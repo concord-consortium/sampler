@@ -1,5 +1,5 @@
 {
-  "name": "codap-plugin-starter-project",
+  "name": "sampler",
   "version": "0.0.1",
   "description": "Concord Consortium Starter CODAP Plugin",
   "main": "index.js",
@@ -61,14 +61,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/concord-consortium/starter-projects.git"
+    "url": "git+https://github.com/concord-consortium/sampler.git"
   },
   "author": "Concord Consortium",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/concord-consortium/starter-projects/issues"
+    "url": "https://github.com/concord-consortium/sampler/issues"
   },
-  "homepage": "https://github.com/concord-consortium/starter-projects#readme",
+  "homepage": "https://github.com/concord-consortium/sampler#readme",
   "nyc": {
     "extends": "@istanbuljs/nyc-config-typescript",
     "all": true,
