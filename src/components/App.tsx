@@ -75,7 +75,7 @@ export const App = () => {
 
   return (
     <div className="App">
-      CODAP Starter Plugin
+      Sampler
       <div className="buttons">
         <button onClick={handleCreateData}>
           Create some data
