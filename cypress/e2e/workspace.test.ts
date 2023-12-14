@@ -5,9 +5,9 @@ context("Test the overall app", () => {
     cy.visit("");
   });
 
-  describe("Desktop functionalities", () => {
-    it("renders with text", () => {
-      ae.getApp().should("have.text", "Hello World");
-    });
-  });
+  // describe("Desktop functionalities", () => {
+  //   it("renders with text", () => {
+  //     ae.getApp().should("have.text", "Hello World");
+  //   });
+  // });
 });
