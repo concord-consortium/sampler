@@ -10,10 +10,10 @@ import {
   addComponentListener,
   ClientNotification,
 } from "@concord-consortium/codap-plugin-api";
-import "./App.css";
+import "./App.scss";
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
-import { ModelTab } from "./model/model";
+import { ModelTab } from "./model/model-component";
 
 const kPluginName = "Sample Plugin";
 const kVersion = "0.0.1";
@@ -27,7 +27,7 @@ export const App = () => {
   // const [codapResponse, setCodapResponse] = useState<any>(undefined);
   const [listenerNotification, setListenerNotification] = useState<string>();
   // const [dataContext, setDataContext] = useState<any>(null);
-  const [tabSelected, setTabSelected] = useState("Model");
+  const [tabSelected, setTabSelected] = useState("Measures");
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});

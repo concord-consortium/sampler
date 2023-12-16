@@ -1,0 +1,58 @@
+.measures-tab {
+  padding: 20px;
+
+  #select-measure-container, #measure-name-container {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+  }
+
+  #select-measure {
+    padding: 1px 2px;
+  }
+
+  #measure-name-container, #measure-formulas {
+    margin-top: 15px;
+  }
+
+  #measure-name {
+    width: 123px;
+  }
+
+  #measure-formulas {
+    margin-left: 3.2vh;
+    .formula {
+      &.hidden {
+        display: none;
+      }
+      &.disabled {
+        background-color: #eaf8fd;
+        border: 1px solid #cfd7da;
+        color: #a3babd;
+        cursor: default;
+        pointer-events: none;
+      }
+    }
+  }
+
+  #measures-bottom {
+    display: flex;
+    justify-content: flex-end;
+  }
+  label {
+    margin-right: 5px;
+  }
+
+  button#add-measure {
+    border-radius: 1.5px;
+    color: black;
+    min-width: 180px;
+    border-radius: 1.5px;
+    border: solid 1px #008cba;
+    background-color: #dbf6ff;
+    font-size: 11px;
+    cursor: pointer;
+    -webkit-transition: background-color 0.4s, color 0.4s;
+    transition: background-color 0.4s, color 0.4s;
+  }
+}
