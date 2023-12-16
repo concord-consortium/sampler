@@ -59,7 +59,10 @@ export const MeasuresTab = () => {
           <span id="conditional_count-formula" data-text="DG.plugin.Sampler.conditional_count-formula">count</span>
           <span className="formula-paren">
             ( <select id="conditional_count-select-attribute" />
-              <select id="conditional_count-select-operator" />
+              <select id="conditional_count-select-operator">
+                <option value="=">=</option>
+                <option value="≠">≠</option>
+              </select>
               <select id="conditional_count-select-value" />
             )
           </span>
@@ -79,7 +82,10 @@ export const MeasuresTab = () => {
           <span id="conditional_percentage-formula" data-text="DG.plugin.Sampler.conditional_percentage-formula-pt-1">100 * count</span>
           <span className="formula-paren">
             ( <select id="conditional_percentage-select-attribute" />
-              <select id="conditional_percentage-select-operator" />
+              <select id="conditional_percentage-select-operator">
+                <option value="=">=</option>
+                <option value="≠">≠</option>
+              </select>
               <select id="conditional_percentage-select-value" />
             )
           </span>
