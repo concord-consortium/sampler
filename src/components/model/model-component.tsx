@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Device } from "./device";
+import { IDevice } from "../../models/device-model";
 
 import "./model-component.scss";
 
 export const ModelTab = () => {
   const [numDevices, setNumDevices] = useState(1);
+  const [selectedDevice, setSelectedDevice] = useState<IDevice | null>(null);
 
   return (
     <div className="model-tab">
@@ -26,16 +28,21 @@ export const ModelTab = () => {
         <button className="clear-data-button">CLEAR DATA</button>
       </div>
       <div className="select-repeat-controls">
-        <select className="select-repeat-dropdown">
-          <option defaultChecked>Select</option>
-          <option>Repeat</option>
-        </select>
-        <input defaultValue="5"></input>
+        <div className="select-repeat-dropdown">
+          <select>
+            <option className={`select-repeat-option`} value="select">Select</option>
+            <option className={`select-repeat-option`} value="repeat">Repeat</option>
+          </select>
+        </div>
+        <input id="sample_size" defaultValue="5"></input>
         <span>items</span>
-        <select>
-          <option>with replacement</option>
-          <option>without replacement</option>
-        </select>
+        <div className="select-replacement-dropdown">
+          <select>
+            <option>with replacement</option>
+            <option>without replacement</option>
+          </select>
+        </div>
+
       </div>
       <div className="collect-controls">
         <span>Collect</span>
@@ -45,7 +52,12 @@ export const ModelTab = () => {
       <div>
         <div className="model-container">
           <div className="device-outputs-container">
-            <Device numDevices={numDevices} setNumDevices={setNumDevices}/>
+            {
+              <div className="device-column">
+                <Device numDevices={numDevices} setNumDevices={setNumDevices} selectedDevice={selectedDevice}
+                        setSelectedDevice={setSelectedDevice}/>
+              </div>
+            }
             <div className="outputs">
               <div className="outputs-title">{`sample 1`}</div>
               <div></div>

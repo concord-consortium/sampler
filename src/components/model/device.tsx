@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { IDevice } from "../../models/device-model";
 
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import DeleteIcon from "../../assets/delete-icon.svg";
@@ -7,7 +8,9 @@ import "./device.scss";
 
 interface IProps {
   numDevices: number;
+  selectedDevice: IDevice | null;
   setNumDevices: (numDevices: number) => void;
+  setSelectedDevice: (selectedDevice: IDevice | null) => void
 }
 
 export const Device = ({numDevices, setNumDevices}: IProps) => {

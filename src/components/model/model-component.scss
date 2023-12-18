@@ -7,16 +7,6 @@
   width: 100%;
   background-color: rgba(0, 140, 186, 0.3);
 
-  input {
-    width: 34px;
-    height: 22px;
-    border-radius: 1.5px;
-    border: solid 1px #8f8f9d;
-    background-color: #fff;
-    margin: 0 2px;
-    font-size: 11px;
-  }
-
   button {
     display: flex;
     align-items: center;
@@ -149,6 +139,88 @@
   align-items: center;
   justify-content: center;
   font-size: 11px;
+
+  .select-repeat-dropdown {
+    position: relative;
+    width: 67px;
+    height: 22px;
+    margin: 0 5px 0 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 100%;
+      padding: 1px 8px 1px 8px;
+      border-radius: 1.5px;
+      border: solid 1px #008cba;
+      background-color: #dbf6ff;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    &::after {
+      content: url("../../assets/dropdown-arrow-icon.svg");
+      position: absolute;
+      right: 0;
+      pointer-events: none;
+    }
+  }
+
+  .select-replacement-dropdown {
+    position: relative;
+    width: 138px;
+    height: 22px;
+    margin: 0 5px 0 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 100%;
+      padding: 1px 8px 1px 8px;
+      border-radius: 1.5px;
+      border: solid 1px #008cba;
+      background-color: #dbf6ff;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .dropdown-arrow-icon {
+      position: absolute;
+      right: 0;
+      top: 0;
+      cursor: pointer;
+      pointer-events: none;
+    }
+    &::after {
+      content: url("../../assets/dropdown-arrow-icon.svg");
+      position: absolute;
+      right: 0;
+      pointer-events: none;
+    }
+  }
+
+  span {
+    margin: 0 3px;
+    font-size: 11px;
+  }
+
+  input {
+    width: 34px;
+    height: 22px;
+    border-radius: 1.5px;
+    border: solid 1px #8f8f9d;
+    background-color: #fff;
+    margin: 0 2px;
+    font-size: 11px;
+    padding: 0 5px;
+  }
 }
 
 .collect-controls {
@@ -160,15 +232,15 @@
   align-items: center;
   justify-content: center;
   font-size: 11px;
-}
-select {
-  height: 22px;
-  margin: 0 5px 0 0;
-  padding: 1px 1px 1px 8px;
-  border-radius: 1.5px;
-  border: solid 1px #008cba;
-  background-color: #dbf6ff;
-  font-size: 11px;
-}
 
-
+  input {
+    width: 34px;
+    height: 22px;
+    border-radius: 1.5px;
+    border: solid 1px #8f8f9d;
+    background-color: #fff;
+    margin: 0 3px;
+    font-size: 11px;
+    padding: 0 5px;
+  }
+}
