@@ -27,7 +27,7 @@ export const App = () => {
   // const [codapResponse, setCodapResponse] = useState<any>(undefined);
   const [listenerNotification, setListenerNotification] = useState<string>();
   // const [dataContext, setDataContext] = useState<any>(null);
-  const [tabSelected, setTabSelected] = useState("Measures");
+  const [tabSelected, setTabSelected] = useState("Model");
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});

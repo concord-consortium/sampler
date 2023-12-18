@@ -45,20 +45,17 @@
       width: 25%; /* Adjust the width of the ticks */
       height: 8px; /* Height of the ticks */
       background: #777; /* Color of the ticks */
-      // width: 1px;
-      // height: 8px;
-      // border: solid 0.5px #777;
     }
 
     input[type='range'],
     input[type='range']::-webkit-slider-runnable-track,
     input[type='range']::-webkit-slider-thumb {
       -webkit-appearance: none;
+      width: 45px;
     }
 
     input[type='range']::-webkit-slider-runnable-track {
       box-sizing: border-box;
-      width: 45px;
       height: 4px;
       border-radius: 2px;
       background: #777;
@@ -66,7 +63,6 @@
 
     input[type='range']::-moz-range-track {
       box-sizing: border-box;
-      width: 45px;
       height: 4px;
       border-radius: 2px;
       background: #777;
@@ -117,14 +113,6 @@
     border: solid 1px #8f8f9d;
     background-color: #fff;
   }
-  .device-outputs-container{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-  }
-
-
   button.clear-data-button {
     width: 85px;
   }
@@ -243,4 +231,11 @@
     font-size: 11px;
     padding: 0 5px;
   }
+}
+
+.device-outputs-container{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 }

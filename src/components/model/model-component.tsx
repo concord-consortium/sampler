@@ -49,19 +49,15 @@ export const ModelTab = () => {
         <input defaultValue="3"></input>
         <span>samples</span>
       </div>
-      <div>
-        <div className="model-container">
-          <div className="device-outputs-container">
-            {
-              <div className="device-column">
-                <Device numDevices={numDevices} setNumDevices={setNumDevices} selectedDevice={selectedDevice}
-                        setSelectedDevice={setSelectedDevice}/>
-              </div>
-            }
-            <div className="outputs">
-              <div className="outputs-title">{`sample 1`}</div>
-              <div></div>
-            </div>
+      <div className="model-container">
+        <div className="device-outputs-container">
+          <div className="device-column">
+            <Device numDevices={numDevices} setNumDevices={setNumDevices} selectedDevice={selectedDevice}
+                    setSelectedDevice={setSelectedDevice}/>
+          </div>
+          <div className="outputs">
+            <div className="outputs-title">{`sample 1`}</div>
+            <div></div>
           </div>
         </div>
       </div>
