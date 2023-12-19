@@ -35,17 +35,31 @@
     align-items: center;
     margin: 0 8px;
     width: 88px;
+    position: relative;
 
-    /* Make ticks for FF and Safari */
-    input[type='range'] {
-      background-color: transparent;
-      border: none;
-    }
+    .tick-marks-container {
+      display: flex;
+      flex-direction: row;
+      align-content: stretch;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: normal;
+      color: #777;
+      width: 32px;
+      height: 22px;
+      position: absolute;
+      left: 8px;
+      top: 2px;
 
-    datalist#speedsettings option {
-      width: 25%; /* Adjust the width of the ticks */
-      height: 8px; /* Height of the ticks */
-      background: #777; /* Color of the ticks */
+      .tick-mark {
+        display: flex;
+        justify-content: center;
+        .tick-line {
+          width: 1px;
+          height: 9px;
+          background-color: #777;
+        }
+      }
     }
 
     input[type='range'],
@@ -80,6 +94,7 @@
       border: solid 1px #999;
       background-color: #f0f0f0;
       position: relative;
+      z-index: 2;
     }
 
     input[type='range']::-moz-range-thumb {
@@ -91,7 +106,9 @@
       border: solid 1px #999;
       background-color: #f0f0f0;
       position: relative;
+      z-index: 2;
     }
+
 
     input[type='range']:focus{
       outline: none;

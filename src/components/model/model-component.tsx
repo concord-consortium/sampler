@@ -20,7 +20,18 @@ const SpeedSlider = () => {
         value={value}
         onChange={handleChange}
         step={1}
+        list="speedSettings"
+        className="slider"
       />
+      <div className="tick-marks-container">
+          {speedValue.map((speed, i) => {
+            return (
+              <div className="tick-mark" key={`tick-${i}`}>
+                <div className="tick-line"/>
+              </div>
+            );
+          })}
+      </div>
       <span id="speed-text" data-text="DG.plugin.Sampler.top-bar.medium-speed">
         {speedValue[value]}
       </span>
