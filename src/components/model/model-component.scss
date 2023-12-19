@@ -34,6 +34,7 @@
     flex-direction: row;
     align-items: center;
     margin: 0 8px;
+    width: 88px;
 
     /* Make ticks for FF and Safari */
     input[type='range'] {
@@ -56,6 +57,7 @@
 
     input[type='range']::-webkit-slider-runnable-track {
       box-sizing: border-box;
+      width: 45px;
       height: 4px;
       border-radius: 2px;
       background: #777;
@@ -63,6 +65,7 @@
 
     input[type='range']::-moz-range-track {
       box-sizing: border-box;
+      width: 45px;
       height: 4px;
       border-radius: 2px;
       background: #777;
