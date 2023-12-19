@@ -7,17 +7,17 @@ import DeleteIcon from "../../assets/delete-icon.svg";
 import "./device.scss";
 
 interface IProps {
-  numDevices: number;
-  selectedDevice: IDevice | null;
-  setNumDevices: (numDevices: number) => void;
-  setSelectedDevice: (selectedDevice: IDevice | null) => void
+  selectedNodeId?: string;
+  onAddNewDeviceinNextColumn: () => void;
+  setSelectedNodeId: (selectedNodeId: string) => void
 }
 
-export const Device = ({numDevices, setNumDevices}: IProps) => {
+export const Device = ({selectedNodeId, setSelectedNodeId,
+    onAddNewDeviceinNextColumn}: IProps) => {
   const [deviceSelected, setDeviceSelected] = useState("mixer");
 
   return (
-    <div className="device-controls-containter">
+    <div className="device-controls-containter" onClick={(e)=>setSelectedNodeId("1")}>
       <div>
         <input className="attr-name" defaultValue={"output"}></input>
       </div>
@@ -32,21 +32,23 @@ export const Device = ({numDevices, setNumDevices}: IProps) => {
           <DeleteIcon />
         </div>
       </div>
-      <div className="footer">
-        <div className="add-remove-variables-buttons">
-          <button>+</button>
-          <button>-</button>
-          <button>...</button>
-        </div>
-        <div className="device-buttons">
-          <button className={deviceSelected === "mixer" ? "selected" : ""} onClick={()=>setDeviceSelected("mixer")}>Mixer</button>
-          <button className={deviceSelected === "spinner" ? "selected" : ""} onClick={()=>setDeviceSelected("spinner")}>Spinner</button>
-          <button className={deviceSelected === "collector" ? "selected" : ""} onClick={()=>setDeviceSelected("collector")}>Collector</button>
-        </div>
-        <div className="add-device-button">
-          <button onClick={()=>setNumDevices(numDevices + 1)}>Add Device</button>
-        </div>
-      </div>
+      { selectedNodeId &&
+          <div className="footer">
+            <div className="add-remove-variables-buttons">
+              <button>+</button>
+              <button>-</button>
+              <button>...</button>
+            </div>
+            <div className="device-buttons">
+              <button className={deviceSelected === "mixer" ? "selected" : ""} onClick={()=>setDeviceSelected("mixer")}>Mixer</button>
+              <button className={deviceSelected === "spinner" ? "selected" : ""} onClick={()=>setDeviceSelected("spinner")}>Spinner</button>
+              <button className={deviceSelected === "collector" ? "selected" : ""} onClick={()=>setDeviceSelected("collector")}>Collector</button>
+            </div>
+            <div className="add-device-button">
+              <button onClick={onAddNewDeviceinNextColumn}>Add Device</button>
+            </div>
+          </div>
+      }
     </div>
   );
 };

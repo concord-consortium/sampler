@@ -5,44 +5,8 @@ import InfoIcon from "../../assets/help-icon.svg";
 
 import "./model-component.scss";
 
-const SpeedSlider = () => {
-  const [value, setValue] = useState(1);
-  const speedValue = ["Slow", "Medium", "Fast", "Fastest"];
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(parseInt(event.target.value, 10)); // Parse the value as an integer
-  };
-
-  return (
-    <div className="speed-slider">
-      <input
-        type="range"
-        min={0}
-        max={3}
-        value={value}
-        onChange={handleChange}
-        step={1}
-        list="speedSettings"
-        className="slider"
-      />
-      <div className="tick-marks-container">
-          {speedValue.map((speed, i) => {
-            return (
-              <div className="tick-mark" key={`tick-${i}`}>
-                <div className="tick-line"/>
-              </div>
-            );
-          })}
-      </div>
-      <span id="speed-text" data-text="DG.plugin.Sampler.top-bar.medium-speed">
-        {speedValue[value]}
-      </span>
-    </div>
-  );
-};
-
 export const ModelTab = () => {
-  const [numDevices, setNumDevices] = useState(1);
-  const [selectedDevice, setSelectedDevice] = useState<IDevice | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | undefined>(undefined);
   const [repeat, setRepeat] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -52,6 +16,14 @@ export const ModelTab = () => {
 
   const handleOpenHelp = () => {
     setShowHelp(!showHelp);
+  };
+
+  const handleAddNewDeviceInNextColumn = () => {
+    // if current node has no children
+    //  create new column
+    //  create new device
+    // else
+    //  add a device in current node's children array
   };
 
   return (
@@ -96,8 +68,8 @@ export const ModelTab = () => {
       <div className="model-container">
         <div className="device-outputs-container">
           <div className="device-column">
-            <Device numDevices={numDevices} setNumDevices={setNumDevices} selectedDevice={selectedDevice}
-                    setSelectedDevice={setSelectedDevice}/>
+            <Device selectedNodeId={selectedNodeId} setSelectedNodeId={setSelectedNodeId}
+                    onAddNewDeviceinNextColumn={handleAddNewDeviceInNextColumn} />
           </div>
           <div className="outputs">
             <div className="outputs-title">{`sample 1`}</div>
@@ -145,6 +117,41 @@ const HelpModal = ({setShowHelp}: IHelpModal) => {
       <div className="modal-footer">
         <button className="modal-button" onClick={handleCloseModal}>Close</button>
       </div>
+    </div>
+  );
+};
+
+const SpeedSlider = () => {
+  const [value, setValue] = useState(1);
+  const speedValue = ["Slow", "Medium", "Fast", "Fastest"];
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(parseInt(event.target.value, 10)); // Parse the value as an integer
+  };
+
+  return (
+    <div className="speed-slider">
+      <input
+        type="range"
+        min={0}
+        max={3}
+        value={value}
+        onChange={handleChange}
+        step={1}
+        list="speedSettings"
+        className="slider"
+      />
+      <div className="tick-marks-container">
+          {speedValue.map((speed, i) => {
+            return (
+              <div className="tick-mark" key={`tick-${i}`}>
+                <div className="tick-line"/>
+              </div>
+            );
+          })}
+      </div>
+      <span id="speed-text" data-text="DG.plugin.Sampler.top-bar.medium-speed">
+        {speedValue[value]}
+      </span>
     </div>
   );
 };
