@@ -1,0 +1,14 @@
+.arrow {
+  position: absolute;
+
+  marker {
+    polygon {
+      fill: #008cba;
+    }
+  }
+
+  line {
+    stroke-width: 3;
+    stroke: #008cba;
+  }
+}

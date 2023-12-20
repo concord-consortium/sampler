@@ -9,7 +9,7 @@ import { useImmer } from "use-immer";
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
-import { IModel, IRunResult } from "../models/model-model";
+import { IModel, IRunResult, getDeviceColumnIndex } from "../models/model-model";
 import { IDevice } from "../models/device-model";
 import { Id, createId } from "../utils/id";
 
@@ -51,7 +51,7 @@ export const App = () => {
     setModel(draft => {
       const newDevice = createDefaultDevice();
 
-      const newColumnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === parentDevice.id)) + 1;
+      const newColumnIndex = getDeviceColumnIndex(draft, parentDevice) + 1;
       if (draft.columns[newColumnIndex]) {
         // column already exists so add the device
         draft.columns[newColumnIndex].devices.push(newDevice);
@@ -64,7 +64,7 @@ export const App = () => {
 
   const handleDeleteDevice = (device: IDevice) => {
     setModel(draft => {
-      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === device.id));
+      const columnIndex = getDeviceColumnIndex(draft, device);
       if (columnIndex !== -1) {
         const devices = draft.columns[columnIndex].devices.filter(dev => dev.id !== device.id);
         const noMoreDevicesInThisColumn = devices.length === 0;

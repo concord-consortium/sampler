@@ -1,5 +1,9 @@
 $teal-dark: #177991;
 
+.model-tab {
+  position: relative;
+}
+
 .model-controls {
   display: flex;
   flex-direction: row;
@@ -274,6 +278,8 @@ $teal-dark: #177991;
   flex-direction: row;
   align-items: center;
   justify-content: left;
+  margin: 0 20px;
+  gap: 40px;
 }
 
 .help-modal {
