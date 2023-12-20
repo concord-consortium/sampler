@@ -5,7 +5,8 @@ import { render, screen } from "@testing-library/react";
 describe("test load app", () => {
   it("renders without crashing", () => {
     render(<App/>);
-    expect(screen.getByText("Sampler")).toBeDefined();
+    expect(screen.getByText("Model")).toBeDefined();
+    expect(screen.getByText("Measures")).toBeDefined();
+    expect(screen.getByText("About")).toBeDefined();
   });
 });
-

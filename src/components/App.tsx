@@ -10,10 +10,10 @@ import {
   addComponentListener,
   ClientNotification,
 } from "@concord-consortium/codap-plugin-api";
-import "./App.css";
+import "./App.scss";
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
-import { ModelTab } from "./model/model";
+import { ModelTab } from "./model/model-component";
 
 const kPluginName = "Sample Plugin";
 const kVersion = "0.0.1";
