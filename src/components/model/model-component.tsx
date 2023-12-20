@@ -1,19 +1,23 @@
 import React, { useState } from "react";
+
 import { Device } from "./device";
+import { IModel } from "../../models/model-model";
+import { IDevice } from "../../models/device-model";
+import { Id } from "../../utils/id";
+
 import InfoIcon from "../../assets/help-icon.svg";
 
 import "./model-component.scss";
-import { IModel } from "../../models/model-model";
-import { IDevice } from "../../models/device-model";
 
 interface IProps {
   model: IModel;
+  selectedDeviceId?: Id;
+  setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
   deleteDevice: (device: IDevice) => void;
 }
 
-export const ModelTab = ({ model, addDevice, deleteDevice }: IProps) => {
-  const [selectedDevice, setSelectedDevice] = useState<IDevice|undefined>(undefined);
+export const ModelTab = ({ model, selectedDeviceId, addDevice, deleteDevice, setSelectedDeviceId }: IProps) => {
   const [repeat, setRepeat] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -74,8 +78,8 @@ export const ModelTab = ({ model, addDevice, deleteDevice }: IProps) => {
                     <Device
                       key={device.id}
                       device={device}
-                      selectedDevice={selectedDevice}
-                      setSelectedDevice={setSelectedDevice}
+                      selectedDeviceId={selectedDeviceId}
+                      setSelectedDeviceId={setSelectedDeviceId}
                       addDevice={addDevice}
                       deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
                     />
