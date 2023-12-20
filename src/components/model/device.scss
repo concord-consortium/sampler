@@ -74,5 +74,8 @@
     border: solid 1px #008cba;
     background-color: #dbf6ff;
     font-size: 11px;
+    &:disabled {
+      opacity: 0.4;
+    }
   }
 }

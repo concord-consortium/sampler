@@ -1,12 +1,19 @@
 import React, { useState } from "react";
 import { Device } from "./device";
-import { IDevice } from "../../models/device-model";
 import InfoIcon from "../../assets/help-icon.svg";
 
 import "./model-component.scss";
+import { IModel } from "../../models/model-model";
+import { IDevice } from "../../models/device-model";
 
-export const ModelTab = () => {
-  const [selectedNodeId, setSelectedNodeId] = useState<string | undefined>(undefined);
+interface IProps {
+  model: IModel;
+  addDevice: (parentDevice: IDevice) => void;
+  deleteDevice: (device: IDevice) => void;
+}
+
+export const ModelTab = ({ model, addDevice, deleteDevice }: IProps) => {
+  const [selectedDevice, setSelectedDevice] = useState<IDevice|undefined>(undefined);
   const [repeat, setRepeat] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -16,14 +23,6 @@ export const ModelTab = () => {
 
   const handleOpenHelp = () => {
     setShowHelp(!showHelp);
-  };
-
-  const handleAddNewDeviceInNextColumn = () => {
-    // if current node has no children
-    //  create new column
-    //  create new device
-    // else
-    //  add a device in current node's children array
   };
 
   return (
@@ -67,10 +66,24 @@ export const ModelTab = () => {
       </div>
       <div className="model-container">
         <div className="device-outputs-container">
-          <div className="device-column">
-            <Device selectedNodeId={selectedNodeId} setSelectedNodeId={setSelectedNodeId}
-                    onAddNewDeviceinNextColumn={handleAddNewDeviceInNextColumn} />
-          </div>
+          {model.columns.map((column, columnIndex) => {
+            return (
+              <div key={columnIndex} className="device-column">
+                {column.devices.map(device => {
+                  return (
+                    <Device
+                      key={device.id}
+                      device={device}
+                      selectedDevice={selectedDevice}
+                      setSelectedDevice={setSelectedDevice}
+                      addDevice={addDevice}
+                      deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
+                    />
+                  );
+                })}
+              </div>
+            );
+          })}
           <div className="outputs">
             <div className="outputs-title">{`sample 1`}</div>
             <div></div>

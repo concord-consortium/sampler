@@ -1,8 +1,7 @@
 export interface IDevice {
-  id: string;
+  id: number;
   deviceType: "mixer" | "spinner" | "collector";
   variables: "string" | "number";
-  children?: string[] // array of device ids
 }
 
 
