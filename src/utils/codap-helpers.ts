@@ -10,6 +10,7 @@ export const kDataContextName = "Sampler";
 export const findOrCreateDataContext = async (attrs: Array<string>) => {
   const dataContextRes = await getDataContext(kDataContextName);
   if (dataContextRes.success) {
+    return "success";
   } else {
     const collectionAttrs = attrs.map((attr) => { return {name: attr, type: "categorical"};});
     const createRes = await createDataContext(kDataContextName);
@@ -22,6 +23,8 @@ export const findOrCreateDataContext = async (attrs: Array<string>) => {
         } else {
           return "error";
         }
+      } else {
+        return "error";
       }
     } else {
       return "error";

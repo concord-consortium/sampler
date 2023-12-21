@@ -123,7 +123,7 @@ export const App = () => {
     if (ctxRes === "success") {
       await createItems(kDataContextName, [result]);
     }
-  }
+  };
 
   return (
     <div className="App">
