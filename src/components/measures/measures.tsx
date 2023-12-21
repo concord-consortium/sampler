@@ -8,7 +8,6 @@ export const MeasuresTab = () => {
     setSelectedMeasure(event.target.value);
   };
 
-  console.log("selectedMeasure", selectedMeasure);
   return (
     <div className="measures-tab">
       <div id="measures-instructions" data-text="DG.plugin.Sampler.measures-instructions">

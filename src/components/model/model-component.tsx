@@ -15,9 +15,13 @@ interface IProps {
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
   deleteDevice: (device: IDevice) => void;
+  handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
+  handleStartRun: () => void;
 }
 
-export const ModelTab = ({ model, selectedDeviceId, addDevice, deleteDevice, setSelectedDeviceId }: IProps) => {
+export const ModelTab = ({ model, selectedDeviceId, addDevice, deleteDevice, setSelectedDeviceId,
+  handleNameChange, handleInputChange, handleStartRun}: IProps) => {
   const [repeat, setRepeat] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -32,7 +36,7 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, deleteDevice, set
   return (
     <div className="model-tab">
       <div className="model-controls">
-        <button className="start-button">START</button>
+        <button className="start-button" onClick={handleStartRun}>START</button>
         <button className="stop-button">STOP</button>
         <SpeedSlider />
         <button className="clear-data-button">CLEAR DATA</button>
@@ -82,6 +86,8 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, deleteDevice, set
                       setSelectedDeviceId={setSelectedDeviceId}
                       addDevice={addDevice}
                       deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
+                      handleNameChange={handleNameChange}
+                      handleInputChange={handleInputChange}
                     />
                   );
                 })}

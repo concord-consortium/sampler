@@ -1,25 +1,20 @@
 import React, { useEffect, useState } from "react";
 import {
-  // createDataContext,
-  // createItems,
-  // createNewCollection,
-  // createTable,
-  // getAllItems,
-  // getDataContext,
+
   initializePlugin,
-  // addComponentListener,
-  // ClientNotification,
+  createItems
 } from "@concord-consortium/codap-plugin-api";
 import { useImmer } from "use-immer";
 
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
-import { IModel } from "../models/model-model";
+import { IModel, IRunResult } from "../models/model-model";
 import { IDevice } from "../models/device-model";
 import { Id, createId } from "../utils/id";
 
 import "./App.scss";
+import { findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
 
 const kPluginName = "Sample Plugin";
 const kVersion = "0.0.1";
@@ -32,70 +27,21 @@ const kInitialDimensions = {
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
 
-export const createDefaultDevice = (): IDevice => ({id: createId(), deviceType: "mixer", variables: "number"});
+export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", deviceType: "mixer", variables: {"a": 100}});
 
 export const App = () => {
-  // const [codapResponse, setCodapResponse] = useState<any>(undefined);
-  // const [listenerNotification, setListenerNotification] = useState<string>();
-  // const [dataContext, setDataContext] = useState<any>(null);
   const [selectedTab, setSelectedTab] = useState<NavTab>("Model");
   const [model, setModel] = useImmer<IModel>({columns: []});
   const [selectedDeviceId, setSelectedDeviceId] = useState<Id|undefined>(undefined);
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
-
-    /*
-    // this is an example of how to add a notification listener to a CODAP component
-    // for more information on listeners and notifications, see
-    // https://github.com/concord-consortium/codap/wiki/CODAP-Data-Interactive-Plugin-API#documentchangenotice
-    const createTableListener = (listenerRes: ClientNotification) => {
-      if (listenerRes.values.operation === "open case table") {
-        setListenerNotification("A case table has been created");
-      }
-    };
-    addComponentListener(createTableListener);
-    */
   }, []);
 
   // TODO: replace this with code that listens for the model state from CODAP - right now this just sets an initial model for development
   useEffect(() => {
     setModel({columns: [{devices: [createDefaultDevice()]}]});
   }, [setModel]);
-
-  // const handleOpenTable = async () => {
-  //   const res = await createTable(dataContext, kDataContextName);
-  //   setCodapResponse(res);
-  // };
-
-  // const handleCreateData = async() => {
-  //   const existingDataContext = await getDataContext(kDataContextName);
-  //   let createDC, createNC, createI;
-  //   if (!existingDataContext.success) {
-  //     createDC = await createDataContext(kDataContextName);
-  //     setDataContext(createDC.values);
-  //   }
-  //   if (existingDataContext?.success || createDC?.success) {
-  //     createNC = await createNewCollection(kDataContextName, "Pets", [{name: "type", type: "string"}, {name: "number", type: "number"}]);
-  //     createI = await createItems(kDataContextName, [ {type: "dog", number: 5},
-  //                                     {type: "cat", number: 4},
-  //                                     {type: "fish", number: 20},
-  //                                     {type: "horse", number: 1},
-  //                                     {type: "bird", number: 8},
-  //                                     {type: "hamster", number: 3}
-  //                                   ]);
-  //   }
-
-  //   setCodapResponse(`Data context created: ${JSON.stringify(createDC)}
-  //   New collection created: ${JSON.stringify(createNC)}
-  //   New items created: ${JSON.stringify(createI)}`
-  //                   );
-  // };
-
-  // const handleGetResponse = async () => {
-  //   const result = await getAllItems(kDataContextName);
-  //   setCodapResponse(result);
-  // };
 
   const handleTabSelect = (tab: NavTab) => {
     setSelectedTab(tab);
@@ -139,6 +85,46 @@ export const App = () => {
     });
   };
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => {
+    setModel(draft => {
+      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === deviceId));
+      if (columnIndex !== -1) {
+        const device = draft.columns[columnIndex].devices.find(dev => dev.id === deviceId);
+        if (device) {
+          device.name = e.target.value;
+        }
+      }
+    });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => {
+    setModel(draft => {
+      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === deviceId));
+      if (columnIndex !== -1) {
+        const device = draft.columns[columnIndex].devices.find(dev => dev.id === deviceId);
+        if (device) {
+          device.variables = {[e.target.value]: 100};
+        }
+      }
+    });
+  };
+
+  const handleStartRun = async () => {
+    // proof of concept that we can "run" the model and add items to CODAP
+    const result: IRunResult = {};
+    const attrKeys: string[] = [];
+    model.columns.forEach(column => {
+      column.devices.forEach(device => {
+        result[device.name] = Object.keys(device.variables)[0];
+        attrKeys.push(device.name);
+      });
+    });
+    const ctxRes = await findOrCreateDataContext(attrKeys);
+    if (ctxRes === "success") {
+      await createItems(kDataContextName, [result]);
+    }
+  }
+
   return (
     <div className="App">
       <div className="navigationTabs">
@@ -161,6 +147,9 @@ export const App = () => {
             addDevice={handleAddDevice}
             deleteDevice={handleDeleteDevice}
             setSelectedDeviceId={setSelectedDeviceId}
+            handleInputChange={handleInputChange}
+            handleNameChange={handleNameChange}
+            handleStartRun={handleStartRun}
           />
         }
         {selectedTab === "Measures" && <MeasuresTab />}

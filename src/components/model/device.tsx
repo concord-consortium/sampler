@@ -15,11 +15,13 @@ interface IProps {
   selectedDeviceId?: Id;
   addDevice: (parentDevice: IDevice) => void;
   deleteDevice?: (device: IDevice) => void;
-  setSelectedDeviceId: (id: Id) => void
+  setSelectedDeviceId: (id: Id) => void;
+  handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
 }
 
 export const Device = (props: IProps) => {
-  const {device, selectedDeviceId, setSelectedDeviceId, addDevice, deleteDevice} = props;
+  const {device, selectedDeviceId, setSelectedDeviceId, addDevice, deleteDevice, handleNameChange, handleInputChange} = props;
   const [viewSelected, setViewSelected] = useState<View>("mixer");
 
   const handleSelectDevice = () => setSelectedDeviceId(device.id);
@@ -29,7 +31,7 @@ export const Device = (props: IProps) => {
   return (
     <div className="device-controls-container" onClick={handleSelectDevice}>
       <div>
-        <input className="attr-name" defaultValue={"output"}></input>
+        <input className="attr-name" value={device.name} onChange={(e) => handleNameChange(e, device.id)}></input>
       </div>
       <div className="device-container">
         <div className="device-status-icon">
@@ -37,6 +39,9 @@ export const Device = (props: IProps) => {
         </div>
         <div className="device">
           {viewSelected}
+        </div>
+        <div className={"set-input"}>
+          <input value={Object.keys(device.variables)[0]} onChange={(e) => handleInputChange(e, device.id)}></input>
         </div>
         {deleteDevice &&
           <div className="device-delete-icon" onClick={handleDeleteDevice}>
