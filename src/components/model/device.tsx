@@ -8,6 +8,9 @@ import { IModel, getNumDevices, getSiblingDevices, getTargetDevices } from "../.
 import DeleteIcon from "../../assets/delete-icon.svg";
 
 import "./device.scss";
+import { Mixer } from "./device-views/mixer/mixer";
+import { Spinner } from "./device-views/spinner/spinner";
+import { Collector } from "./device-views/collector";
 
 const views = ["mixer", "spinner", "collector"] as const;
 type View = typeof views[number];
@@ -48,12 +51,13 @@ export const Device = (props: IProps) => {
         <div className="device-status-icon">
           <VisibleIcon />
         </div>
-        <div className="device">
-          {viewSelected}
-        </div>
-        <div className={"set-input"}>
-          <input value={Object.keys(device.variables)[0]} onChange={(e) => handleInputChange(e, device.id)}></input>
-        </div>
+        {
+          viewSelected === "mixer" ?
+            <Mixer variables={device.variables} /> :
+          viewSelected === "spinner" ?
+            <Spinner variables={device.variables}/> :
+            <Collector collectorVariables={device.collectorVariables}/>
+        }
         {deleteDevice &&
           <div className="device-delete-icon" onClick={handleDeleteDevice}>
             <DeleteIcon />

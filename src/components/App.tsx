@@ -26,7 +26,7 @@ const kInitialDimensions = {
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
 
-export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", deviceType: "mixer", variables: {"a": 100}});
+export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", deviceType: "mixer", variables: {"a": 67, "b": 33}, collectorVariables: []});
 
 export const App = () => {
   const [selectedTab, setSelectedTab] = useState<NavTab>("Model");

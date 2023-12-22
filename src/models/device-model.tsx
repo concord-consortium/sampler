@@ -4,7 +4,8 @@ export interface IDevice {
   id: Id;
   name: string;
   deviceType: "mixer" | "spinner" | "collector";
-  variables: IVariables | ICollectorVariables;
+  variables: IVariables;
+  collectorVariables: ICollectorVariables;
 }
 
 // a map of variables to their percentages
