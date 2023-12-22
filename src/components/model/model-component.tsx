@@ -15,13 +15,14 @@ interface IProps {
   selectedDeviceId?: Id;
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
+  mergeDevices: (device: IDevice) => void;
   deleteDevice: (device: IDevice) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleStartRun: () => void;
 }
 
-export const ModelTab = ({ model, selectedDeviceId, addDevice, deleteDevice, setSelectedDeviceId,
+export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, deleteDevice, setSelectedDeviceId,
   handleNameChange, handleInputChange, handleStartRun}: IProps) => {
   const [repeat, setRepeat] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -83,10 +84,12 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, deleteDevice, set
                   return (
                     <React.Fragment key={device.id}>
                       <Device
+                        model={model}
                         device={device}
                         selectedDeviceId={selectedDeviceId}
                         setSelectedDeviceId={setSelectedDeviceId}
                         addDevice={addDevice}
+                        mergeDevices={mergeDevices}
                         deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
                         handleNameChange={handleNameChange}
                         handleInputChange={handleInputChange}
