@@ -4,9 +4,9 @@ $teal-dark: #177991;
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
-  height: 30px;
+  justify-content: left;
   width: 100%;
+  padding: 4px 12px;
   background-color: rgba(0, 140, 186, 0.3);
 
   button {
@@ -21,7 +21,6 @@ $teal-dark: #177991;
     border-radius: 1.5px;
     border: solid 1px #008cba;
     background-color: #dbf6ff;
-    font-size: 11px;
 
     &.disabled {
       opacity: 0.4;
@@ -126,7 +125,6 @@ $teal-dark: #177991;
 
   span {
     margin: 0 2px;
-    font-size: 11px;
   }
   .attr-name {
     width: 56px;
@@ -142,17 +140,18 @@ $teal-dark: #177991;
 
 .select-repeat-controls {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  justify-content: left;
+  background-color: rgba(0, 140, 186, 0.2);
+  width: 100%;
+  padding: 4px 12px;
 
   .select-repeat-selection {
-    width: 100%;
-    height: 30px;
-    background-color: rgba(0, 140, 186, 0.2);
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
-    font-size: 11px;
+
 
     .select-repeat-dropdown {
       position: relative;
@@ -172,7 +171,6 @@ $teal-dark: #177991;
         border-radius: 1.5px;
         border: solid 1px #008cba;
         background-color: #dbf6ff;
-        font-size: 11px;
         cursor: pointer;
       }
       &::after {
@@ -201,7 +199,6 @@ $teal-dark: #177991;
         border-radius: 1.5px;
         border: solid 1px #008cba;
         background-color: #dbf6ff;
-        font-size: 11px;
         cursor: pointer;
       }
 
@@ -222,7 +219,6 @@ $teal-dark: #177991;
 
     span {
       margin: 0 4px;
-      font-size: 11px;
     }
 
     input {
@@ -232,7 +228,6 @@ $teal-dark: #177991;
       border: solid 1px #8f8f9d;
       background-color: #fff;
       margin: 0 2px;
-      font-size: 11px;
       padding: 0 5px;
     }
   }
@@ -244,10 +239,8 @@ $teal-dark: #177991;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
     span {
       margin: 0 4px;
-      font-size: 11px;
     }
     input {
       margin: 0 5px;
@@ -257,13 +250,13 @@ $teal-dark: #177991;
 
 .collect-controls {
   width: 100%;
-  height: 30px;
   background-color: rgba(0, 140, 186, 0.1);
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
-  font-size: 11px;
+  justify-content: left;
+  padding: 4px 12px;
+  font-weight: 500;
 
   input {
     width: 34px;
@@ -272,16 +265,15 @@ $teal-dark: #177991;
     border: solid 1px #8f8f9d;
     background-color: #fff;
     margin: 0 3px;
-    font-size: 11px;
     padding: 0 5px;
   }
 }
 
-.device-outputs-container{
+.device-outputs-container {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: left;
 }
 
 .help-modal {
@@ -316,7 +308,6 @@ $teal-dark: #177991;
     }
     .help-section-body {
       color: black;
-      font-size: 11px;
       font-weight: 500;
     }
   }
