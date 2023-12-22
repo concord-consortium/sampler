@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-
   initializePlugin,
   createItems
 } from "@concord-consortium/codap-plugin-api";
@@ -58,6 +57,16 @@ export const App = () => {
       } else {
         // create the column and add the device
         draft.columns.splice(newColumnIndex, 0, {devices: [newDevice]});
+      }
+    });
+  };
+
+  const handleMergeDevices = (device: IDevice) => {
+    setModel(draft => {
+      const columnIndex = getDeviceColumnIndex(draft, device);
+      if (columnIndex !== -1) {
+        // remove the other devices
+        draft.columns[columnIndex].devices.splice(0, draft.columns[columnIndex].devices.length, device);
       }
     });
   };
@@ -145,6 +154,7 @@ export const App = () => {
             model={model}
             selectedDeviceId={selectedDeviceId}
             addDevice={handleAddDevice}
+            mergeDevices={handleMergeDevices}
             deleteDevice={handleDeleteDevice}
             setSelectedDeviceId={setSelectedDeviceId}
             handleInputChange={handleInputChange}

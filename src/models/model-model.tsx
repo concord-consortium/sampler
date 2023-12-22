@@ -16,21 +16,27 @@ export interface IRunResult {
 
 export type DeviceMap = Record<Id,IDevice>;
 
-export const getDeviceIds = (model: IModel): Id[] => {
-  return model.columns.reduce<Id[]>((acc, column) => {
+export const getNumDevices = (model: IModel): number => {
+  return getDevices(model).length;
+};
+
+export const getDevices = (model: IModel): IDevice[] => {
+  return model.columns.reduce<IDevice[]>((acc, column) => {
     return column.devices.reduce((acc2, device) => {
-      acc2.push(device.id);
+      acc2.push(device);
       return acc2;
     }, acc);
   }, []);
 };
 
+export const getDeviceIds = (model: IModel): Id[] => {
+  return getDevices(model).map(device => device.id);
+};
+
 export const getDeviceMap = (model: IModel): DeviceMap => {
-  return model.columns.reduce<DeviceMap>((acc, column) => {
-    return column.devices.reduce((acc2, device) => {
-      acc2[device.id] = device;
-      return acc2;
-    }, acc);
+  return getDevices(model).reduce<DeviceMap>((acc, device) => {
+    acc[device.id] = device;
+    return acc;
   }, {});
 };
 
@@ -38,30 +44,53 @@ export const getDeviceColumnIndex = (model: IModel, device: IDevice) => {
   return model.columns.findIndex(c => c.devices.find(d => d.id === device.id));
 };
 
+export const getDeviceIndex = (devices: IDevice[], device: IDevice): number => {
+  return devices.findIndex(d => d.id === device.id);
+};
+
 // returns an array of devices flowing into the passed device
 export const getSourceDevices = (model: IModel, device: IDevice): IDevice[] => {
+  return getMatchingDevices(model, device, -1);
+};
+
+// returns an array of devices flowing out the passed device
+export const getTargetDevices = (model: IModel, device: IDevice): IDevice[] => {
+  return getMatchingDevices(model, device, +1);
+};
+
+// returns an array of sibling devices of the passed device
+export const getSiblingDevices = (model: IModel, device: IDevice): IDevice[] => {
   const columnIndex = getDeviceColumnIndex(model, device);
-  const prevColumnIndex = columnIndex - 1;
-  if (prevColumnIndex < 0) {
+  if (columnIndex !== -1) {
+    return model.columns[columnIndex].devices.filter(d => d.id !== device.id);
+  }
+  return [];
+};
+
+// "private" methods
+
+const getMatchingDevices = (model: IModel, device: IDevice, columnDelta: number): IDevice[] => {
+  const columnIndex = getDeviceColumnIndex(model, device);
+  const matchingColumnIndex = columnIndex + columnDelta;
+  if (matchingColumnIndex < 0 || matchingColumnIndex >= model.columns.length) {
     return [];
   }
 
   const devices = model.columns[columnIndex].devices;
-  const prevDevices = model.columns[prevColumnIndex].devices;
+  const matchingDevices = model.columns[matchingColumnIndex].devices;
 
-  if (devices.length === 1 || prevDevices.length === 1) {
-    // one source or target device so all flow into the device
-    return model.columns[prevColumnIndex].devices;
+  // one source or target device so all flow in our out of the device
+  if (devices.length === 1 || matchingDevices.length === 1) {
+    return matchingDevices;
   }
 
-  if (devices.length === prevDevices.length) {
-    // match up the device by index
-    const deviceIndex = devices.findIndex(d => d.id === device.id);
-    if (deviceIndex !== -1) {
-      return [prevDevices[deviceIndex]];
-    }
+  // match up the device by index
+  const deviceIndex = getDeviceIndex(devices, device);
+  if (matchingDevices[deviceIndex]) {
+    return [matchingDevices[deviceIndex]];
   }
 
   // we should not get into this state, but just in case
   return [];
 };
+
