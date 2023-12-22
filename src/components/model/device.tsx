@@ -33,7 +33,7 @@ export const Device = (props: IProps) => {
       <div>
         <input className="attr-name" value={device.name} onChange={(e) => handleNameChange(e, device.id)}></input>
       </div>
-      <div className="device-container">
+      <div className="device-container" data-device-id={device.id}>
         <div className="device-status-icon">
           <VisibleIcon />
         </div>
