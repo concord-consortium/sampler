@@ -10,12 +10,16 @@ import {
   // addComponentListener,
   // ClientNotification,
 } from "@concord-consortium/codap-plugin-api";
-import "./App.scss";
+import { useImmer } from "use-immer";
+
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
 import { IModel } from "../models/model-model";
 import { IDevice } from "../models/device-model";
+import { Id, createId } from "../utils/id";
+
+import "./App.scss";
 
 const kPluginName = "Sample Plugin";
 const kVersion = "0.0.1";
@@ -28,14 +32,15 @@ const kInitialDimensions = {
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
 
-export const createDefaultDevice = (id: number): IDevice => ({id, deviceType: "mixer", variables: "number"});
+export const createDefaultDevice = (): IDevice => ({id: createId(), deviceType: "mixer", variables: "number"});
 
 export const App = () => {
   // const [codapResponse, setCodapResponse] = useState<any>(undefined);
   // const [listenerNotification, setListenerNotification] = useState<string>();
   // const [dataContext, setDataContext] = useState<any>(null);
-  const [tabSelected, setTabSelected] = useState<NavTab>("Model");
-  const [model, setModel] = useState<IModel>({columns: []});
+  const [selectedTab, setSelectedTab] = useState<NavTab>("Model");
+  const [model, setModel] = useImmer<IModel>({columns: []});
+  const [selectedDeviceId, setSelectedDeviceId] = useState<Id|undefined>(undefined);
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
@@ -55,8 +60,8 @@ export const App = () => {
 
   // TODO: replace this with code that listens for the model state from CODAP - right now this just sets an initial model for development
   useEffect(() => {
-    setModel({columns: [{devices: [createDefaultDevice(1)]}]});
-  }, []);
+    setModel({columns: [{devices: [createDefaultDevice()]}]});
+  }, [setModel]);
 
   // const handleOpenTable = async () => {
   //   const res = await createTable(dataContext, kDataContextName);
@@ -93,50 +98,45 @@ export const App = () => {
   // };
 
   const handleTabSelect = (tab: NavTab) => {
-    setTabSelected(tab);
+    setSelectedTab(tab);
   };
 
   const handleAddDevice = (parentDevice: IDevice) => {
-    // find or create the column next to the parent device
-    const columns = model.columns.slice();
-    const newColumnIndex = columns.findIndex(c => c.devices.includes(parentDevice)) + 1;
-    if (!columns[newColumnIndex]) {
-      columns[newColumnIndex] = {devices: []};
-    }
+    setModel(draft => {
+      const newDevice = createDefaultDevice();
 
-    // get the max device id so we can increment it for the new device
-    const maxDeviceId = model.columns.reduce<number>((acc, {devices}) => {
-      return devices.reduce<number>((acc2, {id}) => {
-        return Math.max(acc2, id);
-      }, acc);
-    }, 0);
-
-    columns[newColumnIndex].devices.push(createDefaultDevice(maxDeviceId + 1));
-    setModel(prev => ({...prev, columns}));
+      const newColumnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === parentDevice.id)) + 1;
+      if (draft.columns[newColumnIndex]) {
+        // column already exists so add the device
+        draft.columns[newColumnIndex].devices.push(newDevice);
+      } else {
+        // create the column and add the device
+        draft.columns.splice(newColumnIndex, 0, {devices: [newDevice]});
+      }
+    });
   };
 
   const handleDeleteDevice = (device: IDevice) => {
-    // find the column for the device
-    const columns = model.columns.slice();
-    const columnIndex = columns.findIndex(c => c.devices.includes(device));
-    if (columnIndex !== -1) {
-      let message = "Delete this device?";
-      const devices = columns[columnIndex].devices.filter(dev => dev.id !== device.id);
-      if (devices.length === 0) {
-        // when last device in a column is deleted delete this column and all the devices to the right
-        if (columns.length > columnIndex + 1) {
-          message = "Delete this device and all the devices to the right of it?";
+    setModel(draft => {
+      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === device.id));
+      if (columnIndex !== -1) {
+        const devices = draft.columns[columnIndex].devices.filter(dev => dev.id !== device.id);
+        const noMoreDevicesInThisColumn = devices.length === 0;
+        const hasColumnsToTheRight = draft.columns.length > columnIndex + 1;
+        const question = noMoreDevicesInThisColumn && hasColumnsToTheRight ? "Delete this device and all the devices to the right of it?" : "Delete this device?";
+        if (confirm(question)) {
+          if (noMoreDevicesInThisColumn) {
+            // when last device in a column is deleted delete this column and all the devices to the right if they exist
+            draft.columns.splice(columnIndex, draft.columns.length - columnIndex);
+          }
+          else {
+            draft.columns[columnIndex].devices = devices;
+          }
         }
-        columns.length = columnIndex;
       } else {
-        columns[columnIndex].devices = devices;
+        alert("Sorry, that device could not be found!");
       }
-      if (confirm(message)) {
-        setModel(prev => ({...prev, columns}));
-      }
-    } else {
-      alert("Sorry, that device could not be found!");
-    }
+    });
   };
 
   return (
@@ -145,7 +145,7 @@ export const App = () => {
         { navTabs.map((tab, index) => {
             return (
               <div key={`${index}`}
-                  className={`tab ${tabSelected === tab ? "selected" : ""}`}
+                  className={`tab ${selectedTab === tab ? "selected" : ""}`}
                   onClick={() => handleTabSelect(navTabs[index])}>
                 {tab}
               </div>
@@ -154,9 +154,17 @@ export const App = () => {
         }
       </div>
       <div className="tab-content">
-        {tabSelected === "Model" && <ModelTab model={model} addDevice={handleAddDevice} deleteDevice={handleDeleteDevice} />}
-        {tabSelected === "Measures" && <MeasuresTab />}
-        {tabSelected === "About" && <AboutTab />}
+        {selectedTab === "Model" &&
+          <ModelTab
+            model={model}
+            selectedDeviceId={selectedDeviceId}
+            addDevice={handleAddDevice}
+            deleteDevice={handleDeleteDevice}
+            setSelectedDeviceId={setSelectedDeviceId}
+          />
+        }
+        {selectedTab === "Measures" && <MeasuresTab />}
+        {selectedTab === "About" && <AboutTab />}
       </div>
     </div>
   );
