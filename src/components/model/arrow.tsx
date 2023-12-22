@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { IDevice } from "../../models/device-model";
 import { IModel } from "../../models/model-model";
@@ -61,6 +61,12 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   const sourceDiv = document.querySelector(`[data-device-id="${source.id}"]`) as HTMLDivElement|null;
   const targetDiv = document.querySelector(`[data-device-id="${target.id}"]`) as HTMLDivElement|null;
 
+  const resetLabelInput = useCallback(() => {
+    if (inputRef.current) {
+      inputRef.current.value = label;
+    }
+  }, [label]);
+
   useEffect(() => {
     const handleMouseUp = (e: MouseEvent) => {
       // clicks outside the label ref cancel editing
@@ -72,12 +78,13 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
         walker = walker.parentElement;
       }
       handleToggleEditing();
+      resetLabelInput();
     };
     if (editing) {
       addEventListener("mouseup", handleMouseUp);
       return () => removeEventListener("mouseup", handleMouseUp);
     }
-  }, [editing]);
+  }, [editing, resetLabelInput]);
 
   // on the initial render the target div will not exist as it is sibling of this component so force a redraw
   useEffect(() => {
@@ -146,9 +153,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   const handleLabelKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.code === "Escape") {
       handleToggleEditing();
-      if (inputRef.current) {
-        inputRef.current.value = label;
-      }
+      resetLabelInput();
     }
   };
 
