@@ -67,9 +67,29 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
     }
   }, [label]);
 
+  const handleToggleEditing = () => {
+    setEditing(prev => {
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }, 1);
+      return !prev;
+    });
+  };
+
+  const handleUpdateLabel = useCallback(() => {
+    const trimmedLabel = (inputRef.current?.value ?? "").trim();
+    if (trimmedLabel.length > 0) {
+      // TODO LATER: update source device in model with trimmedLabel
+
+      setLabel(trimmedLabel);
+      handleToggleEditing();
+    }
+  }, [setLabel]);
+
   useEffect(() => {
     const handleMouseUp = (e: MouseEvent) => {
-      // clicks outside the label ref cancel editing
+      // clicks outside the label ref commits the edit
       let walker = e.target as HTMLElement|null;
       while (walker !== null) {
         if (walker === labelRef.current) {
@@ -77,14 +97,13 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
         }
         walker = walker.parentElement;
       }
-      handleToggleEditing();
-      resetLabelInput();
+      handleUpdateLabel();
     };
     if (editing) {
       addEventListener("mouseup", handleMouseUp);
       return () => removeEventListener("mouseup", handleMouseUp);
     }
-  }, [editing, resetLabelInput]);
+  }, [editing, handleUpdateLabel]);
 
   // on the initial render the target div will not exist as it is sibling of this component so force a redraw
   useEffect(() => {
@@ -140,14 +159,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   const handleSubmitEdit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
-    const trimmedLabel = (inputRef.current?.value ?? "").trim();
-    if (trimmedLabel.length > 0) {
-      // TODO LATER: update source device in model with trimmedLabel
-
-      setLabel(trimmedLabel);
-      handleToggleEditing();
-    }
+    handleUpdateLabel();
   };
 
   const handleLabelKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -155,16 +167,6 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
       handleToggleEditing();
       resetLabelInput();
     }
-  };
-
-  const handleToggleEditing = () => {
-    setEditing(prev => {
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }, 1);
-      return !prev;
-    });
   };
 
   return (
