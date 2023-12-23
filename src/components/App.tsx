@@ -11,17 +11,29 @@ import { ModelTab } from "./model/model-component";
 import { IModel, IRunResult, getDeviceColumnIndex } from "../models/model-model";
 import { IDevice } from "../models/device-model";
 import { Id, createId } from "../utils/id";
+import { findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
+import { tr } from "../utils/localeManager";
 
 import "./App.scss";
-import { findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
-
-const kPluginName = "Sample Plugin";
-const kVersion = "0.0.1";
+const kPluginName = "Sampler";
+const kVersion = "v0.50";
 const kInitialDimensions = {
-  width: 380,
-  height: 680
+  width: 328,
+  height: 500
 };
-// const kDataContextName = "SamplePluginData";
+const targetDataSetName = tr("DG.plugin.Sampler.dataset.name") || "Sampler";
+
+const dataSetName = "Sampler Data";
+
+const iFrameDescriptor ={
+  version: kVersion,
+  name: tr("DG.plugin.Sampler.title"),
+  pluginName: kPluginName,
+  title: tr("DG.plugin.Sampler.title"),
+  dimensions: kInitialDimensions,
+  preventDataContextReorg: false,
+
+};
 
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
