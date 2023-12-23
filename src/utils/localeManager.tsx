@@ -18,27 +18,28 @@
 // ==========================================================================
 
 const DEFAULT_LOCALE = "en-us";
-const stringFileURL = "./strings.json";
+const stringFileURL = "../strings.json";
 
 let translations: Record<string, string> = {};
-let locale = "" ;
+let locale = DEFAULT_LOCALE ;
 
 function getQueryParam(s: string) {
   return new URLSearchParams(window.location.search).get(s);
 }
 
 
-export async function init() {
+export async function localeInit() {
   return fetch(stringFileURL)
       .then(function (response) { return response.json();})
       .then(function (data) {
+        console.log("data translations", data);
         translations = data;
-        locale = (getQueryParam("lang") || "en").toLowerCase();
+        locale = (getQueryParam("lang") || "en-us").toLowerCase();
         if (!(locale && translations[locale])) {
           locale = DEFAULT_LOCALE;
         }
         // localize existing dom
-        localizeDOM(document.body);
+        // localizeDOM(document.body);
       });
 }
 
@@ -58,7 +59,7 @@ function localizeDOM(node: HTMLElement) {
   const titleNodes: HTMLElement[] = Array.from(node.querySelectorAll("[data-title]"));
   textNodes.forEach((el: HTMLElement) => {
     const key: string | undefined = el.dataset.text;
-    el.innerHTML = key && tr(key);
+    el.innerHTML = key && tr(key) || "I don't have a text";
   });
   // altNodes.forEach((el: HTMLOrSVGElement | HTMLImageElement) => {
   //   const key: string | undefined = el.dataset.alt;
@@ -66,16 +67,19 @@ function localizeDOM(node: HTMLElement) {
   // });
   titleNodes.forEach((el: HTMLElement) =>{
     const key: string | undefined = el.dataset.title;
-    el.title = key && tr(key);
+    el.title = key && tr(key) || "I don't have a text";
   });
 }
 
 
 function resolve(stringID: any) {
-  return translations[locale][stringID]?
-      translations[locale][stringID]:
-      (translations[DEFAULT_LOCALE][stringID]?
-            translations[DEFAULT_LOCALE][stringID]:stringID);
+  console.log("stringID", stringID);
+
+  return translations[locale][stringID]
+            ? translations[locale][stringID]
+            : (translations[DEFAULT_LOCALE][stringID]
+                ? translations[DEFAULT_LOCALE][stringID]
+                : stringID);
 }
 /**
  * Translates a string by referencing a hash of translated strings.
@@ -94,7 +98,7 @@ function resolve(stringID: any) {
  * @param args an array of strings or variable sequence of strings
  * @returns {string}
  */
-export function tr(sID: string, args?: string[]) {
+export function tr(sID: string, args?: string[]): string {
   function replacer(match: string[]) {
     if (match.length===2) {
       return (args && (args[ix] != null))? args[ix++]: match;
@@ -106,7 +110,7 @@ export function tr(sID: string, args?: string[]) {
   if (typeof args === "string") {
     args = [args];
   }
-
+console.log("sID", sID);
   let s = resolve(sID);
   let ix = 0;
   return s.replace(/%@[0-9]?/g, replacer);

@@ -17,18 +17,30 @@ type TCODAPResult = { success: boolean; value: any; };
 
 const getCollectionNames = () => {
   return {
-    experiments: tr("DG.plugin.Sampler.dataset.col-experiments"),
-    samples: tr("DG.plugin.Sampler.dataset.col-samples"),
-    items: tr("DG.plugin.Sampler.dataset.col-items")
+    experiments: "experiments",
+    samples: "samples",
+    items: "items"
   };
+  // return {
+  //   experiments: tr("DG.plugin.Sampler.dataset.col-experiments"),
+  //   samples: tr("DG.plugin.Sampler.dataset.col-samples"),
+  //   items: tr("DG.plugin.Sampler.dataset.col-items")
+  // };
 };
 
+// const attrMap = {
+//   experiment: {id: "", name: tr("DG.plugin.Sampler.dataset.attr-experiment")},
+//   description: {id: "", name: tr("DG.plugin.Sampler.dataset.attr-description")},
+//   sample_size: {id: "", name: tr("DG.plugin.Sampler.dataset.attr-sample_size")},
+//   sample: {id: "", name: tr("DG.plugin.Sampler.dataset.attr-sample")},
+//   output: {id: "", name: tr("DG.plugin.Sampler.dataset.attr-output")},
+// };
 const attrMap = {
-  experiment: {id: "", name: tr("DG.plugin.Sampler.dataset.attr-experiment")},
-  description: {id: "", name: tr("DG.plugin.Sampler.dataset.attr-description")},
-  sample_size: {id: "", name: tr("DG.plugin.Sampler.dataset.attr-sample_size")},
-  sample: {id: "", name: tr("DG.plugin.Sampler.dataset.attr-sample")},
-  output: {id: "", name: tr("DG.plugin.Sampler.dataset.attr-output")},
+  experiment: {id: "", name: "experiment"},
+  description: {id: "", name: "description"},
+  sample_size: {id: "", name: "sample size"},
+  sample: {id: "", name: "sample"},
+  output: {id: "", name: "output"},
 };
 
 export const findOrCreateDataContext = async (attrs: Array<string>) => {

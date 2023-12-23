@@ -12,7 +12,7 @@ import { IModel, IRunResult, getDeviceColumnIndex } from "../models/model-model"
 import { IDevice } from "../models/device-model";
 import { Id, createId } from "../utils/id";
 import { findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
-import { tr } from "../utils/localeManager";
+import { tr, localeInit } from "../utils/localeManager";
 
 import "./App.scss";
 const kPluginName = "Sampler";
@@ -21,15 +21,19 @@ const kInitialDimensions = {
   width: 328,
   height: 500
 };
-const targetDataSetName = tr("DG.plugin.Sampler.dataset.name") || "Sampler";
+// const targetDataSetName = tr("DG.plugin.Sampler.dataset.name") || "Sampler";
+const targetDataSetName = "Sampler";
+
 
 const dataSetName = "Sampler Data";
 
 const iFrameDescriptor ={
   version: kVersion,
-  name: tr("DG.plugin.Sampler.title"),
+  name: "Sampler",
+  // name: tr("DG.plugin.Sampler.title"),
   pluginName: kPluginName,
-  title: tr("DG.plugin.Sampler.title"),
+  title: "Sampler",
+  // title: tr("DG.plugin.Sampler.title"),
   dimensions: kInitialDimensions,
   preventDataContextReorg: false,
 
@@ -46,6 +50,7 @@ export const App = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<Id|undefined>(undefined);
 
   useEffect(() => {
+    localeInit();
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
   }, []);
 
