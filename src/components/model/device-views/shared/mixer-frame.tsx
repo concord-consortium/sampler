@@ -1,20 +1,14 @@
 import React from "react";
 
 import "./mixer-frame.scss";
-
-const kContainerX = 10;
-const kContainerY = 0;
-const kContainerWidth = 130;
-const kContainerHeight = 190;
-const kCapHeight = 6;
-const kCapWidth = 40;
-const kBorder = 2;
+import { kBorder, kCapHeight, kCapWidth, kContainerHeight, kContainerWidth, kContainerX, kContainerY } from "./constants";
 
 interface IMixerFrame {
   withReplacement: boolean;
+  children: React.ReactNode;
 }
 
-export const MixerFrame = ({withReplacement}: IMixerFrame) => {
+export const MixerFrame = ({withReplacement, children}: IMixerFrame) => {
   const halfb = (kBorder/2);
   const mx = kContainerX + halfb;
   const my = kContainerY + halfb;
@@ -36,6 +30,7 @@ return (
         strokeWidth={kBorder}
         clipPath={clipping}
       />
+      {children}
     </svg>
   </div>
 );

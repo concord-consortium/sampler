@@ -28,7 +28,7 @@ interface IProps {
 }
 
 export const Device = (props: IProps) => {
-  const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices, deleteDevice, handleNameChange, handleInputChange} = props;
+  const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices, deleteDevice, handleNameChange} = props;
   const [viewSelected, setViewSelected] = useState<View>("mixer");
 
   const handleSelectDevice = () => setSelectedDeviceId(device.id);
