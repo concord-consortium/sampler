@@ -13,6 +13,8 @@ import { Arrow } from "./arrow";
 interface IProps {
   model: IModel;
   selectedDeviceId?: Id;
+  repeat: boolean;
+  replacement: boolean;
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
@@ -20,16 +22,13 @@ interface IProps {
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleStartRun: () => void;
+  handleSelectRepeat: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleSelectReplacement: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
-export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, deleteDevice, setSelectedDeviceId,
-  handleNameChange, handleInputChange, handleStartRun}: IProps) => {
-  const [repeat, setRepeat] = useState(false);
+export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, addDevice, mergeDevices, deleteDevice, setSelectedDeviceId,
+  handleNameChange, handleInputChange, handleStartRun, handleSelectRepeat, handleSelectReplacement}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
-
-  const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRepeat(e.target.value === "repeat");
-  };
 
   const handleOpenHelp = () => {
     setShowHelp(!showHelp);
@@ -54,9 +53,9 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
           <input id="sample_size" defaultValue="5"></input>
           <span>items</span>
           <div className="select-replacement-dropdown">
-            <select>
-              <option>with replacement</option>
-              <option>without replacement</option>
+            <select onChange={handleSelectReplacement}>
+              <option value="with">with replacement</option>
+              <option value="without">without replacement</option>
             </select>
           </div>
         </div>

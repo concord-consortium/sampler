@@ -51,8 +51,11 @@ export const Device = (props: IProps) => {
         <div className="device">
           {viewSelected}
         </div>
-        <div className={"set-input"}>
-          <input value={Object.keys(device.variables)[0]} onChange={(e) => handleInputChange(e, device.id)}></input>
+        <div  className={"set-input"}>
+        { Object.keys(device.variables).map((key: string, index: number) => (
+            <input key={`${key}_${index}`} value={key} onChange={(e) => handleInputChange(e, device.id)} />
+          ))
+        }
         </div>
         {deleteDevice &&
           <div className="device-delete-icon" onClick={handleDeleteDevice}>

@@ -9,12 +9,12 @@ import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
 import { IExperiment, IModel, IRunResult, ISample, getDeviceColumnIndex } from "../models/model-model";
-import { IDevice } from "../models/device-model";
+import { IDevice, IVariables } from "../models/device-model";
 import { Id, createId } from "../utils/id";
 import { findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
-import { tr, localeInit } from "../utils/localeManager";
 
 import "./App.scss";
+
 const kPluginName = "Sampler";
 const kVersion = "v0.50";
 const kInitialDimensions = {
@@ -23,6 +23,7 @@ const kInitialDimensions = {
 };
 // const targetDataSetName = tr("DG.plugin.Sampler.dataset.name") || "Sampler";
 const targetDataSetName = "Sampler";
+const kDefaultDeviceVariables: IVariables = { "a": 33, "b": 33, "c": 33};
 
 
 const dataSetName = "Sampler Data";
@@ -42,15 +43,16 @@ const iFrameDescriptor ={
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
 
-export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", deviceType: "mixer", variables: {"a": 100}});
+export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", viewType: "mixer", variables: kDefaultDeviceVariables});
 
 export const App = () => {
   const [selectedTab, setSelectedTab] = useState<NavTab>("Model");
   const [model, setModel] = useImmer<IModel>({columns: []});
   const [selectedDeviceId, setSelectedDeviceId] = useState<Id|undefined>(undefined);
+  const [repeat, setRepeat] = useState(false);
+  const [replacement, setReplacement] = useState(true);
 
   useEffect(() => {
-    localeInit();
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
   }, []);
 
@@ -135,6 +137,15 @@ export const App = () => {
     });
   };
 
+  const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setRepeat(e.target.value === "repeat");
+  };
+
+  const handleSelectReplacement = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    console.log("UNIT in handleSelectReplacement e.target.value", e.target.value);
+    setReplacement(e.target.value === "with");
+  };
+
   const handleStartRun = async () => {
     // proof of concept that we can "run" the model and add items to CODAP
     let sampleNum = 1;
@@ -142,8 +153,9 @@ export const App = () => {
     const sampleSizeEl = document.getElementById("sample_size");
     const sampleSize: number = (sampleSizeEl?.textContent && parseInt(sampleSizeEl.textContent, 10)) || 1;
     const firstDevice: IDevice = (model.columns[0].devices[0]);
-    const firstDeviceType: string = (firstDevice.deviceType).charAt(0).toUpperCase() + (firstDevice.deviceType).slice(1);
-    const experiment: IExperiment = {experimentAttr: experimentNum, descriptionAttr: firstDevice.name, sampleSize};
+    const firstDeviceType: string = (firstDevice.viewType).charAt(0).toUpperCase() + (firstDevice.viewType).slice(1);
+    const firstDeviceVariableLength = Object.keys(firstDevice.variables).length;
+    const descriptionText = `${firstDeviceType} containing ${firstDeviceVariableLength} items with${replacement? "" : "out"} replacement`;
     const result: IRunResult = {};
     const attrKeys: string[] = [];
     model.columns.forEach(column => {
@@ -156,7 +168,7 @@ export const App = () => {
     if (ctxRes === "success") {
       result.experiment = experimentNum;
       result["sample size"] = sampleSize;
-      result.description = firstDeviceType;
+      result.description = descriptionText;
       result.sample = sampleNum;
       await createItems(kDataContextName, [result]);
     }
@@ -181,6 +193,8 @@ export const App = () => {
           <ModelTab
             model={model}
             selectedDeviceId={selectedDeviceId}
+            repeat={repeat}
+            replacement={replacement}
             addDevice={handleAddDevice}
             mergeDevices={handleMergeDevices}
             deleteDevice={handleDeleteDevice}
@@ -188,6 +202,8 @@ export const App = () => {
             handleInputChange={handleInputChange}
             handleNameChange={handleNameChange}
             handleStartRun={handleStartRun}
+            handleSelectRepeat={handleSelectRepeat}
+            handleSelectReplacement={handleSelectReplacement}
           />
         }
         {selectedTab === "Measures" && <MeasuresTab />}

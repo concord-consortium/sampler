@@ -13,7 +13,7 @@ export interface IModel {
 export interface IExperiment {
   experimentAttr: number;
   descriptionAttr: string;
-  sampleSize: number;
+  sampleSizeAttr: number;
 }
 
 export interface ISample {

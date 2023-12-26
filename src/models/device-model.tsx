@@ -3,7 +3,7 @@ import { Id } from "../utils/id";
 export interface IDevice {
   id: Id;
   name: string;
-  deviceType: "mixer" | "spinner" | "collector";
+  viewType: "mixer" | "spinner" | "collector";
   variables: IVariables | ICollectorVariables;
 }
 
