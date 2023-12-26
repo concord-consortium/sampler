@@ -7,8 +7,18 @@ export interface IColumn {
 
 export interface IModel {
   columns: IColumn[];
+  experimentNum?: number;
 }
 
+export interface IExperiment {
+  experimentAttr: number;
+  descriptionAttr: string;
+  sampleSize: number;
+}
+
+export interface ISample {
+  [sampleAttr: string]: number;
+}
 // as model runs, new key-value pairs are added to the result object
 export interface IRunResult {
   [attr: string]: string | number;

@@ -71,7 +71,7 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
       </div>
       <div className="collect-controls">
         <span>Collect</span>
-        <input defaultValue="3"></input>
+        <input id="num_samples" defaultValue="3"></input>
         <span>samples</span>
       </div>
       <div className="model-container">
