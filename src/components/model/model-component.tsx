@@ -14,9 +14,9 @@ interface IProps {
   model: IModel;
   selectedDeviceId?: Id;
   repeat: boolean;
-  replacement: boolean;
-  sampleSize: number;
-  numSamples: number;
+  sampleSize: string;
+  numSamples: string;
+  enableRunButton: boolean;
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
@@ -30,9 +30,10 @@ interface IProps {
   handleSelectReplacement: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
-export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, sampleSize, numSamples, addDevice,
-    mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange, handleInputChange, handleStartRun,
-    handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat, handleSelectReplacement}: IProps) => {
+export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton,
+    addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange, handleInputChange,
+    handleStartRun, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
+    handleSelectReplacement}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
 
   const handleOpenHelp = () => {
@@ -42,8 +43,8 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, sampleS
   return (
     <div className="model-tab">
       <div className="model-controls">
-        <button className="start-button" onClick={handleStartRun}>START</button>
-        <button className="stop-button">STOP</button>
+        <button className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
+        <button className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
         <SpeedSlider />
         <button className="clear-data-button">CLEAR DATA</button>
       </div>
@@ -55,7 +56,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, sampleS
               <option className={`select-repeat-option`} value="repeat">Repeat</option>
             </select>
           </div>
-          <input type="number" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
+          <input type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
           <span>items</span>
           <div className="select-replacement-dropdown">
             <select onChange={handleSelectReplacement}>
@@ -75,7 +76,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, sampleS
       </div>
       <div className="collect-controls">
         <span>Collect</span>
-        <input type="number" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
+        <input type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
         <span>samples</span>
       </div>
       <div className="model-container">

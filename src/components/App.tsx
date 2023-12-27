@@ -51,9 +51,10 @@ export const App = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<Id|undefined>(undefined);
   const [repeat, setRepeat] = useState(false);
   const [replacement, setReplacement] = useState(true);
-  const [sampleSize, setSampleSize] = useState(5);
-  const [numSamples, setNumSamples] = useState(3);
+  const [sampleSize, setSampleSize] = useState<string>("5");
+  const [numSamples, setNumSamples] = useState<string>("3");
   const [createNewExperiment, setCreateNewExperiment] = useState(true);
+  const [enableRunButton, setEnableRunButton] = useState(true);
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
@@ -154,22 +155,37 @@ export const App = () => {
   };
 
   const handleSampleSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) {
-      setSampleSize(parseInt(e.target.value,10));
-      setCreateNewExperiment(true);
+    setSampleSize(e.target.value);
+    if (e.target.value !== null) {
+      if (Number(e.target.value)) {
+        setCreateNewExperiment(true);
+        setEnableRunButton(true);
+      } else {
+        setEnableRunButton(false);
+      }
+    } else {
+      setEnableRunButton(false);
     }
   };
 
   const handleNumSamplesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) {
-      setNumSamples(parseInt(e.target.value,10));
-      setCreateNewExperiment(true);
+    setNumSamples(e.target.value);
+    if (e.target.value !== null) {
+      if (Number(e.target.value)) {
+        setCreateNewExperiment(true);
+        setEnableRunButton(true);
+      } else {
+        setEnableRunButton(false);
+      }
+    } else {
+      setEnableRunButton(false);
     }
   };
 
   const handleStartRun = async () => {
     // proof of concept that we can "run" the model and add items to CODAP
     let sampleNum = 1;
+    setEnableRunButton(false);
     const experimentNum = model.experimentNum
                             ? createNewExperiment
                                 ? model.experimentNum + 1
@@ -191,12 +207,13 @@ export const App = () => {
     const ctxRes = await findOrCreateDataContext(attrKeys);
     if (ctxRes === "success") {
       result.experiment = experimentNum;
-      result["sample size"] = sampleSize;
+      result["sample size"] = sampleSize && parseInt(sampleSize, 10);
       result.description = descriptionText;
       result.sample = sampleNum;
       await createItems(kDataContextName, [result]);
       setCreateNewExperiment(false);
       setModel({columns: model.columns, experimentNum});
+      setEnableRunButton(true);
     }
   };
 
@@ -220,9 +237,9 @@ export const App = () => {
             model={model}
             selectedDeviceId={selectedDeviceId}
             repeat={repeat}
-            replacement={replacement}
             sampleSize={sampleSize}
             numSamples={numSamples}
+            enableRunButton={enableRunButton}
             addDevice={handleAddDevice}
             mergeDevices={handleMergeDevices}
             deleteDevice={handleDeleteDevice}
