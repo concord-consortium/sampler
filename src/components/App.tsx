@@ -51,6 +51,8 @@ export const App = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<Id|undefined>(undefined);
   const [repeat, setRepeat] = useState(false);
   const [replacement, setReplacement] = useState(true);
+  const [sampleSize, setSampleSize] = useState(5);
+  const [numSamples, setNumSamples] = useState(3);
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
@@ -146,12 +148,22 @@ export const App = () => {
     setReplacement(e.target.value === "with");
   };
 
+  const handleSampleSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value) {
+      setSampleSize(parseInt(e.target.value,10));
+    }
+  };
+
+  const handleNumSamplesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value) {
+      setNumSamples(parseInt(e.target.value,10));
+    }
+  };
+
   const handleStartRun = async () => {
     // proof of concept that we can "run" the model and add items to CODAP
     let sampleNum = 1;
     const experimentNum = model.experimentNum ? model.experimentNum + 1 : 1;
-    const sampleSizeEl = document.getElementById("sample_size");
-    const sampleSize: number = (sampleSizeEl?.textContent && parseInt(sampleSizeEl.textContent, 10)) || 1;
     const firstDevice: IDevice = (model.columns[0].devices[0]);
     const firstDeviceType: string = (firstDevice.viewType).charAt(0).toUpperCase() + (firstDevice.viewType).slice(1);
     const firstDeviceVariableLength = Object.keys(firstDevice.variables).length;
@@ -195,12 +207,15 @@ export const App = () => {
             selectedDeviceId={selectedDeviceId}
             repeat={repeat}
             replacement={replacement}
+            sampleSize={sampleSize}
+            numSamples={numSamples}
             addDevice={handleAddDevice}
             mergeDevices={handleMergeDevices}
             deleteDevice={handleDeleteDevice}
             setSelectedDeviceId={setSelectedDeviceId}
             handleInputChange={handleInputChange}
             handleNameChange={handleNameChange}
+            handleSampleSizeChange={handleSampleSizeChange}
             handleStartRun={handleStartRun}
             handleSelectRepeat={handleSelectRepeat}
             handleSelectReplacement={handleSelectReplacement}

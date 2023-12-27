@@ -15,19 +15,23 @@ interface IProps {
   selectedDeviceId?: Id;
   repeat: boolean;
   replacement: boolean;
+  sampleSize: number;
+  numSamples: number;
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
   deleteDevice: (device: IDevice) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
+  handleSampleSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleStartRun: () => void;
   handleSelectRepeat: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleSelectReplacement: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
-export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, addDevice, mergeDevices, deleteDevice, setSelectedDeviceId,
-  handleNameChange, handleInputChange, handleStartRun, handleSelectRepeat, handleSelectReplacement}: IProps) => {
+export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, sampleSize, numSamples, addDevice,
+    mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange, handleInputChange, handleStartRun,
+    handleSelectRepeat, handleSelectReplacement}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
 
   const handleOpenHelp = () => {
@@ -50,7 +54,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, addDevi
               <option className={`select-repeat-option`} value="repeat">Repeat</option>
             </select>
           </div>
-          <input id="sample_size" defaultValue="5"></input>
+          <input type="number" id="sample_size" value={sampleSize}></input>
           <span>items</span>
           <div className="select-replacement-dropdown">
             <select onChange={handleSelectReplacement}>
@@ -70,7 +74,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, addDevi
       </div>
       <div className="collect-controls">
         <span>Collect</span>
-        <input id="num_samples" defaultValue="3"></input>
+        <input type="number" id="num_samples" value={numSamples}></input>
         <span>samples</span>
       </div>
       <div className="model-container">
