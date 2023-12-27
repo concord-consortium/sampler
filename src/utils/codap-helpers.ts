@@ -9,6 +9,20 @@ import {
 } from "@concord-consortium/codap-plugin-api";
 import { tr } from "./localeManager";
 
+interface Attribute {
+  name: string;
+  formula?: string;
+  description?: string;
+  type?: string;
+  cid?: string;
+  precision?: string;
+  unit?: string;
+  editable?: boolean;
+  renameable?: boolean;
+  deleteable?: boolean;
+  hidden?: boolean;
+}
+
 export const kDataContextName = "Sampler";
 
 type TCODAPRequest = { action: string; resource: string; };
@@ -43,45 +57,38 @@ const attrMap = {
   output: {id: "", name: "output"},
 };
 
+export const getAttributeIds = (allAttrs: Record<string, string>[]) => {
+  const reqs: TCODAPRequest[] = allAttrs.map(collectionAttr => ({
+    "action": "get",
+    "resource": `dataContext[${kDataContextName}].collection[${collectionAttr.collection}].attribute[${collectionAttr.attrName}]`
+  }));
+  codapInterface.sendRequest(reqs, (getAttrsResult: any[]) => {
+    getAttrsResult.forEach((res: {success: boolean, values: Record<string, string>}) => {
+      if (res.success) {
+        switch (res.values.name) {
+          case attrMap.output.name:
+            attrMap.output.id = res.values.id;
+            break;
+          case attrMap.sample.name:
+            attrMap.sample.id = res.values.id;
+            break;
+          case attrMap.sample_size.name:
+            attrMap.sample_size.id = res.values.id;
+            break;
+          case attrMap.description.name:
+            attrMap.description.id = res.values.id;
+            break;
+          case attrMap.experiment.name:
+            attrMap.experiment.id = res.values.id;
+            break;
+        }
+      }
+    });
+  });
+};
+
 export const findOrCreateDataContext = async (attrs: Array<string>) => {
   const dataContextRes = await getDataContext(kDataContextName);
-  const allAttrs = [{collection: "experiments", attrName: attrMap.experiment.name},
-                    {collection: "experiments", attrName: attrMap.description.name},
-                    {collection: "experiments", attrName: attrMap.sample_size.name},
-                    {collection: "samples", attrName: attrMap.sample.name},
-                    {collection: "items", attrName: attrMap.output.name}
-                  ];
-  const getAttributeIds = () => {
-    const reqs: TCODAPRequest[] = allAttrs.map(collectionAttr => ({
-      "action": "get",
-      "resource": `dataContext[${kDataContextName}].collection[${collectionAttr.collection}].attribute[${collectionAttr.attrName}]`
-    }));
-    codapInterface.sendRequest(reqs, (getAttrsResult: any[]) => {
-      console.log("getAttrsResult", getAttrsResult);
-      getAttrsResult.forEach((res: {success: boolean, values: Record<string, string>}) => {
-        console.log("res", res);
-        if (res.success) {
-          switch (res.values.name) {
-            case attrMap.output.name:
-              attrMap.output.id = res.values.id;
-              break;
-            case attrMap.sample.name:
-              attrMap.sample.id = res.values.id;
-              break;
-            case attrMap.sample_size.name:
-              attrMap.sample_size.id = res.values.id;
-              break;
-            case attrMap.description.name:
-              attrMap.description.id = res.values.id;
-              break;
-            case attrMap.experiment.name:
-              attrMap.experiment.id = res.values.id;
-              break;
-          }
-        }
-      });
-    });
-  };
   if (dataContextRes.success) {
     // get the attributes ids
     // map them to their appropriate attributes.
@@ -95,12 +102,20 @@ export const findOrCreateDataContext = async (attrs: Array<string>) => {
       onlyIds.push(attrMap[key as keyof typeof attrMap].id);
     });
     if (onlyIds.length <= 0) {
-      getAttributeIds();
+
+      const allAttrs = [{collection: "experiments", attrName: attrMap.experiment.name},
+                          {collection: "experiments", attrName: attrMap.description.name},
+                          {collection: "experiments", attrName: attrMap.sample_size.name},
+                          {collection: "samples", attrName: attrMap.sample.name},
+                        ];
+      attrs.forEach(attr=>allAttrs.push({collection: "samples", attrName: attr}));
+      getAttributeIds(allAttrs);
     }
-    // return "success";
+    return "success";
   } else {
     const createRes = await createDataContext(kDataContextName);
     const collectionNames = getCollectionNames();
+    const itemsAttrs: Attribute[] = [];
     if (createRes.success) {
       const parentAttrs = [
         {name: attrMap.experiment.name, type: "categorical"},
@@ -108,7 +123,10 @@ export const findOrCreateDataContext = async (attrs: Array<string>) => {
         {name: attrMap.sample_size.name, type: "categorical"}
       ];
       const sampleAttrs = [{name: attrMap.sample.name, type: "categorical"}];
-      const itemsAttrs = [{name: attrMap.output.name}];
+      attrs.forEach(attr=> {
+        itemsAttrs.push({name: attr});
+
+      });
       const createExperimentsCollection = await createParentCollection(kDataContextName, collectionNames.experiments, parentAttrs);
       if (createExperimentsCollection.success) {
         const createSamplesCollection =
@@ -119,7 +137,6 @@ export const findOrCreateDataContext = async (attrs: Array<string>) => {
           if (createOutputCollection.success) {
             const tableRes = await createTable(kDataContextName);
             if (tableRes.success) {
-              getAttributeIds();
               return "success";
             } else {
               return "error";

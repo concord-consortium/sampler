@@ -53,6 +53,7 @@ export const App = () => {
   const [replacement, setReplacement] = useState(true);
   const [sampleSize, setSampleSize] = useState(5);
   const [numSamples, setNumSamples] = useState(3);
+  const [createNewExperiment, setCreateNewExperiment] = useState(true);
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
@@ -80,6 +81,7 @@ export const App = () => {
         draft.columns.splice(newColumnIndex, 0, {devices: [newDevice]});
       }
     });
+    setCreateNewExperiment(true);
   };
 
   const handleMergeDevices = (device: IDevice) => {
@@ -90,6 +92,7 @@ export const App = () => {
         draft.columns[columnIndex].devices.splice(0, draft.columns[columnIndex].devices.length, device);
       }
     });
+    setCreateNewExperiment(true);
   };
 
   const handleDeleteDevice = (device: IDevice) => {
@@ -109,6 +112,7 @@ export const App = () => {
             draft.columns[columnIndex].devices = devices;
           }
         }
+        setCreateNewExperiment(true);
       } else {
         alert("Sorry, that device could not be found!");
       }
@@ -141,28 +145,36 @@ export const App = () => {
 
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setRepeat(e.target.value === "repeat");
+    setCreateNewExperiment(true);
   };
 
   const handleSelectReplacement = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setReplacement(e.target.value === "with");
+    setCreateNewExperiment(true);
   };
 
   const handleSampleSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
       setSampleSize(parseInt(e.target.value,10));
+      setCreateNewExperiment(true);
     }
   };
 
   const handleNumSamplesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
       setNumSamples(parseInt(e.target.value,10));
+      setCreateNewExperiment(true);
     }
   };
 
   const handleStartRun = async () => {
     // proof of concept that we can "run" the model and add items to CODAP
     let sampleNum = 1;
-    const experimentNum = model.experimentNum ? model.experimentNum + 1 : 1;
+    const experimentNum = model.experimentNum
+                            ? createNewExperiment
+                                ? model.experimentNum + 1
+                                : model.experimentNum
+                            : 1;
     const firstDevice: IDevice = (model.columns[0].devices[0]);
     const firstDeviceType: string = (firstDevice.viewType).charAt(0).toUpperCase() + (firstDevice.viewType).slice(1);
     const firstDeviceVariableLength = Object.keys(firstDevice.variables).length;
@@ -175,6 +187,7 @@ export const App = () => {
         attrKeys.push(device.name);
       });
     });
+
     const ctxRes = await findOrCreateDataContext(attrKeys);
     if (ctxRes === "success") {
       result.experiment = experimentNum;
@@ -182,6 +195,8 @@ export const App = () => {
       result.description = descriptionText;
       result.sample = sampleNum;
       await createItems(kDataContextName, [result]);
+      setCreateNewExperiment(false);
+      setModel({columns: model.columns, experimentNum});
     }
   };
 
