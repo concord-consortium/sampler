@@ -66,12 +66,9 @@ export const Mixer = ({variables}: IMixer) => {
   }, [variables]);
 
   return (
-    <div className="mixer">
-      <MixerFrame withReplacement={false}>
-        <Balls
-          ballsArray={ballArray}
-        />
-      </MixerFrame>
-    </div>
+    <>
+      <MixerFrame withReplacement={false}/>
+      <Balls ballsArray={ballArray}/>
+    </>
   );
 };

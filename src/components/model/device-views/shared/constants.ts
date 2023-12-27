@@ -5,3 +5,6 @@ export const kContainerHeight = 190;
 export const kCapHeight = 6;
 export const kCapWidth = 40;
 export const kBorder = 2;
+export const kSpinnerRadius = Math.min(kContainerWidth, kContainerHeight) / 2;
+export const kSpinnerX = kContainerX + (kContainerWidth / 2); //x center of spinner
+export const kSpinnerY = kContainerY + (kContainerHeight / 2); //y center of spinner

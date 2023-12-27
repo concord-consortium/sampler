@@ -11,6 +11,7 @@ import "./device.scss";
 import { Mixer } from "./device-views/mixer/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
+import { kContainerHeight, kContainerWidth } from "./device-views/shared/constants";
 
 const views = ["mixer", "spinner", "collector"] as const;
 type View = typeof views[number];
@@ -51,13 +52,17 @@ export const Device = (props: IProps) => {
         <div className="device-status-icon">
           <VisibleIcon />
         </div>
-        {
-          viewSelected === "mixer" ?
-            <Mixer variables={device.variables} /> :
-          viewSelected === "spinner" ?
-            <Spinner variables={device.variables}/> :
-            <Collector collectorVariables={device.collectorVariables}/>
-        }
+        <div className="device-svg-container">
+          <svg className="spinner-frame" width="100%" height="100%" viewBox={`0 0 ${kContainerWidth + 10} ${kContainerHeight}`} xmlns="http://www.w3.org/2000/svg">
+            {
+              viewSelected === "mixer" ?
+                <Mixer variables={device.variables} /> :
+              viewSelected === "spinner" ?
+                <Spinner variables={device.variables}/> :
+                <Collector collectorVariables={device.collectorVariables}/>
+            }
+          </svg>
+        </div>
         {deleteDevice &&
           <div className="device-delete-icon" onClick={handleDeleteDevice}>
             <DeleteIcon />
