@@ -144,7 +144,6 @@ export const App = () => {
   };
 
   const handleSelectReplacement = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    console.log("UNIT in handleSelectReplacement e.target.value", e.target.value);
     setReplacement(e.target.value === "with");
   };
 
@@ -216,6 +215,7 @@ export const App = () => {
             handleInputChange={handleInputChange}
             handleNameChange={handleNameChange}
             handleSampleSizeChange={handleSampleSizeChange}
+            handleNumSamplesChange={handleNumSamplesChange}
             handleStartRun={handleStartRun}
             handleSelectRepeat={handleSelectRepeat}
             handleSelectReplacement={handleSelectReplacement}

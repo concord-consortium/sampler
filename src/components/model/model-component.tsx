@@ -24,6 +24,7 @@ interface IProps {
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleSampleSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleNumSamplesChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleStartRun: () => void;
   handleSelectRepeat: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleSelectReplacement: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -31,7 +32,7 @@ interface IProps {
 
 export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, sampleSize, numSamples, addDevice,
     mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange, handleInputChange, handleStartRun,
-    handleSelectRepeat, handleSelectReplacement}: IProps) => {
+    handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat, handleSelectReplacement}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
 
   const handleOpenHelp = () => {
@@ -54,7 +55,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, sampleS
               <option className={`select-repeat-option`} value="repeat">Repeat</option>
             </select>
           </div>
-          <input type="number" id="sample_size" value={sampleSize}></input>
+          <input type="number" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
           <span>items</span>
           <div className="select-replacement-dropdown">
             <select onChange={handleSelectReplacement}>
@@ -74,7 +75,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, replacement, sampleS
       </div>
       <div className="collect-controls">
         <span>Collect</span>
-        <input type="number" id="num_samples" value={numSamples}></input>
+        <input type="number" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
         <span>samples</span>
       </div>
       <div className="model-container">

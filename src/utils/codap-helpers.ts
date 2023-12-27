@@ -51,42 +51,41 @@ export const findOrCreateDataContext = async (attrs: Array<string>) => {
                     {collection: "samples", attrName: attrMap.sample.name},
                     {collection: "items", attrName: attrMap.output.name}
                   ];
-  if (dataContextRes.success) {
-    // get all the existing attributes in the context
-    // get the existing attributes ids
-    // map them to their appropriate collections.
-    // We use the ids just in case the attribute names have been changed
-    const getAttributeIds = () => {
-      const reqs: TCODAPRequest[] = allAttrs.map(collectionAttr => ({
-        "action": "get",
-        "resource": `dataContext[${kDataContextName}].collection[${collectionAttr.collection}].attribute[${collectionAttr.attrName}]`
-      }));
-      codapInterface.sendRequest(reqs, (getAttrsResult: any[]) => {
-        console.log("getAttrsResult", getAttrsResult);
-        getAttrsResult.forEach((res: {success: boolean, values: Record<string, string>}) => {
-          console.log("res", res);
-          if (res.success) {
-            switch (res.values.name) {
-              case attrMap.output.name:
-                attrMap.output.id = res.values.id;
-                break;
-              case attrMap.sample.name:
-                attrMap.sample.id = res.values.id;
-                break;
-              case attrMap.sample_size.name:
-                attrMap.sample_size.id = res.values.id;
-                break;
-              case attrMap.description.name:
-                attrMap.description.id = res.values.id;
-                break;
-              case attrMap.experiment.name:
-                attrMap.experiment.id = res.values.id;
-                break;
-            }
+  const getAttributeIds = () => {
+    const reqs: TCODAPRequest[] = allAttrs.map(collectionAttr => ({
+      "action": "get",
+      "resource": `dataContext[${kDataContextName}].collection[${collectionAttr.collection}].attribute[${collectionAttr.attrName}]`
+    }));
+    codapInterface.sendRequest(reqs, (getAttrsResult: any[]) => {
+      console.log("getAttrsResult", getAttrsResult);
+      getAttrsResult.forEach((res: {success: boolean, values: Record<string, string>}) => {
+        console.log("res", res);
+        if (res.success) {
+          switch (res.values.name) {
+            case attrMap.output.name:
+              attrMap.output.id = res.values.id;
+              break;
+            case attrMap.sample.name:
+              attrMap.sample.id = res.values.id;
+              break;
+            case attrMap.sample_size.name:
+              attrMap.sample_size.id = res.values.id;
+              break;
+            case attrMap.description.name:
+              attrMap.description.id = res.values.id;
+              break;
+            case attrMap.experiment.name:
+              attrMap.experiment.id = res.values.id;
+              break;
           }
-        });
+        }
       });
-    };
+    });
+  };
+  if (dataContextRes.success) {
+    // get the attributes ids
+    // map them to their appropriate attributes.
+    // We use the ids just in case the attribute names have been changed
 
     // DataSet already exists. If we haven't loaded in attribute ids from saved state, that means user
     // created dataset before we were tracking attribute changes. Try to get ids, but if the user has
@@ -120,6 +119,7 @@ export const findOrCreateDataContext = async (attrs: Array<string>) => {
           if (createOutputCollection.success) {
             const tableRes = await createTable(kDataContextName);
             if (tableRes.success) {
+              getAttributeIds();
               return "success";
             } else {
               return "error";
