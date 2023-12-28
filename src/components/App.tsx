@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
   initializePlugin,
-  createItems
+  createItems,
+  codapInterface
 } from "@concord-consortium/codap-plugin-api";
 import { useImmer } from "use-immer";
 
@@ -11,7 +12,7 @@ import { ModelTab } from "./model/model-component";
 import { IExperiment, IModel, IRunResult, ISample, getDeviceColumnIndex } from "../models/model-model";
 import { IDevice, IVariables } from "../models/device-model";
 import { Id, createId } from "../utils/id";
-import { findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
+import { deleteAll, findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
 
 import "./App.scss";
 
@@ -217,6 +218,10 @@ export const App = () => {
     }
   };
 
+  const handleClearData = () => {
+    deleteAll();
+  };
+
   return (
     <div className="App">
       <div className="navigationTabs">
@@ -251,6 +256,7 @@ export const App = () => {
             handleStartRun={handleStartRun}
             handleSelectRepeat={handleSelectRepeat}
             handleSelectReplacement={handleSelectReplacement}
+            handleClearData={handleClearData}
           />
         }
         {selectedTab === "Measures" && <MeasuresTab />}

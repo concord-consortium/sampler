@@ -28,12 +28,13 @@ interface IProps {
   handleStartRun: () => void;
   handleSelectRepeat: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleSelectReplacement: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleClearData: () => void;
 }
 
 export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton,
     addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange, handleInputChange,
     handleStartRun, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
-    handleSelectReplacement}: IProps) => {
+    handleSelectReplacement, handleClearData}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
 
   const handleOpenHelp = () => {
@@ -46,7 +47,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
         <button className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
         <button className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
         <SpeedSlider />
-        <button className="clear-data-button">CLEAR DATA</button>
+        <button className="clear-data-button" onClick={handleClearData}>CLEAR DATA</button>
       </div>
       <div className="select-repeat-controls">
         <div className="select-repeat-selection">

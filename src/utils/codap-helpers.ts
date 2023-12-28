@@ -155,3 +155,10 @@ export const findOrCreateDataContext = async (attrs: Array<string>) => {
     }
   }
 };
+
+export const deleteAll = () => {
+  codapInterface.sendRequest({
+    action: "delete",
+    resource: `dataContext[${kDataContextName}].collection[${attrMap.experiment.name}].allCases`
+  });
+};
