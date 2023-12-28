@@ -1,71 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { kBorder, kCapHeight, kContainerHeight, kContainerWidth, kContainerX, kContainerY } from "./constants";
-import { ICollectorItem } from "../../../../models/device-model";
-import { getTextShift, getVariableColor } from "./helpers";
-
-interface IBall {
-  x: number;
-  y: number;
-  radius: number;
-  text: string;
-  fontSize: number;
-}
+import { kBorder, kCapHeight, kMixerContainerHeight, kMixerContainerWidth, kContainerX, kContainerY } from "./constants";
+import { ClippingDef, ICollectorItem } from "../../../../models/device-model";
+import { Ball, IBall } from "./ball";
 
 interface IBalls {
   ballsArray: Array<string>;
+  handleAddDefs: (defs: ClippingDef[]) => void;
 }
 
-const Ball = ({ x, y, radius, text, fontSize }: IBall) => {
-//   ball.click(this.showVariableNameInput(i));
-//   ball.hover((function(circ, lab, size) {
-//     return function() {
-//       if (_this.isRunning() || device === "collector") return;
-//       circ.attr({ fill: getVariableColor(0, 0) });
-//       lab.attr({ fontSize: size + 2, dy: ".26em", });
-//     };
-//   })(circle, label, fontSize), (function(circ, lab, size) {
-//     return function() {
-//       circ.attr({ fill: getVariableColor(0, 0, true) });
-//       lab.attr({ fontSize: size, dy: ".25em", });
-//     };
-//   })(circle, label, fontSize));
-//   ball.orig = {x: x, y: y};
-// }
-
-  // const [hover, setHover] = useState(false);
-
-  return (
-    <g>
-      <circle
-        cx={x}
-        cy={y}
-        r={radius}
-        fill={getVariableColor(0, 0, false)}
-        stroke="#000"
-        strokeWidth={1}
-        origin={`${x} ${y}`}
-      />
-      <text
-        x={x}
-        y={y}
-        fontSize={fontSize}
-        textAnchor="middle"
-        dy=".25em"
-        dx={getTextShift(text, (3.8*(radius/fontSize)))}
-        clipPath="labelClipping"
-      >
-        {text}
-      </text>
-    </g>
-  );
-};
-
-export const Balls = ({ballsArray}: IBalls) => {
+export const Balls = ({ballsArray, handleAddDefs}: IBalls) => {
   const [ballProps, setBallProps] = useState<Array<IBall>>([]);
 
   useEffect(() => {
-    const w = kContainerWidth - kCapHeight - (kBorder * 2);
-    const maxHeight = kContainerHeight * 0.75;
+    const w = kMixerContainerWidth - kCapHeight - (kBorder * 2);
+    const maxHeight = kMixerContainerHeight * 0.75;
     const radius = ballsArray.length < 15 ? 14 : Math.max(14 - (10 * (ballsArray.length - 15)/200), 4);
     const maxInRow = Math.floor(w / (radius * 2));
     const numRows = Math.ceil(ballsArray.length / maxInRow);
@@ -90,14 +38,13 @@ export const Balls = ({ballsArray}: IBalls) => {
 
     const props = [];
 
-
     for (let i = 0; i < ballsArray.length; i++) {
       const rowNumber = Math.floor(i / maxInRow);
       const rowIndex = i % maxInRow;
-      const x = (rowNumber % 2 === 0) ? kContainerX + kBorder + radius + (rowIndex * radius * 2) : kContainerX + kContainerWidth - kBorder - kCapHeight - radius - (rowIndex * radius * 2);
-      const y = kContainerY + kContainerHeight - kBorder - radius - (rowHeight * rowNumber);
+      const x = (rowNumber % 2 === 0) ? kContainerX + kBorder + radius + (rowIndex * radius * 2) : kContainerX + kMixerContainerWidth - kBorder - kCapHeight - radius - (rowIndex * radius * 2);
+      const y = kContainerY + kMixerContainerHeight - kBorder - radius - (rowHeight * rowNumber);
       const text = ballsArray[i];
-      props.push({x, y, radius, text, fontSize});
+      props.push({x, y, radius, text, fontSize, handleAddDefs});
     }
     setBallProps(props);
   }, [ballsArray]);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { IVariables } from "../../../../models/device-model";
+import { ClippingDef, IVariables } from "../../../../models/device-model";
 import { MixerFrame } from "../shared/mixer-frame";
 
 import "./mixer.scss";
@@ -7,9 +7,10 @@ import { Balls } from "../shared/balls";
 
 interface IMixer {
   variables: IVariables;
+  handleAddDefs: (defs: ClippingDef[]) => void;
 }
 
-export const Mixer = ({variables}: IMixer) => {
+export const Mixer = ({variables, handleAddDefs}: IMixer) => {
   const [ballArray, setBallArray] = useState<Array<string>>([]);
 
   useEffect(() => {
@@ -68,7 +69,7 @@ export const Mixer = ({variables}: IMixer) => {
   return (
     <>
       <MixerFrame withReplacement={false}/>
-      <Balls ballsArray={ballArray}/>
+      <Balls ballsArray={ballArray} handleAddDefs={handleAddDefs}/>
     </>
   );
 };

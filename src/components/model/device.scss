@@ -21,9 +21,18 @@
     }
   }
   .device-svg-container {
-    width: 130px;
-    height: 209px;
-    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .device-frame {
+      width: 130px;
+      height: 209px;
+      margin-right: 10px;
+      &.spinner {
+        width: 180px;
+        margin-right: 0px;
+      }
+    }
   }
 }
 .device-status-icon {

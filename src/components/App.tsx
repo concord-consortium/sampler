@@ -118,6 +118,18 @@ export const App = () => {
     });
   };
 
+  const handleUpdateCollectorVariables = (collectorVariables: IDevice["collectorVariables"]) => {
+    setModel(draft => {
+      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
+      if (columnIndex !== -1) {
+        const deviceToUpdate = draft.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+        if (deviceToUpdate) {
+          deviceToUpdate.collectorVariables = collectorVariables;
+        }
+      }
+    });
+  };
+
   const handleStartRun = async () => {
     // proof of concept that we can "run" the model and add items to CODAP
     const result: IRunResult = {};
@@ -160,6 +172,7 @@ export const App = () => {
             handleInputChange={handleInputChange}
             handleNameChange={handleNameChange}
             handleStartRun={handleStartRun}
+            handleUpdateCollectorVariables={handleUpdateCollectorVariables}
           />
         }
         {selectedTab === "Measures" && <MeasuresTab />}

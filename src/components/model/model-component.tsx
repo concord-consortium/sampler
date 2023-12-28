@@ -20,10 +20,11 @@ interface IProps {
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleStartRun: () => void;
+  handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
 }
 
 export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, deleteDevice, setSelectedDeviceId,
-  handleNameChange, handleInputChange, handleStartRun}: IProps) => {
+  handleNameChange, handleInputChange, handleStartRun, handleUpdateCollectorVariables}: IProps) => {
   const [repeat, setRepeat] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -93,6 +94,7 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
                         deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
                         handleNameChange={handleNameChange}
                         handleInputChange={handleInputChange}
+                        handleUpdateCollectorVariables={handleUpdateCollectorVariables}
                       />
                       {sourceDevices.map(sourceDevice => (
                         <Arrow
