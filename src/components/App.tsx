@@ -32,6 +32,10 @@ export const App = () => {
   const [selectedTab, setSelectedTab] = useState<NavTab>("Model");
   const [model, setModel] = useImmer<IModel>({columns: []});
   const [selectedDeviceId, setSelectedDeviceId] = useState<Id|undefined>(undefined);
+  const numColumns = model.columns.length;
+  const lastColumn = model.columns[numColumns - 1];
+  const numDevicesInLastColumn = lastColumn?.devices?.length;
+  const lastDeviceId = lastColumn?.devices?.[numDevicesInLastColumn - 1].id;
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
@@ -41,6 +45,10 @@ export const App = () => {
   useEffect(() => {
     setModel({columns: [{devices: [createDefaultDevice()]}]});
   }, [setModel]);
+
+  useEffect(()=>{
+    setSelectedDeviceId(lastDeviceId);
+  }, [lastDeviceId]);
 
   const handleTabSelect = (tab: NavTab) => {
     setSelectedTab(tab);

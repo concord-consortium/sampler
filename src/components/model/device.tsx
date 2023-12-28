@@ -38,13 +38,14 @@ export const Device = (props: IProps) => {
   const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
   const showCollectorButton = getNumDevices(model) === 1;
   const showMergeButton = siblingDevices.length > 0;
+  const isSelectedDevice = device.id === selectedDeviceId;
 
   return (
     <div className="device-controls-container" onClick={handleSelectDevice}>
       <div>
         <input className="attr-name" value={device.name} onChange={(e) => handleNameChange(e, device.id)}></input>
       </div>
-      <div className="device-container" data-device-id={device.id}>
+      <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id}>
         <div className="device-status-icon">
           <VisibleIcon />
         </div>
@@ -60,7 +61,7 @@ export const Device = (props: IProps) => {
           </div>
         }
       </div>
-      { device.id === selectedDeviceId &&
+      { isSelectedDevice &&
           <div className="footer">
             <div className="add-remove-variables-buttons">
               <button>+</button>
