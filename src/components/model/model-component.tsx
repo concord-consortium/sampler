@@ -4,11 +4,11 @@ import { Device } from "./device";
 import { IModel, getSourceDevices } from "../../models/model-model";
 import { IDevice } from "../../models/device-model";
 import { Id } from "../../utils/id";
-
+import { useResizer } from "../../hooks/use-resizer";
+import { Arrow } from "./arrow";
 import InfoIcon from "../../assets/help-icon.svg";
 
 import "./model-component.scss";
-import { Arrow } from "./arrow";
 
 interface IProps {
   model: IModel;
@@ -26,6 +26,17 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
   handleNameChange, handleInputChange, handleStartRun}: IProps) => {
   const [repeat, setRepeat] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isWide, setIsWide] = useState(false);
+
+  useResizer(()=>{
+    const repeatControlWidth = document.querySelector(".select-repeat-controls")
+    ?.getBoundingClientRect().width;
+    if (repeatControlWidth && repeatControlWidth > 575) {
+      setIsWide(true);
+    } else {
+      setIsWide(false);
+    }
+  });
 
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setRepeat(e.target.value === "repeat");
@@ -52,7 +63,7 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
             </select>
           </div>
           <input id="sample_size" defaultValue="5"></input>
-          <span>items</span>
+          <span>{`${repeat ? "selecting" : ""} items`}</span>
           <div className="select-replacement-dropdown">
             <select>
               <option>with replacement</option>
@@ -61,7 +72,7 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
           </div>
         </div>
         {repeat &&
-          <div className="repeat-until-controls">
+          <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
             <span>until</span>
             <input type="text"></input>
             <InfoIcon onClick={handleOpenHelp}/>
