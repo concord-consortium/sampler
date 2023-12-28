@@ -86,17 +86,22 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
         <span>samples</span>
       </div>
       <div className="model-container">
-        <div className="device-outputs-container">
+        <div className={`device-outputs-container`}>
           {model.columns.map((column, columnIndex) => {
             return (
               <div key={columnIndex} className="device-column">
                 {column.devices.map(device => {
                   const sourceDevices = getSourceDevices(model, device);
+                  const firstInColumn = column.devices[0].id === device.id;
+                  // if next column has more than one device, center this device
+                  const centerDevice = model.columns[columnIndex + 1].devices.length > 1;
                   return (
                     <React.Fragment key={device.id}>
                       <Device
                         model={model}
                         device={device}
+                        firstInColumn={firstInColumn}
+                        // centerDevice={centerDevice}
                         selectedDeviceId={selectedDeviceId}
                         setSelectedDeviceId={setSelectedDeviceId}
                         addDevice={addDevice}
