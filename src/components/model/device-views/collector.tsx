@@ -26,5 +26,5 @@ export const Collector = ({collectorVariables, handleAddDefs}: ICollector) => {
         <Balls ballsArray={ballsArray} handleAddDefs={handleAddDefs}/>
       }
     </>
-  )
+  );
 };
