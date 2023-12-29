@@ -26,7 +26,6 @@ interface IProps {
   deleteDevice?: (device: IDevice) => void;
   setSelectedDeviceId: (id: Id) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
 }
 
@@ -71,7 +70,7 @@ export const Device = (props: IProps) => {
         handleUpdateCollectorVariables(itemValues);
       });
     }
-  }, [selectedDataContext]);
+  }, [selectedDataContext, handleUpdateCollectorVariables]);
 
   const handleSelectDevice = () => setSelectedDeviceId(device.id);
   const handleAddDevice = () => addDevice(device);
@@ -86,7 +85,7 @@ export const Device = (props: IProps) => {
       const newDefs = defs.filter(def => !prevDefs.some(prevDef => prevDef.id === def.id));
       return [...prevDefs, ...newDefs];
     });
-  }
+  };
 
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);

@@ -2,12 +2,10 @@ import {
   codapInterface,
   getDataContext,
   createDataContext,
-  createNewCollection,
   createTable,
   createParentCollection,
   createChildCollection
 } from "@concord-consortium/codap-plugin-api";
-import { tr } from "./localeManager";
 
 interface Attribute {
   name: string;
@@ -26,8 +24,6 @@ interface Attribute {
 export const kDataContextName = "Sampler";
 
 type TCODAPRequest = { action: string; resource: string; };
-type TCODAPResult = { success: boolean; value: any; };
-
 
 const getCollectionNames = () => {
   return {

@@ -1,28 +1,25 @@
 import React, { useState } from "react";
-
 import { Device } from "./device";
 import { IModel, getSourceDevices } from "../../models/model-model";
 import { IDevice } from "../../models/device-model";
 import { Id } from "../../utils/id";
-
 import InfoIcon from "../../assets/help-icon.svg";
-
-import "./model-component.scss";
 import { Arrow } from "./arrow";
+import { Speed, kFast, kMedium, kSlow, kSpeeds } from "../types";
+import "./model-component.scss";
 
 interface IProps {
   model: IModel;
   selectedDeviceId?: Id;
   repeat: boolean;
   sampleSize: string;
-  numSamples: string;
+  numRuns: string;
   enableRunButton: boolean;
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
   deleteDevice: (device: IDevice) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleSampleSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleNumSamplesChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleStartRun: () => void;
@@ -30,13 +27,15 @@ interface IProps {
   handleSelectRepeat: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleSelectReplacement: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleClearData: () => void;
+  handleSetSpeed: (speed: Speed) => void;
+  speed: Speed;
 }
 
 
-export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton,
-    addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange, handleInputChange,
-    handleStartRun, handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange,
-    handleSelectRepeat, handleSelectReplacement, handleClearData}: IProps) => {
+export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numRuns, enableRunButton,
+    addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange, handleStartRun,
+    handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange,
+    handleSelectRepeat, handleSelectReplacement, handleClearData, handleSetSpeed, speed}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
 
   const handleOpenHelp = () => {
@@ -48,7 +47,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
       <div className="model-controls">
         <button className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
         <button className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
-        <SpeedSlider />
+        <SpeedSlider speed={speed} handleSetSpeed={handleSetSpeed} />
         <button className="clear-data-button" onClick={handleClearData}>CLEAR DATA</button>
       </div>
       <div className="select-repeat-controls">
@@ -79,7 +78,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
       </div>
       <div className="collect-controls">
         <span>Collect</span>
-        <input type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
+        <input type="text" id="num_samples" value={numRuns} onChange={handleNumSamplesChange}></input>
         <span>samples</span>
       </div>
       <div className="model-container">
@@ -100,7 +99,6 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
                         mergeDevices={mergeDevices}
                         deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
                         handleNameChange={handleNameChange}
-                        handleInputChange={handleInputChange}
                         handleUpdateCollectorVariables={handleUpdateCollectorVariables}
                       />
                       {sourceDevices.map(sourceDevice => (
@@ -168,11 +166,21 @@ const HelpModal = ({setShowHelp}: IHelpModal) => {
   );
 };
 
-const SpeedSlider = () => {
-  const [value, setValue] = useState(1);
-  const speedValue = ["Slow", "Medium", "Fast", "Fastest"];
+interface ISpeedSlider {
+  handleSetSpeed: (speed: Speed) => void;
+  speed: Speed;
+}
+
+const SpeedSlider = ({speed, handleSetSpeed}: ISpeedSlider) => {
+  const mapSpeedToValue = (s: Speed) => {
+    return s === kSlow ? 0 : s === kMedium ? 1 : s === kFast ? 2 : 3;
+  };
+  const mapValueToSpeed = (value: number) => {
+    return value === 0 ? kSlow : value === 1 ? kMedium : value === 2 ? kFast : kFast;
+  };
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(parseInt(event.target.value, 10)); // Parse the value as an integer
+    const selectedSpeed = mapValueToSpeed(parseInt(event.target.value, 10));
+    handleSetSpeed(selectedSpeed);
   };
 
   return (
@@ -181,23 +189,23 @@ const SpeedSlider = () => {
         type="range"
         min={0}
         max={3}
-        value={value}
+        value={mapSpeedToValue(speed)}
         onChange={handleChange}
         step={1}
         list="speedSettings"
         className="slider"
       />
       <div className="tick-marks-container">
-          {speedValue.map((speed, i) => {
+          {kSpeeds.map((s, i) => {
             return (
-              <div className="tick-mark" key={`tick-${i}`}>
+              <div className="tick-mark" key={`tick-${i}-${s}`}>
                 <div className="tick-line"/>
               </div>
             );
           })}
       </div>
       <span id="speed-text" data-text="DG.plugin.Sampler.top-bar.medium-speed">
-        {speedValue[value]}
+        {speed}
       </span>
     </div>
   );

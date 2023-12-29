@@ -16,7 +16,7 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs }: IBall) => 
   useEffect(() => {
     const id = `text-clip-${x}-${y}`;
     const clipPath = (
-      <clipPath id={id}>
+      <clipPath id={id} key={id}>
         <circle cx={x} cy={y} r={radius} origin={`${x} ${y}`} />
       </clipPath>
     );
