@@ -155,6 +155,8 @@ export const App = () => {
         }
       }
     });
+  };
+
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setRepeat(e.target.value === "repeat");
     setCreateNewExperiment(true);
