@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 
-import { Device } from "./device";
-import { IModel, getSourceDevices } from "../../models/model-model";
+import { IModel } from "../../models/model-model";
 import { IDevice } from "../../models/device-model";
 import { Id } from "../../utils/id";
 import { useResizer } from "../../hooks/use-resizer";
-import { Arrow } from "./arrow";
+import { Column } from "./column";
 import InfoIcon from "../../assets/help-icon.svg";
 
 import "./model-component.scss";
@@ -89,40 +88,19 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
         <div className={`device-outputs-container`}>
           {model.columns.map((column, columnIndex) => {
             return (
-              <div key={columnIndex} className="device-column">
-                {column.devices.map(device => {
-                  const sourceDevices = getSourceDevices(model, device);
-                  const firstInColumn = column.devices[0].id === device.id;
-                  // if next column has more than one device, center this device
-                  const centerDevice = model.columns[columnIndex + 1].devices.length > 1;
-                  return (
-                    <React.Fragment key={device.id}>
-                      <Device
-                        model={model}
-                        device={device}
-                        firstInColumn={firstInColumn}
-                        // centerDevice={centerDevice}
-                        selectedDeviceId={selectedDeviceId}
-                        setSelectedDeviceId={setSelectedDeviceId}
-                        addDevice={addDevice}
-                        mergeDevices={mergeDevices}
-                        deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
-                        handleNameChange={handleNameChange}
-                        handleInputChange={handleInputChange}
-                      />
-                      {sourceDevices.map(sourceDevice => (
-                        <Arrow
-                          key={`${sourceDevice.id}-${device.id}`}
-                          model={model}
-                          selectedDeviceId={selectedDeviceId}
-                          source={sourceDevice}
-                          target={device}
-                        />)
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
+              <Column
+                key={`column-${columnIndex}`}
+                column={column}
+                columnIndex={columnIndex}
+                model={model}
+                selectedDeviceId={selectedDeviceId}
+                setSelectedDeviceId={setSelectedDeviceId}
+                addDevice={addDevice}
+                mergeDevices={mergeDevices}
+                deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
+                handleNameChange={handleNameChange}
+                handleInputChange={handleInputChange}
+              />
             );
           })}
           <div className="outputs">

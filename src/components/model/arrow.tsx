@@ -60,7 +60,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   // lets us leverage the browser flexbox layout.
   const sourceDiv = document.querySelector(`[data-device-id="${source.id}"]`) as HTMLDivElement|null;
   const targetDiv = document.querySelector(`[data-device-id="${target.id}"]`) as HTMLDivElement|null;
-
+  const labelDivWidth = labelRef.current?.getBoundingClientRect().width || 22;
   const resetLabelInput = useCallback(() => {
     if (inputRef.current) {
       inputRef.current.value = label;
@@ -127,29 +127,31 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
 
   const sourceRect = getRect(sourceDiv);
   const targetRect = getRect(targetDiv);
+  const sourceMidPointY = (sourceRect.bottom - sourceRect.top) / 2;
 
-  let svgTop = Math.min(sourceRect.midY, targetRect.midY);
+
+  let svgTop = Math.min(sourceMidPointY, targetRect.midY);
   let svgBottom = Math.max(sourceRect.midY, targetRect.midY);
   let svgHeight = svgBottom - svgTop;
-  const horizontalArrow = svgHeight === 0;
+  const horizontalArrow = svgHeight <= 164;
   const minSvgHeight = Math.max(kMarkerHeight, kMarkerWidth) * 4;
   if (svgHeight < minSvgHeight) {
-    const halfHeightDiff = (minSvgHeight - svgHeight) / 2;
+    const halfHeightDiff = (minSvgHeight + svgHeight) / 2;
     svgHeight = minSvgHeight;
     svgTop -= halfHeightDiff;
     svgBottom += halfHeightDiff;
   }
 
-  const svgLeft = sourceRect.right;
+  const svgLeft = -40;
   const svgWidth = targetRect.left - sourceRect.right;
-
-  const labelTop = horizontalArrow ? svgBottom + 10 : svgTop + (svgHeight / 2) - (kMaxLabelHeight / 2);
-  const labelLeft = svgLeft + (svgWidth / 2) - (kMaxLabelWidth / 2);
-
   const start: IPoint = {x: 0, y: sourceRect.midY - svgTop};
   const end: IPoint = {x: svgWidth, y: targetRect.midY - svgTop};
 
-  const svgStyle: React.CSSProperties = {top: svgTop, left: svgLeft, width: svgWidth, height: svgHeight};
+  const arrowMidPoint = (end.y - start.y) / 2;
+  const labelTop = horizontalArrow ? 0 : arrowMidPoint < 0 ? arrowMidPoint - kMaxLabelHeight/2 : -arrowMidPoint - kMaxLabelHeight;
+  const labelLeft = (svgWidth / 2) - (labelDivWidth / 2);
+
+  const arrowContainerStyle: React.CSSProperties = {top: 0, left: svgLeft, width: svgWidth, height: svgHeight + 10};
   const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft, width: kMaxLabelWidth};
   const labelFormStyle: React.CSSProperties = {display: editing ? "block" : "none"};
   const labelSpanStyle: React.CSSProperties = {display: editing ? "none" : "inline-block"};
@@ -170,8 +172,8 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   };
 
   return (
-    <>
-      <svg className="arrow" style={svgStyle} width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <div className="arrow-container" style={arrowContainerStyle}>
+      <svg className="arrow" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <marker
             id={markerId}
@@ -199,6 +201,6 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
         </form>
         <div onClick={handleToggleEditing} style={labelSpanStyle}>{label}</div>
       </div>
-    </>
+    </div>
   );
 };
