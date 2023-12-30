@@ -22,16 +22,10 @@ interface IProps {
 }
 export const Column = ({column, columnIndex, model, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
     handleNameChange, handleInputChange}: IProps) => {
-  const isLastColumn = columnIndex >= model.columns.length - 1;
-  const isFirstColumn = columnIndex <= 0;
-  // if adjacent columns have more than one device,
-  // and this column only has one device, center this device
-  const centerDevice = model.columns[columnIndex].devices.length === 1
-                        && ((!isLastColumn && model.columns[columnIndex + 1].devices.length > 1)
-                              || (!isFirstColumn && model.columns[columnIndex - 1].devices.length > 1));
+  const hasBranch = model.columns.find(c =>  c.devices.length > 1);
 
   return (
-    <div key={columnIndex} className={`device-column ${centerDevice? "centered" : ""}`}>
+    <div key={columnIndex} className={`device-column ${hasBranch? "centered" : ""}`}>
       {column.devices.map(device => {
         const sourceDevices = getSourceDevices(model, device);
         const firstDeviceInColumn = column.devices[0].id === device.id;
