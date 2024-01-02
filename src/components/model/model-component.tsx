@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-
 import { IModel } from "../../models/model-model";
 import { IDevice } from "../../models/device-model";
 import { Id } from "../../utils/id";

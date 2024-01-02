@@ -1,9 +1,8 @@
-import React, {useEffect} from "react";
+import React from "react";
 import { Device } from "./device";
 import { IColumn, IModel, getSourceDevices } from "../../models/model-model";
 import { IDevice } from "../../models/device-model";
 import { Id } from "../../utils/id";
-import { useResizer } from "../../hooks/use-resizer";
 import { Arrow } from "./arrow";
 
 import "./model-component.scss";

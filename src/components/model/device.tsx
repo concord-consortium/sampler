@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-
-import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { IDevice } from "../../models/device-model";
 import { Id } from "../../utils/id";
 import { IModel, getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
 
 import DeleteIcon from "../../assets/delete-icon.svg";
+import VisibleIcon from "../../assets/visibility-on-icon.svg";
 
 import "./device.scss";
 
@@ -26,7 +25,7 @@ interface IProps {
 
 export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
-    handleNameChange, handleInputChange} = props;
+    handleInputChange} = props;
   const [viewSelected, setViewSelected] = useState<View>("mixer");
 
   const handleSelectDevice = () => setSelectedDeviceId(device.id);

@@ -25,6 +25,7 @@ const kMarkerHeight = 5;
 
 const kMaxLabelHeight = 20;
 const kMaxLabelWidth = 100;
+const kWidthBetweenDevices = 40;
 
 const getRect = (el: HTMLElement): Rect => {
   const {width, height} = el.getBoundingClientRect();
@@ -127,13 +128,13 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
 
   const sourceRect = getRect(sourceDiv);
   const targetRect = getRect(targetDiv);
+  // rect.midY takes into account the y position of the rect vs midpoint based on height.
   const sourceMidPointY = (sourceRect.bottom - sourceRect.top) / 2;
-
-
-  let svgTop = Math.min(sourceMidPointY, targetRect.midY);
+  const targetMidPointY = (targetRect.bottom - targetRect.top) / 2;
+  let svgTop = Math.min(sourceMidPointY, targetMidPointY);
   let svgBottom = Math.max(sourceRect.midY, targetRect.midY);
   let svgHeight = svgBottom - svgTop;
-  const horizontalArrow = svgHeight <= 164;
+  const horizontalArrow = sourceRect.midY === targetRect.midY;
   const minSvgHeight = Math.max(kMarkerHeight, kMarkerWidth) * 4;
   if (svgHeight < minSvgHeight) {
     const halfHeightDiff = (minSvgHeight + svgHeight) / 2;
@@ -142,7 +143,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
     svgBottom += halfHeightDiff;
   }
 
-  const svgLeft = -40;
+  const svgLeft = -kWidthBetweenDevices;
   const svgWidth = targetRect.left - sourceRect.right;
   const start: IPoint = {x: 0, y: sourceRect.midY - svgTop};
   const end: IPoint = {x: svgWidth, y: targetRect.midY - svgTop};
@@ -151,7 +152,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   const labelTop = horizontalArrow ? 0 : arrowMidPoint < 0 ? arrowMidPoint - kMaxLabelHeight/2 : -arrowMidPoint - kMaxLabelHeight;
   const labelLeft = (svgWidth / 2) - (labelDivWidth / 2);
 
-  const arrowContainerStyle: React.CSSProperties = {top: 0, left: svgLeft, width: svgWidth, height: svgHeight + 10};
+  const arrowContainerStyle: React.CSSProperties = {top: 0, left: svgLeft, width: svgWidth, height: svgHeight + kMarkerHeight * 2};
   const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft, width: kMaxLabelWidth};
   const labelFormStyle: React.CSSProperties = {display: editing ? "block" : "none"};
   const labelSpanStyle: React.CSSProperties = {display: editing ? "none" : "inline-block"};
