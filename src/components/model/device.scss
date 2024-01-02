@@ -9,7 +9,6 @@
   width: 180px;
   height: 209px;
   margin: 5px 0;
-  padding-bottom: 39.5px;
   border-radius: 5px;
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.35);
   border: solid 1px #008cba;
@@ -19,6 +18,20 @@
     margin-top: 50%;
     textarea {
       width: 50%;
+    }
+  }
+  .device-svg-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .device-frame {
+      width: 130px;
+      height: 209px;
+      margin-right: 10px;
+      &.spinner {
+        width: 180px;
+        margin-right: 0px;
+      }
     }
   }
 }

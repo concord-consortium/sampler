@@ -44,7 +44,7 @@ const iFrameDescriptor ={
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
 
-export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", viewType: "mixer", variables: kDefaultDeviceVariables});
+export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", viewType: "mixer", variables: {"a": 67, "b": 33}, collectorVariables: []});
 
 export const App = () => {
   const [selectedTab, setSelectedTab] = useState<NavTab>("Model");
@@ -140,6 +140,18 @@ export const App = () => {
         const device = draft.columns[columnIndex].devices.find(dev => dev.id === deviceId);
         if (device) {
           device.variables = {[e.target.value]: 100};
+        }
+      }
+    });
+  };
+
+  const handleUpdateCollectorVariables = (collectorVariables: IDevice["collectorVariables"]) => {
+    setModel(draft => {
+      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
+      if (columnIndex !== -1) {
+        const deviceToUpdate = draft.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+        if (deviceToUpdate) {
+          deviceToUpdate.collectorVariables = collectorVariables;
         }
       }
     });
@@ -254,6 +266,7 @@ export const App = () => {
             handleSampleSizeChange={handleSampleSizeChange}
             handleNumSamplesChange={handleNumSamplesChange}
             handleStartRun={handleStartRun}
+            handleUpdateCollectorVariables={handleUpdateCollectorVariables}
             handleSelectRepeat={handleSelectRepeat}
             handleSelectReplacement={handleSelectReplacement}
             handleClearData={handleClearData}
