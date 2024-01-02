@@ -12,18 +12,28 @@ import "./model-component.scss";
 interface IProps {
   model: IModel;
   selectedDeviceId?: Id;
+  repeat: boolean;
+  sampleSize: string;
+  numSamples: string;
+  enableRunButton: boolean;
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
   deleteDevice: (device: IDevice) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
+  handleSampleSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleNumSamplesChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleStartRun: () => void;
+  handleSelectRepeat: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleSelectReplacement: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleClearData: () => void;
 }
 
-export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, deleteDevice, setSelectedDeviceId,
-  handleNameChange, handleInputChange, handleStartRun}: IProps) => {
-  const [repeat, setRepeat] = useState(false);
+export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton,
+    addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange, handleInputChange,
+    handleStartRun, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
+    handleSelectReplacement, handleClearData}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
   const [isWide, setIsWide] = useState(false);
 
@@ -37,10 +47,6 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
     }
   });
 
-  const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRepeat(e.target.value === "repeat");
-  };
-
   const handleOpenHelp = () => {
     setShowHelp(!showHelp);
   };
@@ -48,10 +54,10 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
   return (
     <div className="model-tab">
       <div className="model-controls">
-        <button className="start-button" onClick={handleStartRun}>START</button>
-        <button className="stop-button">STOP</button>
+        <button className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
+        <button className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
         <SpeedSlider />
-        <button className="clear-data-button">CLEAR DATA</button>
+        <button className="clear-data-button" onClick={handleClearData}>CLEAR DATA</button>
       </div>
       <div className="select-repeat-controls">
         <div className="select-repeat-selection">
@@ -61,12 +67,12 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
               <option className={`select-repeat-option`} value="repeat">Repeat</option>
             </select>
           </div>
-          <input id="sample_size" defaultValue="5"></input>
+          <input type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
           <span>{`${repeat ? "selecting" : ""} items`}</span>
           <div className="select-replacement-dropdown">
-            <select>
-              <option>with replacement</option>
-              <option>without replacement</option>
+            <select onChange={handleSelectReplacement}>
+              <option value="with">with replacement</option>
+              <option value="without">without replacement</option>
             </select>
           </div>
         </div>
@@ -81,7 +87,7 @@ export const ModelTab = ({ model, selectedDeviceId, addDevice, mergeDevices, del
       </div>
       <div className="collect-controls">
         <span>Collect</span>
-        <input defaultValue="3"></input>
+        <input type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
         <span>samples</span>
       </div>
       <div className="model-container">
