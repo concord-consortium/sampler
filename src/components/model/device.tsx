@@ -70,6 +70,7 @@ export const Device = (props: IProps) => {
         handleUpdateCollectorVariables(itemValues);
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDataContext]);
 
   const handleSelectDevice = () => setSelectedDeviceId(device.id);
@@ -85,7 +86,7 @@ export const Device = (props: IProps) => {
       const newDefs = defs.filter(def => !prevDefs.some(prevDef => prevDef.id === def.id));
       return [...prevDefs, ...newDefs];
     });
-  }
+  };
 
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
@@ -98,7 +99,7 @@ export const Device = (props: IProps) => {
     <div className="device-controls-container" onClick={handleSelectDevice}>
       <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id}>
         <div className="device-status-icon">
-          <VisibleIcon />
+          {isSelectedDevice && <VisibleIcon />}
         </div>
         <div className="device-svg-container">
           <div className={`device-frame ${viewSelected}`}>

@@ -47,6 +47,7 @@ export const Balls = ({ballsArray, handleAddDefs}: IBalls) => {
       props.push({x, y, radius, text, fontSize, handleAddDefs});
     }
     setBallProps(props);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ballsArray]);
 
   return (
