@@ -28,16 +28,18 @@ interface IProps {
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
+  handleAddVariable: () => void;
+  handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
 }
 
 export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices,
-    deleteDevice, handleNameChange, handleUpdateCollectorVariables} = props;
-  const [viewSelected, setViewSelected] = useState<View>("mixer");
+    deleteDevice, handleNameChange, handleUpdateCollectorVariables, handleAddVariable, handleUpdateViewType} = props;
   const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
   const [clippingDefs, setClippingDefs] = useState<ClippingDef[]>([]);
+  const { viewType } = device;
 
   useEffect(() => {
     const fetchDataContexts = async () => {
@@ -45,19 +47,19 @@ export const Device = (props: IProps) => {
       return res.values;
     };
 
-    if (viewSelected === "collector") {
+    if (viewType === "collector") {
       fetchDataContexts().then((contexts: Array<IDataContext>) => {
         const filteredCtxs = contexts.filter((context) => context.name !== kDataContextName);
         setDataContexts(filteredCtxs);
       });
     }
 
-    if (viewSelected === "spinner") {
+    if (viewType === "spinner") {
       setViewBox(`0 0 ${kSpinnerContainerWidth + 10} ${kSpinnerContainerHeight}`);
     } else {
       setViewBox(`0 0 ${kMixerContainerWidth + 10} ${kMixerContainerHeight}`);
     }
-  }, [viewSelected]);
+  }, [viewType]);
 
   useEffect(() => {
     if (selectedDataContext) {
@@ -104,7 +106,7 @@ export const Device = (props: IProps) => {
           <VisibleIcon />
         </div>
         <div className="device-svg-container">
-          <div className={`device-frame ${viewSelected}`}>
+          <div className={`device-frame ${viewType}`}>
             <svg
               className="svg"
               width="100%"
@@ -116,9 +118,9 @@ export const Device = (props: IProps) => {
                 {clippingDefs.length && clippingDefs.map((def) => def.element)}
               </defs>
               {
-                viewSelected === "mixer" ?
+                viewType === "mixer" ?
                   <Mixer variables={device.variables} handleAddDefs={handleAddDefs} /> :
-                viewSelected === "spinner" ?
+                viewType === "spinner" ?
                   <Spinner variables={device.variables}/> :
                   <Collector collectorVariables={device.collectorVariables} handleAddDefs={handleAddDefs}/>
               }
@@ -133,11 +135,13 @@ export const Device = (props: IProps) => {
       </div>
       { device.id === selectedDeviceId &&
           <div className="footer">
-            <div className="add-remove-variables-buttons">
-              <button>+</button>
-              <button>-</button>
-              <button>...</button>
-            </div>
+            { device.viewType !== "collector" &&
+              <div className="add-remove-variables-buttons">
+                <button onClick={handleAddVariable}>+</button>
+                <button>-</button>
+                <button>...</button>
+              </div>
+            }
             <div className="device-buttons">
               {
                 kDeviceTypes.map((deviceType) => {
@@ -145,8 +149,8 @@ export const Device = (props: IProps) => {
                   if (renderButton) {
                     return (
                       <button
-                        className={viewSelected === deviceType ? "selected" : ""}
-                        onClick={()=>setViewSelected(deviceType)}
+                        className={viewType === deviceType ? "selected" : ""}
+                        onClick={() => handleUpdateViewType(deviceType)}
                         key={deviceType}>
                           {deviceType}
                       </button>
@@ -157,7 +161,7 @@ export const Device = (props: IProps) => {
             </div>
             <div className="device-buttons">
               {
-                viewSelected === "collector" ?
+                viewType === "collector" ?
                   <select onChange={handleSelectDataContext}>
                     <option value="">Select a data context</option>
                     {

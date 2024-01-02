@@ -38,12 +38,11 @@ const Wedge = ({percent, lastPercent, index, variableName, labelFontSize}: IWedg
   useEffect(() => {
     const pctToDecimal = percent / 100;
     const lastPctToDecimal = lastPercent / 100;
-    const perc1 = lastPctToDecimal;
     const perc2 = lastPctToDecimal + pctToDecimal;
-    const p1 = getCoordinatesForPercent(perc1);
+    const p1 = getCoordinatesForPercent(lastPctToDecimal);
     const p2 = getCoordinatesForPercent(perc2);
-    const largeArc = perc2 - perc1 > 0.5 ? 1 : 0;
-    const varLabelPosition = getCoordinatesForVariableLabel((perc1+perc2)/2, 2);
+    const largeArc = perc2 - lastPctToDecimal > 0.5 ? 1 : 0;
+    const varLabelPosition = getCoordinatesForVariableLabel((lastPctToDecimal + perc2)/2, 2);
 
     const path = [
       `M ${p1.join(" ")}`,
@@ -103,12 +102,12 @@ export const Spinner = ({variables}: ISpinner) => {
       /> :
       <>
         {Object.keys(variables).map((variableName, index) => {
-          const lastVariableName = index !== 0 ? Object.keys(variables)[index - 1] : "";
+          const lastPercent = index === 0 ? 0 : Object.keys(variables).slice(0, index).reduce((acc, curr) => acc + variables[curr], 0);
           return (
             <Wedge
               key={`${variableName}-${index}`}
               percent={variables[variableName]}
-              lastPercent={index === 0 ? 0 : variables[lastVariableName]}
+              lastPercent={lastPercent}
               variableName={variableName}
               index={index}
               labelFontSize={fontSize}

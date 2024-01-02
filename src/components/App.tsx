@@ -5,12 +5,11 @@ import {
   codapInterface
 } from "@concord-consortium/codap-plugin-api";
 import { useImmer } from "use-immer";
-
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
-import { IExperiment, IModel, IRunResult, ISample, getDeviceColumnIndex } from "../models/model-model";
-import { IDevice, IVariables } from "../models/device-model";
+import { IExperiment, IModel, IRunResult, ISample, getDeviceById, getDeviceColumnIndex } from "../models/model-model";
+import { IDevice, IVariables, extractProportionalKeys } from "../models/device-model";
 import { Id, createId } from "../utils/id";
 import { deleteAll, findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
 
@@ -145,6 +144,18 @@ export const App = () => {
     });
   };
 
+  const handleUpdateVariables = (variables: IDevice["variables"]) => {
+    setModel(draft => {
+      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
+      if (columnIndex !== -1) {
+        const deviceToUpdate = draft.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+        if (deviceToUpdate) {
+          deviceToUpdate.variables = variables;
+        }
+      }
+    });
+  }
+
   const handleUpdateCollectorVariables = (collectorVariables: IDevice["collectorVariables"]) => {
     setModel(draft => {
       const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
@@ -234,6 +245,78 @@ export const App = () => {
     deleteAll();
   };
 
+  const handleUpdateViewType = (viewType: IDevice["viewType"]) => {
+    setModel(draft => {
+      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
+      if (columnIndex !== -1) {
+        const deviceToUpdate = draft.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+        if (deviceToUpdate) {
+          deviceToUpdate.viewType = viewType;
+        }
+      }
+    });
+  };
+
+  const handleAddVariable = () => {
+    const getNextVariable = (vars: IVariables): string => {
+      const keys = Object.keys(vars);
+      const isNumeric = keys.every(key => !isNaN(Number(key)));
+
+      if (isNumeric) {
+          const maxKey = Math.max(...keys.map(Number));
+          return (maxKey + 1).toString();
+      } else {
+          const maxChar = keys.reduce((max, key) => {
+              if (key >= "a" && key < "z" || key >= "A" && key < "Z") {
+                  return max < key ? key : max;
+              }
+              return max;
+          }, "0");
+          return String.fromCharCode(maxChar.charCodeAt(0) + 1);
+      }
+    };
+
+    if (model && selectedDeviceId) {
+      const selectedDevice = getDeviceById(model, selectedDeviceId);
+      const { viewType, variables } = selectedDevice;
+      const varKeys = Object.keys(variables);
+      const newPcts: IVariables = {};
+      const newVariable = getNextVariable(variables);
+
+      if (viewType === "spinner") {
+        const numUnique = varKeys.length;
+        const newFraction = 1 / (numUnique + 1);
+        varKeys.map((v) => {
+          const currentPct = (varKeys.filter((variable) => variable === v).length / numUnique) * 100;
+          const amtToSubtract = currentPct * newFraction;
+          newPcts[v] = currentPct - amtToSubtract;
+        });
+        newPcts[newVariable] = newFraction * 100;
+      }
+
+      // else if (viewType === "mixer") {
+      //   const variablesAsArray = extractProportionalKeys(variables);
+      //   const newFraction = 1 / (variablesAsArray.length + 1);
+      //   variablesAsArray.map((v) => {
+      //     const currentPct = (variablesAsArray.filter((variable) => variable === v).length / variablesAsArray.length) * 100;
+      //     const amtToSubtract = currentPct * newFraction;
+      //     newPcts[v] = currentPct - amtToSubtract;
+      //   });
+      //   newPcts[newVariable] = newFraction * 100;
+      // }
+
+      const sumOfNewPcts = Object.keys(newPcts).reduce((sum, v) => sum + newPcts[v], 0);
+      let discrepancy = 100 - sumOfNewPcts;
+      while (discrepancy !== 0) {
+        const sign = discrepancy > 0 ? 1 : -1;
+        const index = Math.floor(Math.random() * Object.keys(newPcts).length);
+        newPcts[Object.keys(newPcts)[index]] += sign;
+        discrepancy -= sign;
+      }
+      handleUpdateVariables(newPcts);
+    }
+  };
+
   return (
     <div className="App">
       <div className="navigationTabs">
@@ -270,6 +353,8 @@ export const App = () => {
             handleSelectRepeat={handleSelectRepeat}
             handleSelectReplacement={handleSelectReplacement}
             handleClearData={handleClearData}
+            handleAddVariable={handleAddVariable}
+            handleUpdateViewType={handleUpdateViewType}
           />
         }
         {selectedTab === "Measures" && <MeasuresTab />}
