@@ -5,10 +5,9 @@ import {
   codapInterface
 } from "@concord-consortium/codap-plugin-api";
 import { useImmer } from "use-immer";
-
+import { ModelTab } from "./model/model-component";
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
-import { ModelTab } from "./model/model-component";
 import { IExperiment, IModel, IRunResult, ISample, getDeviceColumnIndex } from "../models/model-model";
 import { IDevice, IVariables } from "../models/device-model";
 import { Id, createId } from "../utils/id";

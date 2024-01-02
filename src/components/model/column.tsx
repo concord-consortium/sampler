@@ -18,9 +18,10 @@ interface IProps {
   deleteDevice?: (device: IDevice) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
+  handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
 }
 export const Column = ({column, columnIndex, model, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
-    handleNameChange, handleInputChange}: IProps) => {
+    handleNameChange, handleInputChange, handleUpdateCollectorVariables}: IProps) => {
   const hasBranch = model.columns.find(c =>  c.devices.length > 1);
 
   return (
@@ -45,6 +46,7 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, setSelecte
               deleteDevice={deleteDevice}
               handleNameChange={handleNameChange}
               handleInputChange={handleInputChange}
+              handleUpdateCollectorVariables={handleUpdateCollectorVariables}
             />
             {sourceDevices.map(sourceDevice => (
               <Arrow

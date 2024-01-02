@@ -1,8 +1,4 @@
-import React, { useState } from "react";
 import React, { useEffect, useState } from "react";
-import { IDevice } from "../../models/device-model";
-
-import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { ClippingDef, IDataContext, IDevice, IItem, IItems, kDeviceTypes } from "../../models/device-model";
 import { Id } from "../../utils/id";
 import { IModel, getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
