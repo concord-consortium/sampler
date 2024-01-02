@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
-
-import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { ClippingDef, IDataContext, IDevice, IItem, IItems, kDeviceTypes } from "../../models/device-model";
 import { Id } from "../../utils/id";
 import { IModel, getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
-import DeleteIcon from "../../assets/delete-icon.svg";
 import { Mixer } from "./device-views/mixer/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
 import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth } from "./device-views/shared/constants";
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../utils/codap-helpers";
+import DeleteIcon from "../../assets/delete-icon.svg";
+import VisibleIcon from "../../assets/visibility-on-icon.svg";
 
 import "./device.scss";
 
@@ -32,7 +31,7 @@ interface IProps {
 
 export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices,
-    deleteDevice, handleNameChange, handleUpdateCollectorVariables} = props;
+    deleteDevice, handleNameChange, handleInputChange, handleUpdateCollectorVariables} = props;
   const [viewSelected, setViewSelected] = useState<View>("mixer");
   const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
@@ -93,13 +92,11 @@ export const Device = (props: IProps) => {
   const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
   const showCollectorButton = getNumDevices(model) === 1;
   const showMergeButton = siblingDevices.length > 0;
+  const isSelectedDevice = device.id === selectedDeviceId;
 
   return (
     <div className="device-controls-container" onClick={handleSelectDevice}>
-      <div>
-        <input className="attr-name" value={device.name} onChange={(e) => handleNameChange(e, device.id)}></input>
-      </div>
-      <div className="device-container" data-device-id={device.id}>
+      <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id}>
         <div className="device-status-icon">
           <VisibleIcon />
         </div>
@@ -131,7 +128,7 @@ export const Device = (props: IProps) => {
           </div>
         }
       </div>
-      { device.id === selectedDeviceId &&
+      { isSelectedDevice &&
           <div className="footer">
             <div className="add-remove-variables-buttons">
               <button>+</button>

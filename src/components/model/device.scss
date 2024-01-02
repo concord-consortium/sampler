@@ -1,19 +1,21 @@
 .device-controls-container{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   margin: 15px 0;
+  position: relative;
+  top: 15px;
 }
 .device-container {
   width: 180px;
   height: 209px;
   margin: 5px 0;
   border-radius: 5px;
+  border: solid 1px transparent;
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.35);
-  border: solid 1px #008cba;
   background-color: #fff;
   position: relative;
+
+  &.selected {
+    border: solid 1px #008cba;
+  }
   .set-input {
     margin-top: 50%;
     textarea {

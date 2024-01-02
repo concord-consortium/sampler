@@ -5,10 +5,9 @@ import {
   codapInterface
 } from "@concord-consortium/codap-plugin-api";
 import { useImmer } from "use-immer";
-
+import { ModelTab } from "./model/model-component";
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
-import { ModelTab } from "./model/model-component";
 import { IExperiment, IModel, IRunResult, ISample, getDeviceColumnIndex } from "../models/model-model";
 import { IDevice, IVariables } from "../models/device-model";
 import { Id, createId } from "../utils/id";
@@ -56,6 +55,10 @@ export const App = () => {
   const [numSamples, setNumSamples] = useState<string>("3");
   const [createNewExperiment, setCreateNewExperiment] = useState(true);
   const [enableRunButton, setEnableRunButton] = useState(true);
+  const numColumns = model.columns.length;
+  const lastColumn = model.columns[numColumns - 1];
+  const numDevicesInLastColumn = lastColumn?.devices?.length;
+  const lastDeviceId = lastColumn?.devices?.[numDevicesInLastColumn - 1].id;
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
@@ -65,6 +68,10 @@ export const App = () => {
   useEffect(() => {
     setModel({columns: [{devices: [createDefaultDevice()]}], experimentNum: 0});
   }, [setModel]);
+
+  useEffect(()=>{
+    setSelectedDeviceId(lastDeviceId);
+  }, [lastDeviceId]);
 
   const handleTabSelect = (tab: NavTab) => {
     setSelectedTab(tab);

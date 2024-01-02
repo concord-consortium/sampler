@@ -1,14 +1,12 @@
 import React, { useState } from "react";
-
-import { Device } from "./device";
-import { IModel, getSourceDevices } from "../../models/model-model";
+import { IModel } from "../../models/model-model";
 import { IDevice } from "../../models/device-model";
 import { Id } from "../../utils/id";
-
+import { useResizer } from "../../hooks/use-resizer";
+import { Column } from "./column";
 import InfoIcon from "../../assets/help-icon.svg";
 
 import "./model-component.scss";
-import { Arrow } from "./arrow";
 
 interface IProps {
   model: IModel;
@@ -38,6 +36,17 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
     handleStartRun, handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange,
     handleSelectRepeat, handleSelectReplacement, handleClearData}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
+  const [isWide, setIsWide] = useState(false);
+
+  useResizer(()=>{
+    const repeatControlWidth = document.querySelector(".select-repeat-controls")
+    ?.getBoundingClientRect().width;
+    if (repeatControlWidth && repeatControlWidth > 575) {
+      setIsWide(true);
+    } else {
+      setIsWide(false);
+    }
+  });
 
   const handleOpenHelp = () => {
     setShowHelp(!showHelp);
@@ -60,7 +69,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
             </select>
           </div>
           <input type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
-          <span>items</span>
+          <span>{`${repeat ? "selecting" : ""} items`}</span>
           <div className="select-replacement-dropdown">
             <select onChange={handleSelectReplacement}>
               <option value="with">with replacement</option>
@@ -69,7 +78,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
           </div>
         </div>
         {repeat &&
-          <div className="repeat-until-controls">
+          <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
             <span>until</span>
             <input type="text"></input>
             <InfoIcon onClick={handleOpenHelp}/>
@@ -83,39 +92,23 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
         <span>samples</span>
       </div>
       <div className="model-container">
-        <div className="device-outputs-container">
+        <div className={`device-outputs-container`}>
           {model.columns.map((column, columnIndex) => {
             return (
-              <div key={columnIndex} className="device-column">
-                {column.devices.map(device => {
-                  const sourceDevices = getSourceDevices(model, device);
-                  return (
-                    <React.Fragment key={device.id}>
-                      <Device
-                        model={model}
-                        device={device}
-                        selectedDeviceId={selectedDeviceId}
-                        setSelectedDeviceId={setSelectedDeviceId}
-                        addDevice={addDevice}
-                        mergeDevices={mergeDevices}
-                        deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
-                        handleNameChange={handleNameChange}
-                        handleInputChange={handleInputChange}
-                        handleUpdateCollectorVariables={handleUpdateCollectorVariables}
-                      />
-                      {sourceDevices.map(sourceDevice => (
-                        <Arrow
-                          key={`${sourceDevice.id}-${device.id}`}
-                          model={model}
-                          selectedDeviceId={selectedDeviceId}
-                          source={sourceDevice}
-                          target={device}
-                        />)
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
+              <Column
+                key={`column-${columnIndex}`}
+                column={column}
+                columnIndex={columnIndex}
+                model={model}
+                selectedDeviceId={selectedDeviceId}
+                setSelectedDeviceId={setSelectedDeviceId}
+                addDevice={addDevice}
+                mergeDevices={mergeDevices}
+                deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
+                handleNameChange={handleNameChange}
+                handleInputChange={handleInputChange}
+                handleUpdateCollectorVariables={handleUpdateCollectorVariables}
+              />
             );
           })}
           <div className="outputs">
