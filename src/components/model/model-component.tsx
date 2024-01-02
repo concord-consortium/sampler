@@ -24,15 +24,17 @@ interface IProps {
   handleSampleSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleNumSamplesChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleStartRun: () => void;
+  handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
   handleSelectRepeat: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleSelectReplacement: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleClearData: () => void;
 }
 
+
 export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton,
     addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange, handleInputChange,
-    handleStartRun, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
-    handleSelectReplacement, handleClearData}: IProps) => {
+    handleStartRun, handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange,
+    handleSelectRepeat, handleSelectReplacement, handleClearData}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
   const [isWide, setIsWide] = useState(false);
 
@@ -105,6 +107,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
                 deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
                 handleNameChange={handleNameChange}
                 handleInputChange={handleInputChange}
+                handleUpdateCollectorVariables={handleUpdateCollectorVariables}
               />
             );
           })}

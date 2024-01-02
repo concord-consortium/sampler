@@ -4,7 +4,8 @@ export interface IDevice {
   id: Id;
   name: string;
   viewType: "mixer" | "spinner" | "collector";
-  variables: IVariables | ICollectorVariables;
+  variables: IVariables;
+  collectorVariables: ICollectorVariables;
 }
 
 // a map of variables to their percentages
@@ -26,3 +27,20 @@ export interface ICollectorItem {
 // i.e., one ball for "Dog", one ball for "Cat"
 // if "Dog" is selected by the collector, the entire item is sent to CODAP
 export type ICollectorVariables = Array<ICollectorItem>;
+
+export const kDeviceTypes = ["mixer", "spinner", "collector"] as const;
+export interface IDataContext {
+  guid: number;
+  id: number;
+  name: string;
+  title: string;
+}
+
+export interface IItem {
+  id: number;
+  values: ICollectorItem;
+}
+
+export type IItems = Array<IItem>;
+
+export type ClippingDef = { id: string, element: JSX.Element };
