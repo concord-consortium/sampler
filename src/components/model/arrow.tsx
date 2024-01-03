@@ -80,11 +80,16 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
 
   const handleUpdateLabel = useCallback(() => {
     const trimmedLabel = (inputRef.current?.value ?? "").trim();
+
     if (trimmedLabel.length > 0) {
       // TODO LATER: update source device in model with trimmedLabel
-
       setLabel(trimmedLabel);
       handleToggleEditing();
+    } else {
+      if (inputRef.current) {
+        inputRef.current.value = "*";
+        setLabel("*");
+      }
     }
   }, [setLabel]);
 
@@ -163,9 +168,15 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   };
 
   const handleLabelKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.code === "Escape") {
-      handleToggleEditing();
-      resetLabelInput();
+    switch(e.code) {
+      case "Escape":
+        handleToggleEditing();
+        resetLabelInput();
+        break;
+      case "Enter":
+        handleToggleEditing();
+        handleUpdateLabel();
+        break;
     }
   };
 
