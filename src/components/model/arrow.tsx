@@ -22,6 +22,7 @@ type Rect = Omit<DOMRect, "toJSON"> & {midY: number};
 
 const kMarkerWidth = 5;
 const kMarkerHeight = 5;
+const kArrowLineBuffer = 3; //end line under arrowhead instead of the entire width of gap
 
 const kMaxLabelHeight = 22;
 const kMaxLabelWidth = 100;
@@ -178,7 +179,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
           <marker
             id={markerId}
             viewBox={`0 0 ${kMarkerWidth} ${kMarkerHeight}`}
-            refX={kMarkerWidth}
+            refX={kMarkerWidth - kArrowLineBuffer}
             refY={kMarkerHeight / 2}
             markerWidth={kMarkerWidth}
             markerHeight={kMarkerHeight}
@@ -190,7 +191,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
         <line
           x1={start.x}
           y1={start.y - kMarkerHeight}
-          x2={end.x}
+          x2={end.x - kMarkerWidth - kArrowLineBuffer}
           y2={end.y - kMarkerHeight}
           markerEnd={`url(#${markerId})`}
         />
