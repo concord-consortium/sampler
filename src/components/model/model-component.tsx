@@ -22,7 +22,7 @@ interface IProps {
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
   deleteDevice: (device: IDevice) => void;
-  handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
+  handleNameChange: (deviceId: Id, deviceName: string) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleSampleSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleNumSamplesChange: (e: React.ChangeEvent<HTMLInputElement>) => void;

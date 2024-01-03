@@ -25,14 +25,12 @@ interface IProps {
   mergeDevices: (device: IDevice) => void;
   deleteDevice?: (device: IDevice) => void;
   setSelectedDeviceId: (id: Id) => void;
-  handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
 }
 
 export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, multipleColumns, setSelectedDeviceId, addDevice, mergeDevices,
-    deleteDevice, handleNameChange, handleInputChange, handleUpdateCollectorVariables} = props;
+    deleteDevice, handleUpdateCollectorVariables} = props;
   const [viewSelected, setViewSelected] = useState<View>("mixer");
   const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Device } from "./device";
 import { IColumn, IModel, getSourceDevices } from "../../models/model-model";
 import { IDevice } from "../../models/device-model";
@@ -16,7 +16,7 @@ interface IProps {
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
   deleteDevice?: (device: IDevice) => void;
-  handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
+  handleNameChange: (deviceId: Id, newName: string) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
 }
@@ -24,6 +24,38 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, setSelecte
     handleNameChange, handleInputChange, handleUpdateCollectorVariables}: IProps) => {
   const hasBranch = model.columns.find(c =>  c.devices.length > 1);
   const multipleColumns = model.columns.length > 1;
+  const [attrName, setAttrName] = useState("output");
+  const [editing, setEditing] = useState(false);
+  const attrNameInputRef = useRef<HTMLInputElement>(null);
+
+  const resetAttrInput = useCallback(() => {
+    if (attrNameInputRef.current) {
+      attrNameInputRef.current.value = attrName;
+    }
+  }, [attrName]);
+
+  const handleToggleEditing = () => {
+    setEditing(prev => {
+      setTimeout(() => {
+        attrNameInputRef.current?.focus();
+        attrNameInputRef.current?.select();
+      }, 1);
+      return !prev;
+    });
+  };
+
+  const handleAttrNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, deviceId: string) => {
+    switch(e.code) {
+      case "Escape":
+        attrNameInputRef.current?.blur();
+        resetAttrInput();
+        break;
+      case "Enter":
+        attrNameInputRef.current?.blur();
+        handleNameChange(deviceId, e.currentTarget.value);
+        break;
+    }
+  };
 
   return (
     <div key={columnIndex} className={`device-column ${hasBranch? "centered" : ""}`}>
@@ -33,8 +65,10 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, setSelecte
         return (
           <React.Fragment key={device.id}>
             { firstDeviceInColumn &&
-              <div className="device-column-header">
-                <input className="attr-name" value={device.name} onChange={(e) => handleNameChange(e, device.id)}></input>
+              <div className="device-column-header" onClick={handleToggleEditing}>
+                <input ref={attrNameInputRef} className="attr-name" value={device.name}
+                      onChange={(e) => handleNameChange(device.id, e.target.value)} onKeyDown={(e)=>handleAttrNameKeyDown(e, device.id)}>
+                </input>
               </div>
             }
             <Device
@@ -46,8 +80,6 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, setSelecte
               addDevice={addDevice}
               mergeDevices={mergeDevices}
               deleteDevice={deleteDevice}
-              handleNameChange={handleNameChange}
-              handleInputChange={handleInputChange}
               handleUpdateCollectorVariables={handleUpdateCollectorVariables}
             />
             {sourceDevices.map(sourceDevice => (

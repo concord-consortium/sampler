@@ -306,6 +306,14 @@ $pluginMinWidth: 328px;
       margin: 5px;
       position: absolute;
       top: 0;
+
+      .attr-name {
+        width: 40px;
+        margin: 0 70px 27px;
+        border-radius: 1.5px;
+        border: solid 1px #8f8f9d;
+        background-color: #fff;
+      }
     }
   }
 }
