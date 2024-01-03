@@ -210,7 +210,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
               <input type="text" ref={inputRef} defaultValue={label} onKeyDown={handleLabelKeyDown}
                   style={{height: kMaxLabelHeight}} />
             </form>
-          : <div className="label-span" onClick={handleToggleEditing}>{label}</div>
+          : <div className="label-span" tabIndex={0} onKeyDown={handleToggleEditing} onClick={handleToggleEditing}>{label}</div>
         }
       </div>
     </div>
