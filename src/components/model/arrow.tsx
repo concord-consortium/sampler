@@ -153,7 +153,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   const labelLeft = (svgWidth / 2) - (labelDivWidth / 2);
 
   const arrowContainerStyle: React.CSSProperties = {top: 0, left: svgLeft, width: svgWidth, height: svgHeight + kMarkerHeight};
-  const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft, width: labelDivWidth};
+  const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft};
   const markerId = `arrow_${source.id}_${target.id}`;
 
   const handleSubmitEdit = (e: React.FormEvent<HTMLFormElement>) => {
