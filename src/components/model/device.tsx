@@ -20,6 +20,7 @@ interface IProps {
   model: IModel;
   device: IDevice;
   selectedDeviceId?: Id;
+  multipleColumns: boolean;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
   deleteDevice?: (device: IDevice) => void;
@@ -30,7 +31,7 @@ interface IProps {
 }
 
 export const Device = (props: IProps) => {
-  const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices,
+  const {model, device, selectedDeviceId, multipleColumns, setSelectedDeviceId, addDevice, mergeDevices,
     deleteDevice, handleNameChange, handleInputChange, handleUpdateCollectorVariables} = props;
   const [viewSelected, setViewSelected] = useState<View>("mixer");
   const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
@@ -96,7 +97,7 @@ export const Device = (props: IProps) => {
   const isSelectedDevice = device.id === selectedDeviceId;
 
   return (
-    <div className="device-controls-container" onClick={handleSelectDevice}>
+    <div className={`device-controls-container ${multipleColumns ? "multiple-columns" : ""}`} onClick={handleSelectDevice}>
       <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id}>
         <div className="device-status-icon">
           {isSelectedDevice && <VisibleIcon />}

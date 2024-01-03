@@ -23,6 +23,7 @@ interface IProps {
 export const Column = ({column, columnIndex, model, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
     handleNameChange, handleInputChange, handleUpdateCollectorVariables}: IProps) => {
   const hasBranch = model.columns.find(c =>  c.devices.length > 1);
+  const multipleColumns = model.columns.length > 1;
 
   return (
     <div key={columnIndex} className={`device-column ${hasBranch? "centered" : ""}`}>
@@ -40,6 +41,7 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, setSelecte
               model={model}
               device={device}
               selectedDeviceId={selectedDeviceId}
+              multipleColumns={multipleColumns}
               setSelectedDeviceId={setSelectedDeviceId}
               addDevice={addDevice}
               mergeDevices={mergeDevices}
