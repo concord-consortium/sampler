@@ -23,7 +23,7 @@ type Rect = Omit<DOMRect, "toJSON"> & {midY: number};
 const kMarkerWidth = 5;
 const kMarkerHeight = 5;
 
-const kMaxLabelHeight = 20;
+const kMaxLabelHeight = 22;
 const kMaxLabelWidth = 100;
 const kWidthBetweenDevices = 40;
 
@@ -131,7 +131,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   // rect.midY takes into account the y position of the rect vs midpoint based on height.
   const sourceMidPointY = (sourceRect.bottom - sourceRect.top) / 2;
   const targetMidPointY = (targetRect.bottom - targetRect.top) / 2;
-  let svgTop = Math.min(sourceMidPointY, targetMidPointY);
+  let svgTop = Math.min(sourceMidPointY + kMaxLabelHeight, targetMidPointY + kMaxLabelHeight);
   let svgBottom = Math.max(sourceRect.midY, targetRect.midY);
   let svgHeight = svgBottom - svgTop;
   const horizontalArrow = sourceRect.midY === targetRect.midY;
@@ -152,11 +152,10 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   const labelTop = horizontalArrow ? 0 : arrowMidPoint < 0 ? arrowMidPoint - kMaxLabelHeight/2 : -arrowMidPoint - kMaxLabelHeight;
   const labelLeft = (svgWidth / 2) - (labelDivWidth / 2);
 
-  const arrowContainerStyle: React.CSSProperties = {top: 0, left: svgLeft, width: svgWidth, height: svgHeight + kMarkerHeight * 2};
+  const arrowContainerStyle: React.CSSProperties = {top: 0, left: svgLeft, width: svgWidth, height: svgHeight + kMarkerHeight};
   const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft, width: kMaxLabelWidth};
   const labelFormStyle: React.CSSProperties = {display: editing ? "block" : "none"};
   const labelSpanStyle: React.CSSProperties = {display: editing ? "none" : "inline-block"};
-
   const markerId = `arrow_${source.id}_${target.id}`;
 
   const handleSubmitEdit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -190,9 +189,9 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
         </defs>
         <line
           x1={start.x}
-          y1={start.y}
+          y1={start.y - kMarkerHeight}
           x2={end.x}
-          y2={end.y}
+          y2={end.y - kMarkerHeight}
           markerEnd={`url(#${markerId})`}
         />
       </svg>
