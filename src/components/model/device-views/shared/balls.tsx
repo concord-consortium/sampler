@@ -47,7 +47,7 @@ export const Balls = ({ballsArray, handleAddDefs}: IBalls) => {
       props.push({x, y, radius, text, fontSize, handleAddDefs});
     }
     setBallProps(props);
-  }, [ballsArray]);
+  }, [ballsArray, handleAddDefs]);
 
   return (
     <>

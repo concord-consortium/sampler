@@ -2,14 +2,13 @@ import React, { useEffect, useState } from "react";
 import {
   initializePlugin,
   createItems,
-  codapInterface
 } from "@concord-consortium/codap-plugin-api";
 import { useImmer } from "use-immer";
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
-import { IExperiment, IModel, IRunResult, ISample, getDeviceById, getDeviceColumnIndex } from "../models/model-model";
-import { IDevice, IVariables, extractProportionalKeys } from "../models/device-model";
+import { IModel, IRunResult, getDeviceById, getDeviceColumnIndex } from "../models/model-model";
+import { IDevice, IVariables, findCommonDenominator, findEquivNum } from "../models/device-model";
 import { Id, createId } from "../utils/id";
 import { deleteAll, findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
 
@@ -21,29 +20,13 @@ const kInitialDimensions = {
   width: 328,
   height: 500
 };
-// const targetDataSetName = tr("DG.plugin.Sampler.dataset.name") || "Sampler";
-const targetDataSetName = "Sampler";
-const kDefaultDeviceVariables: IVariables = { "a": 33, "b": 33, "c": 33};
+const kDefaultVars: IVariables = ["a", "a", "b"];
 
-
-const dataSetName = "Sampler Data";
-
-const iFrameDescriptor ={
-  version: kVersion,
-  name: "Sampler",
-  // name: tr("DG.plugin.Sampler.title"),
-  pluginName: kPluginName,
-  title: "Sampler",
-  // title: tr("DG.plugin.Sampler.title"),
-  dimensions: kInitialDimensions,
-  preventDataContextReorg: false,
-
-};
 
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
 
-export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", viewType: "mixer", variables: {"a": 67, "b": 33}, collectorVariables: []});
+export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", viewType: "mixer", variables: kDefaultVars, collectorVariables: []});
 
 export const App = () => {
   const [selectedTab, setSelectedTab] = useState<NavTab>("Model");
@@ -132,19 +115,7 @@ export const App = () => {
     });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => {
-    setModel(draft => {
-      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === deviceId));
-      if (columnIndex !== -1) {
-        const device = draft.columns[columnIndex].devices.find(dev => dev.id === deviceId);
-        if (device) {
-          device.variables = {[e.target.value]: 100};
-        }
-      }
-    });
-  };
-
-  const handleUpdateVariables = (variables: IDevice["variables"]) => {
+  const handleUpdateVariables = (variables: IVariables) => {
     setModel(draft => {
       const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
       if (columnIndex !== -1) {
@@ -154,7 +125,7 @@ export const App = () => {
         }
       }
     });
-  }
+  };
 
   const handleUpdateCollectorVariables = (collectorVariables: IDevice["collectorVariables"]) => {
     setModel(draft => {
@@ -259,16 +230,15 @@ export const App = () => {
 
   const handleAddVariable = () => {
     const getNextVariable = (vars: IVariables): string => {
-      const keys = Object.keys(vars);
-      const isNumeric = keys.every(key => !isNaN(Number(key)));
+      const isNumeric = vars.every(v => !isNaN(Number(v)));
 
       if (isNumeric) {
-          const maxKey = Math.max(...keys.map(Number));
+          const maxKey = Math.max(...vars.map(Number));
           return (maxKey + 1).toString();
       } else {
-          const maxChar = keys.reduce((max, key) => {
-              if (key >= "a" && key < "z" || key >= "A" && key < "Z") {
-                  return max < key ? key : max;
+          const maxChar = vars.reduce((max, v) => {
+              if (v >= "a" && v < "z" || v >= "A" && v < "Z") {
+                  return max < v ? v : max;
               }
               return max;
           }, "0");
@@ -279,41 +249,34 @@ export const App = () => {
     if (model && selectedDeviceId) {
       const selectedDevice = getDeviceById(model, selectedDeviceId);
       const { viewType, variables } = selectedDevice;
-      const varKeys = Object.keys(variables);
-      const newPcts: IVariables = {};
       const newVariable = getNextVariable(variables);
-
+      let newVariables: IVariables = [];
       if (viewType === "spinner") {
-        const numUnique = varKeys.length;
+        const numUnique = [...new Set(variables)].length;
         const newFraction = 1 / (numUnique + 1);
-        varKeys.map((v) => {
-          const currentPct = (varKeys.filter((variable) => variable === v).length / numUnique) * 100;
+        const pctMap = [...new Set(variables)].map((v) => {
+          const currentPct = (variables.filter((variable) => variable === v).length / variables.length) * 100;
           const amtToSubtract = currentPct * newFraction;
-          newPcts[v] = currentPct - amtToSubtract;
+          return {variable: v, pct: Math.round(currentPct - amtToSubtract)};
         });
-        newPcts[newVariable] = newFraction * 100;
+        pctMap.push({variable: newVariable, pct: Math.round(newFraction * 100)});
+        const sumOfNewPcts = pctMap.reduce((sum, v) => sum + v.pct, 0);
+        let discrepancy = 100 - sumOfNewPcts;
+        while (discrepancy !== 0) {
+          const sign = discrepancy > 0 ? 1 : -1;
+          const index = Math.floor(Math.random() * pctMap.length);
+          pctMap[index].pct += sign;
+          discrepancy -= sign;
+        }
+        const lcd = findCommonDenominator(pctMap.map((v) => v.pct));
+        pctMap.forEach((vPct) => {
+          const newNum = findEquivNum(vPct.pct, lcd);
+          newVariables.push(...Array.from({length: newNum}, () => vPct.variable));
+        });
+      } else {
+        newVariables.push(...variables, newVariable);
       }
-
-      // else if (viewType === "mixer") {
-      //   const variablesAsArray = extractProportionalKeys(variables);
-      //   const newFraction = 1 / (variablesAsArray.length + 1);
-      //   variablesAsArray.map((v) => {
-      //     const currentPct = (variablesAsArray.filter((variable) => variable === v).length / variablesAsArray.length) * 100;
-      //     const amtToSubtract = currentPct * newFraction;
-      //     newPcts[v] = currentPct - amtToSubtract;
-      //   });
-      //   newPcts[newVariable] = newFraction * 100;
-      // }
-
-      const sumOfNewPcts = Object.keys(newPcts).reduce((sum, v) => sum + newPcts[v], 0);
-      let discrepancy = 100 - sumOfNewPcts;
-      while (discrepancy !== 0) {
-        const sign = discrepancy > 0 ? 1 : -1;
-        const index = Math.floor(Math.random() * Object.keys(newPcts).length);
-        newPcts[Object.keys(newPcts)[index]] += sign;
-        discrepancy -= sign;
-      }
-      handleUpdateVariables(newPcts);
+      handleUpdateVariables(newVariables);
     }
   };
 
@@ -344,7 +307,6 @@ export const App = () => {
             mergeDevices={handleMergeDevices}
             deleteDevice={handleDeleteDevice}
             setSelectedDeviceId={setSelectedDeviceId}
-            handleInputChange={handleInputChange}
             handleNameChange={handleNameChange}
             handleSampleSizeChange={handleSampleSizeChange}
             handleNumSamplesChange={handleNumSamplesChange}

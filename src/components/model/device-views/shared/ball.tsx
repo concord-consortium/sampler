@@ -16,12 +16,12 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs }: IBall) => 
   useEffect(() => {
     const id = `text-clip-${x}-${y}`;
     const clipPath = (
-      <clipPath id={id}>
+      <clipPath id={id} key={id}>
         <circle cx={x} cy={y} r={radius} origin={`${x} ${y}`} />
       </clipPath>
     );
     handleAddDefs([{ id, element: clipPath }]);
-  }, [x, y, radius, text]);
+  }, [x, y, radius, text, handleAddDefs]);
 
   return (
     <g>

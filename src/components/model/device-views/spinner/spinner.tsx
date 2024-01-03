@@ -36,13 +36,11 @@ const Wedge = ({percent, lastPercent, index, variableName, labelFontSize}: IWedg
 
 
   useEffect(() => {
-    const pctToDecimal = percent / 100;
-    const lastPctToDecimal = lastPercent / 100;
-    const perc2 = lastPctToDecimal + pctToDecimal;
-    const p1 = getCoordinatesForPercent(lastPctToDecimal);
+    const perc2 = lastPercent + percent;
+    const p1 = getCoordinatesForPercent(lastPercent);
     const p2 = getCoordinatesForPercent(perc2);
-    const largeArc = perc2 - lastPctToDecimal > 0.5 ? 1 : 0;
-    const varLabelPosition = getCoordinatesForVariableLabel((lastPctToDecimal + perc2)/2, 2);
+    const largeArc = perc2 - lastPercent > 0.5 ? 1 : 0;
+    const varLabelPosition = getCoordinatesForVariableLabel((lastPercent + perc2)/2, 2);
 
     const path = [
       `M ${p1.join(" ")}`,
@@ -85,7 +83,7 @@ export const Spinner = ({variables}: ISpinner) => {
   const [fontSize, setFontSize] = useState(16);
 
   useEffect(() => {
-    const numUnique = Object.keys(variables).length;
+    const numUnique = [...new Set(variables)].length;
     const size = numUnique >= 20 ? 6
       : numUnique >= 10 ? 10
       : 16;
@@ -93,7 +91,7 @@ export const Spinner = ({variables}: ISpinner) => {
   }, [variables]);
 
   return (
-    Object.keys(variables).length === 1 ?
+    variables.length === 1 ?
       <circle
         cx={kSpinnerX}
         cy={kSpinnerY}
@@ -101,12 +99,17 @@ export const Spinner = ({variables}: ISpinner) => {
         fill={getVariableColor(0, 0, false)}
       /> :
       <>
-        {Object.keys(variables).map((variableName, index) => {
-          const lastPercent = index === 0 ? 0 : Object.keys(variables).slice(0, index).reduce((acc, curr) => acc + variables[curr], 0);
+        {[...new Set(variables)].map((variableName, index) => {
+          const varArrayIdx = variables.findIndex((v) => v === variableName);
+          const prevVariables = variables.filter((v, i) => i < varArrayIdx && v !== variableName);
+          const numPrevVariables =  index === 0 ? 0 : prevVariables.length;
+          const numCurrVariable = variables.filter((v) => v === variableName).length;
+          const lastPercent = numPrevVariables / variables.length;
+          const currPercent = numCurrVariable / variables.length;
           return (
             <Wedge
               key={`${variableName}-${index}`}
-              percent={variables[variableName]}
+              percent={currPercent}
               lastPercent={lastPercent}
               variableName={variableName}
               index={index}

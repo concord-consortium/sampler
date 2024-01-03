@@ -22,7 +22,6 @@ interface IProps {
   mergeDevices: (device: IDevice) => void;
   deleteDevice: (device: IDevice) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleSampleSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleNumSamplesChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleStartRun: () => void;
@@ -36,9 +35,9 @@ interface IProps {
 
 
 export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton,
-    addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange, handleInputChange,
-    handleStartRun, handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange,
-    handleSelectRepeat, handleSelectReplacement, handleClearData, handleAddVariable, handleUpdateViewType}: IProps) => {
+    addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange,handleStartRun,
+    handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
+    handleSelectReplacement, handleClearData, handleAddVariable, handleUpdateViewType}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
 
   const handleOpenHelp = () => {
@@ -102,7 +101,6 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
                         mergeDevices={mergeDevices}
                         deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
                         handleNameChange={handleNameChange}
-                        handleInputChange={handleInputChange}
                         handleUpdateCollectorVariables={handleUpdateCollectorVariables}
                         handleAddVariable={handleAddVariable}
                         handleUpdateViewType={handleUpdateViewType}

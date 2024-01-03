@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { ClippingDef, IDataContext, IDevice, IItem, IItems, kDeviceTypes } from "../../models/device-model";
@@ -14,9 +14,6 @@ import { kDataContextName } from "../../utils/codap-helpers";
 
 import "./device.scss";
 
-const views = ["mixer", "spinner", "collector"] as const;
-type View = typeof views[number];
-
 interface IProps {
   model: IModel;
   device: IDevice;
@@ -26,7 +23,6 @@ interface IProps {
   deleteDevice?: (device: IDevice) => void;
   setSelectedDeviceId: (id: Id) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
   handleAddVariable: () => void;
   handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
@@ -34,7 +30,8 @@ interface IProps {
 
 export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices,
-    deleteDevice, handleNameChange, handleUpdateCollectorVariables, handleAddVariable, handleUpdateViewType} = props;
+    deleteDevice, handleNameChange, handleUpdateCollectorVariables, handleAddVariable,
+    handleUpdateViewType} = props;
   const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
@@ -73,7 +70,7 @@ export const Device = (props: IProps) => {
         handleUpdateCollectorVariables(itemValues);
       });
     }
-  }, [selectedDataContext]);
+  }, [selectedDataContext, handleUpdateCollectorVariables]);
 
   const handleSelectDevice = () => setSelectedDeviceId(device.id);
   const handleAddDevice = () => addDevice(device);
@@ -83,12 +80,12 @@ export const Device = (props: IProps) => {
     setSelectedDataContext(e.target.value);
   };
 
-  const handleAddDefs = (defs: { id: string, element: JSX.Element }[]) => {
+  const handleAddDefs = useCallback((defs: { id: string, element: JSX.Element }[]) => {
     setClippingDefs(prevDefs => {
       const newDefs = defs.filter(def => !prevDefs.some(prevDef => prevDef.id === def.id));
       return [...prevDefs, ...newDefs];
     });
-  }
+  }, []);
 
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);

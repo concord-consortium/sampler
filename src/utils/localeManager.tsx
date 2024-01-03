@@ -43,33 +43,33 @@ export async function localeInit() {
       });
 }
 
-function localizeDOM(node: HTMLElement) {
-  function convertToText(elCollection: any[]) {
-    let out = [];
-    let i, el;
-    for (i = 0; i<elCollection.length; i+=1) {
-      out.push(elCollection[i].outerHTML);
-    }
-    return out;
-  }
-  // translate title attributes
-  // translate free text
-  const textNodes: HTMLElement[] = Array.from(node.querySelectorAll("[data-text]"));
-  // const altNodes: HTMLOrSVGElement[] | HTMLImageElement[] = Array.from(node.querySelectorAll("[data-alt]"));
-  const titleNodes: HTMLElement[] = Array.from(node.querySelectorAll("[data-title]"));
-  textNodes.forEach((el: HTMLElement) => {
-    const key: string | undefined = el.dataset.text;
-    el.innerHTML = key && tr(key) || "I don't have a text";
-  });
-  // altNodes.forEach((el: HTMLOrSVGElement | HTMLImageElement) => {
-  //   const key: string | undefined = el.dataset.alt;
-  //   el.alt = key && tr(key);
-  // });
-  titleNodes.forEach((el: HTMLElement) =>{
-    const key: string | undefined = el.dataset.title;
-    el.title = key && tr(key) || "I don't have a text";
-  });
-}
+// function localizeDOM(node: HTMLElement) {
+//   function convertToText(elCollection: any[]) {
+//     let out = [];
+//     let i, el;
+//     for (i = 0; i<elCollection.length; i+=1) {
+//       out.push(elCollection[i].outerHTML);
+//     }
+//     return out;
+//   }
+//   // translate title attributes
+//   // translate free text
+//   const textNodes: HTMLElement[] = Array.from(node.querySelectorAll("[data-text]"));
+//   // const altNodes: HTMLOrSVGElement[] | HTMLImageElement[] = Array.from(node.querySelectorAll("[data-alt]"));
+//   const titleNodes: HTMLElement[] = Array.from(node.querySelectorAll("[data-title]"));
+//   textNodes.forEach((el: HTMLElement) => {
+//     const key: string | undefined = el.dataset.text;
+//     el.innerHTML = key && tr(key) || "I don't have a text";
+//   });
+//   // altNodes.forEach((el: HTMLOrSVGElement | HTMLImageElement) => {
+//   //   const key: string | undefined = el.dataset.alt;
+//   //   el.alt = key && tr(key);
+//   // });
+//   titleNodes.forEach((el: HTMLElement) =>{
+//     const key: string | undefined = el.dataset.title;
+//     el.title = key && tr(key) || "I don't have a text";
+//   });
+// }
 
 
 function resolve(stringID: any) {
