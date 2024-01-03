@@ -1,9 +1,13 @@
 $teal-dark: #177991;
+$pluginMinWidth: 328px;
 
 .model-tab {
   position: relative;
 }
 
+.model-header {
+  min-width: $pluginMinWidth;
+}
 .model-controls {
   display: flex;
   flex-direction: row;

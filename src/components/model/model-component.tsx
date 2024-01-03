@@ -8,6 +8,9 @@ import InfoIcon from "../../assets/help-icon.svg";
 
 import "./model-component.scss";
 
+const kMinColumnWidth = 220; // device + gap width
+const kSelectedSamplesDivWidth = 65; //includes margin-right
+
 interface IProps {
   model: IModel;
   selectedDeviceId?: Id;
@@ -52,44 +55,48 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
     setShowHelp(!showHelp);
   };
 
+  const modelHeaderStyle = {width: (model.columns.length * kMinColumnWidth) + kSelectedSamplesDivWidth};
+
   return (
     <div className="model-tab">
-      <div className="model-controls">
-        <button className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
-        <button className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
-        <SpeedSlider />
-        <button className="clear-data-button" onClick={handleClearData}>CLEAR DATA</button>
-      </div>
-      <div className="select-repeat-controls">
-        <div className="select-repeat-selection">
-          <div className="select-repeat-dropdown">
-            <select onChange={handleSelectRepeat}>
-              <option className={`select-repeat-option`} value="select">Select</option>
-              <option className={`select-repeat-option`} value="repeat">Repeat</option>
-            </select>
-          </div>
-          <input type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
-          <span>{`${repeat ? "selecting" : ""} items`}</span>
-          <div className="select-replacement-dropdown">
-            <select onChange={handleSelectReplacement}>
-              <option value="with">with replacement</option>
-              <option value="without">without replacement</option>
-            </select>
-          </div>
+      <div className="model-header" style={modelHeaderStyle}>
+        <div className="model-controls">
+          <button className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
+          <button className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
+          <SpeedSlider />
+          <button className="clear-data-button" onClick={handleClearData}>CLEAR DATA</button>
         </div>
-        {repeat &&
-          <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
-            <span>until</span>
-            <input type="text"></input>
-            <InfoIcon onClick={handleOpenHelp}/>
-            {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
+        <div className="select-repeat-controls">
+          <div className="select-repeat-selection">
+            <div className="select-repeat-dropdown">
+              <select onChange={handleSelectRepeat}>
+                <option className={`select-repeat-option`} value="select">Select</option>
+                <option className={`select-repeat-option`} value="repeat">Repeat</option>
+              </select>
+            </div>
+            <input type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
+            <span>{`${repeat ? "selecting" : ""} items`}</span>
+            <div className="select-replacement-dropdown">
+              <select onChange={handleSelectReplacement}>
+                <option value="with">with replacement</option>
+                <option value="without">without replacement</option>
+              </select>
+            </div>
           </div>
-        }
-      </div>
-      <div className="collect-controls">
-        <span>Collect</span>
-        <input type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
-        <span>samples</span>
+          {repeat &&
+            <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
+              <span>until</span>
+              <input type="text"></input>
+              <InfoIcon onClick={handleOpenHelp}/>
+              {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
+            </div>
+          }
+        </div>
+        <div className="collect-controls">
+          <span>Collect</span>
+          <input type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
+          <span>samples</span>
+        </div>
       </div>
       <div className="model-container">
         <div className={`device-outputs-container`}>

@@ -15,10 +15,11 @@ import { deleteAll, findOrCreateDataContext, kDataContextName } from "../utils/c
 
 import "./App.scss";
 
+export const kPluginMidWidth = 328;
 const kPluginName = "Sampler";
 const kVersion = "v0.50";
 const kInitialDimensions = {
-  width: 328,
+  width: kPluginMidWidth,
   height: 500
 };
 // const targetDataSetName = tr("DG.plugin.Sampler.dataset.name") || "Sampler";

@@ -25,7 +25,6 @@ const kMarkerHeight = 5;
 const kArrowLineBuffer = 3; //end line under arrowhead instead of the entire width of gap
 
 const kMaxLabelHeight = 22;
-const kMaxLabelWidth = 100;
 const kWidthBetweenDevices = 40;
 
 const getRect = (el: HTMLElement): Rect => {
@@ -154,9 +153,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   const labelLeft = (svgWidth / 2) - (labelDivWidth / 2);
 
   const arrowContainerStyle: React.CSSProperties = {top: 0, left: svgLeft, width: svgWidth, height: svgHeight + kMarkerHeight};
-  const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft, width: kMaxLabelWidth};
-  const labelFormStyle: React.CSSProperties = {display: editing ? "block" : "none"};
-  const labelSpanStyle: React.CSSProperties = {display: editing ? "none" : "inline-block"};
+  const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft, width: labelDivWidth};
   const markerId = `arrow_${source.id}_${target.id}`;
 
   const handleSubmitEdit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -197,10 +194,13 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
         />
       </svg>
       <div ref={labelRef} className="arrow-label" style={labelStyle}>
-        <form onSubmit={handleSubmitEdit} style={labelFormStyle}>
-          <input type="text" ref={inputRef} defaultValue={label} onKeyDown={handleLabelKeyDown} style={{height: kMaxLabelHeight}} />
-        </form>
-        <div onClick={handleToggleEditing} style={labelSpanStyle}>{label}</div>
+        { editing
+          ? <form className="label-form" onSubmit={handleSubmitEdit}>
+              <input type="text" ref={inputRef} defaultValue={label} onKeyDown={handleLabelKeyDown}
+                  style={{height: kMaxLabelHeight}} />
+            </form>
+          : <div className="label-span" onClick={handleToggleEditing}>{label}</div>
+        }
       </div>
     </div>
   );
