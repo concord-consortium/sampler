@@ -228,6 +228,21 @@ export const App = () => {
     });
   };
 
+  const handleDeleteVariable = () => {
+    if (model && selectedDeviceId) {
+      const selectedDevice = getDeviceById(model, selectedDeviceId);
+      const { viewType, variables } = selectedDevice;
+      let newVariables: IVariables = [];
+      if (viewType === "mixer") {
+        newVariables.push(...variables.slice(0, variables.length - 1));
+      } else {
+        const lastVariable = variables[variables.length - 1];
+        newVariables.push(...variables.filter((v) => v !== lastVariable));
+      }
+      handleUpdateVariables(newVariables);
+    }
+  };
+
   const handleAddVariable = () => {
     const getNextVariable = (vars: IVariables): string => {
       const isNumeric = vars.every(v => !isNaN(Number(v)));
@@ -316,6 +331,7 @@ export const App = () => {
             handleSelectReplacement={handleSelectReplacement}
             handleClearData={handleClearData}
             handleAddVariable={handleAddVariable}
+            handleDeleteVariable={handleDeleteVariable}
             handleUpdateViewType={handleUpdateViewType}
           />
         }

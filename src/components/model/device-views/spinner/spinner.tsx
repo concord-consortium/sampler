@@ -91,13 +91,28 @@ export const Spinner = ({variables}: ISpinner) => {
   }, [variables]);
 
   return (
-    variables.length === 1 ?
-      <circle
-        cx={kSpinnerX}
-        cy={kSpinnerY}
-        radius={kSpinnerRadius}
-        fill={getVariableColor(0, 0, false)}
-      /> :
+    [...new Set(variables)].length === 1 ?
+      <>
+        <circle
+          cx={kSpinnerX}
+          cy={kSpinnerY}
+          r={kSpinnerRadius}
+          stroke="#000"
+          strokeWidth={1}
+          fill={getVariableColor(0, 0, false)}
+        />
+        <text
+          x={kSpinnerX}
+          y={kSpinnerY}
+          textAnchor="middle"
+          dy=".25em"
+          dx={getTextShift(variables[0], variables[0].length)}
+          fill="#000"
+          fontSize={fontSize}
+        >
+          {variables[0]}
+        </text>
+      </> :
       <>
         {[...new Set(variables)].map((variableName, index) => {
           const varArrayIdx = variables.findIndex((v) => v === variableName);

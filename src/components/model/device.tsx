@@ -25,13 +25,14 @@ interface IProps {
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
   handleAddVariable: () => void;
+  handleDeleteVariable: () => void;
   handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
 }
 
 export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices,
     deleteDevice, handleNameChange, handleUpdateCollectorVariables, handleAddVariable,
-    handleUpdateViewType} = props;
+    handleUpdateViewType, handleDeleteVariable} = props;
   const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
@@ -135,7 +136,7 @@ export const Device = (props: IProps) => {
             { device.viewType !== "collector" &&
               <div className="add-remove-variables-buttons">
                 <button onClick={handleAddVariable}>+</button>
-                <button>-</button>
+                <button onClick={handleDeleteVariable}>-</button>
                 <button>...</button>
               </div>
             }
