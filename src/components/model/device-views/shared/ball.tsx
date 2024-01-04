@@ -36,7 +36,7 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSel
         origin={`${x} ${y}`}
       />
       <text
-        id={`ball-text-${text}-${i}`}
+        id={`ball-label-${text}-${i}`}
         style={{ cursor: "pointer" }}
         x={x}
         y={y}

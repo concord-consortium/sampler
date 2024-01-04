@@ -1,18 +1,21 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface IVariableLabelInput {
   variableIdx: number;
+  viewType: "mixer" | "spinner" | "collector";
   variableName: string;
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
-  handleBlur: () => void;
+  onBlur: () => void;
 }
 
 export const VariableLabelInput = ({variableIdx, variableName,
-  handleEditVariable, handleBlur}: IVariableLabelInput) => {
+  handleEditVariable, onBlur, viewType}: IVariableLabelInput) => {
+  const [text, setText] = useState<string>(variableName);
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const textLabel = document.getElementById(`ball-text-${variableName}-${variableIdx}`);
+    const idStr = viewType === "spinner" ? "wedge" : "ball";
+    const textLabel = document.getElementById(`${idStr}-label-${variableName}-${variableIdx}`);
     if (textLabel && ref.current) {
       ref.current.focus();
       const {x, y, height} = textLabel.getBoundingClientRect();
@@ -21,7 +24,19 @@ export const VariableLabelInput = ({variableIdx, variableName,
       ref.current.style.left = `${x}px`;
       ref.current.style.width = `${width}`;
     }
-  }, [variableIdx, variableName]);
+  }, [variableIdx, viewType, variableName]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleEditVariable(variableIdx, text);
+      onBlur();
+    }
+  };
+
+  const handleBlur = () => {
+    handleEditVariable(variableIdx, text);
+    onBlur();
+  };
 
   return (
     <input
@@ -29,9 +44,10 @@ export const VariableLabelInput = ({variableIdx, variableName,
       style={{position: "fixed"}}
       className="variable-label-input"
       type="text"
-      value={variableName}
+      value={text}
       onBlur={handleBlur}
-      onChange={(e) => handleEditVariable(variableIdx, e.target.value)}
+      onKeyDown={handleKeyDown}
+      onChange={(e) => setText(e.currentTarget.value)}
     />
   );
 };

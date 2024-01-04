@@ -1,19 +1,19 @@
 import React, { useCallback, useEffect, useState } from "react";
-
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
-import { ClippingDef, IDataContext, IDevice, IItem, IItems, kDeviceTypes } from "../../models/device-model";
+import { ClippingDef, IDataContext, IDevice, IItem, IItems } from "../../models/device-model";
 import { Id } from "../../utils/id";
 import { IModel, getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
 import DeleteIcon from "../../assets/delete-icon.svg";
 import { Mixer } from "./device-views/mixer/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
+import { VariableLabelInput } from "./variable-label-input";
+import { DeviceFooter } from "./device-footer";
 import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth } from "./device-views/shared/constants";
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../utils/codap-helpers";
 
 import "./device.scss";
-import { VariableLabelInput } from "./variable-label-input";
 
 interface IProps {
   model: IModel;
@@ -35,11 +35,12 @@ export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices,
     deleteDevice, handleNameChange, handleUpdateCollectorVariables, handleAddVariable,
     handleUpdateViewType, handleDeleteVariable, handleEditVariable} = props;
-  const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
-  const [clippingDefs, setClippingDefs] = useState<ClippingDef[]>([]);
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
+  const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
+  const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`);
+  const [clippingDefs, setClippingDefs] = useState<ClippingDef[]>([]);
   const { viewType } = device;
 
   useEffect(() => {
@@ -95,6 +96,13 @@ export const Device = (props: IProps) => {
     setSelectedVariableIdx(variableIdx);
   };
 
+  const handleSvgClick = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+    if ((e.target as HTMLElement).id === "svg-elemt") {
+      setSelectedVariableIdx(null);
+      setSelectedWedge(null);
+    }
+  };
+
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
   const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
@@ -114,29 +122,46 @@ export const Device = (props: IProps) => {
           <div className={`device-frame ${viewType}`}>
             <svg
               className="svg"
+              id={`svg-elemt`}
               width="100%"
               height="100%"
               viewBox={viewBox}
               xmlns="http://www.w3.org/2000/svg"
+              onClick={handleSvgClick}
             >
               <defs>
                 {clippingDefs.length && clippingDefs.map((def) => def.element)}
               </defs>
               {
                 viewType === "mixer" ?
-                  <Mixer variables={device.variables} handleAddDefs={handleAddDefs} handleSetSelectedVariable={handleSetSelectedVariable} /> :
+                  <Mixer
+                    variables={device.variables}
+                    handleAddDefs={handleAddDefs}
+                    handleSetSelectedVariable={handleSetSelectedVariable}
+                  /> :
                 viewType === "spinner" ?
-                  <Spinner variables={device.variables} handleSetSelectedVariable={handleSetSelectedVariable} /> :
-                  <Collector collectorVariables={device.collectorVariables} handleAddDefs={handleAddDefs} handleSetSelectedVariable={handleSetSelectedVariable}/>
+                  <Spinner
+                    variables={device.variables}
+                    selectedVariableIdx={selectedVariableIdx}
+                    selectedWedge={selectedWedge}
+                    handleSetSelectedWedge={(vName: string) => setSelectedWedge(vName)}
+                    handleSetSelectedVariable={handleSetSelectedVariable}
+                  /> :
+                  <Collector
+                    collectorVariables={device.collectorVariables}
+                    handleAddDefs={handleAddDefs}
+                    handleSetSelectedVariable={handleSetSelectedVariable}
+                  />
               }
             </svg>
             {
               selectedVariableIdx !== null &&
                 <VariableLabelInput
+                  viewType={viewType}
                   variableIdx={selectedVariableIdx}
                   variableName={device.variables[selectedVariableIdx]}
                   handleEditVariable={handleEditVariable}
-                  handleBlur={() => setSelectedVariableIdx(null)}
+                  onBlur={() => setSelectedVariableIdx(null)}
                 />
             }
           </div>
@@ -148,51 +173,19 @@ export const Device = (props: IProps) => {
         }
       </div>
       { device.id === selectedDeviceId &&
-          <div className="footer">
-            { device.viewType !== "collector" &&
-              <div className="add-remove-variables-buttons">
-                <button onClick={handleAddVariable}>+</button>
-                <button onClick={handleDeleteVariable}>-</button>
-                <button>...</button>
-              </div>
-            }
-            <div className="device-buttons">
-              {
-                kDeviceTypes.map((deviceType) => {
-                  const renderButton = deviceType !== "collector" || showCollectorButton;
-                  if (renderButton) {
-                    return (
-                      <button
-                        className={viewType === deviceType ? "selected" : ""}
-                        onClick={() => handleUpdateViewType(deviceType)}
-                        key={deviceType}>
-                          {deviceType}
-                      </button>
-                    );
-                  }
-                })
-              }
-            </div>
-            <div className="device-buttons">
-              {
-                viewType === "collector" ?
-                  <select onChange={handleSelectDataContext}>
-                    <option value="">Select a data context</option>
-                    {
-                      dataContexts.map((context) => {
-                        return <option value={context.name} key={context.id}>{context.name}</option>;
-                      })
-                    }
-                  </select>
-                   :
-                  <>
-                    <button onClick={handleAddDevice}>{addButtonLabel}</button>
-                    {showMergeButton && <button onClick={handleMergeDevices}>Merge</button>}
-                  </>
-              }
-
-            </div>
-          </div>
+          <DeviceFooter
+            viewType={viewType}
+            handleAddVariable={handleAddVariable}
+            handleAddDevice={handleAddDevice}
+            handleDeleteVariable={handleDeleteVariable}
+            showCollectorButton={showCollectorButton}
+            showMergeButton={showMergeButton}
+            handleUpdateViewType={handleUpdateViewType}
+            handleSelectDataContext={handleSelectDataContext}
+            dataContexts={dataContexts}
+            addButtonLabel={addButtonLabel}
+            handleMergeDevices={handleMergeDevices}
+          />
       }
     </div>
   );
