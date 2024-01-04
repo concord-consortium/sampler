@@ -15,10 +15,11 @@ import { deleteAll, findOrCreateDataContext, kDataContextName } from "../utils/c
 
 import "./App.scss";
 
+export const kPluginMidWidth = 328;
 const kPluginName = "Sampler";
 const kVersion = "v0.50";
 const kInitialDimensions = {
-  width: 328,
+  width: kPluginMidWidth,
   height: 500
 };
 // const targetDataSetName = tr("DG.plugin.Sampler.dataset.name") || "Sampler";
@@ -128,13 +129,13 @@ export const App = () => {
     });
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => {
+  const handleNameChange = (deviceId: Id, newName: string) => {
     setModel(draft => {
       const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === deviceId));
       if (columnIndex !== -1) {
         const device = draft.columns[columnIndex].devices.find(dev => dev.id === deviceId);
         if (device) {
-          device.name = e.target.value;
+          device.name = newName;
         }
       }
     });

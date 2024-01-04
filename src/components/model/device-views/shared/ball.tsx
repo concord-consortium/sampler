@@ -21,6 +21,7 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs }: IBall) => 
       </clipPath>
     );
     handleAddDefs([{ id, element: clipPath }]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [x, y, radius, text]);
 
   return (

@@ -20,18 +20,17 @@ interface IProps {
   model: IModel;
   device: IDevice;
   selectedDeviceId?: Id;
+  multipleColumns: boolean;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
   deleteDevice?: (device: IDevice) => void;
   setSelectedDeviceId: (id: Id) => void;
-  handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
 }
 
 export const Device = (props: IProps) => {
-  const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices,
-    deleteDevice, handleNameChange, handleInputChange, handleUpdateCollectorVariables} = props;
+  const {model, device, selectedDeviceId, multipleColumns, setSelectedDeviceId, addDevice, mergeDevices,
+    deleteDevice, handleUpdateCollectorVariables} = props;
   const [viewSelected, setViewSelected] = useState<View>("mixer");
   const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
@@ -70,6 +69,7 @@ export const Device = (props: IProps) => {
         handleUpdateCollectorVariables(itemValues);
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDataContext]);
 
   const handleSelectDevice = () => setSelectedDeviceId(device.id);
@@ -85,7 +85,7 @@ export const Device = (props: IProps) => {
       const newDefs = defs.filter(def => !prevDefs.some(prevDef => prevDef.id === def.id));
       return [...prevDefs, ...newDefs];
     });
-  }
+  };
 
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
@@ -95,10 +95,10 @@ export const Device = (props: IProps) => {
   const isSelectedDevice = device.id === selectedDeviceId;
 
   return (
-    <div className="device-controls-container" onClick={handleSelectDevice}>
+    <div className={`device-controls-container ${multipleColumns ? "multiple-columns" : ""}`} onClick={handleSelectDevice}>
       <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id}>
         <div className="device-status-icon">
-          <VisibleIcon />
+          {isSelectedDevice && <VisibleIcon />}
         </div>
         <div className="device-svg-container">
           <div className={`device-frame ${viewSelected}`}>
