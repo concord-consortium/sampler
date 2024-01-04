@@ -6,9 +6,10 @@ import { Balls } from "./shared/balls";
 interface ICollector {
   collectorVariables: ICollectorVariables;
   handleAddDefs: (defs: ClippingDef[]) => void
+  handleSetSelectedVariable: (variableIdx: number) => void;
 }
 
-export const Collector = ({collectorVariables, handleAddDefs}: ICollector) => {
+export const Collector = ({collectorVariables, handleAddDefs, handleSetSelectedVariable}: ICollector) => {
   const [ballsArray, setBallsArray] = useState<Array<string>>([]);
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export const Collector = ({collectorVariables, handleAddDefs}: ICollector) => {
     <>
       <MixerFrame withReplacement={false}/>
       { ballsArray.length &&
-        <Balls ballsArray={ballsArray} handleAddDefs={handleAddDefs}/>
+        <Balls ballsArray={ballsArray} handleAddDefs={handleAddDefs} handleSetSelectedVariable={handleSetSelectedVariable}/>
       }
     </>
   );

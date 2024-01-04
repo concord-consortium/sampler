@@ -9,10 +9,11 @@ export interface IBall {
   text: string;
   fontSize: number;
   handleAddDefs: (defs: ClippingDef[]) => void;
+  handleSetSelectedVariable: (variableIdx: number) => void;
+  i: number;
 }
 
-export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs }: IBall) => {
-
+export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSelectedVariable, i }: IBall) => {
   useEffect(() => {
     const id = `text-clip-${x}-${y}`;
     const clipPath = (
@@ -35,6 +36,8 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs }: IBall) => 
         origin={`${x} ${y}`}
       />
       <text
+        id={`ball-text-${text}-${i}`}
+        style={{ cursor: "pointer" }}
         x={x}
         y={y}
         fontSize={fontSize}
@@ -43,6 +46,7 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs }: IBall) => 
         dx={getTextShift(text, (3.8*(radius/fontSize)))}
         origin={`${x} ${y}`}
         clipPath={`url(#text-clip-${x}-${y})`}
+        onClick={() => handleSetSelectedVariable(i)}
       >
         {text}
       </text>

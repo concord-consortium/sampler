@@ -13,6 +13,7 @@ interface IWedge {
 
 interface ISpinner {
   variables: IVariables;
+  handleSetSelectedVariable: (variableIdx: number) => void;
 }
 
 const getCoordinatesForPercent = (percent: number) => {

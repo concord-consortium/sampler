@@ -32,13 +32,15 @@ interface IProps {
   handleAddVariable: () => void;
   handleDeleteVariable: () => void;
   handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
+  handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
 }
 
 
 export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton,
     addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange,handleStartRun,
     handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
-    handleSelectReplacement, handleClearData, handleAddVariable, handleDeleteVariable, handleUpdateViewType}: IProps) => {
+    handleSelectReplacement, handleClearData, handleAddVariable, handleDeleteVariable, handleUpdateViewType,
+    handleEditVariable}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
 
   const handleOpenHelp = () => {
@@ -106,6 +108,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
                         handleAddVariable={handleAddVariable}
                         handleDeleteVariable={handleDeleteVariable}
                         handleUpdateViewType={handleUpdateViewType}
+                        handleEditVariable={handleEditVariable}
                       />
                       {sourceDevices.map(sourceDevice => (
                         <Arrow

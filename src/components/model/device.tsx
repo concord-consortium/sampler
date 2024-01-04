@@ -13,6 +13,7 @@ import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-pl
 import { kDataContextName } from "../../utils/codap-helpers";
 
 import "./device.scss";
+import { VariableLabelInput } from "./variable-label-input";
 
 interface IProps {
   model: IModel;
@@ -27,16 +28,18 @@ interface IProps {
   handleAddVariable: () => void;
   handleDeleteVariable: () => void;
   handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
+  handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
 }
 
 export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices,
     deleteDevice, handleNameChange, handleUpdateCollectorVariables, handleAddVariable,
-    handleUpdateViewType, handleDeleteVariable} = props;
+    handleUpdateViewType, handleDeleteVariable, handleEditVariable} = props;
   const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
   const [clippingDefs, setClippingDefs] = useState<ClippingDef[]>([]);
+  const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
   const { viewType } = device;
 
   useEffect(() => {
@@ -88,6 +91,10 @@ export const Device = (props: IProps) => {
     });
   }, []);
 
+  const handleSetSelectedVariable = (variableIdx: number) => {
+    setSelectedVariableIdx(variableIdx);
+  };
+
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
   const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
@@ -117,12 +124,21 @@ export const Device = (props: IProps) => {
               </defs>
               {
                 viewType === "mixer" ?
-                  <Mixer variables={device.variables} handleAddDefs={handleAddDefs} /> :
+                  <Mixer variables={device.variables} handleAddDefs={handleAddDefs} handleSetSelectedVariable={handleSetSelectedVariable} /> :
                 viewType === "spinner" ?
-                  <Spinner variables={device.variables}/> :
-                  <Collector collectorVariables={device.collectorVariables} handleAddDefs={handleAddDefs}/>
+                  <Spinner variables={device.variables} handleSetSelectedVariable={handleSetSelectedVariable} /> :
+                  <Collector collectorVariables={device.collectorVariables} handleAddDefs={handleAddDefs} handleSetSelectedVariable={handleSetSelectedVariable}/>
               }
             </svg>
+            {
+              selectedVariableIdx !== null &&
+                <VariableLabelInput
+                  variableIdx={selectedVariableIdx}
+                  variableName={device.variables[selectedVariableIdx]}
+                  handleEditVariable={handleEditVariable}
+                  handleBlur={() => setSelectedVariableIdx(null)}
+                />
+            }
           </div>
         </div>
         {deleteDevice &&

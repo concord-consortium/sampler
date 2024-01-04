@@ -295,6 +295,22 @@ export const App = () => {
     }
   };
 
+  const handleEditVariable = (oldVariableIdx: number, newVariableName: string) => {
+    if (model && selectedDeviceId) {
+      const selectedDevice = getDeviceById(model, selectedDeviceId);
+      const { viewType, variables } = selectedDevice;
+      const newVariables: IVariables = [];
+      if (viewType === "mixer" || viewType === "collector") {
+        newVariables.push(...variables);
+        newVariables[oldVariableIdx] = newVariableName;
+      } else {
+        const oldVariableName = variables[oldVariableIdx];
+        newVariables.push(...variables.map((v) => v === oldVariableName ? newVariableName : v));
+      }
+      handleUpdateVariables(newVariables);
+    }
+  };
+
   return (
     <div className="App">
       <div className="navigationTabs">
@@ -333,6 +349,7 @@ export const App = () => {
             handleAddVariable={handleAddVariable}
             handleDeleteVariable={handleDeleteVariable}
             handleUpdateViewType={handleUpdateViewType}
+            handleEditVariable={handleEditVariable}
           />
         }
         {selectedTab === "Measures" && <MeasuresTab />}

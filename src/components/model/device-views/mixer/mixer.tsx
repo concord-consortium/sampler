@@ -8,13 +8,14 @@ import "./mixer.scss";
 interface IMixer {
   variables: IVariables;
   handleAddDefs: (defs: ClippingDef[]) => void;
+  handleSetSelectedVariable: (variableIdx: number) => void;
 }
 
-export const Mixer = ({variables, handleAddDefs}: IMixer) => {
+export const Mixer = ({variables, handleAddDefs, handleSetSelectedVariable}: IMixer) => {
   return (
     <>
       <MixerFrame withReplacement={false}/>
-      <Balls ballsArray={variables} handleAddDefs={handleAddDefs}/>
+      <Balls ballsArray={variables} handleAddDefs={handleAddDefs} handleSetSelectedVariable={handleSetSelectedVariable}/>
     </>
   );
 };
