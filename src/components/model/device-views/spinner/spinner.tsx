@@ -8,13 +8,16 @@ interface ISpinner {
   variables: IVariables;
   selectedVariableIdx: number|null;
   handleSetSelectedVariable: (variableIdx: number) => void;
-  handleSetSelectedWedge: (wedgeName: string) => void;
-  selectedWedge: string | null;
+  handleDeleteWedge: (e: React.MouseEvent) => void;
+  handleSetEditingPct: () => void;
+  handleSetEditingVarName: (variableIdx: number) => void
 }
 
 
-export const Spinner = ({variables, selectedWedge, handleSetSelectedWedge, handleSetSelectedVariable}: ISpinner) => {
+export const Spinner = ({variables, selectedVariableIdx, handleSetSelectedVariable, handleDeleteWedge,
+  handleSetEditingPct, handleSetEditingVarName}: ISpinner) => {
   const [fontSize, setFontSize] = useState(16);
+  const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
 
   useEffect(() => {
     const numUnique = [...new Set(variables)].length;
@@ -22,7 +25,13 @@ export const Spinner = ({variables, selectedWedge, handleSetSelectedWedge, handl
       : numUnique >= 10 ? 10
       : 16;
     setFontSize(size);
-  }, [variables]);
+
+    if (selectedVariableIdx !== null) {
+      setSelectedWedge(variables[selectedVariableIdx]);
+    } else {
+      setSelectedWedge(null);
+    }
+  }, [variables, selectedVariableIdx]);
 
   return (
     [...new Set(variables)].length === 1 ?
@@ -36,6 +45,7 @@ export const Spinner = ({variables, selectedWedge, handleSetSelectedWedge, handl
           fill={getVariableColor(0, 0, false)}
         />
         <text
+          id={`wedge-label-${variables[0]}-0`}
           x={kSpinnerX}
           y={kSpinnerY}
           textAnchor="middle"
@@ -44,6 +54,7 @@ export const Spinner = ({variables, selectedWedge, handleSetSelectedWedge, handl
           fill="#000"
           fontSize={fontSize}
           onClick={() => handleSetSelectedVariable(0)}
+          style={{ cursor: "pointer" }}
         >
           {variables[0]}
         </text>
@@ -65,9 +76,11 @@ export const Spinner = ({variables, selectedWedge, handleSetSelectedWedge, handl
               index={index}
               labelFontSize={fontSize}
               varArrayIdx={varArrayIdx}
-              handleSetSelectedWedge={handleSetSelectedWedge}
-              handleSetSelectedVariable={handleSetSelectedVariable}
               selectedWedge={selectedWedge}
+              handleSetSelectedVariable={handleSetSelectedVariable}
+              handleSetEditingVarName={handleSetEditingVarName}
+              handleSetEditingPct={handleSetEditingPct}
+              handleDeleteWedge={handleDeleteWedge}
             />
           );
         })}

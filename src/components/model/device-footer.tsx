@@ -7,7 +7,7 @@ interface IDeviceFooter {
   viewType: string;
   handleAddVariable: () => void;
   handleAddDevice: () => void;
-  handleDeleteVariable: () => void;
+  handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
   showCollectorButton: boolean;
   showMergeButton: boolean;
   handleUpdateViewType: (viewType: "mixer" | "spinner" | "collector") => void;
@@ -25,7 +25,7 @@ export const DeviceFooter = ({viewType, handleAddVariable, handleAddDevice, hand
       { viewType !== "collector" &&
         <div className="add-remove-variables-buttons">
           <button onClick={handleAddVariable}>+</button>
-          <button onClick={handleDeleteVariable}>-</button>
+          <button onClick={(e) => handleDeleteVariable(e)}>-</button>
           <button>...</button>
         </div>
       }

@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from "react";
-import {
-  initializePlugin,
-  createItems,
-} from "@concord-consortium/codap-plugin-api";
+import { initializePlugin, createItems } from "@concord-consortium/codap-plugin-api";
 import { useImmer } from "use-immer";
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
 import { IModel, IRunResult, getDeviceById, getDeviceColumnIndex } from "../models/model-model";
-import { IDevice, IVariables, findCommonDenominator, findEquivNum } from "../models/device-model";
+import { IDevice, IVariables } from "../models/device-model";
 import { Id, createId } from "../utils/id";
 import { deleteAll, findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
+import { createNewVarArray, getNextVariable, getProportionalVars } from "./helpers";
 
 import "./App.scss";
 
@@ -228,7 +226,7 @@ export const App = () => {
     });
   };
 
-  const handleDeleteVariable = () => {
+  const handleDeleteVariable = (e: React.MouseEvent, selectedVariable?: string) => {
     if (model && selectedDeviceId) {
       const selectedDevice = getDeviceById(model, selectedDeviceId);
       const { viewType, variables } = selectedDevice;
@@ -236,62 +234,27 @@ export const App = () => {
       if (viewType === "mixer") {
         newVariables.push(...variables.slice(0, variables.length - 1));
       } else {
-        const lastVariable = variables[variables.length - 1];
-        newVariables.push(...variables.filter((v) => v !== lastVariable));
+        if (selectedVariable) {
+          newVariables.push(...variables.filter((v) => v !== selectedVariable));
+        } else {
+          const lastVariable = variables[variables.length - 1];
+          newVariables.push(...variables.filter((v) => v !== lastVariable));
+        }
       }
       handleUpdateVariables(newVariables);
     }
   };
 
   const handleAddVariable = () => {
-    const getNextVariable = (vars: IVariables): string => {
-      const isNumeric = vars.every(v => !isNaN(Number(v)));
-
-      if (isNumeric) {
-          const maxKey = Math.max(...vars.map(Number));
-          return (maxKey + 1).toString();
-      } else {
-          const maxChar = vars.reduce((max, v) => {
-              if (v >= "a" && v < "z" || v >= "A" && v < "Z") {
-                  return max < v ? v : max;
-              }
-              return max;
-          }, "0");
-          return String.fromCharCode(maxChar.charCodeAt(0) + 1);
-      }
-    };
-
     if (model && selectedDeviceId) {
       const selectedDevice = getDeviceById(model, selectedDeviceId);
       const { viewType, variables } = selectedDevice;
-      const newVariable = getNextVariable(variables);
-      let newVariables: IVariables = [];
       if (viewType === "spinner") {
-        const numUnique = [...new Set(variables)].length;
-        const newFraction = 1 / (numUnique + 1);
-        const pctMap = [...new Set(variables)].map((v) => {
-          const currentPct = (variables.filter((variable) => variable === v).length / variables.length) * 100;
-          const amtToSubtract = currentPct * newFraction;
-          return {variable: v, pct: Math.round(currentPct - amtToSubtract)};
-        });
-        pctMap.push({variable: newVariable, pct: Math.round(newFraction * 100)});
-        const sumOfNewPcts = pctMap.reduce((sum, v) => sum + v.pct, 0);
-        let discrepancy = 100 - sumOfNewPcts;
-        while (discrepancy !== 0) {
-          const sign = discrepancy > 0 ? 1 : -1;
-          const index = Math.floor(Math.random() * pctMap.length);
-          pctMap[index].pct += sign;
-          discrepancy -= sign;
-        }
-        const lcd = findCommonDenominator(pctMap.map((v) => v.pct));
-        pctMap.forEach((vPct) => {
-          const newNum = findEquivNum(vPct.pct, lcd);
-          newVariables.push(...Array.from({length: newNum}, () => vPct.variable));
-        });
+        handleUpdateVariables(getProportionalVars(variables));
       } else {
-        newVariables.push(...variables, newVariable);
+        const newVariable = getNextVariable(variables);
+        handleUpdateVariables([...variables, newVariable]);
       }
-      handleUpdateVariables(newVariables);
     }
   };
 
@@ -307,6 +270,16 @@ export const App = () => {
         const oldVariableName = variables[oldVariableIdx];
         newVariables.push(...variables.map((v) => v === oldVariableName ? newVariableName : v));
       }
+      handleUpdateVariables(newVariables);
+    }
+  };
+
+  const handleEditVarPct = (variableIdx: number, pctStr: string) => {
+    if (model && selectedDeviceId) {
+      const selectedDevice = getDeviceById(model, selectedDeviceId);
+      const { variables } = selectedDevice;
+      const selectedVar = variables[variableIdx];
+      const newVariables = createNewVarArray(selectedVar, variables, Number(pctStr));
       handleUpdateVariables(newVariables);
     }
   };
@@ -350,6 +323,7 @@ export const App = () => {
             handleDeleteVariable={handleDeleteVariable}
             handleUpdateViewType={handleUpdateViewType}
             handleEditVariable={handleEditVariable}
+            handleEditVarPct={handleEditVarPct}
           />
         }
         {selectedTab === "Measures" && <MeasuresTab />}

@@ -8,7 +8,7 @@ interface IVariableLabelInput {
   onBlur: () => void;
 }
 
-export const VariableLabelInput = ({variableIdx, variableName,
+export const NameLabelInput = ({variableIdx, variableName,
   handleEditVariable, onBlur, viewType}: IVariableLabelInput) => {
   const [text, setText] = useState<string>(variableName);
   const ref = useRef<HTMLInputElement>(null);

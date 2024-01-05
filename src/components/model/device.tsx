@@ -7,11 +7,13 @@ import DeleteIcon from "../../assets/delete-icon.svg";
 import { Mixer } from "./device-views/mixer/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
-import { VariableLabelInput } from "./variable-label-input";
+import { NameLabelInput } from "./name-label-input";
+import { PctLabelInput } from "./percent-label-input";
 import { DeviceFooter } from "./device-footer";
 import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth } from "./device-views/shared/constants";
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../utils/codap-helpers";
+import { getPercentOfVar } from "../helpers";
 
 import "./device.scss";
 
@@ -26,22 +28,25 @@ interface IProps {
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
   handleAddVariable: () => void;
-  handleDeleteVariable: () => void;
+  handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
   handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
+  handleEditVarPct: (variableIdx: number, pctStr: string) => void
 }
 
 export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices,
     deleteDevice, handleNameChange, handleUpdateCollectorVariables, handleAddVariable,
-    handleUpdateViewType, handleDeleteVariable, handleEditVariable} = props;
+    handleUpdateViewType, handleDeleteVariable, handleEditVariable, handleEditVarPct} = props;
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
+  const [isEditingVarName, setIsEditingVarName] = useState<boolean>(false);
+  const [isEditingVarPct, setIsEditingVarPct] = useState<boolean>(false);
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
   const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`);
   const [clippingDefs, setClippingDefs] = useState<ClippingDef[]>([]);
-  const { viewType } = device;
+  const { viewType, variables } = device;
 
   useEffect(() => {
     const fetchDataContexts = async () => {
@@ -103,6 +108,17 @@ export const Device = (props: IProps) => {
     }
   };
 
+  const handleDeleteWedge = (e: React.MouseEvent) => {
+    if (selectedWedge) {
+      handleDeleteVariable(e, selectedWedge);
+      setSelectedWedge(null);
+    }
+  };
+
+  const handlePctChange = (variableIdx: number, newPct: string) => {
+    handleEditVarPct(variableIdx, newPct);
+  };
+
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
   const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
@@ -143,9 +159,10 @@ export const Device = (props: IProps) => {
                   <Spinner
                     variables={device.variables}
                     selectedVariableIdx={selectedVariableIdx}
-                    selectedWedge={selectedWedge}
-                    handleSetSelectedWedge={(vName: string) => setSelectedWedge(vName)}
+                    handleDeleteWedge={handleDeleteWedge}
                     handleSetSelectedVariable={handleSetSelectedVariable}
+                    handleSetEditingVarName={() => setIsEditingVarName(true)}
+                    handleSetEditingPct={() => setIsEditingVarPct(true)}
                   /> :
                   <Collector
                     collectorVariables={device.collectorVariables}
@@ -155,13 +172,23 @@ export const Device = (props: IProps) => {
               }
             </svg>
             {
-              selectedVariableIdx !== null &&
-                <VariableLabelInput
+              isEditingVarName && selectedVariableIdx !== null &&
+                <NameLabelInput
                   viewType={viewType}
                   variableIdx={selectedVariableIdx}
-                  variableName={device.variables[selectedVariableIdx]}
+                  variableName={variables[selectedVariableIdx]}
                   handleEditVariable={handleEditVariable}
-                  onBlur={() => setSelectedVariableIdx(null)}
+                  onBlur={() => setIsEditingVarName(false)}
+                />
+            }
+            {
+              isEditingVarPct && selectedVariableIdx !== null &&
+                <PctLabelInput
+                  percent={getPercentOfVar(variables[selectedVariableIdx], variables).toString()}
+                  variableIdx={selectedVariableIdx}
+                  variableName={variables[selectedVariableIdx]}
+                  handlePctChange={handlePctChange}
+                  onBlur={() => setIsEditingVarPct(false)}
                 />
             }
           </div>
