@@ -1,21 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { IVariables } from "../../../../models/device-model";
+import { ClippingDef, IVariables } from "../../../../models/device-model";
 import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getTextShift, getVariableColor } from "../shared/helpers";
 import { Wedge } from "./wedge";
+import { DndContext } from "@dnd-kit/core";
 
 interface ISpinner {
   variables: IVariables;
   selectedVariableIdx: number|null;
+  isDragging: boolean;
+  handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleDeleteWedge: (e: React.MouseEvent) => void;
   handleSetEditingPct: () => void;
-  handleSetEditingVarName: (variableIdx: number) => void
+  handleSetEditingVarName: (variableIdx: number) => void;
+  handleStartDrag: (originPt: {x: number; y: number;}) => void;
 }
 
-
-export const Spinner = ({variables, selectedVariableIdx, handleSetSelectedVariable, handleDeleteWedge,
-  handleSetEditingPct, handleSetEditingVarName}: ISpinner) => {
+export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSelectedVariable, handleDeleteWedge,
+  handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: ISpinner) => {
   const [fontSize, setFontSize] = useState(16);
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
 
@@ -77,10 +80,14 @@ export const Spinner = ({variables, selectedVariableIdx, handleSetSelectedVariab
               labelFontSize={fontSize}
               varArrayIdx={varArrayIdx}
               selectedWedge={selectedWedge}
+              nextVariable={[...new Set(variables)][index + 1]}
+              isDragging={isDragging}
+              handleAddDefs={handleAddDefs}
               handleSetSelectedVariable={handleSetSelectedVariable}
               handleSetEditingVarName={handleSetEditingVarName}
               handleSetEditingPct={handleSetEditingPct}
               handleDeleteWedge={handleDeleteWedge}
+              handleStartDrag={handleStartDrag}
             />
           );
         })}

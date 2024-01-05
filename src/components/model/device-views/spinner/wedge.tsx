@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
-import { getTextShift, getVariableColor } from "../shared/helpers";
+import { calculateWedgePercentage, getTextShift, getVariableColor } from "../shared/helpers";
+import { ClippingDef } from "../../../../models/device-model";
 
 interface IWedge {
   percent: number;
@@ -9,11 +10,15 @@ interface IWedge {
   index: number;
   labelFontSize: number;
   varArrayIdx: number;
-  handleSetSelectedVariable: (variableIdx: number) => void;
   selectedWedge: string | null;
+  nextVariable: string;
+  isDragging: boolean;
+  handleAddDefs: (def: ClippingDef) => void;
+  handleSetSelectedVariable: (variableIdx: number) => void;
   handleDeleteWedge: (e: React.MouseEvent) => void;
   handleSetEditingPct: () => void;
   handleSetEditingVarName: (variableIdx: number) => void
+  handleStartDrag: (originPt: {x: number; y: number;}) => void;
 }
 
 const kDarkTeal = "#008cba";
@@ -45,14 +50,16 @@ const getEllipseCoords = (percent: number) => {
 
 
 export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
-  varArrayIdx, selectedWedge, handleSetSelectedVariable, handleDeleteWedge,
-  handleSetEditingPct, handleSetEditingVarName}: IWedge) => {
+  varArrayIdx, selectedWedge, isDragging, handleSetSelectedVariable, handleDeleteWedge,
+  handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: IWedge) => {
   const [wedgePath, setWedgePath] = useState("");
   const [wedgeColor, setWedgeColor] = useState(selectedWedge === variableName ? kDarkTeal : "");
   const [labelPos, setLabelPos] = useState<{x: number, y: number}>({x: 0, y: 0});
   const [labelLinePath, setLabelLinePath] = useState("");
   const [pctPos, setPctPos] = useState<{x: number, y: number}>({x: 0, y: 0});
   const [delBtnPos, setDelBtnPos] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const [edgePath, setEdgePath] = useState("");
+  const [point1, setPoint1] = useState<{x: number, y: number}>({x: 0, y: 0});
 
   useEffect(() => {
     const perc2 = lastPercent + percent;
@@ -85,9 +92,19 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
     setPctPos({x: pctLabelLoc[0], y: pctLabelLoc[1]});
     setLabelLinePath(`M ${labelLineP1.join(" ")} L ${labelLineP2.join(" ")}`);
     setDelBtnPos({x: pctLabelLoc[0], y: deleteBtnLocY});
+    setEdgePath(`M ${kSpinnerX} ${kSpinnerY} L ${p2[0]} ${p2[1]}`);
+    setPoint1({x: p1[0], y: p1[1]});
     const color = selectedWedge === variableName ? kDarkTeal : getVariableColor(index, 2, false);
     setWedgeColor(color);
-  }, [percent, lastPercent, index, variableName, selectedWedge]);
+
+    const clipPathId = `wedge-clip-${variableName}`;
+    const clipPath = (
+      <clipPath id={clipPathId} key={clipPathId}>
+        <path d={path} />
+      </clipPath>
+    );
+    handleAddDefs({ id: clipPathId, element: clipPath });
+  }, [percent, lastPercent, index, variableName, selectedWedge, handleAddDefs, varArrayIdx]);
 
   const handleLabelClick = (e: React.MouseEvent) => {
     handleSetEditingVarName(varArrayIdx);
@@ -96,6 +113,11 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
 
   const handleWedgeClick = (e: React.MouseEvent) => {
     handleSetSelectedVariable(varArrayIdx);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    handleSetSelectedVariable(varArrayIdx);
+    handleStartDrag({x: point1.x, y: point1.y});
   };
 
   const buttonSize = 15;
@@ -111,9 +133,8 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
     <>
       <path
         d={wedgePath}
+        id={`wedge-${variableName}`}
         fill={wedgeColor}
-        stroke="#000"
-        strokeWidth={1}
         className="wedge"
         onClick={handleWedgeClick}
         style={{ cursor: "pointer" }}
@@ -129,11 +150,31 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
         fill={selectedWedge === variableName ? "#FFF" : "#000"}
         fontSize={labelFontSize}
         fontWeight={selectedWedge === variableName ? "bold" : "normal"}
-        clipPath={wedgePath}
         onClick={handleLabelClick}
+        clipPath={`url(#wedge-clip-${variableName}`}
       >
         {variableName}
       </text>
+      <path
+        id={`wedge-edge-${variableName}`}
+        d={edgePath}
+        stroke={wedgeColor}
+        strokeWidth={10}
+        style={{cursor: isDragging && selectedWedge === variableName ? "grabbing" : "grab"}}
+        onMouseDown={handleMouseDown}
+        clipPath={`url(#wedge-clip-${variableName}`}
+      />
+      <path
+        d={edgePath}
+        stroke={"#FFF"}
+        strokeWidth={1}
+      />
+      <circle
+        r={5}
+        cx={point1.x}
+        cy={point1.y}
+        fill={"red"}
+      />
       { selectedWedge === variableName &&
         <>
           <path

@@ -58,26 +58,13 @@ export function fewestNumbersToSum (target: number, count: number) {
   return result;
 }
 
-export function calculateWedgePercentage({cx, cy, x1, y1, x2, y2}: Record<string, number>) {
-  // calculate angles in radians
-  const angle1 = Math.atan2(y1 - cy, x1 - cx);
-  const angle2 = Math.atan2(y2 - cy, x2 - cx);
+export const getNextVariable = (varIdx: number, variables: IVariables) => {
+  const uniqueVariables = [...new Set(variables)];
+  const index = uniqueVariables.indexOf(variables[varIdx]);
+  return uniqueVariables[index + 1];
+};
 
-  // calculate the angle between the two points
-  let angle = angle2 - angle1;
-
-  // handle cases where the angle crosses the boundary between -π and π
-  if (angle < 0) {
-      angle += 2 * Math.PI;
-  }
-
-  // calculate the percentage of the circle's circumference
-  const percentage = (angle / (2 * Math.PI)) * 100;
-
-  return percentage;
-}
-
-export const getNextVariable = (vars: IVariables): string => {
+export const getNewVariable = (vars: IVariables): string => {
   const isNumeric = vars.every(v => !isNaN(Number(v)));
 
   if (isNumeric) {
@@ -96,7 +83,7 @@ export const getNextVariable = (vars: IVariables): string => {
 
 export const getProportionalVars = (variables: IVariables) => {
   const numUnique = [...new Set(variables)].length;
-  const newVariable = getNextVariable( variables);
+  const newVariable = getNewVariable( variables);
   const newVariables: IVariables = [];
   const newFraction = 1 / (numUnique + 1);
   const pctMap = [...new Set(variables)].map((v) => {
@@ -140,20 +127,20 @@ interface IGetNewPcts {
   oldPct: number;
   selectedVar: string;
   variables: IVariables;
-  lastOrNext?: string;
+  updateNext?: boolean;
 }
 
-export const getNewPcts = ({newPct, oldPct, selectedVar, variables, lastOrNext}: IGetNewPcts) => {
+export const getNewPcts = ({newPct, oldPct, selectedVar, variables, updateNext}: IGetNewPcts) => {
   const diffOfPcts = newPct - oldPct;
   const newPctsMap: Record<string, number> = {};
   let newPcts: Array<number> = [];
   const uniqueVariables = [...new Set(variables)];
 
-  if (lastOrNext) {
+  if (updateNext) {
     // only update adjacent variable (if user is dragging a wedge boundary)
     const unselectedVars = variables.filter(v => v !== selectedVar);
     const { firstIndexOfVar, lastIndexOfVar } = getFirstAndLastIndexOfVar(selectedVar, variables);
-    const adjacentVar = lastOrNext === "last" ? variables.find((v, i) => i === firstIndexOfVar - 1): variables.find((v, i) => i === lastIndexOfVar + 1);
+    const adjacentVar = variables.find((v, i) => i === lastIndexOfVar + 1);
 
     // update new percents
      newPcts = unselectedVars.map((v, i) => {
@@ -180,9 +167,9 @@ export const getNewPcts = ({newPct, oldPct, selectedVar, variables, lastOrNext}:
   return {newPcts, newPctsMap};
 };
 
-export const createNewVarArray = (selectedVar: string, variables: IVariables, newPct: number) => {
+export const createNewVarArray = (selectedVar: string, variables: IVariables, newPct: number, updateNext?: boolean) => {
   const oldPct = getPercentOfVar(selectedVar, variables);
-  const { newPcts, newPctsMap } = getNewPcts({newPct, oldPct, selectedVar, variables});
+  const { newPcts, newPctsMap } = getNewPcts({newPct, oldPct, selectedVar, variables, updateNext});
   let newVariables: IVariables = [];
   let uniqueVariables = [...new Set(variables)];
   if (uniqueVariables.length === 2 && (newPct === 33 || newPcts.includes(33))) {

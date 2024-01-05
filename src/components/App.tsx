@@ -8,7 +8,7 @@ import { IModel, IRunResult, getDeviceById, getDeviceColumnIndex } from "../mode
 import { IDevice, IVariables } from "../models/device-model";
 import { Id, createId } from "../utils/id";
 import { deleteAll, findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
-import { createNewVarArray, getNextVariable, getProportionalVars } from "./helpers";
+import { createNewVarArray, getNewVariable, getProportionalVars } from "./helpers";
 
 import "./App.scss";
 
@@ -252,7 +252,7 @@ export const App = () => {
       if (viewType === "spinner") {
         handleUpdateVariables(getProportionalVars(variables));
       } else {
-        const newVariable = getNextVariable(variables);
+        const newVariable = getNewVariable(variables);
         handleUpdateVariables([...variables, newVariable]);
       }
     }
@@ -274,12 +274,12 @@ export const App = () => {
     }
   };
 
-  const handleEditVarPct = (variableIdx: number, pctStr: string) => {
+  const handleEditVarPct = (variableIdx: number, pctStr: string, updateNext?: boolean) => {
     if (model && selectedDeviceId) {
       const selectedDevice = getDeviceById(model, selectedDeviceId);
       const { variables } = selectedDevice;
       const selectedVar = variables[variableIdx];
-      const newVariables = createNewVarArray(selectedVar, variables, Number(pctStr));
+      const newVariables = createNewVarArray(selectedVar, variables, Number(pctStr), updateNext);
       handleUpdateVariables(newVariables);
     }
   };

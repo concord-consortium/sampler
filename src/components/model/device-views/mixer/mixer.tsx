@@ -7,7 +7,7 @@ import "./mixer.scss";
 
 interface IMixer {
   variables: IVariables;
-  handleAddDefs: (defs: ClippingDef[]) => void;
+  handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
 }
 

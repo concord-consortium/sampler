@@ -8,7 +8,7 @@ export interface IBall {
   radius: number;
   text: string;
   fontSize: number;
-  handleAddDefs: (defs: ClippingDef[]) => void;
+  handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
   i: number;
 }
@@ -21,7 +21,7 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSel
         <circle cx={x} cy={y} r={radius} origin={`${x} ${y}`} />
       </clipPath>
     );
-    handleAddDefs([{ id, element: clipPath }]);
+    handleAddDefs({ id, element: clipPath });
   }, [x, y, radius, text, handleAddDefs]);
 
   return (

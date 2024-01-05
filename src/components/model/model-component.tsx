@@ -33,7 +33,7 @@ interface IProps {
   handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
   handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
-  handleEditVarPct: (variableIdx: number, pctStr: string) => void;
+  handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
 }
 
 

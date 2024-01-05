@@ -5,7 +5,7 @@ import { Ball, IBall } from "./ball";
 
 interface IBalls {
   ballsArray: Array<string>;
-  handleAddDefs: (defs: ClippingDef[]) => void;
+  handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
 }
 

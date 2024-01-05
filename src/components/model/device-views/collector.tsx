@@ -5,7 +5,7 @@ import { Balls } from "./shared/balls";
 
 interface ICollector {
   collectorVariables: ICollectorVariables;
-  handleAddDefs: (defs: ClippingDef[]) => void
+  handleAddDefs: (def: ClippingDef) => void
   handleSetSelectedVariable: (variableIdx: number) => void;
 }
 

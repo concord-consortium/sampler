@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { ClippingDef, IDataContext, IDevice, IItem, IItems } from "../../models/device-model";
 import { Id } from "../../utils/id";
@@ -10,12 +10,13 @@ import { Collector } from "./device-views/collector";
 import { NameLabelInput } from "./name-label-input";
 import { PctLabelInput } from "./percent-label-input";
 import { DeviceFooter } from "./device-footer";
-import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth } from "./device-views/shared/constants";
+import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth, kSpinnerX, kSpinnerY } from "./device-views/shared/constants";
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../utils/codap-helpers";
-import { getPercentOfVar } from "../helpers";
+import { getNextVariable, getPercentOfVar } from "../helpers";
 
 import "./device.scss";
+import { calculateWedgePercentage } from "./device-views/shared/helpers";
 
 interface IProps {
   model: IModel;
@@ -31,7 +32,7 @@ interface IProps {
   handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
   handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
-  handleEditVarPct: (variableIdx: number, pctStr: string) => void
+  handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void
 }
 
 export const Device = (props: IProps) => {
@@ -46,7 +47,10 @@ export const Device = (props: IProps) => {
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
   const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`);
   const [clippingDefs, setClippingDefs] = useState<ClippingDef[]>([]);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragOrigin, setDragOrigin] = useState<{x: number, y: number}>({x: 0, y: 0});
   const { viewType, variables } = device;
+  const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     const fetchDataContexts = async () => {
@@ -90,10 +94,18 @@ export const Device = (props: IProps) => {
     setSelectedDataContext(e.target.value);
   };
 
-  const handleAddDefs = useCallback((defs: { id: string, element: JSX.Element }[]) => {
+  const handleAddDefs = useCallback((def: { id: string, element: JSX.Element }) => {
     setClippingDefs(prevDefs => {
-      const newDefs = defs.filter(def => !prevDefs.some(prevDef => prevDef.id === def.id));
-      return [...prevDefs, ...newDefs];
+      const newDef = !prevDefs.some(prevDef => prevDef.id === def.id);
+      if (newDef) {
+        return [...prevDefs, def];
+      } else {
+        const oldDef = prevDefs.find(prevDef => prevDef.id === def.id);
+        const idxOfOldDef = prevDefs.indexOf(oldDef!);
+        const newDefs = [...prevDefs];
+        newDefs.splice(idxOfOldDef, 1, def);
+        return newDefs;
+      }
     });
   }, []);
 
@@ -115,8 +127,73 @@ export const Device = (props: IProps) => {
     }
   };
 
-  const handlePctChange = (variableIdx: number, newPct: string) => {
-    handleEditVarPct(variableIdx, newPct);
+  const handlePctChange = (variableIdx: number, newPct: string, updateNext?: boolean) => {
+    handleEditVarPct(variableIdx, newPct, updateNext);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleDrag);
+      document.addEventListener("mouseup", endDrag);
+    } else {
+      document.removeEventListener("mousemove", handleDrag);
+      document.removeEventListener("mouseup", endDrag);
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleDrag);
+      document.removeEventListener("mouseup", endDrag);
+    };
+  }, [isDragging]);
+
+  const handleStartDrag = (originPt: {x: number, y: number}) => {
+    setDragOrigin(originPt);
+    setIsDragging(true);
+  };
+
+  const endDrag = () => {
+    setIsDragging(false);
+    setDragOrigin({x: 0, y: 0});
+  };
+
+  const convertDomCoordsToSvg = (x: number, y: number) =>{
+    const svgEl = svgRef?.current;
+    let svgX = 0;
+    let svgY = 0;
+    if (svgEl) {
+      const svgMatrix = svgEl.getScreenCTM();
+      const svgPt = svgEl.createSVGPoint();
+      svgPt.x = x;
+      svgPt.y = y;
+      const svgCoords = svgPt.matrixTransform(svgMatrix!.inverse());
+      svgX = svgCoords.x;
+      svgY = svgCoords.y;
+    }
+    return {svgX, svgY};
+  };
+
+  const handleDrag = (e: MouseEvent) => {
+    if (!isDragging) return;
+    if (selectedVariableIdx !== null) {
+      const { svgX, svgY } = convertDomCoordsToSvg(e.clientX, e.clientY);
+      const args = {
+        cx: kSpinnerX,
+        cy: kSpinnerY,
+        x1: dragOrigin.x,
+        y1: dragOrigin.y,
+        x2: svgX,
+        y2: svgY
+      }
+      const newPct = calculateWedgePercentage(args);
+      const newNicePct = Math.round(newPct);
+      const htmlTarget = e.target as HTMLElement;
+      const varName = variables[selectedVariableIdx];
+      const nextVarName = getNextVariable(selectedVariableIdx, variables);
+      const isWithinBounds = htmlTarget.id === `wedge-${varName}` || htmlTarget.id === `wedge-${nextVarName}`;
+      if (isWithinBounds && (newNicePct > 1 && newNicePct < 100)) {
+        handlePctChange(selectedVariableIdx, newNicePct.toString(), true);
+      }
+    }
   };
 
   const targetDevices = getTargetDevices(model, device);
@@ -138,6 +215,7 @@ export const Device = (props: IProps) => {
           <div className={`device-frame ${viewType}`}>
             <svg
               className="svg"
+              ref={svgRef}
               id={`svg-elemt`}
               width="100%"
               height="100%"
@@ -159,10 +237,13 @@ export const Device = (props: IProps) => {
                   <Spinner
                     variables={device.variables}
                     selectedVariableIdx={selectedVariableIdx}
+                    isDragging={isDragging}
+                    handleAddDefs={handleAddDefs}
                     handleDeleteWedge={handleDeleteWedge}
                     handleSetSelectedVariable={handleSetSelectedVariable}
                     handleSetEditingVarName={() => setIsEditingVarName(true)}
                     handleSetEditingPct={() => setIsEditingVarPct(true)}
+                    handleStartDrag={handleStartDrag}
                   /> :
                   <Collector
                     collectorVariables={device.collectorVariables}
