@@ -139,7 +139,7 @@ export const getNewPcts = ({newPct, oldPct, selectedVar, variables, updateNext}:
   if (updateNext) {
     // only update adjacent variable (if user is dragging a wedge boundary)
     const unselectedVars = variables.filter(v => v !== selectedVar);
-    const { firstIndexOfVar, lastIndexOfVar } = getFirstAndLastIndexOfVar(selectedVar, variables);
+    const { lastIndexOfVar } = getFirstAndLastIndexOfVar(selectedVar, variables);
     const adjacentVar = variables.find((v, i) => i === lastIndexOfVar + 1);
 
     // update new percents

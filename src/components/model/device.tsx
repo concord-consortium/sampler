@@ -14,9 +14,9 @@ import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, k
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../utils/codap-helpers";
 import { getNextVariable, getPercentOfVar } from "../helpers";
+import { calculateWedgePercentage } from "./device-views/shared/helpers";
 
 import "./device.scss";
-import { calculateWedgePercentage } from "./device-views/shared/helpers";
 
 interface IProps {
   model: IModel;
@@ -96,15 +96,14 @@ export const Device = (props: IProps) => {
 
   const handleAddDefs = useCallback((def: { id: string, element: JSX.Element }) => {
     setClippingDefs(prevDefs => {
-      const newDef = !prevDefs.some(prevDef => prevDef.id === def.id);
-      if (newDef) {
-        return [...prevDefs, def];
-      } else {
-        const oldDef = prevDefs.find(prevDef => prevDef.id === def.id);
-        const idxOfOldDef = prevDefs.indexOf(oldDef!);
+      const oldDef = prevDefs.find(prevDef => prevDef.id === def.id);
+      if (oldDef) {
+        const idxOfOldDef = prevDefs.indexOf(oldDef);
         const newDefs = [...prevDefs];
         newDefs.splice(idxOfOldDef, 1, def);
         return newDefs;
+      } else {
+        return [...prevDefs, def];
       }
     });
   }, []);
@@ -127,24 +126,9 @@ export const Device = (props: IProps) => {
     }
   };
 
-  const handlePctChange = (variableIdx: number, newPct: string, updateNext?: boolean) => {
+  const handlePctChange = useCallback((variableIdx: number, newPct: string, updateNext?: boolean) => {
     handleEditVarPct(variableIdx, newPct, updateNext);
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener("mousemove", handleDrag);
-      document.addEventListener("mouseup", endDrag);
-    } else {
-      document.removeEventListener("mousemove", handleDrag);
-      document.removeEventListener("mouseup", endDrag);
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", handleDrag);
-      document.removeEventListener("mouseup", endDrag);
-    };
-  }, [isDragging]);
+  }, [handleEditVarPct]);
 
   const handleStartDrag = (originPt: {x: number, y: number}) => {
     setDragOrigin(originPt);
@@ -165,14 +149,16 @@ export const Device = (props: IProps) => {
       const svgPt = svgEl.createSVGPoint();
       svgPt.x = x;
       svgPt.y = y;
-      const svgCoords = svgPt.matrixTransform(svgMatrix!.inverse());
-      svgX = svgCoords.x;
-      svgY = svgCoords.y;
+      if (svgMatrix) {
+        const svgCoords = svgPt.matrixTransform(svgMatrix.inverse());
+        svgX = svgCoords.x;
+        svgY = svgCoords.y;
+      }
     }
     return {svgX, svgY};
   };
 
-  const handleDrag = (e: MouseEvent) => {
+  const handleDrag = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     if (selectedVariableIdx !== null) {
       const { svgX, svgY } = convertDomCoordsToSvg(e.clientX, e.clientY);
@@ -183,7 +169,7 @@ export const Device = (props: IProps) => {
         y1: dragOrigin.y,
         x2: svgX,
         y2: svgY
-      }
+      };
       const newPct = calculateWedgePercentage(args);
       const newNicePct = Math.round(newPct);
       const htmlTarget = e.target as HTMLElement;
@@ -194,7 +180,22 @@ export const Device = (props: IProps) => {
         handlePctChange(selectedVariableIdx, newNicePct.toString(), true);
       }
     }
-  };
+  }, [dragOrigin, isDragging, selectedVariableIdx, variables, handlePctChange]);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleDrag);
+      document.addEventListener("mouseup", endDrag);
+    } else {
+      document.removeEventListener("mousemove", handleDrag);
+      document.removeEventListener("mouseup", endDrag);
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleDrag);
+      document.removeEventListener("mouseup", endDrag);
+    };
+  }, [isDragging, handleDrag]);
 
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);

@@ -13,6 +13,8 @@ export const PctLabelInput = ({percent, variableIdx, variableName,
   const [text, setText] = useState<string>(percent);
   const ref = useRef<HTMLInputElement>(null);
 
+
+
   useEffect(() => {
     const textLabel = document.getElementById(`wedge-pct-${variableName}`);
     if (textLabel && ref.current) {
@@ -27,6 +29,10 @@ export const PctLabelInput = ({percent, variableIdx, variableName,
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
+      handlePctChange(variableIdx, text);
+      onBlur();
+    } else if (e.key === "Tab") {
+      e.preventDefault();
       handlePctChange(variableIdx, text);
       onBlur();
     }

@@ -3,7 +3,7 @@ import { ClippingDef, IVariables } from "../../../../models/device-model";
 import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getTextShift, getVariableColor } from "../shared/helpers";
 import { Wedge } from "./wedge";
-import { DndContext } from "@dnd-kit/core";
+import { SeparatorLine } from "./separator-lines";
 
 interface ISpinner {
   variables: IVariables;
@@ -36,6 +36,16 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
     }
   }, [variables, selectedVariableIdx]);
 
+  const getCurrentAndLastPct = (variableName: string, index: number) => {
+    const varArrayIdx = variables.findIndex((v) => v === variableName);
+    const prevVariables = variables.filter((v, i) => i < varArrayIdx && v !== variableName);
+    const numPrevVariables =  index === 0 ? 0 : prevVariables.length;
+    const numCurrVariable = variables.filter((v) => v === variableName).length;
+    const lastPercent = numPrevVariables / variables.length;
+    const currPercent = numCurrVariable / variables.length;
+    return {lastPercent, currPercent};
+  };
+
   return (
     [...new Set(variables)].length === 1 ?
       <>
@@ -65,11 +75,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
       <>
         {[...new Set(variables)].map((variableName, index) => {
           const varArrayIdx = variables.findIndex((v) => v === variableName);
-          const prevVariables = variables.filter((v, i) => i < varArrayIdx && v !== variableName);
-          const numPrevVariables =  index === 0 ? 0 : prevVariables.length;
-          const numCurrVariable = variables.filter((v) => v === variableName).length;
-          const lastPercent = numPrevVariables / variables.length;
-          const currPercent = numCurrVariable / variables.length;
+          const {lastPercent, currPercent} = getCurrentAndLastPct(variableName, index);
           return (
             <Wedge
               key={`${variableName}-${index}`}
@@ -81,6 +87,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
               varArrayIdx={varArrayIdx}
               selectedWedge={selectedWedge}
               nextVariable={[...new Set(variables)][index + 1]}
+              isLastVariable={index === [...new Set(variables)].length - 1}
               isDragging={isDragging}
               handleAddDefs={handleAddDefs}
               handleSetSelectedVariable={handleSetSelectedVariable}
@@ -88,6 +95,16 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
               handleSetEditingPct={handleSetEditingPct}
               handleDeleteWedge={handleDeleteWedge}
               handleStartDrag={handleStartDrag}
+            />
+          );
+        })}
+        {[...new Set(variables)].map((variableName, index) => {
+          const {lastPercent, currPercent} = getCurrentAndLastPct(variableName, index);
+          return (
+            <SeparatorLine
+              key={`separator-line-${variableName}-${index}`}
+              percent={currPercent}
+              lastPercent={lastPercent}
             />
           );
         })}

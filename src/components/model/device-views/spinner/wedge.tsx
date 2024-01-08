@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
-import { calculateWedgePercentage, getTextShift, getVariableColor } from "../shared/helpers";
+import { getCoordinatesForPercent, getTextShift, getVariableColor } from "../shared/helpers";
 import { ClippingDef } from "../../../../models/device-model";
 
 interface IWedge {
@@ -13,6 +13,7 @@ interface IWedge {
   selectedWedge: string | null;
   nextVariable: string;
   isDragging: boolean;
+  isLastVariable: boolean;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleDeleteWedge: (e: React.MouseEvent) => void;
@@ -23,13 +24,6 @@ interface IWedge {
 
 const kDarkTeal = "#008cba";
 const kLightBlue = "#dbf6ff";
-
-const getCoordinatesForPercent = (percent: number, radius: number = kSpinnerRadius) => {
-  const perc = percent + 0.75; // rotate 3/4 to start at top
-  const x = kSpinnerX + (Math.cos(2 * Math.PI * perc) * radius);
-  const y = kSpinnerY + (Math.sin(2 * Math.PI * perc) * radius);
-  return [x, y];
-};
 
 const getCoordinatesForVariableLabel = (percent: number, numUnique: number) => {
   const perc = percent + 0.75; // rotate 3/4 to start at top
@@ -50,7 +44,7 @@ const getEllipseCoords = (percent: number) => {
 
 
 export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
-  varArrayIdx, selectedWedge, isDragging, handleSetSelectedVariable, handleDeleteWedge,
+  varArrayIdx, selectedWedge, isLastVariable, isDragging, handleSetSelectedVariable, handleDeleteWedge,
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: IWedge) => {
   const [wedgePath, setWedgePath] = useState("");
   const [wedgeColor, setWedgeColor] = useState(selectedWedge === variableName ? kDarkTeal : "");
@@ -131,17 +125,19 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
 
   return (
     <>
+      {/* wedge */}
       <path
         d={wedgePath}
         id={`wedge-${variableName}`}
         fill={wedgeColor}
         className="wedge"
         onClick={handleWedgeClick}
-        style={{ cursor: "pointer" }}
+        style={{ cursor: isDragging? "grabbing" : "pointer" }}
       />
+      {/* variable name label */}
       <text
         id={`wedge-label-${variableName}-${varArrayIdx}`}
-        style={{ cursor: "pointer" }}
+        style={{ cursor: isDragging? "grabbing" : "pointer" }}
         x={labelPos.x}
         y={labelPos.y}
         textAnchor="middle"
@@ -155,28 +151,21 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
       >
         {variableName}
       </text>
-      <path
-        id={`wedge-edge-${variableName}`}
-        d={edgePath}
-        stroke={wedgeColor}
-        strokeWidth={10}
-        style={{cursor: isDragging && selectedWedge === variableName ? "grabbing" : "grab"}}
-        onMouseDown={handleMouseDown}
-        clipPath={`url(#wedge-clip-${variableName}`}
-      />
-      <path
-        d={edgePath}
-        stroke={"#FFF"}
-        strokeWidth={1}
-      />
-      <circle
-        r={5}
-        cx={point1.x}
-        cy={point1.y}
-        fill={"red"}
-      />
+      {/* draggable edge */}
+      { !isLastVariable &&
+        <path
+          id={`wedge-edge-${variableName}`}
+          d={edgePath}
+          stroke={wedgeColor}
+          strokeWidth={10}
+          style={{cursor: isDragging ? "grabbing" : "grab"}}
+          onMouseDown={handleMouseDown}
+          clipPath={`url(#wedge-clip-${variableName}`}
+        />
+      }
       { selectedWedge === variableName &&
         <>
+          {/* percentage label */}
           <path
             d={labelLinePath}
             strokeWidth={2}
@@ -193,6 +182,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
           >
             {Math.round(percent * 100)}%
           </text>
+          {/* delete wedge button */}
           <g style={{cursor: "pointer"}} onClick={(e) => handleDeleteWedge(e)}>
             <rect
               x={delBtnPos.x - (buttonSize / 2)}

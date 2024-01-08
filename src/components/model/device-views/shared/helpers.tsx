@@ -1,3 +1,5 @@
+import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "./constants";
+
 export const getVariableColor = (i: number, slices: number, lighten: boolean) => {
   const baseColorHue = 171;
   const hueDiff = Math.min(15, 60/slices);
@@ -11,7 +13,7 @@ export const getTextShift = (text: string, maxLetters: number) => {
   return (0.2 * lettersOver) + "em";
 };
 
-export function calculateWedgePercentage({cx, cy, x1, y1, x2, y2}: Record<string, number>) {
+export const calculateWedgePercentage = ({cx, cy, x1, y1, x2, y2}: Record<string, number>) => {
   // calculate angles in radians
   const angle1 = Math.atan2(y1 - cy, x1 - cx);
   const angle2 = Math.atan2(y2 - cy, x2 - cx);
@@ -28,4 +30,11 @@ export function calculateWedgePercentage({cx, cy, x1, y1, x2, y2}: Record<string
   const percentage = (angle / (2 * Math.PI)) * 100;
 
   return percentage;
-}
+};
+
+export const getCoordinatesForPercent = (percent: number, radius: number = kSpinnerRadius) => {
+  const perc = percent + 0.75; // rotate 3/4 to start at top
+  const x = kSpinnerX + (Math.cos(2 * Math.PI * perc) * radius);
+  const y = kSpinnerY + (Math.sin(2 * Math.PI * perc) * radius);
+  return [x, y];
+};
