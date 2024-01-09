@@ -308,7 +308,7 @@ export const App = () => {
         }
       </div>
       <div className="tab-content">
-        {selectedTab === "Model" &&
+        {selectedTab === "Model" ?
           <ModelTab
             model={model}
             selectedDeviceId={selectedDeviceId}
@@ -333,10 +333,11 @@ export const App = () => {
             handleUpdateViewType={handleUpdateViewType}
             handleEditVariable={handleEditVariable}
             handleEditVarPct={handleEditVarPct}
-          />
+          /> :
+          selectedTab === "Measures" ?
+          <MeasuresTab /> :
+          <AboutTab />
         }
-        {selectedTab === "Measures" && <MeasuresTab />}
-        {selectedTab === "About" && <AboutTab />}
       </div>
     </div>
   );

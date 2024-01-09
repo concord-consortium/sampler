@@ -16,12 +16,17 @@ interface IProps {
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
   deleteDevice?: (device: IDevice) => void;
-  handleNameChange: (deviceId: Id, newName: string) => void;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
+  handleNameChange: (deviceId: string, newName: string) => void;
+  handleAddVariable: (selectedVariable?: string) => void;
+  handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
+  handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
+  handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
+  handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
 }
 export const Column = ({column, columnIndex, model, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
-    handleNameChange, handleInputChange, handleUpdateCollectorVariables}: IProps) => {
+    handleNameChange, handleUpdateCollectorVariables, handleAddVariable, handleDeleteVariable,
+    handleEditVarPct, handleEditVariable, handleUpdateViewType}: IProps) => {
   const hasBranch = model.columns.find(c =>  c.devices.length > 1);
   const multipleColumns = model.columns.length > 1;
   const [attrName, setAttrName] = useState("output");
@@ -79,8 +84,14 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, setSelecte
               setSelectedDeviceId={setSelectedDeviceId}
               addDevice={addDevice}
               mergeDevices={mergeDevices}
-              deleteDevice={deleteDevice}
+              deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
+              handleNameChange={handleNameChange}
               handleUpdateCollectorVariables={handleUpdateCollectorVariables}
+              handleAddVariable={handleAddVariable}
+              handleDeleteVariable={handleDeleteVariable}
+              handleUpdateViewType={handleUpdateViewType}
+              handleEditVariable={handleEditVariable}
+              handleEditVarPct={handleEditVarPct}
             />
             {sourceDevices.map(sourceDevice => (
               <Arrow

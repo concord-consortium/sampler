@@ -27,7 +27,7 @@ interface IProps {
   mergeDevices: (device: IDevice) => void;
   deleteDevice?: (device: IDevice) => void;
   setSelectedDeviceId: (id: Id) => void;
-  handleNameChange: (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => void;
+  handleNameChange: (deviceId: string, newName: string) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
   handleAddVariable: () => void;
   handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
@@ -37,11 +37,9 @@ interface IProps {
 }
 
 export const Device = (props: IProps) => {
-  const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices,
-    deleteDevice, handleNameChange, handleUpdateCollectorVariables, handleAddVariable,
-    handleUpdateViewType, handleDeleteVariable, handleEditVariable, handleEditVarPct} = props;
-  const [viewSelected, setViewSelected] = useState<View>("mixer");
-  const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
+  const {model, device, selectedDeviceId, multipleColumns, setSelectedDeviceId, addDevice, mergeDevices,
+    deleteDevice, handleUpdateCollectorVariables, handleAddVariable, handleUpdateViewType, handleDeleteVariable,
+    handleEditVariable, handleEditVarPct} = props;
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
@@ -284,16 +282,16 @@ export const Device = (props: IProps) => {
       </div>
       { device.id === selectedDeviceId &&
           <DeviceFooter
+            showCollectorButton={showCollectorButton}
+            showMergeButton={showMergeButton}
+            dataContexts={dataContexts}
+            addButtonLabel={addButtonLabel}
             viewType={viewType}
             handleAddVariable={handleAddVariable}
             handleAddDevice={handleAddDevice}
             handleDeleteVariable={handleDeleteVariable}
-            showCollectorButton={showCollectorButton}
-            showMergeButton={showMergeButton}
             handleUpdateViewType={handleUpdateViewType}
             handleSelectDataContext={handleSelectDataContext}
-            dataContexts={dataContexts}
-            addButtonLabel={addButtonLabel}
             handleMergeDevices={handleMergeDevices}
           />
       }
