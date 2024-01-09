@@ -22,9 +22,10 @@ type Rect = Omit<DOMRect, "toJSON"> & {midY: number};
 
 const kMarkerWidth = 5;
 const kMarkerHeight = 5;
+const kArrowLineBuffer = 3; //end line under arrowhead instead of the entire width of gap
 
-const kMaxLabelHeight = 20;
-const kMaxLabelWidth = 100;
+const kMaxLabelHeight = 22;
+const kWidthBetweenDevices = 40;
 
 const getRect = (el: HTMLElement): Rect => {
   const {width, height} = el.getBoundingClientRect();
@@ -60,7 +61,7 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   // lets us leverage the browser flexbox layout.
   const sourceDiv = document.querySelector(`[data-device-id="${source.id}"]`) as HTMLDivElement|null;
   const targetDiv = document.querySelector(`[data-device-id="${target.id}"]`) as HTMLDivElement|null;
-
+  const labelDivWidth = labelRef.current?.getBoundingClientRect().width || 22;
   const resetLabelInput = useCallback(() => {
     if (inputRef.current) {
       inputRef.current.value = label;
@@ -79,11 +80,16 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
 
   const handleUpdateLabel = useCallback(() => {
     const trimmedLabel = (inputRef.current?.value ?? "").trim();
+
     if (trimmedLabel.length > 0) {
       // TODO LATER: update source device in model with trimmedLabel
-
       setLabel(trimmedLabel);
       handleToggleEditing();
+    } else {
+      if (inputRef.current) {
+        inputRef.current.value = "*";
+        setLabel("*");
+      }
     }
   }, [setLabel]);
 
@@ -127,33 +133,32 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
 
   const sourceRect = getRect(sourceDiv);
   const targetRect = getRect(targetDiv);
-
-  let svgTop = Math.min(sourceRect.midY, targetRect.midY);
+  // rect.midY takes into account the y position of the rect vs midpoint based on height.
+  const sourceMidPointY = (sourceRect.bottom - sourceRect.top) / 2;
+  const targetMidPointY = (targetRect.bottom - targetRect.top) / 2;
+  let svgTop = Math.min(sourceMidPointY + kMaxLabelHeight, targetMidPointY + kMaxLabelHeight);
   let svgBottom = Math.max(sourceRect.midY, targetRect.midY);
   let svgHeight = svgBottom - svgTop;
-  const horizontalArrow = svgHeight === 0;
+  const horizontalArrow = sourceRect.midY === targetRect.midY;
   const minSvgHeight = Math.max(kMarkerHeight, kMarkerWidth) * 4;
   if (svgHeight < minSvgHeight) {
-    const halfHeightDiff = (minSvgHeight - svgHeight) / 2;
+    const halfHeightDiff = (minSvgHeight + svgHeight) / 2;
     svgHeight = minSvgHeight;
     svgTop -= halfHeightDiff;
     svgBottom += halfHeightDiff;
   }
 
-  const svgLeft = sourceRect.right;
+  const svgLeft = -kWidthBetweenDevices;
   const svgWidth = targetRect.left - sourceRect.right;
-
-  const labelTop = horizontalArrow ? svgBottom + 10 : svgTop + (svgHeight / 2) - (kMaxLabelHeight / 2);
-  const labelLeft = svgLeft + (svgWidth / 2) - (kMaxLabelWidth / 2);
-
   const start: IPoint = {x: 0, y: sourceRect.midY - svgTop};
   const end: IPoint = {x: svgWidth, y: targetRect.midY - svgTop};
 
-  const svgStyle: React.CSSProperties = {top: svgTop, left: svgLeft, width: svgWidth, height: svgHeight};
-  const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft, width: kMaxLabelWidth};
-  const labelFormStyle: React.CSSProperties = {display: editing ? "block" : "none"};
-  const labelSpanStyle: React.CSSProperties = {display: editing ? "none" : "inline-block"};
+  const arrowMidPoint = (end.y - start.y) / 2;
+  const labelTop = horizontalArrow ? 0 : arrowMidPoint < 0 ? arrowMidPoint - kMaxLabelHeight/2 : -arrowMidPoint - kMaxLabelHeight;
+  const labelLeft = (svgWidth / 2) - (labelDivWidth / 2);
 
+  const arrowContainerStyle: React.CSSProperties = {top: 0, left: svgLeft, width: svgWidth, height: svgHeight + kMarkerHeight};
+  const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft};
   const markerId = `arrow_${source.id}_${target.id}`;
 
   const handleSubmitEdit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -163,20 +168,26 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   };
 
   const handleLabelKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.code === "Escape") {
-      handleToggleEditing();
-      resetLabelInput();
+    switch(e.code) {
+      case "Escape":
+        handleToggleEditing();
+        resetLabelInput();
+        break;
+      case "Enter":
+        handleToggleEditing();
+        handleUpdateLabel();
+        break;
     }
   };
 
   return (
-    <>
-      <svg className="arrow" style={svgStyle} width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <div className="arrow-container" style={arrowContainerStyle}>
+      <svg className="arrow" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <marker
             id={markerId}
             viewBox={`0 0 ${kMarkerWidth} ${kMarkerHeight}`}
-            refX={kMarkerWidth}
+            refX={kMarkerWidth - kArrowLineBuffer}
             refY={kMarkerHeight / 2}
             markerWidth={kMarkerWidth}
             markerHeight={kMarkerHeight}
@@ -187,18 +198,21 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
         </defs>
         <line
           x1={start.x}
-          y1={start.y}
-          x2={end.x}
-          y2={end.y}
+          y1={start.y - kMarkerHeight}
+          x2={end.x - kMarkerWidth - kArrowLineBuffer}
+          y2={end.y - kMarkerHeight}
           markerEnd={`url(#${markerId})`}
         />
       </svg>
       <div ref={labelRef} className="arrow-label" style={labelStyle}>
-        <form onSubmit={handleSubmitEdit} style={labelFormStyle}>
-          <input type="text" ref={inputRef} defaultValue={label} onKeyDown={handleLabelKeyDown} style={{height: kMaxLabelHeight}} />
-        </form>
-        <div onClick={handleToggleEditing} style={labelSpanStyle}>{label}</div>
+        { editing
+          ? <form className="label-form" onSubmit={handleSubmitEdit}>
+              <input type="text" ref={inputRef} defaultValue={label} onKeyDown={handleLabelKeyDown}
+                  style={{height: kMaxLabelHeight}} />
+            </form>
+          : <div className="label-span" tabIndex={0} onKeyDown={handleToggleEditing} onClick={handleToggleEditing}>{label}</div>
+        }
       </div>
-    </>
+    </div>
   );
 };

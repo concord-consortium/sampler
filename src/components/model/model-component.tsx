@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-
-import { Device } from "./device";
-import { IModel, getSourceDevices } from "../../models/model-model";
+import { IModel } from "../../models/model-model";
 import { IDevice } from "../../models/device-model";
 import { Id } from "../../utils/id";
-
+import { useResizer } from "../../hooks/use-resizer";
+import { Column } from "./column";
 import InfoIcon from "../../assets/help-icon.svg";
 
 import "./model-component.scss";
-import { Arrow } from "./arrow";
+
+const kMinColumnWidth = 220; // device + gap width
+const kSelectedSamplesDivWidth = 65; //includes margin-right
 
 interface IProps {
   model: IModel;
@@ -43,52 +44,67 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
     handleSelectReplacement, handleClearData, handleAddVariable, handleDeleteVariable, handleUpdateViewType,
     handleEditVariable, handleEditVarPct}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
+  const [isWide, setIsWide] = useState(false);
+
+  useResizer(()=>{
+    const repeatControlWidth = document.querySelector(".select-repeat-controls")
+    ?.getBoundingClientRect().width;
+    if (repeatControlWidth && repeatControlWidth > 575) {
+      setIsWide(true);
+    } else {
+      setIsWide(false);
+    }
+  });
 
   const handleOpenHelp = () => {
     setShowHelp(!showHelp);
   };
 
+  const modelHeaderStyle = {width: (model.columns.length * kMinColumnWidth) + kSelectedSamplesDivWidth};
+
   return (
     <div className="model-tab">
-      <div className="model-controls">
-        <button className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
-        <button className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
-        <SpeedSlider />
-        <button className="clear-data-button" onClick={handleClearData}>CLEAR DATA</button>
-      </div>
-      <div className="select-repeat-controls">
-        <div className="select-repeat-selection">
-          <div className="select-repeat-dropdown">
-            <select onChange={handleSelectRepeat}>
-              <option className={`select-repeat-option`} value="select">Select</option>
-              <option className={`select-repeat-option`} value="repeat">Repeat</option>
-            </select>
-          </div>
-          <input type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
-          <span>items</span>
-          <div className="select-replacement-dropdown">
-            <select onChange={handleSelectReplacement}>
-              <option value="with">with replacement</option>
-              <option value="without">without replacement</option>
-            </select>
-          </div>
+      <div className="model-header" style={modelHeaderStyle}>
+        <div className="model-controls">
+          <button className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
+          <button className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
+          <SpeedSlider />
+          <button className="clear-data-button" onClick={handleClearData}>CLEAR DATA</button>
         </div>
-        {repeat &&
-          <div className="repeat-until-controls">
-            <span>until</span>
-            <input type="text"></input>
-            <InfoIcon onClick={handleOpenHelp}/>
-            {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
+        <div className="select-repeat-controls">
+          <div className="select-repeat-selection">
+            <div className="select-repeat-dropdown">
+              <select onChange={handleSelectRepeat}>
+                <option className={`select-repeat-option`} value="select">Select</option>
+                <option className={`select-repeat-option`} value="repeat">Repeat</option>
+              </select>
+            </div>
+            <input type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
+            <span>{`${repeat ? "selecting" : ""} items`}</span>
+            <div className="select-replacement-dropdown">
+              <select onChange={handleSelectReplacement}>
+                <option value="with">with replacement</option>
+                <option value="without">without replacement</option>
+              </select>
+            </div>
           </div>
-        }
-      </div>
-      <div className="collect-controls">
-        <span>Collect</span>
-        <input type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
-        <span>samples</span>
+          {repeat &&
+            <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
+              <span>until</span>
+              <input type="text"></input>
+              <InfoIcon onClick={handleOpenHelp}/>
+              {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
+            </div>
+          }
+        </div>
+        <div className="collect-controls">
+          <span>Collect</span>
+          <input type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
+          <span>samples</span>
+        </div>
       </div>
       <div className="model-container">
-        <div className="device-outputs-container">
+        <div className={`device-outputs-container`}>
           {model.columns.map((column, columnIndex) => {
             return (
               <div key={columnIndex} className="device-column">
@@ -125,6 +141,20 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
                   );
                 })}
               </div>
+              <Column
+                key={`column-${columnIndex}`}
+                column={column}
+                columnIndex={columnIndex}
+                model={model}
+                selectedDeviceId={selectedDeviceId}
+                setSelectedDeviceId={setSelectedDeviceId}
+                addDevice={addDevice}
+                mergeDevices={mergeDevices}
+                deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
+                handleNameChange={handleNameChange}
+                handleInputChange={handleInputChange}
+                handleUpdateCollectorVariables={handleUpdateCollectorVariables}
+              />
             );
           })}
           <div className="outputs">

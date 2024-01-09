@@ -12,10 +12,11 @@ import { createNewVarArray, getNewVariable, getProportionalVars } from "./helper
 
 import "./App.scss";
 
+export const kPluginMidWidth = 328;
 const kPluginName = "Sampler";
 const kVersion = "v0.50";
 const kInitialDimensions = {
-  width: 328,
+  width: kPluginMidWidth,
   height: 500
 };
 const kDefaultVars: IVariables = ["a", "a", "b"];
@@ -36,6 +37,10 @@ export const App = () => {
   const [numSamples, setNumSamples] = useState<string>("3");
   const [createNewExperiment, setCreateNewExperiment] = useState(true);
   const [enableRunButton, setEnableRunButton] = useState(true);
+  const numColumns = model.columns.length;
+  const lastColumn = model.columns[numColumns - 1];
+  const numDevicesInLastColumn = lastColumn?.devices?.length;
+  const lastDeviceId = lastColumn?.devices?.[numDevicesInLastColumn - 1].id;
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
@@ -45,6 +50,10 @@ export const App = () => {
   useEffect(() => {
     setModel({columns: [{devices: [createDefaultDevice()]}], experimentNum: 0});
   }, [setModel]);
+
+  useEffect(()=>{
+    setSelectedDeviceId(lastDeviceId);
+  }, [lastDeviceId]);
 
   const handleTabSelect = (tab: NavTab) => {
     setSelectedTab(tab);
@@ -101,13 +110,13 @@ export const App = () => {
     });
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => {
+  const handleNameChange = (deviceId: Id, newName: string) => {
     setModel(draft => {
       const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === deviceId));
       if (columnIndex !== -1) {
         const device = draft.columns[columnIndex].devices.find(dev => dev.id === deviceId);
         if (device) {
-          device.name = e.target.value;
+          device.name = newName;
         }
       }
     });

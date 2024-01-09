@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { ClippingDef, IDataContext, IDevice, IItem, IItems } from "../../models/device-model";
 import { Id } from "../../utils/id";
 import { IModel, getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
-import DeleteIcon from "../../assets/delete-icon.svg";
 import { Mixer } from "./device-views/mixer/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
@@ -15,6 +13,8 @@ import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-pl
 import { kDataContextName } from "../../utils/codap-helpers";
 import { getNextVariable, getPercentOfVar } from "../helpers";
 import { calculateWedgePercentage } from "./device-views/shared/helpers";
+import DeleteIcon from "../../assets/delete-icon.svg";
+import VisibleIcon from "../../assets/visibility-on-icon.svg";
 
 import "./device.scss";
 
@@ -22,6 +22,7 @@ interface IProps {
   model: IModel;
   device: IDevice;
   selectedDeviceId?: Id;
+  multipleColumns: boolean;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
   deleteDevice?: (device: IDevice) => void;
@@ -39,6 +40,8 @@ export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices,
     deleteDevice, handleNameChange, handleUpdateCollectorVariables, handleAddVariable,
     handleUpdateViewType, handleDeleteVariable, handleEditVariable, handleEditVarPct} = props;
+  const [viewSelected, setViewSelected] = useState<View>("mixer");
+  const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
@@ -202,15 +205,13 @@ export const Device = (props: IProps) => {
   const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
   const showCollectorButton = getNumDevices(model) === 1;
   const showMergeButton = siblingDevices.length > 0;
+  const isSelectedDevice = device.id === selectedDeviceId;
 
   return (
-    <div className="device-controls-container" onClick={handleSelectDevice}>
-      <div>
-        <input className="attr-name" value={device.name} onChange={(e) => handleNameChange(e, device.id)}></input>
-      </div>
-      <div className="device-container" data-device-id={device.id}>
+    <div className={`device-controls-container ${multipleColumns ? "multiple-columns" : ""}`} onClick={handleSelectDevice}>
+      <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id}>
         <div className="device-status-icon">
-          <VisibleIcon />
+          {isSelectedDevice && <VisibleIcon />}
         </div>
         <div className="device-svg-container">
           <div className={`device-frame ${viewType}`}>

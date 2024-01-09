@@ -1,28 +1,49 @@
-.arrow {
+.arrow-container {
   position: absolute;
 
-  marker {
-    polygon {
-      fill: #008cba;
+  .arrow {
+
+    marker {
+      polygon {
+        fill: #008cba;
+      }
+    }
+
+    line {
+      stroke-width: 3;
+      stroke: #008cba;
     }
   }
 
-  line {
-    stroke-width: 3;
-    stroke: #008cba;
-  }
-}
-
-.arrow-label {
-  position: absolute;
-
-  div {
-    cursor: pointer;
-    border: 1px solid #000;
-    padding: 3px 6px;
-    background-color: white;
+  .arrow-label {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    max-width: 100px;
+    min-height: 22px;
     font-size: 11px;
     font-weight: 500;
     color: #000;
+
+    &.editing {
+      padding: 1px;
+      border-radius: 4.5px;
+      border: solid 2px rgba(0,122,255, 0.25);
+      background-color: #fff;
+    }
+    
+    .label-span {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background-color: white;
+      border-radius: 1.5px;
+      border: solid 1px #8f8f9d;
+    }
   }
 }

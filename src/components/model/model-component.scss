@@ -1,9 +1,13 @@
 $teal-dark: #177991;
+$pluginMinWidth: 328px;
 
 .model-tab {
   position: relative;
 }
 
+.model-header {
+  min-width: $pluginMinWidth;
+}
 .model-controls {
   display: flex;
   flex-direction: row;
@@ -147,6 +151,7 @@ $teal-dark: #177991;
   flex-direction: row;
   align-items: center;
   justify-content: left;
+  flex-wrap: wrap;
   background-color: rgba(0, 140, 186, 0.2);
   width: 100%;
   padding: 4px 12px;
@@ -155,7 +160,7 @@ $teal-dark: #177991;
     display: flex;
     flex-direction: row;
     align-items: center;
-
+    width: 350px;
 
     .select-repeat-dropdown {
       position: relative;
@@ -235,14 +240,18 @@ $teal-dark: #177991;
       padding: 0 5px;
     }
   }
+
   .repeat-until-controls {
-    width: 100%;
+    width: 350px;
     height: 30px;
-    background-color: rgba(0, 140, 186, 0.2);
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
+    &.wide {
+      width: 200px;
+      justify-content: left;
+    }
     span {
       margin: 0 4px;
     }
@@ -276,10 +285,37 @@ $teal-dark: #177991;
 .device-outputs-container {
   display: flex;
   flex-direction: row;
-  align-items: center;
   justify-content: left;
   margin: 0 20px;
   gap: 40px;
+  position: absolute;
+
+  .device-column {
+    position: relative;
+    top: 23px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    &.centered {
+      justify-content: center;
+      display: flex;
+      flex-direction: column;
+    }
+    .device-column-header {
+      margin: 5px;
+      position: absolute;
+      top: 0;
+
+      .attr-name {
+        width: 40px;
+        margin: 0 70px 27px;
+        border-radius: 1.5px;
+        border: solid 1px #8f8f9d;
+        background-color: #fff;
+      }
+    }
+  }
 }
 
 .help-modal {
