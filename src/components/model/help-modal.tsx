@@ -18,7 +18,7 @@ export const HelpModal = ({setShowHelp}: IHelpModal) => {
           Specify a Condition to Repeat Until
         </p>
         <p className="help-section-body">
-          Repeat Until allos the odel to continue drawing samples until a desired outcome -- the Condition specified -- occurs.
+          Repeat Until allows the model to continue drawing samples until a desired outcome -- the Condition specified -- occurs.
         </p>
         <p className="help-section-title">
           Using a Formula
