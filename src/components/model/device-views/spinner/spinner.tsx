@@ -1,117 +1,110 @@
 import React, { useEffect, useState } from "react";
-import { IVariables } from "../../../../models/device-model";
+import { ClippingDef, IVariables } from "../../../../models/device-model";
 import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getTextShift, getVariableColor } from "../shared/helpers";
-
-interface IWedge {
-  percent: number;
-  lastPercent: number;
-  variableName: string;
-  index: number;
-  labelFontSize: number;
-}
+import { Wedge } from "./wedge";
+import { SeparatorLine } from "./separator-lines";
 
 interface ISpinner {
   variables: IVariables;
+  selectedVariableIdx: number|null;
+  isDragging: boolean;
+  handleAddDefs: (def: ClippingDef) => void;
+  handleSetSelectedVariable: (variableIdx: number) => void;
+  handleDeleteWedge: (e: React.MouseEvent) => void;
+  handleSetEditingPct: () => void;
+  handleSetEditingVarName: (variableIdx: number) => void;
+  handleStartDrag: (originPt: {x: number; y: number;}) => void;
 }
 
-const getCoordinatesForPercent = (percent: number) => {
-  const perc = percent + 0.75; // rotate 3/4 to start at top
-  const x = kSpinnerX + (Math.cos(2 * Math.PI * perc) * kSpinnerRadius);
-  const y = kSpinnerY + (Math.sin(2 * Math.PI * perc) * kSpinnerRadius);
-  return [x, y];
-};
-
-const getCoordinatesForVariableLabel = (percent: number, numUnique: number) => {
-  const perc = percent + 0.75; // rotate 3/4 to start at top
-  const x = kSpinnerX + (Math.cos(2 * Math.PI * perc) * kSpinnerRadius * (1 + (Math.min(.70, numUnique * 0.1))));
-  const y = kSpinnerY + (Math.sin(2 * Math.PI * perc) * kSpinnerRadius * (1 + (Math.min(.70, numUnique * 0.1))));
-  return [x, y];
-};
-
-const Wedge = ({percent, lastPercent, index, variableName, labelFontSize}: IWedge) => {
-  const [wedgePath, setWedgePath] = useState("");
-  const [wedgeColor, setWedgeColor] = useState("");
-  const [labelPos, setLabelPos] = useState<{x: number, y: number}>({x: 0, y: 0});
-
-
-  useEffect(() => {
-    const pctToDecimal = percent / 100;
-    const lastPctToDecimal = lastPercent / 100;
-    const perc1 = lastPctToDecimal;
-    const perc2 = lastPctToDecimal + pctToDecimal;
-    const p1 = getCoordinatesForPercent(perc1);
-    const p2 = getCoordinatesForPercent(perc2);
-    const largeArc = perc2 - perc1 > 0.5 ? 1 : 0;
-    const varLabelPosition = getCoordinatesForVariableLabel((perc1+perc2)/2, 2);
-
-    const path = [
-      `M ${p1.join(" ")}`,
-      `A ${kSpinnerRadius} ${kSpinnerRadius} 0 ${largeArc} 1 ${p2.join(" ")}`,
-      `L ${kSpinnerX} ${kSpinnerY}`,
-      `L ${p1.join(" ")}`
-    ].join(" ");
-
-    setWedgePath(path);
-    setWedgeColor(getVariableColor(index, 2, false));
-    setLabelPos({x: (kSpinnerX + varLabelPosition[0]) / 2, y: (kSpinnerY + varLabelPosition[1]) / 2});
-  }, [percent, lastPercent, index]);
-
-  return (
-    <>
-      <path
-        d={wedgePath}
-        fill={wedgeColor}
-        stroke="#000"
-        strokeWidth={1}
-        className="wedge"
-      />
-      <text
-        x={labelPos.x}
-        y={labelPos.y}
-        textAnchor="middle"
-        dy=".25em"
-        dx={getTextShift(variableName, variableName.length)}
-        fill="#000"
-        fontSize={labelFontSize}
-        clipPath={wedgePath}
-      >
-        {variableName}
-      </text>
-    </>
-  );
-};
-
-export const Spinner = ({variables}: ISpinner) => {
+export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSelectedVariable, handleDeleteWedge,
+  handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: ISpinner) => {
   const [fontSize, setFontSize] = useState(16);
+  const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
 
   useEffect(() => {
-    const numUnique = Object.keys(variables).length;
+    const numUnique = [...new Set(variables)].length;
     const size = numUnique >= 20 ? 6
       : numUnique >= 10 ? 10
       : 16;
     setFontSize(size);
-  }, [variables]);
+
+    if (selectedVariableIdx !== null) {
+      setSelectedWedge(variables[selectedVariableIdx]);
+    } else {
+      setSelectedWedge(null);
+    }
+  }, [variables, selectedVariableIdx]);
+
+  const getCurrentAndLastPct = (variableName: string, index: number) => {
+    const varArrayIdx = variables.findIndex((v) => v === variableName);
+    const prevVariables = variables.filter((v, i) => i < varArrayIdx && v !== variableName);
+    const numPrevVariables =  index === 0 ? 0 : prevVariables.length;
+    const numCurrVariable = variables.filter((v) => v === variableName).length;
+    const lastPercent = numPrevVariables / variables.length;
+    const currPercent = numCurrVariable / variables.length;
+    return {lastPercent, currPercent};
+  };
 
   return (
-    Object.keys(variables).length === 1 ?
-      <circle
-        cx={kSpinnerX}
-        cy={kSpinnerY}
-        radius={kSpinnerRadius}
-        fill={getVariableColor(0, 0, false)}
-      /> :
+    [...new Set(variables)].length === 1 ?
       <>
-        {Object.keys(variables).map((variableName, index) => {
-          const lastVariableName = index !== 0 ? Object.keys(variables)[index - 1] : "";
+        <circle
+          cx={kSpinnerX}
+          cy={kSpinnerY}
+          r={kSpinnerRadius}
+          stroke="#000"
+          strokeWidth={1}
+          fill={getVariableColor(0, 0, false)}
+        />
+        <text
+          id={`wedge-label-${variables[0]}-0`}
+          x={kSpinnerX}
+          y={kSpinnerY}
+          textAnchor="middle"
+          dy=".25em"
+          dx={getTextShift(variables[0], variables[0].length)}
+          fill="#000"
+          fontSize={fontSize}
+          onClick={() => handleSetSelectedVariable(0)}
+          style={{ cursor: "pointer" }}
+        >
+          {variables[0]}
+        </text>
+      </> :
+      <>
+        {[...new Set(variables)].map((variableName, index) => {
+          const varArrayIdx = variables.findIndex((v) => v === variableName);
+          const {lastPercent, currPercent} = getCurrentAndLastPct(variableName, index);
           return (
             <Wedge
               key={`${variableName}-${index}`}
-              percent={variables[variableName]}
-              lastPercent={index === 0 ? 0 : variables[lastVariableName]}
+              percent={currPercent}
+              lastPercent={lastPercent}
               variableName={variableName}
               index={index}
               labelFontSize={fontSize}
+              varArrayIdx={varArrayIdx}
+              selectedWedge={selectedWedge}
+              nextVariable={[...new Set(variables)][index + 1]}
+              isLastVariable={index === [...new Set(variables)].length - 1}
+              isDragging={isDragging}
+              handleAddDefs={handleAddDefs}
+              handleSetSelectedVariable={handleSetSelectedVariable}
+              handleSetEditingVarName={handleSetEditingVarName}
+              handleSetEditingPct={handleSetEditingPct}
+              handleDeleteWedge={handleDeleteWedge}
+              handleStartDrag={handleStartDrag}
+            />
+          );
+        })}
+        {[...new Set(variables)].map((variableName, index) => {
+          const {lastPercent, currPercent} = getCurrentAndLastPct(variableName, index);
+          return (
+            <SeparatorLine
+              key={`separator-line-${variableName}-${index}`}
+              percent={currPercent}
+              lastPercent={lastPercent}
             />
           );
         })}

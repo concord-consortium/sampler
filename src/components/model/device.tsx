@@ -1,20 +1,22 @@
-import React, { useEffect, useState } from "react";
-import { ClippingDef, IDataContext, IDevice, IItem, IItems, kDeviceTypes } from "../../models/device-model";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { ClippingDef, IDataContext, IDevice, IItem, IItems } from "../../models/device-model";
 import { Id } from "../../utils/id";
 import { IModel, getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
 import { Mixer } from "./device-views/mixer/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
-import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth } from "./device-views/shared/constants";
+import { NameLabelInput } from "./name-label-input";
+import { PctLabelInput } from "./percent-label-input";
+import { DeviceFooter } from "./device-footer";
+import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth, kSpinnerX, kSpinnerY } from "./device-views/shared/constants";
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../utils/codap-helpers";
+import { getNextVariable, getPercentOfVar } from "../helpers";
+import { calculateWedgePercentage } from "./device-views/shared/helpers";
 import DeleteIcon from "../../assets/delete-icon.svg";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 
 import "./device.scss";
-
-const views = ["mixer", "spinner", "collector"] as const;
-type View = typeof views[number];
 
 interface IProps {
   model: IModel;
@@ -25,17 +27,31 @@ interface IProps {
   mergeDevices: (device: IDevice) => void;
   deleteDevice?: (device: IDevice) => void;
   setSelectedDeviceId: (id: Id) => void;
+  handleNameChange: (deviceId: string, newName: string) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
+  handleAddVariable: () => void;
+  handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
+  handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
+  handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
+  handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void
 }
 
 export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, multipleColumns, setSelectedDeviceId, addDevice, mergeDevices,
-    deleteDevice, handleUpdateCollectorVariables} = props;
-  const [viewSelected, setViewSelected] = useState<View>("mixer");
-  const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`); // [x, y, width, height
+    deleteDevice, handleUpdateCollectorVariables, handleAddVariable, handleUpdateViewType, handleDeleteVariable,
+    handleEditVariable, handleEditVarPct} = props;
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
+  const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
+  const [isEditingVarName, setIsEditingVarName] = useState<boolean>(false);
+  const [isEditingVarPct, setIsEditingVarPct] = useState<boolean>(false);
+  const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
+  const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`);
   const [clippingDefs, setClippingDefs] = useState<ClippingDef[]>([]);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragOrigin, setDragOrigin] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const { viewType, variables } = device;
+  const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     const fetchDataContexts = async () => {
@@ -43,19 +59,19 @@ export const Device = (props: IProps) => {
       return res.values;
     };
 
-    if (viewSelected === "collector") {
+    if (viewType === "collector") {
       fetchDataContexts().then((contexts: Array<IDataContext>) => {
         const filteredCtxs = contexts.filter((context) => context.name !== kDataContextName);
         setDataContexts(filteredCtxs);
       });
     }
 
-    if (viewSelected === "spinner") {
+    if (viewType === "spinner") {
       setViewBox(`0 0 ${kSpinnerContainerWidth + 10} ${kSpinnerContainerHeight}`);
     } else {
       setViewBox(`0 0 ${kMixerContainerWidth + 10} ${kMixerContainerHeight}`);
     }
-  }, [viewSelected]);
+  }, [viewType]);
 
   useEffect(() => {
     if (selectedDataContext) {
@@ -69,8 +85,7 @@ export const Device = (props: IProps) => {
         handleUpdateCollectorVariables(itemValues);
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDataContext]);
+  }, [selectedDataContext, handleUpdateCollectorVariables]);
 
   const handleSelectDevice = () => setSelectedDeviceId(device.id);
   const handleAddDevice = () => addDevice(device);
@@ -80,12 +95,108 @@ export const Device = (props: IProps) => {
     setSelectedDataContext(e.target.value);
   };
 
-  const handleAddDefs = (defs: { id: string, element: JSX.Element }[]) => {
+  const handleAddDefs = useCallback((def: { id: string, element: JSX.Element }) => {
     setClippingDefs(prevDefs => {
-      const newDefs = defs.filter(def => !prevDefs.some(prevDef => prevDef.id === def.id));
-      return [...prevDefs, ...newDefs];
+      const oldDef = prevDefs.find(prevDef => prevDef.id === def.id);
+      if (oldDef) {
+        const idxOfOldDef = prevDefs.indexOf(oldDef);
+        const newDefs = [...prevDefs];
+        newDefs.splice(idxOfOldDef, 1, def);
+        return newDefs;
+      } else {
+        return [...prevDefs, def];
+      }
     });
+  }, []);
+
+  const handleSetSelectedVariable = (variableIdx: number) => {
+    setSelectedVariableIdx(variableIdx);
   };
+
+  const handleSvgClick = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+    if ((e.target as HTMLElement).id === "svg-elemt") {
+      setSelectedVariableIdx(null);
+      setSelectedWedge(null);
+    }
+  };
+
+  const handleDeleteWedge = (e: React.MouseEvent) => {
+    if (selectedWedge) {
+      handleDeleteVariable(e, selectedWedge);
+      setSelectedWedge(null);
+    }
+  };
+
+  const handlePctChange = useCallback((variableIdx: number, newPct: string, updateNext?: boolean) => {
+    handleEditVarPct(variableIdx, newPct, updateNext);
+  }, [handleEditVarPct]);
+
+  const handleStartDrag = (originPt: {x: number, y: number}) => {
+    setDragOrigin(originPt);
+    setIsDragging(true);
+  };
+
+  const endDrag = () => {
+    setIsDragging(false);
+    setDragOrigin({x: 0, y: 0});
+  };
+
+  const convertDomCoordsToSvg = (x: number, y: number) =>{
+    const svgEl = svgRef?.current;
+    let svgX = 0;
+    let svgY = 0;
+    if (svgEl) {
+      const svgMatrix = svgEl.getScreenCTM();
+      const svgPt = svgEl.createSVGPoint();
+      svgPt.x = x;
+      svgPt.y = y;
+      if (svgMatrix) {
+        const svgCoords = svgPt.matrixTransform(svgMatrix.inverse());
+        svgX = svgCoords.x;
+        svgY = svgCoords.y;
+      }
+    }
+    return {svgX, svgY};
+  };
+
+  const handleDrag = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    if (selectedVariableIdx !== null) {
+      const { svgX, svgY } = convertDomCoordsToSvg(e.clientX, e.clientY);
+      const args = {
+        cx: kSpinnerX,
+        cy: kSpinnerY,
+        x1: dragOrigin.x,
+        y1: dragOrigin.y,
+        x2: svgX,
+        y2: svgY
+      };
+      const newPct = calculateWedgePercentage(args);
+      const newNicePct = Math.round(newPct);
+      const htmlTarget = e.target as HTMLElement;
+      const varName = variables[selectedVariableIdx];
+      const nextVarName = getNextVariable(selectedVariableIdx, variables);
+      const isWithinBounds = htmlTarget.id === `wedge-${varName}` || htmlTarget.id === `wedge-${nextVarName}`;
+      if (isWithinBounds && (newNicePct > 1 && newNicePct < 100)) {
+        handlePctChange(selectedVariableIdx, newNicePct.toString(), true);
+      }
+    }
+  }, [dragOrigin, isDragging, selectedVariableIdx, variables, handlePctChange]);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleDrag);
+      document.addEventListener("mouseup", endDrag);
+    } else {
+      document.removeEventListener("mousemove", handleDrag);
+      document.removeEventListener("mouseup", endDrag);
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleDrag);
+      document.removeEventListener("mouseup", endDrag);
+    };
+  }, [isDragging, handleDrag]);
 
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
@@ -101,25 +212,66 @@ export const Device = (props: IProps) => {
           {isSelectedDevice && <VisibleIcon />}
         </div>
         <div className="device-svg-container">
-          <div className={`device-frame ${viewSelected}`}>
+          <div className={`device-frame ${viewType}`}>
             <svg
               className="svg"
+              ref={svgRef}
+              id={`svg-elemt`}
               width="100%"
               height="100%"
               viewBox={viewBox}
               xmlns="http://www.w3.org/2000/svg"
+              onClick={handleSvgClick}
             >
               <defs>
                 {clippingDefs.length && clippingDefs.map((def) => def.element)}
               </defs>
               {
-                viewSelected === "mixer" ?
-                  <Mixer variables={device.variables} handleAddDefs={handleAddDefs} /> :
-                viewSelected === "spinner" ?
-                  <Spinner variables={device.variables}/> :
-                  <Collector collectorVariables={device.collectorVariables} handleAddDefs={handleAddDefs}/>
+                viewType === "mixer" ?
+                  <Mixer
+                    variables={device.variables}
+                    handleAddDefs={handleAddDefs}
+                    handleSetSelectedVariable={handleSetSelectedVariable}
+                  /> :
+                viewType === "spinner" ?
+                  <Spinner
+                    variables={device.variables}
+                    selectedVariableIdx={selectedVariableIdx}
+                    isDragging={isDragging}
+                    handleAddDefs={handleAddDefs}
+                    handleDeleteWedge={handleDeleteWedge}
+                    handleSetSelectedVariable={handleSetSelectedVariable}
+                    handleSetEditingVarName={() => setIsEditingVarName(true)}
+                    handleSetEditingPct={() => setIsEditingVarPct(true)}
+                    handleStartDrag={handleStartDrag}
+                  /> :
+                  <Collector
+                    collectorVariables={device.collectorVariables}
+                    handleAddDefs={handleAddDefs}
+                    handleSetSelectedVariable={handleSetSelectedVariable}
+                  />
               }
             </svg>
+            {
+              isEditingVarName && selectedVariableIdx !== null &&
+                <NameLabelInput
+                  viewType={viewType}
+                  variableIdx={selectedVariableIdx}
+                  variableName={variables[selectedVariableIdx]}
+                  handleEditVariable={handleEditVariable}
+                  onBlur={() => setIsEditingVarName(false)}
+                />
+            }
+            {
+              isEditingVarPct && selectedVariableIdx !== null &&
+                <PctLabelInput
+                  percent={getPercentOfVar(variables[selectedVariableIdx], variables).toString()}
+                  variableIdx={selectedVariableIdx}
+                  variableName={variables[selectedVariableIdx]}
+                  handlePctChange={handlePctChange}
+                  onBlur={() => setIsEditingVarPct(false)}
+                />
+            }
           </div>
         </div>
         {deleteDevice &&
@@ -128,50 +280,20 @@ export const Device = (props: IProps) => {
           </div>
         }
       </div>
-      { isSelectedDevice &&
-          <div className="footer">
-            <div className="add-remove-variables-buttons">
-              <button>+</button>
-              <button>-</button>
-              <button>...</button>
-            </div>
-            <div className="device-buttons">
-              {
-                kDeviceTypes.map((deviceType) => {
-                  const renderButton = deviceType !== "collector" || showCollectorButton;
-                  if (renderButton) {
-                    return (
-                      <button
-                        className={viewSelected === deviceType ? "selected" : ""}
-                        onClick={()=>setViewSelected(deviceType)}
-                        key={deviceType}>
-                          {deviceType}
-                      </button>
-                    );
-                  }
-                })
-              }
-            </div>
-            <div className="device-buttons">
-              {
-                viewSelected === "collector" ?
-                  <select onChange={handleSelectDataContext}>
-                    <option value="">Select a data context</option>
-                    {
-                      dataContexts.map((context) => {
-                        return <option value={context.name} key={context.id}>{context.name}</option>;
-                      })
-                    }
-                  </select>
-                   :
-                  <>
-                    <button onClick={handleAddDevice}>{addButtonLabel}</button>
-                    {showMergeButton && <button onClick={handleMergeDevices}>Merge</button>}
-                  </>
-              }
-
-            </div>
-          </div>
+      { device.id === selectedDeviceId &&
+          <DeviceFooter
+            showCollectorButton={showCollectorButton}
+            showMergeButton={showMergeButton}
+            dataContexts={dataContexts}
+            addButtonLabel={addButtonLabel}
+            viewType={viewType}
+            handleAddVariable={handleAddVariable}
+            handleAddDevice={handleAddDevice}
+            handleDeleteVariable={handleDeleteVariable}
+            handleUpdateViewType={handleUpdateViewType}
+            handleSelectDataContext={handleSelectDataContext}
+            handleMergeDevices={handleMergeDevices}
+          />
       }
     </div>
   );

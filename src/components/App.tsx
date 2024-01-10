@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from "react";
-import {
-  initializePlugin,
-  createItems,
-  codapInterface
-} from "@concord-consortium/codap-plugin-api";
+import { initializePlugin, createItems } from "@concord-consortium/codap-plugin-api";
 import { useImmer } from "use-immer";
-import { ModelTab } from "./model/model-component";
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
-import { IExperiment, IModel, IRunResult, ISample, getDeviceColumnIndex } from "../models/model-model";
+import { ModelTab } from "./model/model-component";
+import { IModel, IRunResult, getDeviceById, getDeviceColumnIndex } from "../models/model-model";
 import { IDevice, IVariables } from "../models/device-model";
 import { Id, createId } from "../utils/id";
 import { deleteAll, findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
+import { createNewVarArray, getNewVariable, getProportionalVars } from "./helpers";
 
 import "./App.scss";
 
@@ -22,29 +19,13 @@ const kInitialDimensions = {
   width: kPluginMidWidth,
   height: 500
 };
-// const targetDataSetName = tr("DG.plugin.Sampler.dataset.name") || "Sampler";
-const targetDataSetName = "Sampler";
-const kDefaultDeviceVariables: IVariables = { "a": 33, "b": 33, "c": 33};
+const kDefaultVars: IVariables = ["a", "a", "b"];
 
-
-const dataSetName = "Sampler Data";
-
-const iFrameDescriptor ={
-  version: kVersion,
-  name: "Sampler",
-  // name: tr("DG.plugin.Sampler.title"),
-  pluginName: kPluginName,
-  title: "Sampler",
-  // title: tr("DG.plugin.Sampler.title"),
-  dimensions: kInitialDimensions,
-  preventDataContextReorg: false,
-
-};
 
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
 
-export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", viewType: "mixer", variables: {"a": 67, "b": 33}, collectorVariables: []});
+export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", viewType: "mixer", variables: kDefaultVars, collectorVariables: []});
 
 export const App = () => {
   const [selectedTab, setSelectedTab] = useState<NavTab>("Model");
@@ -141,13 +122,13 @@ export const App = () => {
     });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, deviceId: Id) => {
+  const handleUpdateVariables = (variables: IVariables) => {
     setModel(draft => {
-      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === deviceId));
+      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
       if (columnIndex !== -1) {
-        const device = draft.columns[columnIndex].devices.find(dev => dev.id === deviceId);
-        if (device) {
-          device.variables = {[e.target.value]: 100};
+        const deviceToUpdate = draft.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+        if (deviceToUpdate) {
+          deviceToUpdate.variables = variables;
         }
       }
     });
@@ -242,6 +223,76 @@ export const App = () => {
     deleteAll();
   };
 
+  const handleUpdateViewType = (viewType: IDevice["viewType"]) => {
+    setModel(draft => {
+      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
+      if (columnIndex !== -1) {
+        const deviceToUpdate = draft.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+        if (deviceToUpdate) {
+          deviceToUpdate.viewType = viewType;
+        }
+      }
+    });
+  };
+
+  const handleDeleteVariable = (e: React.MouseEvent, selectedVariable?: string) => {
+    if (model && selectedDeviceId) {
+      const selectedDevice = getDeviceById(model, selectedDeviceId);
+      const { viewType, variables } = selectedDevice;
+      let newVariables: IVariables = [];
+      if (viewType === "mixer") {
+        newVariables.push(...variables.slice(0, variables.length - 1));
+      } else {
+        if (selectedVariable) {
+          newVariables.push(...variables.filter((v) => v !== selectedVariable));
+        } else {
+          const lastVariable = variables[variables.length - 1];
+          newVariables.push(...variables.filter((v) => v !== lastVariable));
+        }
+      }
+      handleUpdateVariables(newVariables);
+    }
+  };
+
+  const handleAddVariable = () => {
+    if (model && selectedDeviceId) {
+      const selectedDevice = getDeviceById(model, selectedDeviceId);
+      const { viewType, variables } = selectedDevice;
+      if (viewType === "spinner") {
+        handleUpdateVariables(getProportionalVars(variables));
+      } else {
+        const newVariable = getNewVariable(variables);
+        handleUpdateVariables([...variables, newVariable]);
+      }
+    }
+  };
+
+  const handleEditVariable = (oldVariableIdx: number, newVariableName: string) => {
+    if (model && selectedDeviceId) {
+      const selectedDevice = getDeviceById(model, selectedDeviceId);
+      const { viewType, variables } = selectedDevice;
+      const newVariables: IVariables = [];
+      if (viewType === "mixer" || viewType === "collector") {
+        newVariables.push(...variables);
+        newVariables[oldVariableIdx] = newVariableName;
+      } else {
+        const oldVariableName = variables[oldVariableIdx];
+        newVariables.push(...variables.map((v) => v === oldVariableName ? newVariableName : v));
+      }
+      handleUpdateVariables(newVariables);
+    }
+  };
+
+  const handleEditVarPct = (variableIdx: number, pctStr: string, updateNext?: boolean) => {
+    if (model && selectedDeviceId) {
+      const selectedDevice = getDeviceById(model, selectedDeviceId);
+      const { variables } = selectedDevice;
+      const selectedVar = variables[variableIdx];
+      const newVariables = createNewVarArray(selectedVar, variables, Number(pctStr), updateNext);
+      handleUpdateVariables(newVariables);
+    }
+  };
+
   return (
     <div className="App">
       <div className="navigationTabs">
@@ -257,7 +308,7 @@ export const App = () => {
         }
       </div>
       <div className="tab-content">
-        {selectedTab === "Model" &&
+        {selectedTab === "Model" ?
           <ModelTab
             model={model}
             selectedDeviceId={selectedDeviceId}
@@ -269,7 +320,6 @@ export const App = () => {
             mergeDevices={handleMergeDevices}
             deleteDevice={handleDeleteDevice}
             setSelectedDeviceId={setSelectedDeviceId}
-            handleInputChange={handleInputChange}
             handleNameChange={handleNameChange}
             handleSampleSizeChange={handleSampleSizeChange}
             handleNumSamplesChange={handleNumSamplesChange}
@@ -278,10 +328,16 @@ export const App = () => {
             handleSelectRepeat={handleSelectRepeat}
             handleSelectReplacement={handleSelectReplacement}
             handleClearData={handleClearData}
-          />
+            handleAddVariable={handleAddVariable}
+            handleDeleteVariable={handleDeleteVariable}
+            handleUpdateViewType={handleUpdateViewType}
+            handleEditVariable={handleEditVariable}
+            handleEditVarPct={handleEditVarPct}
+          /> :
+          selectedTab === "Measures" ?
+          <MeasuresTab /> :
+          <AboutTab />
         }
-        {selectedTab === "Measures" && <MeasuresTab />}
-        {selectedTab === "About" && <AboutTab />}
       </div>
     </div>
   );

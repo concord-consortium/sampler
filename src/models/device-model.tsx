@@ -1,9 +1,11 @@
 import { Id } from "../utils/id";
 
+export type View = "mixer" | "spinner" | "collector";
+
 export interface IDevice {
   id: Id;
   name: string;
-  viewType: "mixer" | "spinner" | "collector";
+  viewType: View;
   variables: IVariables;
   collectorVariables: ICollectorVariables;
 }
@@ -11,10 +13,7 @@ export interface IDevice {
 // a map of variables to their percentages
 // i.e.: { a: 50, b: 50 }
 // the view (mixer / spinner) decides how to best represent these percentages
-export interface IVariables {
-  [variableName: string]: number;
-}
-
+export type IVariables = Array<string>;
 // a map of attributes to their values
 // { "Mammal": "Dog", "Color": "Brown"}
 export interface ICollectorItem {
@@ -44,3 +43,34 @@ export interface IItem {
 export type IItems = Array<IItem>;
 
 export type ClippingDef = { id: string, element: JSX.Element };
+
+export function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
+}
+
+
+export function lcm(a: number, b: number): number {
+  return (a * b) / gcd(a, b);
+}
+
+export function isOneThirdOrTwoThirds(value: number): boolean {
+  return value === 33 || value === 67;
+}
+
+export function percentageToFraction (percentage: number) {
+  const numerator = percentage;
+  const denominator = 100;
+  const commonFactor = gcd(numerator, denominator);
+  return [numerator / commonFactor, denominator / commonFactor];
+}
+
+export function findCommonDenominator (percentages: number[]): number {
+  const fractions = percentages.map((p) => percentageToFraction(p));
+  const denominators = fractions.map((f) => { return f[1];});
+  const lcdDenominator = denominators.reduce((accumulator, currentDenominator) => lcm(accumulator, currentDenominator));
+  return lcdDenominator;
+}
+
+export function findEquivNum(n: number, lcd: number) {
+  return (n * (lcd / 100));
+}
