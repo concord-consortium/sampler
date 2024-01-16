@@ -49,7 +49,7 @@ export const Balls = ({ballsArray, handleAddDefs, handleSetSelectedVariable, han
       props.push({x, y, radius, text, fontSize, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i});
     }
     setBallProps(props);
-  }, [ballsArray, handleAddDefs, handleSetSelectedVariable]);
+  }, [ballsArray, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName]);
 
   return (
     <>

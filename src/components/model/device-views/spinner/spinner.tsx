@@ -11,7 +11,7 @@ interface ISpinner {
   isDragging: boolean;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
-  handleDeleteWedge: (e: React.MouseEvent) => void;
+  handleDeleteWedge: (e: React.MouseEvent, variableName: string) => void;
   handleSetEditingPct: () => void;
   handleSetEditingVarName: (variableIdx: number) => void;
   handleStartDrag: (originPt: {x: number; y: number;}) => void;
