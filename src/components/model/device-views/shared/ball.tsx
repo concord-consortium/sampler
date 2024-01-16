@@ -10,10 +10,11 @@ export interface IBall {
   fontSize: number;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
+  handleSetEditingVarName: (variableIdx: number) => void;
   i: number;
 }
 
-export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSelectedVariable, i }: IBall) => {
+export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i }: IBall) => {
   useEffect(() => {
     const id = `text-clip-${x}-${y}`;
     const clipPath = (
@@ -25,7 +26,7 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSel
   }, [x, y, radius, text, handleAddDefs]);
 
   return (
-    <g>
+    <g onClick={() => handleSetEditingVarName(i)}>
       <circle
         cx={x}
         cy={y}

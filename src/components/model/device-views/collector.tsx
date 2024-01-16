@@ -7,9 +7,10 @@ interface ICollector {
   collectorVariables: ICollectorVariables;
   handleAddDefs: (def: ClippingDef) => void
   handleSetSelectedVariable: (variableIdx: number) => void;
+  handleSetEditingVarName: (variableIdx: number) => void;
 }
 
-export const Collector = ({collectorVariables, handleAddDefs, handleSetSelectedVariable}: ICollector) => {
+export const Collector = ({collectorVariables, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: ICollector) => {
   const [ballsArray, setBallsArray] = useState<Array<string>>([]);
 
   useEffect(() => {
@@ -24,7 +25,12 @@ export const Collector = ({collectorVariables, handleAddDefs, handleSetSelectedV
     <>
       <MixerFrame withReplacement={false}/>
       { ballsArray.length &&
-        <Balls ballsArray={ballsArray} handleAddDefs={handleAddDefs} handleSetSelectedVariable={handleSetSelectedVariable}/>
+        <Balls
+          ballsArray={ballsArray}
+          handleAddDefs={handleAddDefs}
+          handleSetSelectedVariable={handleSetSelectedVariable}
+          handleSetEditingVarName={handleSetEditingVarName}
+        />
       }
     </>
   );

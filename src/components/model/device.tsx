@@ -232,6 +232,7 @@ export const Device = (props: IProps) => {
                     variables={device.variables}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
+                    handleSetEditingVarName={() => setIsEditingVarName(true)}
                   /> :
                 viewType === "spinner" ?
                   <Spinner
@@ -249,6 +250,7 @@ export const Device = (props: IProps) => {
                     collectorVariables={device.collectorVariables}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
+                    handleSetEditingVarName={() => setIsEditingVarName(true)}
                   />
               }
             </svg>
