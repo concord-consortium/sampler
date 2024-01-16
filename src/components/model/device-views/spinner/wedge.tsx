@@ -133,7 +133,9 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
         className="wedge"
         onClick={handleWedgeClick}
         style={{ cursor: isDragging? "grabbing" : "pointer" }}
-      />
+      >
+        <title>{Math.round(percent * 100)}%</title>
+      </path>
       {/* variable name label */}
       <text
         id={`wedge-label-${variableName}-${varArrayIdx}`}
