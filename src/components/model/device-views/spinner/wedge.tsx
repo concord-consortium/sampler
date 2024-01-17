@@ -16,7 +16,7 @@ interface IWedge {
   isLastVariable: boolean;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
-  handleDeleteWedge: (e: React.MouseEvent) => void;
+  handleDeleteWedge: (e: React.MouseEvent, variableName: string) => void;
   handleSetEditingPct: () => void;
   handleSetEditingVarName: (variableIdx: number) => void
   handleStartDrag: (originPt: {x: number; y: number;}) => void;
@@ -133,7 +133,9 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
         className="wedge"
         onClick={handleWedgeClick}
         style={{ cursor: isDragging? "grabbing" : "pointer" }}
-      />
+      >
+        <title>{Math.round(percent * 100)}%</title>
+      </path>
       {/* variable name label */}
       <text
         id={`wedge-label-${variableName}-${varArrayIdx}`}
@@ -183,7 +185,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
             {Math.round(percent * 100)}%
           </text>
           {/* delete wedge button */}
-          <g style={{cursor: "pointer"}} onClick={(e) => handleDeleteWedge(e)}>
+          <g style={{cursor: "pointer"}} onClick={(e) => handleDeleteWedge(e, variableName)}>
             <rect
               x={delBtnPos.x - (buttonSize / 2)}
               y={delBtnPos.y - (buttonSize / 2)}

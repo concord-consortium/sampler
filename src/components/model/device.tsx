@@ -45,7 +45,6 @@ export const Device = (props: IProps) => {
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
   const [isEditingVarName, setIsEditingVarName] = useState<boolean>(false);
   const [isEditingVarPct, setIsEditingVarPct] = useState<boolean>(false);
-  const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
   const [viewBox, setViewBox] = useState<string>(`0 0 ${kMixerContainerWidth} ${kMixerContainerHeight}`);
   const [clippingDefs, setClippingDefs] = useState<ClippingDef[]>([]);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -116,15 +115,12 @@ export const Device = (props: IProps) => {
   const handleSvgClick = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
     if ((e.target as HTMLElement).id === "svg-elemt") {
       setSelectedVariableIdx(null);
-      setSelectedWedge(null);
     }
   };
 
-  const handleDeleteWedge = (e: React.MouseEvent) => {
-    if (selectedWedge) {
-      handleDeleteVariable(e, selectedWedge);
-      setSelectedWedge(null);
-    }
+  const handleDeleteWedge = (e: React.MouseEvent, variableName: string) => {
+    handleDeleteVariable(e, variableName);
+    setSelectedVariableIdx(null);
   };
 
   const handlePctChange = useCallback((variableIdx: number, newPct: string, updateNext?: boolean) => {
@@ -232,6 +228,7 @@ export const Device = (props: IProps) => {
                     variables={device.variables}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
+                    handleSetEditingVarName={() => setIsEditingVarName(true)}
                   /> :
                 viewType === "spinner" ?
                   <Spinner
@@ -249,6 +246,7 @@ export const Device = (props: IProps) => {
                     collectorVariables={device.collectorVariables}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
+                    handleSetEditingVarName={() => setIsEditingVarName(true)}
                   />
               }
             </svg>

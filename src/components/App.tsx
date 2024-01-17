@@ -239,6 +239,11 @@ export const App = () => {
     if (model && selectedDeviceId) {
       const selectedDevice = getDeviceById(model, selectedDeviceId);
       const { viewType, variables } = selectedDevice;
+
+      if ([...new Set(variables)].length === 1) {
+        return;
+      }
+
       let newVariables: IVariables = [];
       if (viewType === "mixer") {
         newVariables.push(...variables.slice(0, variables.length - 1));

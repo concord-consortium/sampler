@@ -7,9 +7,10 @@ interface IBalls {
   ballsArray: Array<string>;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
+  handleSetEditingVarName:  (variableIdx: number) => void;
 }
 
-export const Balls = ({ballsArray, handleAddDefs, handleSetSelectedVariable}: IBalls) => {
+export const Balls = ({ballsArray, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IBalls) => {
   const [ballProps, setBallProps] = useState<Array<IBall>>([]);
 
   useEffect(() => {
@@ -45,10 +46,10 @@ export const Balls = ({ballsArray, handleAddDefs, handleSetSelectedVariable}: IB
       const x = (rowNumber % 2 === 0) ? kContainerX + kBorder + radius + (rowIndex * radius * 2) : kContainerX + kMixerContainerWidth - kBorder - kCapHeight - radius - (rowIndex * radius * 2);
       const y = kContainerY + kMixerContainerHeight - kBorder - radius - (rowHeight * rowNumber);
       const text = ballsArray[i];
-      props.push({x, y, radius, text, fontSize, handleAddDefs, handleSetSelectedVariable, i});
+      props.push({x, y, radius, text, fontSize, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i});
     }
     setBallProps(props);
-  }, [ballsArray, handleAddDefs, handleSetSelectedVariable]);
+  }, [ballsArray, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName]);
 
   return (
     <>
