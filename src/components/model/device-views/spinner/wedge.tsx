@@ -10,6 +10,7 @@ interface IWedge {
   index: number;
   labelFontSize: number;
   varArrayIdx: number;
+  numUniqueVariables: number;
   selectedWedge: string | null;
   nextVariable: string;
   isDragging: boolean;
@@ -43,7 +44,7 @@ const getEllipseCoords = (percent: number) => {
 };
 
 
-export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
+export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize, numUniqueVariables,
   varArrayIdx, selectedWedge, isLastVariable, isDragging, handleSetSelectedVariable, handleDeleteWedge,
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: IWedge) => {
   const [wedgePath, setWedgePath] = useState("");
@@ -60,7 +61,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
     const p1 = getCoordinatesForPercent(lastPercent);
     const p2 = getCoordinatesForPercent(perc2);
     const largeArc = perc2 - lastPercent > 0.5 ? 1 : 0;
-    const varLabelPosition = getCoordinatesForVariableLabel((lastPercent + perc2)/2, 2);
+    const varLabelPosition = getCoordinatesForVariableLabel((lastPercent + perc2)/2, numUniqueVariables);
     const labelPerc2 = lastPercent + (perc2 - lastPercent) / 2;
     const pctLabelLoc = getEllipseCoords(labelPerc2);
     const labelLineP1 = getCoordinatesForPercent(labelPerc2);
@@ -98,7 +99,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
       </clipPath>
     );
     handleAddDefs({ id: clipPathId, element: clipPath });
-  }, [percent, lastPercent, index, variableName, selectedWedge, handleAddDefs, varArrayIdx]);
+  }, [percent, lastPercent, index, variableName, selectedWedge, handleAddDefs, varArrayIdx, numUniqueVariables]);
 
   const handleLabelClick = (e: React.MouseEvent) => {
     handleSetEditingVarName(varArrayIdx);

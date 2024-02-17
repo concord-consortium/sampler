@@ -21,6 +21,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: ISpinner) => {
   const [fontSize, setFontSize] = useState(16);
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
+  const [numUniqueVariables, setNumUniqueVariables] = useState(0);
 
   useEffect(() => {
     const numUnique = [...new Set(variables)].length;
@@ -28,6 +29,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
       : numUnique >= 10 ? 10
       : 16;
     setFontSize(size);
+    setNumUniqueVariables(numUnique);
 
     if (selectedVariableIdx !== null) {
       setSelectedWedge(variables[selectedVariableIdx]);
@@ -86,6 +88,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
               labelFontSize={fontSize}
               varArrayIdx={varArrayIdx}
               selectedWedge={selectedWedge}
+              numUniqueVariables={numUniqueVariables}
               nextVariable={[...new Set(variables)][index + 1]}
               isLastVariable={index === [...new Set(variables)].length - 1}
               isDragging={isDragging}
