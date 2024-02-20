@@ -25,7 +25,7 @@ export const NameLabelInput = ({variableIdx, variableName,
       ref.current.style.left = `${x}px`;
       ref.current.style.width = `${width}`;
     }
-  }, [variableIdx, viewType, variableName]);
+  }, [variableIdx, viewType, deviceId, variableName]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {

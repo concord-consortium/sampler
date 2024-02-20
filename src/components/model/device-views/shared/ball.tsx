@@ -24,7 +24,7 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSel
       </clipPath>
     );
     handleAddDefs({ id, element: clipPath });
-  }, [x, y, radius, text, handleAddDefs]);
+  }, [x, y, radius, text, handleAddDefs, deviceId]);
 
   return (
     <g onClick={() => handleSetEditingVarName(i)}>

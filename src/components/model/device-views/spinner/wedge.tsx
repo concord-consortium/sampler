@@ -100,7 +100,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
       </clipPath>
     );
     handleAddDefs({ id: clipPathId, element: clipPath });
-  }, [percent, lastPercent, index, variableName, selectedWedge, handleAddDefs, varArrayIdx, numUniqueVariables]);
+  }, [percent, lastPercent, index, variableName, selectedWedge, handleAddDefs, deviceId, varArrayIdx, numUniqueVariables]);
 
   const handleLabelClick = (e: React.MouseEvent) => {
     handleSetEditingVarName(varArrayIdx);

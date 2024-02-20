@@ -14,8 +14,6 @@ export const PctLabelInput = ({percent, variableIdx, variableName, deviceId,
   const [text, setText] = useState<string>(percent);
   const ref = useRef<HTMLInputElement>(null);
 
-
-
   useEffect(() => {
     const textLabel = document.getElementById(`${deviceId}-wedge-pct-${variableName}`);
     if (textLabel && ref.current) {
@@ -26,7 +24,7 @@ export const PctLabelInput = ({percent, variableIdx, variableName, deviceId,
       ref.current.style.left = `${x}px`;
       ref.current.style.width = `${width}`;
     }
-  }, [variableIdx, variableName]);
+  }, [variableIdx, deviceId, variableName]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {

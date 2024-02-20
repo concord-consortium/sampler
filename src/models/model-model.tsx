@@ -2,6 +2,7 @@ import { Id } from "../utils/id";
 import { IDevice } from "./device-model";
 
 export interface IColumn {
+  name: string;
   devices: IDevice[];
 }
 
