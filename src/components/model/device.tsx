@@ -226,6 +226,7 @@ export const Device = (props: IProps) => {
                 viewType === "mixer" ?
                   <Mixer
                     variables={device.variables}
+                    deviceId={device.id}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
                     handleSetEditingVarName={() => setIsEditingVarName(true)}
@@ -233,6 +234,7 @@ export const Device = (props: IProps) => {
                 viewType === "spinner" ?
                   <Spinner
                     variables={device.variables}
+                    deviceId={device.id}
                     selectedVariableIdx={selectedVariableIdx}
                     isDragging={isDragging}
                     handleAddDefs={handleAddDefs}
@@ -244,6 +246,7 @@ export const Device = (props: IProps) => {
                   /> :
                   <Collector
                     collectorVariables={device.collectorVariables}
+                    deviceId={device.id}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
                     handleSetEditingVarName={() => setIsEditingVarName(true)}
@@ -254,6 +257,7 @@ export const Device = (props: IProps) => {
               isEditingVarName && selectedVariableIdx !== null &&
                 <NameLabelInput
                   viewType={viewType}
+                  deviceId={device.id}
                   variableIdx={selectedVariableIdx}
                   variableName={variables[selectedVariableIdx]}
                   handleEditVariable={handleEditVariable}
@@ -264,6 +268,7 @@ export const Device = (props: IProps) => {
               isEditingVarPct && selectedVariableIdx !== null &&
                 <PctLabelInput
                   percent={getPercentOfVar(variables[selectedVariableIdx], variables).toString()}
+                  deviceId={device.id}
                   variableIdx={selectedVariableIdx}
                   variableName={variables[selectedVariableIdx]}
                   handlePctChange={handlePctChange}

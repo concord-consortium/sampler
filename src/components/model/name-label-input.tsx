@@ -4,18 +4,19 @@ interface IVariableLabelInput {
   variableIdx: number;
   viewType: "mixer" | "spinner" | "collector";
   variableName: string;
+  deviceId: string;
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
   onBlur: () => void;
 }
 
 export const NameLabelInput = ({variableIdx, variableName,
-  handleEditVariable, onBlur, viewType}: IVariableLabelInput) => {
+  handleEditVariable, onBlur, viewType, deviceId}: IVariableLabelInput) => {
   const [text, setText] = useState<string>(variableName);
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const idStr = viewType === "spinner" ? "wedge" : "ball";
-    const textLabel = document.getElementById(`${idStr}-label-${variableName}-${variableIdx}`);
+    const textLabel = document.getElementById(`${deviceId}-${idStr}-label-${variableName}-${variableIdx}`);
     if (textLabel && ref.current) {
       ref.current.focus();
       const {x, y, height} = textLabel.getBoundingClientRect();

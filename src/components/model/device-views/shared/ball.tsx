@@ -8,15 +8,16 @@ export interface IBall {
   radius: number;
   text: string;
   fontSize: number;
+  deviceId: string;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleSetEditingVarName: (variableIdx: number) => void;
   i: number;
 }
 
-export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i }: IBall) => {
+export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i, deviceId }: IBall) => {
   useEffect(() => {
-    const id = `text-clip-${x}-${y}`;
+    const id = `${deviceId}-text-clip-${x}-${y}`;
     const clipPath = (
       <clipPath id={id} key={id}>
         <circle cx={x} cy={y} r={radius} origin={`${x} ${y}`} />
@@ -37,7 +38,7 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSel
         origin={`${x} ${y}`}
       />
       <text
-        id={`ball-label-${text}-${i}`}
+        id={`${deviceId}-ball-label-${text}-${i}`}
         style={{ cursor: "pointer" }}
         x={x}
         y={y}
@@ -46,7 +47,7 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSel
         dy=".25em"
         dx={getTextShift(text, (3.8*(radius/fontSize)))}
         origin={`${x} ${y}`}
-        clipPath={`url(#text-clip-${x}-${y})`}
+        clipPath={`url(#${deviceId}-text-clip-${x}-${y})`}
         onClick={() => handleSetSelectedVariable(i)}
       >
         {text}

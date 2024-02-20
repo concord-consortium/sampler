@@ -4,11 +4,12 @@ interface IVariableLabelInput {
   percent: string;
   variableIdx: number;
   variableName: string;
+  deviceId: string;
   handlePctChange: (variableIdx: number, newPct: string) => void;
   onBlur: () => void;
 }
 
-export const PctLabelInput = ({percent, variableIdx, variableName,
+export const PctLabelInput = ({percent, variableIdx, variableName, deviceId,
   handlePctChange, onBlur}: IVariableLabelInput) => {
   const [text, setText] = useState<string>(percent);
   const ref = useRef<HTMLInputElement>(null);
@@ -16,7 +17,7 @@ export const PctLabelInput = ({percent, variableIdx, variableName,
 
 
   useEffect(() => {
-    const textLabel = document.getElementById(`wedge-pct-${variableName}`);
+    const textLabel = document.getElementById(`${deviceId}-wedge-pct-${variableName}`);
     if (textLabel && ref.current) {
       ref.current.focus();
       const {x, y, height} = textLabel.getBoundingClientRect();

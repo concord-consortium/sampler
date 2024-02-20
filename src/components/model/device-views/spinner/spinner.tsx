@@ -7,6 +7,7 @@ import { SeparatorLine } from "./separator-lines";
 
 interface ISpinner {
   variables: IVariables;
+  deviceId: string;
   selectedVariableIdx: number|null;
   isDragging: boolean;
   handleAddDefs: (def: ClippingDef) => void;
@@ -17,7 +18,7 @@ interface ISpinner {
   handleStartDrag: (originPt: {x: number; y: number;}) => void;
 }
 
-export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSelectedVariable, handleDeleteWedge,
+export const Spinner = ({variables, selectedVariableIdx, isDragging, deviceId, handleSetSelectedVariable, handleDeleteWedge,
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: ISpinner) => {
   const [fontSize, setFontSize] = useState(16);
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
@@ -64,7 +65,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
           fill={getVariableColor(0, 0, false)}
         />
         <text
-          id={`wedge-label-${variables[0]}-0`}
+          id={`${deviceId}-wedge-label-${variables[0]}-0`}
           x={kSpinnerX}
           y={kSpinnerY}
           textAnchor="middle"
@@ -85,6 +86,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
           return (
             <Wedge
               key={`${variableName}-${index}`}
+              deviceId={deviceId}
               percent={currPercent}
               lastPercent={lastPercent}
               variableName={variableName}
@@ -109,7 +111,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
           const {lastPercent, currPercent} = getCurrentAndLastPct(variableName, index);
           return (
             <SeparatorLine
-              key={`separator-line-${variableName}-${index}`}
+              key={`${deviceId}-separator-line-${variableName}-${index}`}
               percent={currPercent}
               lastPercent={lastPercent}
             />
