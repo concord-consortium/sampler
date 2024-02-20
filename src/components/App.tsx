@@ -186,7 +186,6 @@ export const App = () => {
     for (let sampleIndex = 0; sampleIndex < Number(numSamples); sampleIndex++) {
       for (let i = 0; i < Number(sampleSize); i++) {
         const sample: { [key: string]: string|number } = {};
-
         model.columns.forEach(column => {
           // to-do: pick a device based on the user formula if there is one defined
           const device = column.devices.length > 1 ? getRandomElement(column.devices): column.devices[0];
@@ -194,6 +193,8 @@ export const App = () => {
           sample[column.name] = variable;
           sample.experiment = experimentNum;
           sample.sample = sampleIndex + 1;
+          const deviceStr = device.viewType.charAt(0).toUpperCase() + device.viewType.slice(1);
+          sample.description = `${deviceStr} containing ${numSamples} items${replacement ? " (with replacement)" : ""}`;
           sample["sample size"] = sampleSize && parseInt(sampleSize, 10);
         });
         results.push(sample);
