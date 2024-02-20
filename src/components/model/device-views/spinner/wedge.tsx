@@ -15,6 +15,7 @@ interface IWedge {
   nextVariable: string;
   isDragging: boolean;
   isLastVariable: boolean;
+  deviceId: string;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleDeleteWedge: (e: React.MouseEvent, variableName: string) => void;
@@ -45,7 +46,7 @@ const getEllipseCoords = (percent: number) => {
 
 
 export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize, numUniqueVariables,
-  varArrayIdx, selectedWedge, isLastVariable, isDragging, handleSetSelectedVariable, handleDeleteWedge,
+  varArrayIdx, selectedWedge, isLastVariable, isDragging, deviceId, handleSetSelectedVariable, handleDeleteWedge,
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: IWedge) => {
   const [wedgePath, setWedgePath] = useState("");
   const [wedgeColor, setWedgeColor] = useState(selectedWedge === variableName ? kDarkTeal : "");
@@ -92,14 +93,14 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
     const color = selectedWedge === variableName ? kDarkTeal : getVariableColor(index, 2, false);
     setWedgeColor(color);
 
-    const clipPathId = `wedge-clip-${variableName}`;
+    const clipPathId = `${deviceId}-wedge-clip-${variableName}`;
     const clipPath = (
       <clipPath id={clipPathId} key={clipPathId}>
         <path d={path} />
       </clipPath>
     );
     handleAddDefs({ id: clipPathId, element: clipPath });
-  }, [percent, lastPercent, index, variableName, selectedWedge, handleAddDefs, varArrayIdx, numUniqueVariables]);
+  }, [percent, lastPercent, index, variableName, selectedWedge, handleAddDefs, deviceId, varArrayIdx, numUniqueVariables]);
 
   const handleLabelClick = (e: React.MouseEvent) => {
     handleSetEditingVarName(varArrayIdx);
@@ -129,7 +130,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
       {/* wedge */}
       <path
         d={wedgePath}
-        id={`wedge-${variableName}`}
+        id={`${deviceId}-wedge-${variableName}`}
         fill={wedgeColor}
         className="wedge"
         onClick={handleWedgeClick}
@@ -139,7 +140,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
       </path>
       {/* variable name label */}
       <text
-        id={`wedge-label-${variableName}-${varArrayIdx}`}
+        id={`${deviceId}-wedge-label-${variableName}-${varArrayIdx}`}
         style={{ cursor: isDragging? "grabbing" : "pointer" }}
         x={labelPos.x}
         y={labelPos.y}
@@ -150,20 +151,20 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
         fontSize={labelFontSize}
         fontWeight={selectedWedge === variableName ? "bold" : "normal"}
         onClick={handleLabelClick}
-        clipPath={`url(#wedge-clip-${variableName}`}
+        clipPath={`url(#${deviceId}-wedge-clip-${variableName}`}
       >
         {variableName}
       </text>
       {/* draggable edge */}
       { !isLastVariable &&
         <path
-          id={`wedge-edge-${variableName}`}
+          id={`${deviceId}-wedge-edge-${variableName}`}
           d={edgePath}
           stroke={wedgeColor}
           strokeWidth={10}
           style={{cursor: isDragging ? "grabbing" : "grab"}}
           onMouseDown={handleMouseDown}
-          clipPath={`url(#wedge-clip-${variableName}`}
+          clipPath={`url(#${deviceId}-wedge-clip-${variableName}`}
         />
       }
       { selectedWedge === variableName &&
@@ -175,7 +176,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
             stroke={"#000"}
           />
           <text
-            id={`wedge-pct-${variableName}`}
+            id={`${deviceId}-wedge-pct-${variableName}`}
             x={pctPos.x}
             y={pctPos.y + 4}
             fontSize={12}

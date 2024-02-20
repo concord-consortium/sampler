@@ -5,12 +5,13 @@ import { Balls } from "./shared/balls";
 
 interface ICollector {
   collectorVariables: ICollectorVariables;
+  deviceId: string;
   handleAddDefs: (def: ClippingDef) => void
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleSetEditingVarName: (variableIdx: number) => void;
 }
 
-export const Collector = ({collectorVariables, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: ICollector) => {
+export const Collector = ({collectorVariables, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, deviceId}: ICollector) => {
   const [ballsArray, setBallsArray] = useState<Array<string>>([]);
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export const Collector = ({collectorVariables, handleAddDefs, handleSetSelectedV
       { ballsArray.length &&
         <Balls
           ballsArray={ballsArray}
+          deviceId={deviceId}
           handleAddDefs={handleAddDefs}
           handleSetSelectedVariable={handleSetSelectedVariable}
           handleSetEditingVarName={handleSetEditingVarName}
