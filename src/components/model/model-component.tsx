@@ -18,6 +18,7 @@ interface IProps {
   sampleSize: string;
   numSamples: string;
   enableRunButton: boolean;
+  modelIsRunning: boolean;
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
@@ -37,7 +38,7 @@ interface IProps {
   handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
 }
 
-export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton,
+export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton, modelIsRunning,
     addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange,handleStartRun,
     handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
     handleSelectReplacement, handleClearData, handleAddVariable, handleDeleteVariable, handleUpdateViewType,
@@ -91,6 +92,8 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
                   columnIndex={columnIndex}
                   model={model}
                   selectedDeviceId={selectedDeviceId}
+                  modelIsRunning={modelIsRunning}
+                  numSamples={numSamples} //temporary so we don't run forever
                   setSelectedDeviceId={setSelectedDeviceId}
                   addDevice={addDevice}
                   mergeDevices={mergeDevices}

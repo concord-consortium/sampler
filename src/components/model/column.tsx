@@ -12,6 +12,8 @@ interface IProps {
   columnIndex: number;
   model: IModel;
   selectedDeviceId?: Id;
+  modelIsRunning: boolean;
+  numSamples: string;
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
@@ -24,7 +26,8 @@ interface IProps {
   handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
 }
-export const Column = ({column, columnIndex, model, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
+export const Column = ({column, columnIndex, model, selectedDeviceId, modelIsRunning, numSamples,
+    setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
     handleNameChange, handleUpdateCollectorVariables, handleAddVariable, handleDeleteVariable,
     handleEditVarPct, handleEditVariable, handleUpdateViewType}: IProps) => {
   const hasBranch = model.columns.find(c =>  c.devices.length > 1);
@@ -100,6 +103,8 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, setSelecte
                 selectedDeviceId={selectedDeviceId}
                 source={sourceDevice}
                 target={device}
+                modelIsRunning={modelIsRunning}
+                numSamples={numSamples}
               />)
             )}
           </React.Fragment>

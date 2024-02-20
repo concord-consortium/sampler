@@ -37,6 +37,7 @@ export const App = () => {
   const [numSamples, setNumSamples] = useState<string>("3");
   const [createNewExperiment, setCreateNewExperiment] = useState(true);
   const [enableRunButton, setEnableRunButton] = useState(true);
+  const [modelIsRunning, setModelIsRunning] = useState(false);
   const numColumns = model.columns.length;
   const lastColumn = model.columns[numColumns - 1];
   const numDevicesInLastColumn = lastColumn?.devices?.length;
@@ -188,6 +189,7 @@ export const App = () => {
     // proof of concept that we can "run" the model and add items to CODAP
     let sampleNum = 1;
     setEnableRunButton(false);
+    setModelIsRunning(true);
     const experimentNum = model.experimentNum
                             ? createNewExperiment
                                 ? model.experimentNum + 1
@@ -321,6 +323,7 @@ export const App = () => {
             sampleSize={sampleSize}
             numSamples={numSamples}
             enableRunButton={enableRunButton}
+            modelIsRunning={modelIsRunning}
             addDevice={handleAddDevice}
             mergeDevices={handleMergeDevices}
             deleteDevice={handleDeleteDevice}

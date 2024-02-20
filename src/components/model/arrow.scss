@@ -4,14 +4,21 @@
   .arrow {
 
     marker {
-      polygon {
-        fill: #008cba;
+      .pulse {
+        fill: #FF6B3B;
       }
     }
 
     line {
       stroke-width: 3;
       stroke: #008cba;
+      &.pulse-line {
+        visibility: hidden;
+        &.visible {
+          visibility: visible;
+          stroke: #FF6B3B;
+        }
+      }
     }
   }
 
@@ -34,7 +41,7 @@
       border: solid 2px rgba(0,122,255, 0.25);
       background-color: #fff;
     }
-    
+
     .label-span {
       cursor: pointer;
       display: flex;

@@ -16,6 +16,8 @@ interface IProps {
   target: IDevice
   model: IModel
   selectedDeviceId?: string
+  modelIsRunning: boolean
+  numSamples: string //temporary so we don't run forever
 }
 
 type Rect = Omit<DOMRect, "toJSON"> & {midY: number};
@@ -43,7 +45,7 @@ const getRect = (el: HTMLElement): Rect => {
   return {width, height, x, y, left: x, right: x + width, top: y, bottom: y + height, midY};
 };
 
-export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
+export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, numSamples}: IProps) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [drawCount, setDrawCount] = useState(0);
   const redraw = () => setDrawCount(prev => prev + 1);
@@ -52,6 +54,10 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   const [label, setLabel] = useState("*");
   const inputRef = useRef<HTMLInputElement>(null);
   const labelRef = useRef<HTMLDivElement>(null);
+  const animationLineRef = useRef<SVGLineElement>(null);
+  const [flashArrow, setFlashArrow] = useState(false);
+  const [runAnimation, setRunAnimation] = useState(false);
+  const numAnimationCycles = useRef(0);
 
   // Using data attributes and directly linking to rendered divs isn't the "React way" but in this instance
   // the arrows are rendered in parallel with the device divs that are layed out by the browser using flexbox.
@@ -62,6 +68,9 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   const sourceDiv = document.querySelector(`[data-device-id="${source.id}"]`) as HTMLDivElement|null;
   const targetDiv = document.querySelector(`[data-device-id="${target.id}"]`) as HTMLDivElement|null;
   const labelDivWidth = labelRef.current?.getBoundingClientRect().width || 22;
+  const markerId = `arrow_${source.id}_${target.id}`;
+  let arrowLength = 0;
+
   const resetLabelInput = useCallback(() => {
     if (inputRef.current) {
       inputRef.current.value = label;
@@ -123,8 +132,52 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
     redraw();
   }, [model, selectedDeviceId]);
 
+  useEffect(() => {setRunAnimation(modelIsRunning);}, [modelIsRunning]);
+
   // when the plugin is resized or the scrollbar appears/disappears redraw since the arrow is absolutely positioned
   useResizer(redraw);
+
+  useEffect(() => {
+    if (runAnimation) {
+      let startTime: number | null = null;
+      const duration = 3000; // Duration in milliseconds for the whole animation cycle
+
+      const animate = (time: number) => {
+        if (!startTime) startTime = time;
+        const elapsedTime = time - startTime;
+        const progress = elapsedTime / duration;
+
+        // Update the stroke-dashoffset to create a moving pulse effect
+        if (animationLineRef.current) {
+          const dashOffset = (arrowLength) * (1 - progress);
+          animationLineRef.current.style.strokeDashoffset = `${dashOffset}`;
+          animationLineRef.current.style.strokeDasharray = `${arrowLength}`;
+          const leadingEdgePosition = (arrowLength) * progress;
+          const markerPosition = (arrowLength - 14);
+
+          if (leadingEdgePosition >= markerPosition) {
+            setFlashArrow(true);
+          } else {
+            setFlashArrow(false);
+          }
+        }
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          if (numAnimationCycles.current < Number(numSamples) - 1) {
+            numAnimationCycles.current = numAnimationCycles.current + 1;
+            startTime = null; // reset startTime for continuous loop
+            requestAnimationFrame(animate); // for continuous loop
+          } else {
+            setRunAnimation(false);
+            numAnimationCycles.current = 0;
+          }
+        }
+      };
+
+      requestAnimationFrame(animate);
+    }
+  }, [arrowLength, markerId, runAnimation, numAnimationCycles, numSamples]);
 
   // wait until both the source and target div are drawn
   if (!sourceDiv || !targetDiv) {
@@ -152,14 +205,13 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
   const svgWidth = targetRect.left - sourceRect.right;
   const start: IPoint = {x: 0, y: sourceRect.midY - svgTop};
   const end: IPoint = {x: svgWidth, y: targetRect.midY - svgTop};
-
+  arrowLength = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
   const arrowMidPoint = (end.y - start.y) / 2;
   const labelTop = horizontalArrow ? 0 : arrowMidPoint < 0 ? arrowMidPoint - kMaxLabelHeight/2 : -arrowMidPoint - kMaxLabelHeight;
   const labelLeft = (svgWidth / 2) - (labelDivWidth / 2);
 
   const arrowContainerStyle: React.CSSProperties = {top: 0, left: svgLeft, width: svgWidth, height: svgHeight + kMarkerHeight};
   const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft};
-  const markerId = `arrow_${source.id}_${target.id}`;
 
   const handleSubmitEdit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -193,13 +245,21 @@ export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
             markerHeight={kMarkerHeight}
             orient="auto"
           >
-            <polygon points={`0 0, ${kMarkerWidth} ${kMarkerHeight / 2}, 0 ${kMarkerHeight}`} />
+            <polygon points={`0 0, ${kMarkerWidth} ${kMarkerHeight / 2}, 0 ${kMarkerHeight}`} fill={flashArrow && runAnimation ? "#ff6347": "#008cba"}/>
           </marker>
         </defs>
         <line
           x1={start.x}
           y1={start.y - kMarkerHeight}
-          x2={end.x - kMarkerWidth - kArrowLineBuffer}
+          x2={end.x - kMarkerWidth}
+          y2={end.y - kMarkerHeight}
+          markerEnd={`url(#${markerId})`}
+        />
+        <line ref={animationLineRef}
+          className={`pulse-line ${runAnimation ? "visible" : ""}`}
+          x1={start.x}
+          y1={start.y - kMarkerHeight}
+          x2={end.x - kMarkerWidth}
           y2={end.y - kMarkerHeight}
           markerEnd={`url(#${markerId})`}
         />
