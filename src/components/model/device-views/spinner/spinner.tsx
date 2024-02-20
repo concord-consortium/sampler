@@ -38,15 +38,19 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
     }
   }, [variables, selectedVariableIdx]);
 
-  const getCurrentAndLastPct = (variableName: string, index: number) => {
-    const varArrayIdx = variables.findIndex((v) => v === variableName);
-    const prevVariables = variables.filter((v, i) => i < varArrayIdx && v !== variableName);
-    const numPrevVariables =  index === 0 ? 0 : prevVariables.length;
-    const numCurrVariable = variables.filter((v) => v === variableName).length;
-    const lastPercent = numPrevVariables / variables.length;
-    const currPercent = numCurrVariable / variables.length;
-    return {lastPercent, currPercent};
-  };
+  function getCurrentAndLastPct(variableName: string, index: number): { lastPercent: number, currPercent: number } {
+    const counts = variables.reduce((acc, val) => {
+      acc[val] = (acc[val] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const uniqueVariables = [...new Set(variables)];
+    let lastPercent = 0;
+    for (let i = 0; i < index; i++) {
+      lastPercent += (counts[uniqueVariables[i]] / variables.length);
+    }
+    const currPercent = (counts[variableName] / variables.length);
+    return { lastPercent, currPercent };
+  }
 
   return (
     [...new Set(variables)].length === 1 ?
