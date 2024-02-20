@@ -71,7 +71,7 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, setSelecte
           <React.Fragment key={device.id}>
             { firstDeviceInColumn &&
               <div className="device-column-header" onClick={handleToggleEditing}>
-                <input ref={attrNameInputRef} className="attr-name" value={device.name}
+                <input ref={attrNameInputRef} className="attr-name" value={column.name}
                       onChange={(e) => handleNameChange(device.id, e.target.value)} onKeyDown={(e)=>handleAttrNameKeyDown(e, device.id)}>
                 </input>
               </div>
