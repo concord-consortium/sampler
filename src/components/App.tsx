@@ -20,7 +20,8 @@ const kInitialDimensions = {
   height: 500
 };
 const kDefaultVars: IVariables = ["a", "a", "b"];
-
+const kMinColumnWidth = 220; // device + gap width
+const kSelectedSamplesDivWidth = 65; //includes margin-right
 
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
@@ -41,6 +42,9 @@ export const App = () => {
   const lastColumn = model.columns[numColumns - 1];
   const numDevicesInLastColumn = lastColumn?.devices?.length;
   const lastDeviceId = lastColumn?.devices?.[numDevicesInLastColumn - 1].id;
+  const modelWidth = (model.columns.length * kMinColumnWidth) + kSelectedSamplesDivWidth;
+  const modelHeaderStyle = {width: modelWidth};
+  const navTabsEl = document.getElementsByClassName("navigationTabs")[0] as HTMLElement;
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
@@ -54,6 +58,12 @@ export const App = () => {
   useEffect(()=>{
     setSelectedDeviceId(lastDeviceId);
   }, [lastDeviceId]);
+
+  useEffect(() => {
+    if (navTabsEl && modelWidth) {
+      navTabsEl.style.setProperty("--after-width", `${modelWidth + 25}px`);
+    }
+  },[modelWidth, navTabsEl]);
 
   const handleTabSelect = (tab: NavTab) => {
     setSelectedTab(tab);
@@ -332,6 +342,7 @@ export const App = () => {
             sampleSize={sampleSize}
             numSamples={numSamples}
             enableRunButton={enableRunButton}
+            modelHeaderStyle={modelHeaderStyle}
             addDevice={handleAddDevice}
             mergeDevices={handleMergeDevices}
             deleteDevice={handleDeleteDevice}
