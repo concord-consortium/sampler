@@ -1,29 +1,11 @@
 .arrow-container {
   position: absolute;
-
-  // .arrow {
-
-  //   marker {
-  //     .pulse {
-  //       fill: #008cba;
-  //     }
-  //   }
-
-  //   line {
-  //     stroke-width: 3;
-  //     stroke: #008cba;
-  //     &.running {
-  //       stroke: #a2a2a2;
-  //     }
-  //     &.pulse-line {
-  //       visibility: hidden;
-  //       &.visible {
-  //         visibility: visible;
-  //         stroke: #008cba;
-  //       }
-  //     }
-  //   }
-  // }
+  .arrow {
+    line {
+      stroke-width: 3;
+      fill: none;
+    }
+  }
 
   .arrow-label {
     position: relative;

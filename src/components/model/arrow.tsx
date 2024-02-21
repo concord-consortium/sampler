@@ -269,22 +269,18 @@ console.log("modelisrunning", modelIsRunning);
         <line
           x1={start.x}
           y1={start.y - kMarkerHeight}
-          x2={end.x + kMarkerWidth}
+          x2={end.x + kMarkerWidth - kArrowLineBuffer}
           y2={end.y - kMarkerHeight}
           stroke={runAnimation ? "#a2a2a2" : "#008cba"}
           markerEnd={showFinalMarker || !runAnimation ? `url(#final-${markerId})` : `url(#init-${markerId})`}
-          strokeWidth="3"
-          fill="none"
         />
         <line ref={animationLineRef}
           className={`pulse-line ${runAnimation ? "visible" : ""}`}
           x1={start.x}
           y1={start.y - kMarkerHeight}
-          x2={end.x + kMarkerWidth}
+          x2={end.x + kMarkerWidth - kArrowLineBuffer}
           y2={end.y - kMarkerHeight}
-          fill="none"
           stroke = "#008cba"
-          strokeWidth="3"
           strokeDasharray={arrowLength}
           strokeDashoffset={arrowLength}
         />
