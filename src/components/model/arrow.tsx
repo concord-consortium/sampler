@@ -242,7 +242,7 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
           <marker
             id={`init-${markerId}`}
             viewBox={`0 0 ${kMarkerWidth} ${kMarkerHeight}`}
-            refX={kMarkerWidth - kArrowLineBuffer}
+            refX={kMarkerWidth}
             refY={kMarkerHeight / 2}
             markerWidth={kMarkerWidth}
             markerHeight={kMarkerHeight}
@@ -254,7 +254,7 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
           <marker
             id={`final-${markerId}`}
             viewBox={`0 0 ${kMarkerWidth} ${kMarkerHeight}`}
-            refX={kMarkerWidth - kArrowLineBuffer}
+            refX={kMarkerWidth}
             refY={kMarkerHeight / 2}
             markerWidth={kMarkerWidth}
             markerHeight={kMarkerHeight}
@@ -267,10 +267,10 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
         <line
           x1={start.x}
           y1={start.y - kMarkerHeight}
-          x2={end.x - kMarkerWidth}
+          x2={end.x + kMarkerWidth}
           y2={end.y - kMarkerHeight}
-          stroke="#a2a2a2"
-          markerEnd={showFinalMarker ? `url(#final-${markerId})` : `url(#init-${markerId})`}
+          stroke={runAnimation ? "#a2a2a2" : "#008cba"}
+          markerEnd={showFinalMarker || !runAnimation ? `url(#final-${markerId})` : `url(#init-${markerId})`}
           strokeWidth="3"
           fill="none"
         />
@@ -278,7 +278,7 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
           className={`pulse-line ${runAnimation ? "visible" : ""}`}
           x1={start.x}
           y1={start.y - kMarkerHeight}
-          x2={end.x - kMarkerWidth}
+          x2={end.x + kMarkerWidth}
           y2={end.y - kMarkerHeight}
           fill="none"
           stroke = "#008cba"
