@@ -28,6 +28,7 @@ const kArrowLineBuffer = 3; //end line under arrowhead instead of the entire wid
 
 const kMaxLabelHeight = 22;
 const kWidthBetweenDevices = 40;
+const kAnimationDuration = 2500; // Duration in milliseconds for the whole animation cycle
 
 const getRect = (el: HTMLElement): Rect => {
   const {width, height} = el.getBoundingClientRect();
@@ -55,7 +56,7 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
   const inputRef = useRef<HTMLInputElement>(null);
   const labelRef = useRef<HTMLDivElement>(null);
   const animationLineRef = useRef<SVGLineElement>(null);
-  const [flashArrow, setFlashArrow] = useState(false);
+  const [showFinalMarker, setShowFinalMarker] = useState(false);
   const [runAnimation, setRunAnimation] = useState(false);
   const numAnimationCycles = useRef(0);
 
@@ -140,25 +141,27 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
   useEffect(() => {
     if (runAnimation) {
       let startTime: number | null = null;
-      const duration = 3000; // Duration in milliseconds for the whole animation cycle
 
       const animate = (time: number) => {
         if (!startTime) startTime = time;
         const elapsedTime = time - startTime;
-        const progress = elapsedTime / duration;
+        const progress = elapsedTime / kAnimationDuration;
 
         // Update the stroke-dashoffset to create a moving pulse effect
         if (animationLineRef.current) {
           const dashOffset = (arrowLength) * (1 - progress);
           animationLineRef.current.style.strokeDashoffset = `${dashOffset}`;
           animationLineRef.current.style.strokeDasharray = `${arrowLength}`;
-          const leadingEdgePosition = (arrowLength) * progress;
-          const markerPosition = (arrowLength - 14);
+          // const leadingEdgePosition = (arrowLength) * progress;
+          // const markerPosition = (arrowLength - 14);
+          const markerPosition = kMarkerWidth + kArrowLineBuffer;
+          // const currentOffset = parseFloat(window.getComputedStyle(animationLineRef.current).strokeDashoffset);
+          // if (currentOffset <= kMarkerWidth + kArrowLineBuffer) {
 
-          if (leadingEdgePosition >= markerPosition) {
-            setFlashArrow(true);
+          if (dashOffset <= markerPosition) {
+            setShowFinalMarker(true);
           } else {
-            setFlashArrow(false);
+            setShowFinalMarker(false);
           }
         }
         if (progress < 1) {
@@ -243,8 +246,11 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
             refY={kMarkerHeight / 2}
             markerWidth={kMarkerWidth}
             markerHeight={kMarkerHeight}
-            orient="auto"
+            orient="auto-start-reverse"
+            fill="#a2a2a2"
           >
+            <polygon points={`0 0, ${kMarkerWidth} ${kMarkerHeight / 2}, 0 ${kMarkerHeight}`} />
+          </marker>
           <marker
             id={`final-${markerId}`}
             viewBox={`0 0 ${kMarkerWidth} ${kMarkerHeight}`}
@@ -252,9 +258,10 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
             refY={kMarkerHeight / 2}
             markerWidth={kMarkerWidth}
             markerHeight={kMarkerHeight}
-            orient="auto">
-          </marker>
-            <polygon points={`0 0, ${kMarkerWidth} ${kMarkerHeight / 2}, 0 ${kMarkerHeight}`} fill={flashArrow && runAnimation ? "#ff6347": "#008cba"}/>
+            orient="auto-start-reverse"
+            fill="#008cba"
+          >
+            <polygon points={`0 0, ${kMarkerWidth} ${kMarkerHeight / 2}, 0 ${kMarkerHeight}`} />
           </marker>
         </defs>
         <line
@@ -262,7 +269,10 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
           y1={start.y - kMarkerHeight}
           x2={end.x - kMarkerWidth}
           y2={end.y - kMarkerHeight}
-          markerEnd={`url(#${markerId})`}
+          stroke="#a2a2a2"
+          markerEnd={showFinalMarker ? `url(#final-${markerId})` : `url(#init-${markerId})`}
+          strokeWidth="3"
+          fill="none"
         />
         <line ref={animationLineRef}
           className={`pulse-line ${runAnimation ? "visible" : ""}`}
@@ -270,7 +280,11 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
           y1={start.y - kMarkerHeight}
           x2={end.x - kMarkerWidth}
           y2={end.y - kMarkerHeight}
-          markerEnd={`url(#${markerId})`}
+          fill="none"
+          stroke = "#008cba"
+          strokeWidth="3"
+          strokeDasharray={arrowLength}
+          strokeDashoffset={arrowLength}
         />
       </svg>
       <div ref={labelRef} className="arrow-label" style={labelStyle}>
