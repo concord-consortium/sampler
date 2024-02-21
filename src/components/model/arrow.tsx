@@ -22,7 +22,7 @@ interface IProps {
 
 type Rect = Omit<DOMRect, "toJSON"> & {midY: number};
 
-const kMarkerWidth = 5;
+const kMarkerWidth = 4;
 const kMarkerHeight = 5;
 const kArrowLineBuffer = 3; //end line under arrowhead instead of the entire width of gap
 
@@ -237,7 +237,7 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
       <svg className="arrow" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <marker
-            id={markerId}
+            id={`init-${markerId}`}
             viewBox={`0 0 ${kMarkerWidth} ${kMarkerHeight}`}
             refX={kMarkerWidth - kArrowLineBuffer}
             refY={kMarkerHeight / 2}
@@ -245,6 +245,15 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
             markerHeight={kMarkerHeight}
             orient="auto"
           >
+          <marker
+            id={`final-${markerId}`}
+            viewBox={`0 0 ${kMarkerWidth} ${kMarkerHeight}`}
+            refX={kMarkerWidth - kArrowLineBuffer}
+            refY={kMarkerHeight / 2}
+            markerWidth={kMarkerWidth}
+            markerHeight={kMarkerHeight}
+            orient="auto">
+          </marker>
             <polygon points={`0 0, ${kMarkerWidth} ${kMarkerHeight / 2}, 0 ${kMarkerHeight}`} fill={flashArrow && runAnimation ? "#ff6347": "#008cba"}/>
           </marker>
         </defs>
