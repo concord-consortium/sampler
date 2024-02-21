@@ -4,7 +4,6 @@ export type View = "mixer" | "spinner" | "collector";
 
 export interface IDevice {
   id: Id;
-  name: string;
   viewType: View;
   variables: IVariables;
   collectorVariables: ICollectorVariables;

@@ -4,11 +4,11 @@ import { useImmer } from "use-immer";
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
-import { IModel, IRunResult, getDeviceById, getDeviceColumnIndex } from "../models/model-model";
+import { IModel, getDeviceById, getDeviceColumnIndex } from "../models/model-model";
 import { IDevice, IVariables } from "../models/device-model";
 import { Id, createId } from "../utils/id";
 import { deleteAll, findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
-import { createNewVarArray, getNewVariable, getProportionalVars } from "./helpers";
+import { createNewVarArray, getNewVariable, getProportionalVars, getRandomElement } from "./helpers";
 
 import "./App.scss";
 
@@ -25,7 +25,7 @@ const kDefaultVars: IVariables = ["a", "a", "b"];
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
 
-export const createDefaultDevice = (): IDevice => ({id: createId(), name: "output", viewType: "mixer", variables: kDefaultVars, collectorVariables: []});
+export const createDefaultDevice = (): IDevice => ({id: createId(), viewType: "mixer", variables: kDefaultVars, collectorVariables: []});
 
 export const App = () => {
   const [selectedTab, setSelectedTab] = useState<NavTab>("Model");
@@ -49,7 +49,7 @@ export const App = () => {
 
   // TODO: replace this with code that listens for the model state from CODAP - right now this just sets an initial model for development
   useEffect(() => {
-    setModel({columns: [{devices: [createDefaultDevice()]}], experimentNum: 0});
+    setModel({columns: [{name: "output", devices: [createDefaultDevice()]}], experimentNum: 0});
   }, [setModel]);
 
   useEffect(()=>{
@@ -70,7 +70,7 @@ export const App = () => {
         draft.columns[newColumnIndex].devices.push(newDevice);
       } else {
         // create the column and add the device
-        draft.columns.splice(newColumnIndex, 0, {devices: [newDevice]});
+        draft.columns.splice(newColumnIndex, 0, {name: "output", devices: [newDevice]});
       }
     });
     setCreateNewExperiment(true);
@@ -113,12 +113,9 @@ export const App = () => {
 
   const handleNameChange = (deviceId: Id, newName: string) => {
     setModel(draft => {
-      const columnIndex = draft.columns.findIndex(c => c.devices.find(d => d.id === deviceId));
-      if (columnIndex !== -1) {
-        const device = draft.columns[columnIndex].devices.find(dev => dev.id === deviceId);
-        if (device) {
-          device.name = newName;
-        }
+      const column = draft.columns.find(c => c.devices.find(d => d.id === deviceId));
+      if (column) {
+        column.name = newName;
       }
     });
   };
@@ -185,36 +182,50 @@ export const App = () => {
     }
   };
 
+  const getResults = (experimentNum: number): { [key: string]: string|number }[] => {
+    const results: { [key: string]: string|number }[] = [];
+    for (let sampleIndex = 0; sampleIndex < Number(numSamples); sampleIndex++) {
+      for (let i = 0; i < Number(sampleSize); i++) {
+        const sample: { [key: string]: string|number } = {};
+        model.columns.forEach(column => {
+          // to-do: pick a device based on the user formula if there is one defined
+          const device = column.devices.length > 1 ? getRandomElement(column.devices): column.devices[0];
+          const variable = getRandomElement(device.variables);
+          sample[column.name] = variable;
+          sample.experiment = experimentNum;
+          sample.sample = sampleIndex + 1;
+          const deviceStr = device.viewType.charAt(0).toUpperCase() + device.viewType.slice(1);
+          sample.description = `${deviceStr} containing ${numSamples} items${replacement ? " (with replacement)" : ""}`;
+          sample["sample size"] = sampleSize && parseInt(sampleSize, 10);
+        });
+        results.push(sample);
+      }
+    }
+    return results;
+  };
+
+  const getAttrKeys = () => {
+    const attrKeys: string[] = [];
+    model.columns.forEach(column => {
+        attrKeys.push(column.name);
+    });
+    return attrKeys;
+  };
+
   const handleStartRun = async () => {
     // proof of concept that we can "run" the model and add items to CODAP
-    let sampleNum = 1;
     setEnableRunButton(false);
     setModelIsRunning(true);
     const experimentNum = model.experimentNum
-                            ? createNewExperiment
-                                ? model.experimentNum + 1
-                                : model.experimentNum
-                            : 1;
-    const firstDevice: IDevice = (model.columns[0].devices[0]);
-    const firstDeviceType: string = (firstDevice.viewType).charAt(0).toUpperCase() + (firstDevice.viewType).slice(1);
-    const firstDeviceVariableLength = Object.keys(firstDevice.variables).length;
-    const descriptionText = `${firstDeviceType} containing ${firstDeviceVariableLength} items with${replacement? "" : "out"} replacement`;
-    const result: IRunResult = {};
-    const attrKeys: string[] = [];
-    model.columns.forEach(column => {
-      column.devices.forEach(device => {
-        result[device.name] = Object.keys(device.variables)[0];
-        attrKeys.push(device.name);
-      });
-    });
-
+    ? createNewExperiment
+        ? model.experimentNum + 1
+        : model.experimentNum
+    : 1;
+    const results = getResults(experimentNum);
+    const attrKeys = getAttrKeys();
     const ctxRes = await findOrCreateDataContext(attrKeys);
     if (ctxRes === "success") {
-      result.experiment = experimentNum;
-      result["sample size"] = sampleSize && parseInt(sampleSize, 10);
-      result.description = descriptionText;
-      result.sample = sampleNum;
-      await createItems(kDataContextName, [result]);
+      await createItems(kDataContextName, results);
       setCreateNewExperiment(false);
       setModel({columns: model.columns, experimentNum});
       setEnableRunButton(true);

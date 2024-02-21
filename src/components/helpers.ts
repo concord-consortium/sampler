@@ -199,3 +199,8 @@ export const createNewVarArray = (selectedVar: string, variables: IVariables, ne
   }
   return newVariables;
 };
+
+export function getRandomElement<T>(array: T[]): T {
+  const randomIndex = Math.floor(Math.random() * array.length);
+  return array[randomIndex];
+}

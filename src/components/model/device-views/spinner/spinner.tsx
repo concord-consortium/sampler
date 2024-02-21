@@ -7,6 +7,7 @@ import { SeparatorLine } from "./separator-lines";
 
 interface ISpinner {
   variables: IVariables;
+  deviceId: string;
   selectedVariableIdx: number|null;
   isDragging: boolean;
   handleAddDefs: (def: ClippingDef) => void;
@@ -17,10 +18,11 @@ interface ISpinner {
   handleStartDrag: (originPt: {x: number; y: number;}) => void;
 }
 
-export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSelectedVariable, handleDeleteWedge,
+export const Spinner = ({variables, selectedVariableIdx, isDragging, deviceId, handleSetSelectedVariable, handleDeleteWedge,
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: ISpinner) => {
   const [fontSize, setFontSize] = useState(16);
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
+  const [numUniqueVariables, setNumUniqueVariables] = useState(0);
 
   useEffect(() => {
     const numUnique = [...new Set(variables)].length;
@@ -28,6 +30,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
       : numUnique >= 10 ? 10
       : 16;
     setFontSize(size);
+    setNumUniqueVariables(numUnique);
 
     if (selectedVariableIdx !== null) {
       setSelectedWedge(variables[selectedVariableIdx]);
@@ -36,15 +39,19 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
     }
   }, [variables, selectedVariableIdx]);
 
-  const getCurrentAndLastPct = (variableName: string, index: number) => {
-    const varArrayIdx = variables.findIndex((v) => v === variableName);
-    const prevVariables = variables.filter((v, i) => i < varArrayIdx && v !== variableName);
-    const numPrevVariables =  index === 0 ? 0 : prevVariables.length;
-    const numCurrVariable = variables.filter((v) => v === variableName).length;
-    const lastPercent = numPrevVariables / variables.length;
-    const currPercent = numCurrVariable / variables.length;
-    return {lastPercent, currPercent};
-  };
+  function getCurrentAndLastPct(variableName: string, index: number): { lastPercent: number, currPercent: number } {
+    const counts = variables.reduce((acc, val) => {
+      acc[val] = (acc[val] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const uniqueVariables = [...new Set(variables)];
+    let lastPercent = 0;
+    for (let i = 0; i < index; i++) {
+      lastPercent += (counts[uniqueVariables[i]] / variables.length);
+    }
+    const currPercent = (counts[variableName] / variables.length);
+    return { lastPercent, currPercent };
+  }
 
   return (
     [...new Set(variables)].length === 1 ?
@@ -58,7 +65,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
           fill={getVariableColor(0, 0, false)}
         />
         <text
-          id={`wedge-label-${variables[0]}-0`}
+          id={`${deviceId}-wedge-label-${variables[0]}-0`}
           x={kSpinnerX}
           y={kSpinnerY}
           textAnchor="middle"
@@ -79,6 +86,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
           return (
             <Wedge
               key={`${variableName}-${index}`}
+              deviceId={deviceId}
               percent={currPercent}
               lastPercent={lastPercent}
               variableName={variableName}
@@ -86,6 +94,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
               labelFontSize={fontSize}
               varArrayIdx={varArrayIdx}
               selectedWedge={selectedWedge}
+              numUniqueVariables={numUniqueVariables}
               nextVariable={[...new Set(variables)][index + 1]}
               isLastVariable={index === [...new Set(variables)].length - 1}
               isDragging={isDragging}
@@ -102,7 +111,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, handleSetSe
           const {lastPercent, currPercent} = getCurrentAndLastPct(variableName, index);
           return (
             <SeparatorLine
-              key={`separator-line-${variableName}-${index}`}
+              key={`${deviceId}-separator-line-${variableName}-${index}`}
               percent={currPercent}
               lastPercent={lastPercent}
             />
