@@ -18,6 +18,7 @@ interface IProps {
   selectedDeviceId?: string
   modelIsRunning: boolean
   numSamples: string //temporary so we don't run forever
+  setModelIsRunning: (isRunning: boolean) => void
 }
 
 type Rect = Omit<DOMRect, "toJSON"> & {midY: number};
@@ -46,7 +47,7 @@ const getRect = (el: HTMLElement): Rect => {
   return {width, height, x, y, left: x, right: x + width, top: y, bottom: y + height, midY};
 };
 
-export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, numSamples}: IProps) => {
+export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, numSamples, setModelIsRunning}: IProps) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [drawCount, setDrawCount] = useState(0);
   const redraw = () => setDrawCount(prev => prev + 1);
@@ -71,7 +72,7 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
   const labelDivWidth = labelRef.current?.getBoundingClientRect().width || 22;
   const markerId = `arrow_${source.id}_${target.id}`;
   let arrowLength = 0;
-
+console.log("modelisrunning", modelIsRunning);
   const resetLabelInput = useCallback(() => {
     if (inputRef.current) {
       inputRef.current.value = label;
@@ -174,13 +175,14 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
           } else {
             setRunAnimation(false);
             numAnimationCycles.current = 0;
+            setModelIsRunning(false);
           }
         }
       };
 
       requestAnimationFrame(animate);
     }
-  }, [arrowLength, markerId, runAnimation, numAnimationCycles, numSamples]);
+  }, [arrowLength, markerId, runAnimation, numAnimationCycles, numSamples, setModelIsRunning]);
 
   // wait until both the source and target div are drawn
   if (!sourceDiv || !targetDiv) {

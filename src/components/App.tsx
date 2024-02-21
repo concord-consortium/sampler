@@ -341,6 +341,7 @@ export const App = () => {
             handleUpdateViewType={handleUpdateViewType}
             handleEditVariable={handleEditVariable}
             handleEditVarPct={handleEditVarPct}
+            setModelIsRunning={setModelIsRunning}
           /> :
           selectedTab === "Measures" ?
           <MeasuresTab /> :

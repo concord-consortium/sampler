@@ -25,11 +25,12 @@ interface IProps {
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
   handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
+  setModelIsRunning: (isRunning: boolean) => void;
 }
 export const Column = ({column, columnIndex, model, selectedDeviceId, modelIsRunning, numSamples,
     setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
     handleNameChange, handleUpdateCollectorVariables, handleAddVariable, handleDeleteVariable,
-    handleEditVarPct, handleEditVariable, handleUpdateViewType}: IProps) => {
+    handleEditVarPct, handleEditVariable, handleUpdateViewType, setModelIsRunning}: IProps) => {
   const hasBranch = model.columns.find(c =>  c.devices.length > 1);
   const multipleColumns = model.columns.length > 1;
   const [attrName, setAttrName] = useState("output");
@@ -105,6 +106,7 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, modelIsRun
                 target={device}
                 modelIsRunning={modelIsRunning}
                 numSamples={numSamples}
+                setModelIsRunning={setModelIsRunning}
               />)
             )}
           </React.Fragment>
