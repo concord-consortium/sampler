@@ -9,6 +9,7 @@ import { IDevice, IVariables } from "../models/device-model";
 import { Id, createId } from "../utils/id";
 import { deleteAll, findOrCreateDataContext, kDataContextName } from "../utils/codap-helpers";
 import { createNewVarArray, getNewVariable, getProportionalVars, getRandomElement } from "./helpers";
+import { parseSpecifier } from "../utils/utils";
 
 import "./App.scss";
 
@@ -141,6 +142,17 @@ export const App = () => {
         }
       }
     });
+  };
+
+  const handleUpdateVariablesToSeries = (series: string) => {
+    if (series) {
+      const sequence = parseSpecifier(series, "to");
+      if (sequence) {
+        // swap contents of sequence into variables without updating variables reference
+        handleUpdateVariables(sequence);
+      }
+      else { alert("parse error in sequence"); }
+    }
   };
 
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -349,6 +361,7 @@ export const App = () => {
             handleUpdateViewType={handleUpdateViewType}
             handleEditVariable={handleEditVariable}
             handleEditVarPct={handleEditVarPct}
+            handleUpdateVariablesToSeries={handleUpdateVariablesToSeries}
           /> :
           selectedTab === "Measures" ?
           <MeasuresTab /> :

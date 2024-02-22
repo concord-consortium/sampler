@@ -34,13 +34,14 @@ interface IProps {
   handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
   handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
-  handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void
+  handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
+  handleUpdateVariablesToSeries: (series: string) => void;
 }
 
 export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, multipleColumns, setSelectedDeviceId, addDevice, mergeDevices,
     deleteDevice, handleUpdateCollectorVariables, handleAddVariable, handleUpdateViewType, handleDeleteVariable,
-    handleEditVariable, handleEditVarPct} = props;
+    handleEditVariable, handleEditVarPct, handleUpdateVariablesToSeries} = props;
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
@@ -305,7 +306,11 @@ export const Device = (props: IProps) => {
             handleSpecifyVariables={handleSpecifyVariables}
           />
       }
-      {showVariableEditor && <SetVariableSeriesModal setShowVariableEditor={setShowVariableEditor} />}
+      {showVariableEditor &&
+        <SetVariableSeriesModal
+          setShowVariableEditor={setShowVariableEditor}
+          handleUpdateVariablesToSeries={handleUpdateVariablesToSeries}
+        />}
     </div>
   );
 };
