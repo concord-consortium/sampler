@@ -5,6 +5,7 @@ import { IModel } from "../../models/model-model";
 import { useResizer } from "../../hooks/use-resizer";
 
 import "./arrow.scss";
+import { useGlobalStateContext } from "../../hooks/use-global-state";
 
 interface IPoint {
   x: number
@@ -14,7 +15,6 @@ interface IPoint {
 interface IProps {
   source: IDevice
   target: IDevice
-  model: IModel
   selectedDeviceId?: string
 }
 
@@ -43,7 +43,9 @@ const getRect = (el: HTMLElement): Rect => {
   return {width, height, x, y, left: x, right: x + width, top: y, bottom: y + height, midY};
 };
 
-export const Arrow = ({source, target, model, selectedDeviceId}: IProps) => {
+export const Arrow = ({source, target, selectedDeviceId}: IProps) => {
+  const { globalState } = useGlobalStateContext();
+  const { model } = globalState;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [drawCount, setDrawCount] = useState(0);
   const redraw = () => setDrawCount(prev => prev + 1);

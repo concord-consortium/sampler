@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-import { IModel } from "../../models/model-model";
-import { IDevice } from "../../models/device-model";
-import { Id } from "../../utils/id";
+import { useGlobalStateContext } from "../../hooks/use-global-state";
 import { useResizer } from "../../hooks/use-resizer";
 import { Column } from "./column";
 import { ModelHeader } from "./model-header";
@@ -11,37 +9,9 @@ import "./model-component.scss";
 const kMinColumnWidth = 220; // device + gap width
 const kSelectedSamplesDivWidth = 65; //includes margin-right
 
-interface IProps {
-  model: IModel;
-  selectedDeviceId?: Id;
-  repeat: boolean;
-  sampleSize: string;
-  numSamples: string;
-  enableRunButton: boolean;
-  setSelectedDeviceId: (id: Id) => void;
-  addDevice: (parentDevice: IDevice) => void;
-  mergeDevices: (device: IDevice) => void;
-  deleteDevice: (device: IDevice) => void;
-  handleNameChange: (deviceId: Id, newName: string) => void;
-  handleSampleSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleNumSamplesChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleStartRun: () => void;
-  handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
-  handleSelectRepeat: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  handleSelectReplacement: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  handleClearData: () => void;
-  handleAddVariable: (selectedVariable?: string) => void;
-  handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
-  handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
-  handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
-  handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
-}
-
-export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton,
-    addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange,handleStartRun,
-    handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
-    handleSelectReplacement, handleClearData, handleAddVariable, handleDeleteVariable, handleUpdateViewType,
-    handleEditVariable, handleEditVarPct}: IProps) => {
+export const ModelTab = () => {
+  const { globalState } = useGlobalStateContext();
+  const { model } = globalState;
   const [showHelp, setShowHelp] = useState(false);
   const [isWide, setIsWide] = useState(false);
 
@@ -65,16 +35,6 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
     <div className="model-tab">
       <ModelHeader
         modelHeaderStyle={modelHeaderStyle}
-        enableRunButton={enableRunButton}
-        repeat={repeat}
-        sampleSize={sampleSize}
-        numSamples={numSamples}
-        handleStartRun={handleStartRun}
-        handleSampleSizeChange={handleSampleSizeChange}
-        handleNumSamplesChange={handleNumSamplesChange}
-        handleSelectRepeat={handleSelectRepeat}
-        handleSelectReplacement={handleSelectReplacement}
-        handleClearData={handleClearData}
         showHelp={showHelp}
         setShowHelp={setShowHelp}
         isWide={isWide}
@@ -89,19 +49,6 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
                   key={`column-${columnIndex}`}
                   column={column}
                   columnIndex={columnIndex}
-                  model={model}
-                  selectedDeviceId={selectedDeviceId}
-                  setSelectedDeviceId={setSelectedDeviceId}
-                  addDevice={addDevice}
-                  mergeDevices={mergeDevices}
-                  deleteDevice={columnIndex !== 0 ? deleteDevice : undefined}
-                  handleNameChange={handleNameChange}
-                  handleUpdateCollectorVariables={handleUpdateCollectorVariables}
-                  handleAddVariable={handleAddVariable}
-                  handleDeleteVariable={handleDeleteVariable}
-                  handleUpdateViewType={handleUpdateViewType}
-                  handleEditVariable={handleEditVariable}
-                  handleEditVarPct={handleEditVarPct}
                 />
               );
             })}

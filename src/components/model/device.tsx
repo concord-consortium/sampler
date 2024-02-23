@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ClippingDef, IDataContext, IDevice, IItem, IItems } from "../../models/device-model";
-import { Id } from "../../utils/id";
-import { IModel, getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
+import { useGlobalStateContext } from "../../hooks/use-global-state";
+import { ClippingDef, IDataContext, IDevice, IItem, IItems, IVariables } from "../../models/device-model";
+import { getDeviceById, getDeviceColumnIndex } from "../../models/model-model";
 import { Mixer } from "./device-views/mixer/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
@@ -11,35 +11,22 @@ import { DeviceFooter } from "./device-footer";
 import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth, kSpinnerX, kSpinnerY } from "./device-views/shared/constants";
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../utils/codap-helpers";
-import { getNextVariable, getPercentOfVar } from "../helpers";
+import { createNewVarArray, getNextVariable, getPercentOfVar } from "../helpers";
 import { calculateWedgePercentage } from "./device-views/shared/helpers";
 import DeleteIcon from "../../assets/delete-icon.svg";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 
 import "./device.scss";
-
 interface IProps {
-  model: IModel;
   device: IDevice;
-  selectedDeviceId?: Id;
-  multipleColumns: boolean;
-  addDevice: (parentDevice: IDevice) => void;
-  mergeDevices: (device: IDevice) => void;
-  deleteDevice?: (device: IDevice) => void;
-  setSelectedDeviceId: (id: Id) => void;
-  handleNameChange: (deviceId: string, newName: string) => void;
-  handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
-  handleAddVariable: () => void;
-  handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
-  handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
-  handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
-  handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void
+  deviceIndex: number;
 }
 
 export const Device = (props: IProps) => {
-  const {model, device, selectedDeviceId, multipleColumns, setSelectedDeviceId, addDevice, mergeDevices,
-    deleteDevice, handleUpdateCollectorVariables, handleAddVariable, handleUpdateViewType, handleDeleteVariable,
-    handleEditVariable, handleEditVarPct} = props;
+  const { globalState, setGlobalState } = useGlobalStateContext();
+  const { model, selectedDeviceId } = globalState;
+  const { device, deviceIndex } = props;
+  const multipleColumns = model.columns.length > 1;
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
@@ -81,15 +68,55 @@ export const Device = (props: IProps) => {
 
       fetchItems().then((items: IItems) => {
         const itemValues = items.map((item: IItem) => item.values);
-        handleUpdateCollectorVariables(itemValues);
+        setGlobalState(draft => {
+          const columnIndex = draft.model.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
+          if (columnIndex !== -1) {
+            const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+            if (deviceToUpdate) {
+              deviceToUpdate.collectorVariables = itemValues;
+            }
+          }
+        });
       });
     }
-  }, [selectedDataContext, handleUpdateCollectorVariables]);
+  }, [selectedDataContext]);
 
-  const handleSelectDevice = () => setSelectedDeviceId(device.id);
-  const handleAddDevice = () => addDevice(device);
-  const handleDeleteDevice = () => deleteDevice?.(device);
-  const handleMergeDevices = () => mergeDevices(device);
+
+  const handleSelectDevice = () => {
+    setGlobalState(draft => {
+      draft.selectedDeviceId = device.id;
+    });
+  };
+
+  const handleDeleteDevice = () => {
+    if (deviceIndex === 0) {
+      return;
+    }
+
+    setGlobalState(draft => {
+      const { model } = draft;
+      const columnIndex = getDeviceColumnIndex(model, device);
+      if (columnIndex !== -1) {
+        const devices = model.columns[columnIndex].devices.filter(dev => dev.id !== device.id);
+        const noMoreDevicesInThisColumn = devices.length === 0;
+        const hasColumnsToTheRight = model.columns.length > columnIndex + 1;
+        const question = noMoreDevicesInThisColumn && hasColumnsToTheRight ? "Delete this device and all the devices to the right of it?" : "Delete this device?";
+        if (confirm(question)) {
+          if (noMoreDevicesInThisColumn) {
+            // when last device in a column is deleted delete this column and all the devices to the right if they exist
+            model.columns.splice(columnIndex, model.columns.length - columnIndex);
+          }
+          else {
+            model.columns[columnIndex].devices = devices;
+          }
+        }
+        draft.createNewExperiment = true;
+      } else {
+        alert("Sorry, that device could not be found!");
+      }
+    });
+  };
+
   const handleSelectDataContext = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedDataContext(e.target.value);
   };
@@ -118,14 +145,76 @@ export const Device = (props: IProps) => {
     }
   };
 
+  const handleUpdateVariables = (variables: IVariables) => {
+    setGlobalState(draft => {
+      const columnIndex = draft.model.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
+      if (columnIndex !== -1) {
+        const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+        if (deviceToUpdate) {
+          deviceToUpdate.variables = variables;
+        }
+      }
+    });
+  };
+
+  const handleDeleteVariable = (e: React.MouseEvent, selectedVariable?: string) => {
+    if (model && selectedDeviceId) {
+      const selectedDevice = getDeviceById(model, selectedDeviceId);
+      const { viewType, variables } = selectedDevice;
+
+      if ([...new Set(variables)].length === 1) {
+        return;
+      }
+
+      let newVariables: IVariables = [];
+      if (viewType === "mixer") {
+        newVariables.push(...variables.slice(0, variables.length - 1));
+      } else {
+        if (selectedVariable) {
+          newVariables.push(...variables.filter((v) => v !== selectedVariable));
+        } else {
+          const lastVariable = variables[variables.length - 1];
+          newVariables.push(...variables.filter((v) => v !== lastVariable));
+        }
+      }
+      handleUpdateVariables(newVariables);
+    }
+  };
+
   const handleDeleteWedge = (e: React.MouseEvent, variableName: string) => {
     handleDeleteVariable(e, variableName);
     setSelectedVariableIdx(null);
   };
 
+  const handleEditVarPct = (variableIdx: number, pctStr: string, updateNext?: boolean) => {
+    if (model && selectedDeviceId) {
+      const selectedDevice = getDeviceById(model, selectedDeviceId);
+      const { variables } = selectedDevice;
+      const selectedVar = variables[variableIdx];
+      const newVariables = createNewVarArray(selectedVar, variables, Number(pctStr), updateNext);
+      handleUpdateVariables(newVariables);
+    }
+  };
+
   const handlePctChange = useCallback((variableIdx: number, newPct: string, updateNext?: boolean) => {
     handleEditVarPct(variableIdx, newPct, updateNext);
   }, [handleEditVarPct]);
+
+  const handleEditVariable = (oldVariableIdx: number, newVariableName: string) => {
+    if (model && selectedDeviceId) {
+      const selectedDevice = getDeviceById(model, selectedDeviceId);
+      const { viewType, variables } = selectedDevice;
+      const newVariables: IVariables = [];
+      if (viewType === "mixer" || viewType === "collector") {
+        newVariables.push(...variables);
+        newVariables[oldVariableIdx] = newVariableName;
+      } else {
+        const oldVariableName = variables[oldVariableIdx];
+        newVariables.push(...variables.map((v) => v === oldVariableName ? newVariableName : v));
+      }
+      handleUpdateVariables(newVariables);
+    }
+  };
 
   const handleStartDrag = (originPt: {x: number, y: number}) => {
     setDragOrigin(originPt);
@@ -194,11 +283,6 @@ export const Device = (props: IProps) => {
     };
   }, [isDragging, handleDrag]);
 
-  const targetDevices = getTargetDevices(model, device);
-  const siblingDevices = getSiblingDevices(model, device);
-  const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
-  const showCollectorButton = getNumDevices(model) === 1;
-  const showMergeButton = siblingDevices.length > 0;
   const isSelectedDevice = device.id === selectedDeviceId;
 
   return (
@@ -277,7 +361,7 @@ export const Device = (props: IProps) => {
             }
           </div>
         </div>
-        {deleteDevice &&
+        {deviceIndex !== 0 &&
           <div className="device-delete-icon" onClick={handleDeleteDevice}>
             <DeleteIcon />
           </div>
@@ -285,17 +369,11 @@ export const Device = (props: IProps) => {
       </div>
       { device.id === selectedDeviceId &&
           <DeviceFooter
-            showCollectorButton={showCollectorButton}
-            showMergeButton={showMergeButton}
+            device={device}
             dataContexts={dataContexts}
-            addButtonLabel={addButtonLabel}
-            viewType={viewType}
-            handleAddVariable={handleAddVariable}
-            handleAddDevice={handleAddDevice}
+            handleUpdateVariables={handleUpdateVariables}
             handleDeleteVariable={handleDeleteVariable}
-            handleUpdateViewType={handleUpdateViewType}
             handleSelectDataContext={handleSelectDataContext}
-            handleMergeDevices={handleMergeDevices}
           />
       }
     </div>
