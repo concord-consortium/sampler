@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { ClippingDef, IVariables } from "../../../../models/device-model";
+import { ClippingDef, IDevice } from "../../../../models/device-model";
 import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getTextShift, getVariableColor } from "../shared/helpers";
 import { Wedge } from "./wedge";
 import { SeparatorLine } from "./separator-lines";
 
 interface ISpinner {
-  variables: IVariables;
-  deviceId: string;
+  device: IDevice;
   selectedVariableIdx: number|null;
   isDragging: boolean;
   handleAddDefs: (def: ClippingDef) => void;
@@ -18,11 +17,12 @@ interface ISpinner {
   handleStartDrag: (originPt: {x: number; y: number;}) => void;
 }
 
-export const Spinner = ({variables, selectedVariableIdx, isDragging, deviceId, handleSetSelectedVariable, handleDeleteWedge,
+export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelectedVariable, handleDeleteWedge,
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: ISpinner) => {
   const [fontSize, setFontSize] = useState(16);
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
   const [numUniqueVariables, setNumUniqueVariables] = useState(0);
+  const { variables, id } = device;
 
   useEffect(() => {
     const numUnique = [...new Set(variables)].length;
@@ -65,7 +65,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, deviceId, h
           fill={getVariableColor(0, 0, false)}
         />
         <text
-          id={`${deviceId}-wedge-label-${variables[0]}-0`}
+          id={`${id}-wedge-label-${variables[0]}-0`}
           x={kSpinnerX}
           y={kSpinnerY}
           textAnchor="middle"
@@ -86,7 +86,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, deviceId, h
           return (
             <Wedge
               key={`${variableName}-${index}`}
-              deviceId={deviceId}
+              deviceId={id}
               percent={currPercent}
               lastPercent={lastPercent}
               variableName={variableName}
@@ -111,7 +111,7 @@ export const Spinner = ({variables, selectedVariableIdx, isDragging, deviceId, h
           const {lastPercent, currPercent} = getCurrentAndLastPct(variableName, index);
           return (
             <SeparatorLine
-              key={`${deviceId}-separator-line-${variableName}-${index}`}
+              key={`${id}-separator-line-${variableName}-${index}`}
               percent={currPercent}
               lastPercent={lastPercent}
             />

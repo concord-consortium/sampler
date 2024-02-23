@@ -34,13 +34,13 @@ export const App = () => {
     setGlobalState(draft => {
       draft.model = {columns: [{name: "output", devices: [createDefaultDevice()]}], experimentNum: 0};
     });
-  }, []);
+  }, [setGlobalState]);
 
   useEffect(()=>{
     setGlobalState(draft => {
       draft.selectedDeviceId = lastDeviceId;
     });
-  }, [lastDeviceId]);
+  }, [lastDeviceId, setGlobalState]);
 
   const handleTabSelect = (tab: NavTab) => {
     setGlobalState(draft => {

@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 import { Updater, useImmer } from "use-immer";
-import { IGlobalState } from "../types"
+import { IGlobalState } from "../types";
 
 export const getDefaultState = (): IGlobalState => {
   return {
@@ -13,8 +13,8 @@ export const getDefaultState = (): IGlobalState => {
     numSamples: "3",
     createNewExperiment: true,
     enableRunButton: true
-  }
-}
+  };
+};
 
 export interface IGlobalStateContext {
   globalState: IGlobalState;

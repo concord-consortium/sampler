@@ -16,6 +16,7 @@ export const Column = ({column, columnIndex}: IProps) => {
   const { model } = globalState;
   const hasBranch = model.columns.find(c =>  c.devices.length > 1);
   const [attrName] = useState("output");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [editing, setEditing] = useState(false);
   const attrNameInputRef = useRef<HTMLInputElement>(null);
 
@@ -37,10 +38,9 @@ export const Column = ({column, columnIndex}: IProps) => {
 
   const handleNameChange = (deviceId: Id, newName: string) => {
     setGlobalState(draft => {
-      const { model } = draft;
-      const column = model.columns.find(c => c.devices.find(d => d.id === deviceId));
-      if (column) {
-        column.name = newName;
+      const col = draft.model.columns.find(c => c.devices.find(d => d.id === deviceId));
+      if (col) {
+        col.name = newName;
       }
     });
   };

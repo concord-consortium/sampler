@@ -1,17 +1,17 @@
 import React from "react";
-import { ClippingDef, IVariables } from "../../../../models/device-model";
+import { ClippingDef, IDevice } from "../../../../models/device-model";
 import { MixerFrame } from "../shared/mixer-frame";
 import { Balls } from "../shared/balls";
 
 interface IMixer {
-  variables: IVariables;
-  deviceId: string;
+  device: IDevice;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleSetEditingVarName: (variableIdx: number) => void;
 }
 
-export const Mixer = ({variables, deviceId, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IMixer) => {
+export const Mixer = ({device, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IMixer) => {
+  const { variables, id: deviceId } = device;
   return (
     <>
       <MixerFrame withReplacement={false}/>

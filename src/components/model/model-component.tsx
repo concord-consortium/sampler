@@ -38,7 +38,6 @@ export const ModelTab = () => {
         showHelp={showHelp}
         setShowHelp={setShowHelp}
         isWide={isWide}
-        setIsWide={setIsWide}
         handleOpenHelp={handleOpenHelp}
       />
       <div className="model-container">

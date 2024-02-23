@@ -25,7 +25,7 @@ export const DeviceFooter = ({device, handleUpdateVariables, handleDeleteVariabl
   const showMergeButton = siblingDevices.length > 0;
 
   const handleAddVariable = () => {
-    const { viewType, variables } = device;
+    const { variables } = device;
     if (viewType === "spinner") {
       handleUpdateVariables(getProportionalVars(variables));
     } else {
@@ -51,24 +51,22 @@ export const DeviceFooter = ({device, handleUpdateVariables, handleDeleteVariabl
 
   const handleMergeDevices = () => {
     setGlobalState(draft => {
-      const { model } = draft;
-      const columnIndex = getDeviceColumnIndex(model, device);
+      const columnIndex = getDeviceColumnIndex(draft.model, device);
       if (columnIndex !== -1) {
         // remove the other devices
-        model.columns[columnIndex].devices.splice(0, model.columns[columnIndex].devices.length, device);
+        draft.model.columns[columnIndex].devices.splice(0, model.columns[columnIndex].devices.length, device);
       }
       draft.createNewExperiment = true;
     });
   };
 
-  const handleUpdateViewType = (viewType: IDevice["viewType"]) => {
+  const handleUpdateViewType = (view: IDevice["viewType"]) => {
     setGlobalState(draft => {
-      const { model } = draft;
-      const columnIndex = model.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
+      const columnIndex = draft.model.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
       if (columnIndex !== -1) {
-        const deviceToUpdate = model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+        const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
         if (deviceToUpdate) {
-          deviceToUpdate.viewType = viewType;
+          deviceToUpdate.viewType = view;
         }
       }
     });

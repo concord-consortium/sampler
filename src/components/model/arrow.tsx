@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-
+import { useGlobalStateContext } from "../../hooks/use-global-state";
 import { IDevice } from "../../models/device-model";
-import { IModel } from "../../models/model-model";
 import { useResizer } from "../../hooks/use-resizer";
 
 import "./arrow.scss";
-import { useGlobalStateContext } from "../../hooks/use-global-state";
 
 interface IPoint {
   x: number

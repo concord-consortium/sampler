@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/use-global-state";
 import { ClippingDef, IDataContext, IDevice, IItem, IItems, IVariables } from "../../models/device-model";
-import { getDeviceById, getDeviceColumnIndex } from "../../models/model-model";
+import { getDeviceColumnIndex } from "../../models/model-model";
 import { Mixer } from "./device-views/mixer/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
@@ -26,7 +26,6 @@ export const Device = (props: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { model, selectedDeviceId } = globalState;
   const { device, deviceIndex } = props;
-  const multipleColumns = model.columns.length > 1;
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
@@ -38,6 +37,7 @@ export const Device = (props: IProps) => {
   const [dragOrigin, setDragOrigin] = useState<{x: number, y: number}>({x: 0, y: 0});
   const { viewType, variables } = device;
   const svgRef = useRef<SVGSVGElement>(null);
+  const multipleColumns = model.columns.length > 1;
 
   useEffect(() => {
     const fetchDataContexts = async () => {
@@ -79,7 +79,7 @@ export const Device = (props: IProps) => {
         });
       });
     }
-  }, [selectedDataContext]);
+  }, [selectedDataContext, selectedDeviceId, setGlobalState]);
 
 
   const handleSelectDevice = () => {
@@ -94,20 +94,19 @@ export const Device = (props: IProps) => {
     }
 
     setGlobalState(draft => {
-      const { model } = draft;
       const columnIndex = getDeviceColumnIndex(model, device);
       if (columnIndex !== -1) {
-        const devices = model.columns[columnIndex].devices.filter(dev => dev.id !== device.id);
+        const devices = draft.model.columns[columnIndex].devices.filter(dev => dev.id !== device.id);
         const noMoreDevicesInThisColumn = devices.length === 0;
-        const hasColumnsToTheRight = model.columns.length > columnIndex + 1;
+        const hasColumnsToTheRight = draft.model.columns.length > columnIndex + 1;
         const question = noMoreDevicesInThisColumn && hasColumnsToTheRight ? "Delete this device and all the devices to the right of it?" : "Delete this device?";
         if (confirm(question)) {
           if (noMoreDevicesInThisColumn) {
             // when last device in a column is deleted delete this column and all the devices to the right if they exist
-            model.columns.splice(columnIndex, model.columns.length - columnIndex);
+            draft.model.columns.splice(columnIndex, draft.model.columns.length - columnIndex);
           }
           else {
-            model.columns[columnIndex].devices = devices;
+            draft.model.columns[columnIndex].devices = devices;
           }
         }
         draft.createNewExperiment = true;
@@ -145,40 +144,36 @@ export const Device = (props: IProps) => {
     }
   };
 
-  const handleUpdateVariables = (variables: IVariables) => {
+  const handleUpdateVariables = useCallback((newVariables: IVariables) => {
     setGlobalState(draft => {
       const columnIndex = draft.model.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
       if (columnIndex !== -1) {
         const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
         if (deviceToUpdate) {
-          deviceToUpdate.variables = variables;
+          deviceToUpdate.variables = newVariables;
         }
       }
     });
-  };
+  }, [selectedDeviceId, setGlobalState]);
 
   const handleDeleteVariable = (e: React.MouseEvent, selectedVariable?: string) => {
-    if (model && selectedDeviceId) {
-      const selectedDevice = getDeviceById(model, selectedDeviceId);
-      const { viewType, variables } = selectedDevice;
-
-      if ([...new Set(variables)].length === 1) {
-        return;
-      }
-
-      let newVariables: IVariables = [];
-      if (viewType === "mixer") {
-        newVariables.push(...variables.slice(0, variables.length - 1));
-      } else {
-        if (selectedVariable) {
-          newVariables.push(...variables.filter((v) => v !== selectedVariable));
-        } else {
-          const lastVariable = variables[variables.length - 1];
-          newVariables.push(...variables.filter((v) => v !== lastVariable));
-        }
-      }
-      handleUpdateVariables(newVariables);
+    if (selectedDeviceId !== device.id) return;
+    if ([...new Set(variables)].length === 1) {
+      return;
     }
+
+    let newVariables: IVariables = [];
+    if (viewType === "mixer") {
+      newVariables.push(...variables.slice(0, variables.length - 1));
+    } else {
+      if (selectedVariable) {
+        newVariables.push(...variables.filter((v) => v !== selectedVariable));
+      } else {
+        const lastVariable = variables[variables.length - 1];
+        newVariables.push(...variables.filter((v) => v !== lastVariable));
+      }
+    }
+    handleUpdateVariables(newVariables);
   };
 
   const handleDeleteWedge = (e: React.MouseEvent, variableName: string) => {
@@ -186,34 +181,22 @@ export const Device = (props: IProps) => {
     setSelectedVariableIdx(null);
   };
 
-  const handleEditVarPct = (variableIdx: number, pctStr: string, updateNext?: boolean) => {
-    if (model && selectedDeviceId) {
-      const selectedDevice = getDeviceById(model, selectedDeviceId);
-      const { variables } = selectedDevice;
-      const selectedVar = variables[variableIdx];
-      const newVariables = createNewVarArray(selectedVar, variables, Number(pctStr), updateNext);
-      handleUpdateVariables(newVariables);
-    }
+  const handlePctChange = (variableIdx: number, newPct: string, updateNext?: boolean) => {
+    const selectedVar = variables[variableIdx];
+    const newVariables = createNewVarArray(selectedVar, variables, Number(newPct), updateNext);
+    handleUpdateVariables(newVariables);
   };
 
-  const handlePctChange = useCallback((variableIdx: number, newPct: string, updateNext?: boolean) => {
-    handleEditVarPct(variableIdx, newPct, updateNext);
-  }, [handleEditVarPct]);
-
   const handleEditVariable = (oldVariableIdx: number, newVariableName: string) => {
-    if (model && selectedDeviceId) {
-      const selectedDevice = getDeviceById(model, selectedDeviceId);
-      const { viewType, variables } = selectedDevice;
-      const newVariables: IVariables = [];
-      if (viewType === "mixer" || viewType === "collector") {
-        newVariables.push(...variables);
-        newVariables[oldVariableIdx] = newVariableName;
-      } else {
-        const oldVariableName = variables[oldVariableIdx];
-        newVariables.push(...variables.map((v) => v === oldVariableName ? newVariableName : v));
-      }
-      handleUpdateVariables(newVariables);
+    const newVariables: IVariables = [];
+    if (viewType === "mixer" || viewType === "collector") {
+      newVariables.push(...variables);
+      newVariables[oldVariableIdx] = newVariableName;
+    } else {
+      const oldVariableName = variables[oldVariableIdx];
+      newVariables.push(...variables.map((v) => v === oldVariableName ? newVariableName : v));
     }
+    handleUpdateVariables(newVariables);
   };
 
   const handleStartDrag = (originPt: {x: number, y: number}) => {
@@ -261,12 +244,14 @@ export const Device = (props: IProps) => {
       const htmlTarget = e.target as HTMLElement;
       const varName = variables[selectedVariableIdx];
       const nextVarName = getNextVariable(selectedVariableIdx, variables);
-      const isWithinBounds = htmlTarget.id === `wedge-${varName}` || htmlTarget.id === `wedge-${nextVarName}`;
+      const isWithinBounds = htmlTarget.id === `${device.id}-wedge-${varName}` || htmlTarget.id === `${device.id}-wedge-${nextVarName}`;
       if (isWithinBounds && (newNicePct > 1 && newNicePct < 100)) {
-        handlePctChange(selectedVariableIdx, newNicePct.toString(), true);
+        const selectedVar = variables[selectedVariableIdx];
+        const newVariables = createNewVarArray(selectedVar, variables, Number(newNicePct), true);
+        handleUpdateVariables(newVariables);
       }
     }
-  }, [dragOrigin, isDragging, selectedVariableIdx, variables, handlePctChange]);
+  }, [dragOrigin, isDragging, selectedVariableIdx, variables, device.id, handleUpdateVariables]);
 
   useEffect(() => {
     if (isDragging) {
@@ -309,16 +294,14 @@ export const Device = (props: IProps) => {
               {
                 viewType === "mixer" ?
                   <Mixer
-                    variables={device.variables}
-                    deviceId={device.id}
+                    device={device}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
                     handleSetEditingVarName={() => setIsEditingVarName(true)}
                   /> :
                 viewType === "spinner" ?
                   <Spinner
-                    variables={device.variables}
-                    deviceId={device.id}
+                    device={device}
                     selectedVariableIdx={selectedVariableIdx}
                     isDragging={isDragging}
                     handleAddDefs={handleAddDefs}
@@ -329,8 +312,7 @@ export const Device = (props: IProps) => {
                     handleStartDrag={handleStartDrag}
                   /> :
                   <Collector
-                    collectorVariables={device.collectorVariables}
-                    deviceId={device.id}
+                    device={device}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
                     handleSetEditingVarName={() => setIsEditingVarName(true)}

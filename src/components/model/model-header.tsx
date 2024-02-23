@@ -12,12 +12,11 @@ interface IModelHeader {
   showHelp: boolean;
   isWide: boolean;
   setShowHelp: (showHelp: boolean) => void;
-  setIsWide: (isWide: boolean) => void;
   handleOpenHelp: () => void;
 }
 
 export const ModelHeader = (props: IModelHeader) => {
-  const { modelHeaderStyle, showHelp, setShowHelp, isWide, setIsWide, handleOpenHelp } = props;
+  const { modelHeaderStyle, showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { model, repeat, sampleSize, numSamples, enableRunButton, replacement, createNewExperiment } = globalState;
 
@@ -114,7 +113,6 @@ export const ModelHeader = (props: IModelHeader) => {
       }
     });
   };
-
 
   return (
     <div className="model-header" style={modelHeaderStyle}>
