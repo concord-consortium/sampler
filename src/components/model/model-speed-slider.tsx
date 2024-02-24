@@ -2,7 +2,7 @@ import React, {useState} from "react";
 
 export const SpeedSlider = () => {
   const [value, setValue] = useState(1);
-  const speedValue = ["Slow", "Medium", "Fast", "Fastest"];
+  const speedValue = ["slow", "medium", "fast", "fastest"];
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(parseInt(event.target.value, 10)); // Parse the value as an integer
@@ -29,9 +29,7 @@ export const SpeedSlider = () => {
             );
           })}
       </div>
-      <span id="speed-text" data-text="DG.plugin.Sampler.top-bar.medium-speed">
-        {speedValue[value]}
-      </span>
+      <span id="speed-text" data-text={`DG.plugin.sampler.speed.${speedValue[value]}`} />
     </div>
   );
 };

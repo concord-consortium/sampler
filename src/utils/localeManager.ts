@@ -29,22 +29,6 @@ function getQueryParam(s: string) {
 
 
 export async function localeInit() {
-  // return fetch(stringFileURL)
-  //     .then(function (response) { return response.json();})
-  //     .then(function (data) {
-  //       console.log("data translations", data);
-  //       translations = data;
-  //       locale = (getQueryParam("lang") || "en-us").toLowerCase();
-  //       if (!(locale && translations[locale])) {
-  //         locale = DEFAULT_LOCALE;
-  //       }
-  //       // localize existing dom
-  //       localizeDOM(document.body);
-  //     });
-  // return fetch(stringFileURL)
-  // .then(function (response) { return response.json();})
-  // .then(function (data) {
-    console.log("data translations", translationStrings);
     translations = translationStrings as Record<string,any>;
     locale = (getQueryParam("lang") || "en-us").toLowerCase();
     if (!(locale && translations[locale])) {
@@ -52,24 +36,15 @@ export async function localeInit() {
     }
     // localize existing dom
     localizeDOM(document.body);
-  // });
 }
 
 function localizeDOM(node: HTMLElement) {
-  // function convertToText(elCollection: any[]) {
-  //   let out = [];
-  //   let i, el;
-  //   for (i = 0; i<elCollection.length; i+=1) {
-  //     out.push(elCollection[i].outerHTML);
-  //   }
-  //   return out;
-  // }
   // translate title attributes
   // translate free text
   const textNodes: HTMLElement[] = Array.from(node.querySelectorAll("[data-text]"));
   const altNodes: HTMLImageElement[] = Array.from(node.querySelectorAll("[data-alt]")) as HTMLImageElement[];
   const titleNodes: HTMLElement[] = Array.from(node.querySelectorAll("[data-title]"));
-  console.log("textNodes", textNodes);
+
   textNodes.forEach((el: HTMLElement) => {
     const key: string | undefined = el.dataset.text;
     el.innerHTML = key && tr(key) || "I don't have a text";
@@ -86,8 +61,6 @@ function localizeDOM(node: HTMLElement) {
 
 
 function resolve(stringID: any) {
-  console.log("stringID", stringID);
-
   return translations[locale][stringID]
             ? translations[locale][stringID]
             : (translations[DEFAULT_LOCALE][stringID]
@@ -123,7 +96,7 @@ export function tr(sID: string, args?: string[]): string {
   if (typeof args === "string") {
     args = [args];
   }
-console.log("sID", sID);
+
   let s = resolve(sID);
   let ix = 0;
   return s.replace(/%@[0-9]?/g, replacer);
