@@ -72,7 +72,7 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
   const labelDivWidth = labelRef.current?.getBoundingClientRect().width || 22;
   const markerId = `arrow_${source.id}_${target.id}`;
   let arrowLength = 0;
-console.log("modelisrunning", modelIsRunning);
+
   const resetLabelInput = useCallback(() => {
     if (inputRef.current) {
       inputRef.current.value = label;
