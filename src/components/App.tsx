@@ -1,20 +1,10 @@
 import React, { useEffect } from "react";
-import { GlobalStateContext, useGlobalStateContextValue } from "../hooks/use-global-state";
-import { initializePlugin  } from "@concord-consortium/codap-plugin-api";
+import { GlobalStateContext, useGlobalStateContextValue } from "../hooks/useGlobalState";
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
-import { createDefaultDevice } from "../models/device-model";
 
 import "./App.scss";
-
-export const kPluginMidWidth = 328;
-const kPluginName = "Sampler";
-const kVersion = "v0.50";
-const kInitialDimensions = {
-  width: kPluginMidWidth,
-  height: 500
-};
 
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
@@ -27,14 +17,6 @@ export const App = () => {
   const lastColumn = model.columns[numColumns - 1];
   const numDevicesInLastColumn = lastColumn?.devices?.length;
   const lastDeviceId = lastColumn?.devices?.[numDevicesInLastColumn - 1].id;
-
-  useEffect(() => {
-    initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
-    // TODO: replace this with code that listens for the model state from CODAP - right now this just sets an initial model for development
-    setGlobalState(draft => {
-      draft.model = {columns: [{name: "output", devices: [createDefaultDevice()]}], experimentNum: 0};
-    });
-  }, [setGlobalState]);
 
   useEffect(()=>{
     setGlobalState(draft => {

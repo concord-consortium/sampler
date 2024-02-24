@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useGlobalStateContext } from "../../hooks/use-global-state";
+import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { IDevice } from "../../models/device-model";
 import { useResizer } from "../../hooks/use-resizer";
 

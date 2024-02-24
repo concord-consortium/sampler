@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useGlobalStateContext } from "../../hooks/use-global-state";
+import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { useResizer } from "../../hooks/use-resizer";
 import { Column } from "./column";
 import { ModelHeader } from "./model-header";

@@ -1,8 +1,9 @@
 import React from "react";
 import { IDataContext, IDevice, IVariables, createDefaultDevice, kDeviceTypes } from "../../models/device-model";
-import { useGlobalStateContext } from "../../hooks/use-global-state";
+import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { getDeviceColumnIndex, getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
 import { getNewVariable, getProportionalVars } from "../helpers";
+import { createId } from "../../utils/id";
 
 import "./device-footer.scss";
 
@@ -43,7 +44,7 @@ export const DeviceFooter = ({device, handleUpdateVariables, handleDeleteVariabl
         draft.model.columns[newColumnIndex].devices.push(newDevice);
       } else {
         // create the column and add the device
-        draft.model.columns.splice(newColumnIndex, 0, {name: "output", devices: [newDevice]});
+        draft.model.columns.splice(newColumnIndex, 0, {name: "output", id: createId(), devices: [newDevice]});
       }
       draft.createNewExperiment = true;
     });

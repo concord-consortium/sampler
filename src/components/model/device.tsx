@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useGlobalStateContext } from "../../hooks/use-global-state";
+import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { ClippingDef, IDataContext, IDevice, IItem, IItems, IVariables } from "../../models/device-model";
 import { getDeviceColumnIndex } from "../../models/model-model";
 import { Mixer } from "./device-views/mixer/mixer";
@@ -9,14 +9,15 @@ import { NameLabelInput } from "./name-label-input";
 import { PctLabelInput } from "./percent-label-input";
 import { DeviceFooter } from "./device-footer";
 import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth, kSpinnerX, kSpinnerY } from "./device-views/shared/constants";
+import { kDataContextName } from "../../contants";
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
-import { kDataContextName } from "../../utils/codap-helpers";
 import { createNewVarArray, getNextVariable, getPercentOfVar } from "../helpers";
 import { calculateWedgePercentage } from "./device-views/shared/helpers";
 import DeleteIcon from "../../assets/delete-icon.svg";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 
 import "./device.scss";
+
 interface IProps {
   device: IDevice;
   deviceIndex: number;
