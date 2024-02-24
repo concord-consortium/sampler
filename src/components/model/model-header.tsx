@@ -2,6 +2,7 @@ import React from "react";
 import { SpeedSlider } from "./model-speed-slider";
 import { HelpModal } from "./help-modal";
 import InfoIcon from "../../assets/help-icon.svg";
+import { tr } from "../../utils/localeManager";
 
 interface IModelHeader {
   modelHeaderStyle: React.CSSProperties;
@@ -29,31 +30,31 @@ export const ModelHeader = (props: IModelHeader) => {
   return (
     <div className="model-header" style={modelHeaderStyle}>
       <div className="model-controls">
-        <button className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
-        <button className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
+        <button className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun} data-text="DG.plugin.Sampler.top-bar.run"></button>
+        <button className={`stop-button ${enableRunButton ? "disabled" : ""}`} data-text="DG.plugin.Sampler.top-bar.stop"></button>
         <SpeedSlider />
-        <button className="clear-data-button" onClick={handleClearData}>CLEAR DATA</button>
+        <button className="clear-data-button" onClick={handleClearData} data-text="DG.plugin.Sampler.reset-text"></button>
       </div>
       <div className="select-repeat-controls">
         <div className="select-repeat-selection">
           <div className="select-repeat-dropdown">
             <select onChange={handleSelectRepeat}>
-              <option className={`select-repeat-option`} value="select">Select</option>
-              <option className={`select-repeat-option`} value="repeat">Repeat</option>
+              <option className={`select-repeat-option`} value="select" data-text="DG.plugin.Sampler.selection-options.select-cases"></option>
+              <option className={`select-repeat-option`} value="repeat" data-text="DG.plugin.Sampler.selection-options.repeat-cases"></option>
             </select>
           </div>
           <input type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
-          <span>{`${repeat ? "selecting" : ""} items`}</span>
+          <span data-text={repeat ? "DG.plugin.Sampler.selection-options.selecting-items" : "DG.plugin.Sampler.selection-options.items"}></span>
           <div className="select-replacement-dropdown">
             <select onChange={handleSelectReplacement}>
-              <option value="with">with replacement</option>
-              <option value="without">without replacement</option>
+              <option value="with" data-text="DG.plugin.Sampler.selection-options.with-replacement"></option>
+              <option value="without" data-text="DG.plugin.Sampler.selection-options.without-replacement"></option>
             </select>
           </div>
         </div>
         {repeat &&
           <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
-            <span>until</span>
+            <span >{tr("DG.plugin.Sampler.repeat-control.until")}</span>
             <input type="text"></input>
             <InfoIcon onClick={handleOpenHelp}/>
             {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
@@ -61,9 +62,9 @@ export const ModelHeader = (props: IModelHeader) => {
         }
       </div>
       <div className="collect-controls">
-        <span>Collect</span>
+        <span data-text="DG.plugin.Sampler.draw-settings.collect-samples-p1"></span>
         <input type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
-        <span>samples</span>
+        <span data-text="DG.plugin.Sampler.draw-settings.collect-samples-p2"></span>
       </div>
     </div>
   );

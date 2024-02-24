@@ -16,9 +16,9 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // ==========================================================================
-
+import translationStrings from "./strings.json";
 const DEFAULT_LOCALE = "en-us";
-const stringFileURL = "../strings.json";
+const stringFileURL = "./strings.json";
 
 let translations: Record<string, string> = {};
 let locale = DEFAULT_LOCALE ;
@@ -29,47 +29,60 @@ function getQueryParam(s: string) {
 
 
 export async function localeInit() {
-  return fetch(stringFileURL)
-      .then(function (response) { return response.json();})
-      .then(function (data) {
-        console.log("data translations", data);
-        translations = data;
-        locale = (getQueryParam("lang") || "en-us").toLowerCase();
-        if (!(locale && translations[locale])) {
-          locale = DEFAULT_LOCALE;
-        }
-        // localize existing dom
-        // localizeDOM(document.body);
-      });
+  // return fetch(stringFileURL)
+  //     .then(function (response) { return response.json();})
+  //     .then(function (data) {
+  //       console.log("data translations", data);
+  //       translations = data;
+  //       locale = (getQueryParam("lang") || "en-us").toLowerCase();
+  //       if (!(locale && translations[locale])) {
+  //         locale = DEFAULT_LOCALE;
+  //       }
+  //       // localize existing dom
+  //       localizeDOM(document.body);
+  //     });
+  // return fetch(stringFileURL)
+  // .then(function (response) { return response.json();})
+  // .then(function (data) {
+    console.log("data translations", translationStrings);
+    translations = translationStrings as Record<string,any>;
+    locale = (getQueryParam("lang") || "en-us").toLowerCase();
+    if (!(locale && translations[locale])) {
+      locale = DEFAULT_LOCALE;
+    }
+    // localize existing dom
+    localizeDOM(document.body);
+  // });
 }
 
-// function localizeDOM(node: HTMLElement) {
-//   function convertToText(elCollection: any[]) {
-//     let out = [];
-//     let i, el;
-//     for (i = 0; i<elCollection.length; i+=1) {
-//       out.push(elCollection[i].outerHTML);
-//     }
-//     return out;
-//   }
-//   // translate title attributes
-//   // translate free text
-//   const textNodes: HTMLElement[] = Array.from(node.querySelectorAll("[data-text]"));
-//   // const altNodes: HTMLOrSVGElement[] | HTMLImageElement[] = Array.from(node.querySelectorAll("[data-alt]"));
-//   const titleNodes: HTMLElement[] = Array.from(node.querySelectorAll("[data-title]"));
-//   textNodes.forEach((el: HTMLElement) => {
-//     const key: string | undefined = el.dataset.text;
-//     el.innerHTML = key && tr(key) || "I don't have a text";
-//   });
-//   // altNodes.forEach((el: HTMLOrSVGElement | HTMLImageElement) => {
-//   //   const key: string | undefined = el.dataset.alt;
-//   //   el.alt = key && tr(key);
-//   // });
-//   titleNodes.forEach((el: HTMLElement) =>{
-//     const key: string | undefined = el.dataset.title;
-//     el.title = key && tr(key) || "I don't have a text";
-//   });
-// }
+function localizeDOM(node: HTMLElement) {
+  // function convertToText(elCollection: any[]) {
+  //   let out = [];
+  //   let i, el;
+  //   for (i = 0; i<elCollection.length; i+=1) {
+  //     out.push(elCollection[i].outerHTML);
+  //   }
+  //   return out;
+  // }
+  // translate title attributes
+  // translate free text
+  const textNodes: HTMLElement[] = Array.from(node.querySelectorAll("[data-text]"));
+  const altNodes: HTMLImageElement[] = Array.from(node.querySelectorAll("[data-alt]")) as HTMLImageElement[];
+  const titleNodes: HTMLElement[] = Array.from(node.querySelectorAll("[data-title]"));
+  console.log("textNodes", textNodes);
+  textNodes.forEach((el: HTMLElement) => {
+    const key: string | undefined = el.dataset.text;
+    el.innerHTML = key && tr(key) || "I don't have a text";
+  });
+  altNodes.forEach((el: HTMLImageElement) => {
+    const key: string | undefined = el.dataset.alt;
+    el.alt = key && tr(key) || "I don't have an alternate text";
+  });
+  titleNodes.forEach((el: HTMLElement) =>{
+    const key: string | undefined = el.dataset.title;
+    el.title = key && tr(key) || "I don't have a text";
+  });
+}
 
 
 function resolve(stringID: any) {

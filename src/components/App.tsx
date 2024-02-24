@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { initializePlugin, createItems } from "@concord-consortium/codap-plugin-api";
 import { useImmer } from "use-immer";
+import { localeInit } from "../utils/localeManager";
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
@@ -44,6 +45,7 @@ export const App = () => {
 
   useEffect(() => {
     initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
+    localeInit();
   }, []);
 
   // TODO: replace this with code that listens for the model state from CODAP - right now this just sets an initial model for development
@@ -313,8 +315,9 @@ export const App = () => {
     <div className="App">
       <div className="navigationTabs">
         { navTabs.map((tab, index) => {
+            const tabKey = tab.toLowerCase();
             return (
-              <div key={`${index}`}
+              <div key={`${index}`} data-text={`DG.plugin.Sampler.tab.${tabKey}`}
                   className={`tab ${selectedTab === tab ? "selected" : ""}`}
                   onClick={() => handleTabSelect(navTabs[index])}>
                 {tab}
