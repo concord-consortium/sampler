@@ -32,10 +32,6 @@ export function parseSequence(seq: string, rangeWord: string) {
     const multiplier = Math.pow(10, dec);
     const F1 = f1 * multiplier;
     const F2 = f2 * multiplier;
-    // arr = Array.apply(null, {length: Math.abs(F2-F1)+1}).map(function(value, index){
-    //   let multipliedVal = f1 < f2 ? (F1 + index) : (F1 - index);
-    //   return (multipliedVal/multiplier).toFixed(dec);
-    // });
     arr = [...Array(Math.abs(F2 - F1) + 1)].map((value, index) => {
       const multipliedVal = f1 < f2 ? F1 + index : F1 - index;
       return (multipliedVal / multiplier).toFixed(dec);
@@ -45,10 +41,7 @@ export function parseSequence(seq: string, rangeWord: string) {
     let c1 = v1.charCodeAt(0);
     let c2 = v2.charCodeAt(0);
     let increasing = c2 > c1;
-    // arr = Array.apply(null, {length: Math.abs(c1-c2)+1}).map(function(value, index){
-    //   let nextChar = increasing ? (c1 + index) : (c1 - index);
-    //   return String.fromCharCode(nextChar);
-    // });
+
     arr = [...Array(Math.abs(c1 - c2) + 1)].map((value, index) => {
       const nextChar = increasing ? (c1 + index) : (c1 - index);
       return String.fromCharCode(nextChar);
