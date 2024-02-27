@@ -26,7 +26,8 @@
   &:after {
     content: "";
     border-bottom: solid 1px #777;
-    width: 100%;
+    min-width: 100%;
+    width: var(--after-width, auto);
     z-index: 1;
     bottom: 0;
     left: 0;
