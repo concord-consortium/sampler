@@ -2,7 +2,9 @@ import React from "react";
 import { IDataContext, IDevice, IVariables, createDefaultDevice, kDeviceTypes } from "../../models/device-model";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { getDeviceColumnIndex, getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
-import { getNewVariable, getProportionalVars } from "../helpers";
+import { getNewColumnName, getNewVariable, getProportionalVars } from "../helpers";
+import { createNewAttribute } from "@concord-consortium/codap-plugin-api";
+import { kDataContextName } from "../../contants";
 import { createId } from "../../utils/id";
 
 import "./device-footer.scss";
@@ -44,7 +46,13 @@ export const DeviceFooter = ({device, handleUpdateVariables, handleDeleteVariabl
         draft.model.columns[newColumnIndex].devices.push(newDevice);
       } else {
         // create the column and add the device
-        draft.model.columns.splice(newColumnIndex, 0, {name: "output", id: createId(), devices: [newDevice]});
+        const name: string = getNewColumnName("output", model.columns);
+        const id: string = createId();
+        draft.model.columns.splice(newColumnIndex, 0, {name, id, devices: [newDevice]});
+        draft.attrMap[id] = {name, codapID: null};
+        if (draft.samplerContext) {
+          createNewAttribute(kDataContextName, "items", name);
+        }
       }
       draft.createNewExperiment = true;
     });
