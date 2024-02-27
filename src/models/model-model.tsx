@@ -3,6 +3,7 @@ import { IDevice } from "./device-model";
 
 export interface IColumn {
   name: string;
+  id: Id;
   devices: IDevice[];
 }
 
