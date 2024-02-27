@@ -209,17 +209,18 @@ export function getRandomElement<T>(array: T[]): T {
 export const getNewColumnName = (proposedName: string, columns: IColumn[], columnId?: string) => {
   let name = proposedName;
   const otherColumnsWithSameName = columns.filter(c => c.name.startsWith(proposedName) && c.id !== columnId);
+  const isNameUnique = otherColumnsWithSameName.length === 0 || otherColumnsWithSameName.every((col) => col.name !== proposedName);
 
-  if (otherColumnsWithSameName.length === 0) {
+  if (isNameUnique) {
     return name;
   }
 
   const indexes = otherColumnsWithSameName.map((col) => Number(col.name.slice(proposedName.length)));
   const highestIndex = Math.max(...indexes);
   if (!highestIndex) {
-    name = name + 1;
+    name = name + 2;
   } else {
-    for (let i = 1; i <= highestIndex; i++) {
+    for (let i = 2; i <= highestIndex; i++) {
       const nameWithIndex = name + i;
       const isNameWithIndexUsed = otherColumnsWithSameName.find((col) => col.name === nameWithIndex);
       if (!isNameWithIndexUsed) {
