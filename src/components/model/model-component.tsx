@@ -37,8 +37,6 @@ interface IProps {
   setModelIsRunning: (isRunning: boolean) => void;
 }
 
-}
-
 export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton, modelHeaderStyle, modelIsRunning,
     addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange,handleStartRun,
     handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
