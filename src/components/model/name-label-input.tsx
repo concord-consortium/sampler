@@ -29,13 +29,15 @@ export const NameLabelInput = ({variableIdx, variableName,
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      handleEditVariable(variableIdx, text);
+      const trimText = text.trim();
+      handleEditVariable(variableIdx, trimText);
       onBlur();
     }
   };
 
   const handleBlur = () => {
-    handleEditVariable(variableIdx, text);
+    const trimText = text.trim();
+    handleEditVariable(variableIdx, trimText);
     onBlur();
   };
 

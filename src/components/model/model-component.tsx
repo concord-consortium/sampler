@@ -8,9 +8,6 @@ import { ModelHeader } from "./model-header";
 
 import "./model-component.scss";
 
-const kMinColumnWidth = 220; // device + gap width
-const kSelectedSamplesDivWidth = 65; //includes margin-right
-
 interface IProps {
   model: IModel;
   selectedDeviceId?: Id;
@@ -18,6 +15,7 @@ interface IProps {
   sampleSize: string;
   numSamples: string;
   enableRunButton: boolean;
+  modelHeaderStyle: React.CSSProperties;
   modelIsRunning: boolean;
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
@@ -39,7 +37,9 @@ interface IProps {
   setModelIsRunning: (isRunning: boolean) => void;
 }
 
-export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton, modelIsRunning,
+}
+
+export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton, modelHeaderStyle, modelIsRunning,
     addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange,handleStartRun,
     handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
     handleSelectReplacement, handleClearData, handleAddVariable, handleDeleteVariable, handleUpdateViewType,
@@ -61,7 +61,6 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
     setShowHelp(!showHelp);
   };
 
-  const modelHeaderStyle = {width: (model.columns.length * kMinColumnWidth) + kSelectedSamplesDivWidth};
 
   return (
     <div className="model-tab">
