@@ -75,16 +75,11 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
           msg.values.result.attrIDs.forEach((id: string, i: number) => {
             const newName = msg.values.result.attrs[i].name;
             setGlobalState((draft) => {
-              const attrKey = Object.keys(draft.attrMap).find(key => draft.attrMap[key].codapID === id);
-              if (attrKey) {
-                draft.attrMap[attrKey].name = newName;
-                const column = draft.model.columns.find(c => c.id === attrKey);
-                console.log("column", column, newName);
-                // also update the name of the column in the model
-                if (column) {
-                  console.log("in if statement");
-                  column.name = newName;
-                }
+              const columnId = Object.keys(draft.attrMap).find(key => draft.attrMap[key].codapID === id);
+              const column = draft.model.columns.find(c => c.id === columnId);
+              if (columnId && column) {
+                draft.attrMap[columnId].name = newName;
+                column.name = newName;
               }
             });
           });

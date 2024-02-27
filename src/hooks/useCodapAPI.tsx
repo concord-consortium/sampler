@@ -8,7 +8,6 @@ type TCODAPRequest = { action: string; resource: string; };
 
 export const useCodapAPI = () => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-
   const { model, sampleSize, numSamples, replacement, createNewExperiment, attrMap } = globalState;
 
   const getResults = (experimentNum: number): { [key: string]: string|number }[] => {
@@ -33,13 +32,6 @@ export const useCodapAPI = () => {
     return results;
   };
 
-  const getColumnKeys = () => {
-    const attrKeys: string[] = [];
-    model.columns.forEach(column => {
-        attrKeys.push(column.name);
-    });
-    return attrKeys;
-  };
 
   const getCollectionNames = () => {
     return {
@@ -61,7 +53,7 @@ export const useCodapAPI = () => {
       {collection: "samples", attrName: attrMap.sample.name},
     ];
 
-    attrs.forEach(attr=>allAttrs.push({collection: "samples", attrName: attr}));
+    attrs.forEach(attr => allAttrs.push({collection: "samples", attrName: attr}));
 
     const reqs: TCODAPRequest[] = allAttrs.map(collectionAttr => ({
       "action": "get",
@@ -155,8 +147,8 @@ export const useCodapAPI = () => {
         : model.experimentNum
     : 1;
     const results = getResults(experimentNum);
-    const attrKeys = getColumnKeys();
-    const ctxRes = await findOrCreateDataContext(attrKeys);
+    const attrNames = model.columns.map(column => column.name);
+    const ctxRes = await findOrCreateDataContext(attrNames);
     if (ctxRes === "success") {
       await createItems(kDataContextName, results);
       setGlobalState(draft => {
