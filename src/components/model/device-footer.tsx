@@ -15,9 +15,10 @@ interface IDeviceFooter {
   handleUpdateVariables: (variables: IVariables) => void;
   handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
   handleSelectDataContext: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleSpecifyVariables: () => void;
 }
 
-export const DeviceFooter = ({device, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, dataContexts}: IDeviceFooter) => {
+export const DeviceFooter = ({device, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, dataContexts}: IDeviceFooter) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { model, selectedDeviceId } = globalState;
   const { viewType } = device;
@@ -124,7 +125,6 @@ export const DeviceFooter = ({device, handleUpdateVariables, handleDeleteVariabl
               {showMergeButton && <button onClick={handleMergeDevices}>Merge</button>}
             </>
         }
-
       </div>
     </div>
   );

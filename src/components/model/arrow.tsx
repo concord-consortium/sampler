@@ -14,9 +14,6 @@ interface IProps {
   source: IDevice
   target: IDevice
   selectedDeviceId?: string
-  modelIsRunning: boolean
-  numSamples: string //temporary so we don't run forever
-  setModelIsRunning: (isRunning: boolean) => void
 }
 
 type Rect = Omit<DOMRect, "toJSON"> & {midY: number};
@@ -46,8 +43,8 @@ const getRect = (el: HTMLElement): Rect => {
 };
 
 export const Arrow = ({source, target, selectedDeviceId}: IProps) => {
-  const { globalState } = useGlobalStateContext();
-  const { model } = globalState;
+  const { globalState, setGlobalState } = useGlobalStateContext();
+  const { model, modelIsRunning, numSamples } = globalState;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [drawCount, setDrawCount] = useState(0);
   const redraw = () => setDrawCount(prev => prev + 1);
@@ -175,14 +172,16 @@ export const Arrow = ({source, target, selectedDeviceId}: IProps) => {
           } else {
             setRunAnimation(false);
             numAnimationCycles.current = 0;
-            setModelIsRunning(false);
+            setGlobalState(draft => {
+              draft.modelIsRunning = false;
+            });
           }
         }
       };
 
       requestAnimationFrame(animate);
     }
-  }, [arrowLength, markerId, runAnimation, numAnimationCycles, numSamples, setModelIsRunning]);
+  }, [arrowLength, markerId, runAnimation, numAnimationCycles, numSamples, setGlobalState]);
 
   // wait until both the source and target div are drawn
   if (!sourceDiv || !targetDiv) {

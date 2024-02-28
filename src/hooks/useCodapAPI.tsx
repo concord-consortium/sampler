@@ -139,7 +139,7 @@ export const useCodapAPI = () => {
   const handleStartRun = async () => {
     // proof of concept that we can "run" the model and add items to CODAP
     setGlobalState(draft => {
-      draft.createNewExperiment = false;
+      draft.modelIsRunning = true;
     });
     const experimentNum = model.experimentNum
     ? createNewExperiment

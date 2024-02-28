@@ -16,6 +16,8 @@ import { calculateWedgePercentage } from "./device-views/shared/helpers";
 import { SetVariableSeriesModal } from "./variable-setting-modal";
 import DeleteIcon from "../../assets/delete-icon.svg";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
+import { parseSpecifier } from "../../utils/utils";
+
 
 import "./device.scss";
 
@@ -162,6 +164,17 @@ export const Device = (props: IProps) => {
       }
     });
   }, [selectedDeviceId, setGlobalState]);
+
+  const handleUpdateVariablesToSeries = (series: string) => {
+    if (series) {
+      const sequence = parseSpecifier(series, "to");
+      if (sequence) {
+        // swap contents of sequence into variables without updating variables reference
+        handleUpdateVariables(sequence);
+      }
+      else { alert("parse error in sequence"); }
+    }
+  };
 
   const handleDeleteVariable = (e: React.MouseEvent, selectedVariable?: string) => {
     if (selectedDeviceId !== device.id) return;
@@ -363,6 +376,7 @@ export const Device = (props: IProps) => {
             handleUpdateVariables={handleUpdateVariables}
             handleDeleteVariable={handleDeleteVariable}
             handleSelectDataContext={handleSelectDataContext}
+            handleSpecifyVariables={handleSpecifyVariables}
           />
       }
       {showVariableEditor &&

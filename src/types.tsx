@@ -32,6 +32,7 @@ export interface IGlobalState {
   dataContexts: Array<IDataContext>;
   collectorContext: IDataContext | undefined;
   samplerContext: IDataContext | undefined;
+  modelIsRunning: boolean;
 }
 
 export interface ICollection {

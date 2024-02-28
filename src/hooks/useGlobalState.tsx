@@ -28,7 +28,8 @@ export const getDefaultState = (): IGlobalState => {
     attrMap: defaultAttrMap,
     dataContexts: [],
     samplerContext: undefined,
-    collectorContext: undefined
+    collectorContext: undefined,
+    modelIsRunning: false
   };
 };
 
