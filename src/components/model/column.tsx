@@ -12,6 +12,8 @@ interface IProps {
   columnIndex: number;
   model: IModel;
   selectedDeviceId?: Id;
+  modelIsRunning: boolean;
+  numSamples: string;
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
@@ -24,14 +26,16 @@ interface IProps {
   handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
   handleUpdateVariablesToSeries: (series: string) => void;
+  setModelIsRunning: (isRunning: boolean) => void;
 }
-export const Column = ({column, columnIndex, model, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
+export const Column = ({column, columnIndex, model, selectedDeviceId, modelIsRunning, numSamples,
+    setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
     handleNameChange, handleUpdateCollectorVariables, handleAddVariable, handleDeleteVariable,
-    handleEditVarPct, handleEditVariable, handleUpdateViewType, handleUpdateVariablesToSeries}: IProps) => {
+    handleEditVarPct, handleEditVariable, handleUpdateViewType, handleUpdateVariablesToSeries, setModelIsRunning}: IProps) => {
   const hasBranch = model.columns.find(c =>  c.devices.length > 1);
   const multipleColumns = model.columns.length > 1;
-  const [attrName, setAttrName] = useState("output");
-  const [editing, setEditing] = useState(false);
+  const [attrName] = useState("output");
+  const [, setEditing] = useState(false);
   const attrNameInputRef = useRef<HTMLInputElement>(null);
 
   const resetAttrInput = useCallback(() => {
@@ -102,6 +106,9 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, setSelecte
                 selectedDeviceId={selectedDeviceId}
                 source={sourceDevice}
                 target={device}
+                modelIsRunning={modelIsRunning}
+                numSamples={numSamples}
+                setModelIsRunning={setModelIsRunning}
               />)
             )}
           </React.Fragment>

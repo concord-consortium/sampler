@@ -1,17 +1,9 @@
 .arrow-container {
   position: absolute;
-
   .arrow {
-
-    marker {
-      polygon {
-        fill: #008cba;
-      }
-    }
-
     line {
       stroke-width: 3;
-      stroke: #008cba;
+      fill: none;
     }
   }
 
@@ -34,7 +26,7 @@
       border: solid 2px rgba(0,122,255, 0.25);
       background-color: #fff;
     }
-    
+
     .label-span {
       cursor: pointer;
       display: flex;

@@ -39,6 +39,7 @@ export const App = () => {
   const [numSamples, setNumSamples] = useState<string>("3");
   const [createNewExperiment, setCreateNewExperiment] = useState(true);
   const [enableRunButton, setEnableRunButton] = useState(true);
+  const [modelIsRunning, setModelIsRunning] = useState(false);
   const numColumns = model.columns.length;
   const lastColumn = model.columns[numColumns - 1];
   const numDevicesInLastColumn = lastColumn?.devices?.length;
@@ -236,6 +237,7 @@ export const App = () => {
   const handleStartRun = async () => {
     // proof of concept that we can "run" the model and add items to CODAP
     setEnableRunButton(false);
+    setModelIsRunning(true);
     const experimentNum = model.experimentNum
     ? createNewExperiment
         ? model.experimentNum + 1
@@ -355,6 +357,7 @@ export const App = () => {
             numSamples={numSamples}
             enableRunButton={enableRunButton}
             modelHeaderStyle={modelHeaderStyle}
+            modelIsRunning={modelIsRunning}
             addDevice={handleAddDevice}
             mergeDevices={handleMergeDevices}
             deleteDevice={handleDeleteDevice}
@@ -373,6 +376,7 @@ export const App = () => {
             handleEditVariable={handleEditVariable}
             handleEditVarPct={handleEditVarPct}
             handleUpdateVariablesToSeries={handleUpdateVariablesToSeries}
+            setModelIsRunning={setModelIsRunning}
           /> :
           selectedTab === "Measures" ?
           <MeasuresTab /> :

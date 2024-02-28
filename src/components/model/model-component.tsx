@@ -16,6 +16,7 @@ interface IProps {
   numSamples: string;
   enableRunButton: boolean;
   modelHeaderStyle: React.CSSProperties;
+  modelIsRunning: boolean;
   setSelectedDeviceId: (id: Id) => void;
   addDevice: (parentDevice: IDevice) => void;
   mergeDevices: (device: IDevice) => void;
@@ -34,13 +35,14 @@ interface IProps {
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
   handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
   handleUpdateVariablesToSeries: (series: string) => void;
+  setModelIsRunning: (isRunning: boolean) => void;
 }
 
-export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton, modelHeaderStyle,
+export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSamples, enableRunButton, modelHeaderStyle, modelIsRunning,
     addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange,handleStartRun,
     handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
     handleSelectReplacement, handleClearData, handleAddVariable, handleDeleteVariable, handleUpdateViewType,
-    handleEditVariable, handleEditVarPct, handleUpdateVariablesToSeries}: IProps) => {
+    handleEditVariable, handleEditVarPct, handleUpdateVariablesToSeries, setModelIsRunning}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
   const [isWide, setIsWide] = useState(false);
 
@@ -89,6 +91,8 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
                   columnIndex={columnIndex}
                   model={model}
                   selectedDeviceId={selectedDeviceId}
+                  modelIsRunning={modelIsRunning}
+                  numSamples={numSamples} //temporary so we don't run forever
                   setSelectedDeviceId={setSelectedDeviceId}
                   addDevice={addDevice}
                   mergeDevices={mergeDevices}
@@ -101,6 +105,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
                   handleEditVariable={handleEditVariable}
                   handleEditVarPct={handleEditVarPct}
                   handleUpdateVariablesToSeries={handleUpdateVariablesToSeries}
+                  setModelIsRunning={setModelIsRunning}
                 />
               );
             })}
