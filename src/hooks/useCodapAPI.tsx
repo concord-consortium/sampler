@@ -154,6 +154,7 @@ export const useCodapAPI = () => {
       setGlobalState(draft => {
         draft.model.experimentNum = experimentNum;
         draft.enableRunButton = true;
+        draft.createNewExperiment = false;
       });
     }
   };

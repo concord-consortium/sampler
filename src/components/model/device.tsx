@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { ClippingDef, IDataContext, IDevice, IItem, IItems, IVariables } from "../../models/device-model";
-import { getDeviceColumnIndex } from "../../models/model-model";
 import { Mixer } from "./device-views/mixer/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
@@ -18,18 +17,17 @@ import DeleteIcon from "../../assets/delete-icon.svg";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { parseSpecifier } from "../../utils/utils";
 
-
 import "./device.scss";
 
 interface IProps {
   device: IDevice;
-  deviceIndex: number;
+  columnIndex: number;
 }
 
 export const Device = (props: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { model, selectedDeviceId } = globalState;
-  const { device, deviceIndex } = props;
+  const { device, columnIndex } = props;
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
@@ -74,17 +72,14 @@ export const Device = (props: IProps) => {
       fetchItems().then((items: IItems) => {
         const itemValues = items.map((item: IItem) => item.values);
         setGlobalState(draft => {
-          const columnIndex = draft.model.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
-          if (columnIndex !== -1) {
-            const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
-            if (deviceToUpdate) {
-              deviceToUpdate.collectorVariables = itemValues;
-            }
+          const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+          if (deviceToUpdate) {
+            deviceToUpdate.collectorVariables = itemValues;
           }
         });
       });
     }
-  }, [selectedDataContext, selectedDeviceId, setGlobalState]);
+  }, [selectedDataContext, selectedDeviceId, setGlobalState, columnIndex]);
 
 
   const handleSelectDevice = () => {
@@ -94,30 +89,21 @@ export const Device = (props: IProps) => {
   };
 
   const handleDeleteDevice = () => {
-    if (deviceIndex === 0) {
-      return;
-    }
-
     setGlobalState(draft => {
-      const columnIndex = getDeviceColumnIndex(model, device);
-      if (columnIndex !== -1) {
-        const devices = draft.model.columns[columnIndex].devices.filter(dev => dev.id !== device.id);
-        const noMoreDevicesInThisColumn = devices.length === 0;
-        const hasColumnsToTheRight = draft.model.columns.length > columnIndex + 1;
-        const question = noMoreDevicesInThisColumn && hasColumnsToTheRight ? "Delete this device and all the devices to the right of it?" : "Delete this device?";
-        if (confirm(question)) {
-          if (noMoreDevicesInThisColumn) {
-            // when last device in a column is deleted delete this column and all the devices to the right if they exist
-            draft.model.columns.splice(columnIndex, draft.model.columns.length - columnIndex);
-          }
-          else {
-            draft.model.columns[columnIndex].devices = devices;
-          }
+      const devices = draft.model.columns[columnIndex].devices.filter(dev => dev.id !== device.id);
+      const noMoreDevicesInThisColumn = devices.length === 0;
+      const hasColumnsToTheRight = draft.model.columns.length > columnIndex + 1;
+      const question = noMoreDevicesInThisColumn && hasColumnsToTheRight ? "Delete this device and all the devices to the right of it?" : "Delete this device?";
+      if (confirm(question)) {
+        if (noMoreDevicesInThisColumn) {
+          // when last device in a column is deleted delete this column and all the devices to the right if they exist
+          draft.model.columns.splice(columnIndex, draft.model.columns.length - columnIndex);
         }
-        draft.createNewExperiment = true;
-      } else {
-        alert("Sorry, that device could not be found!");
+        else {
+          draft.model.columns[columnIndex].devices = devices;
+        }
       }
+      draft.createNewExperiment = true;
     });
   };
 
@@ -155,15 +141,13 @@ export const Device = (props: IProps) => {
 
   const handleUpdateVariables = useCallback((newVariables: IVariables) => {
     setGlobalState(draft => {
-      const columnIndex = draft.model.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
-      if (columnIndex !== -1) {
-        const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
-        if (deviceToUpdate) {
-          deviceToUpdate.variables = newVariables;
-        }
+      const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+      if (deviceToUpdate) {
+        deviceToUpdate.variables = newVariables;
       }
+      draft.createNewExperiment = true;
     });
-  }, [selectedDeviceId, setGlobalState]);
+  }, [selectedDeviceId, setGlobalState, columnIndex]);
 
   const handleUpdateVariablesToSeries = (series: string) => {
     if (series) {
@@ -363,15 +347,16 @@ export const Device = (props: IProps) => {
             }
           </div>
         </div>
-        {deviceIndex !== 0 &&
-          <div className="device-delete-icon" onClick={handleDeleteDevice}>
-            <DeleteIcon />
-          </div>
+        { columnIndex !== 0 && isSelectedDevice &&
+            <div className="device-delete-icon" onClick={handleDeleteDevice}>
+              <DeleteIcon />
+            </div>
         }
       </div>
       { device.id === selectedDeviceId &&
           <DeviceFooter
             device={device}
+            columnIndex={columnIndex}
             dataContexts={dataContexts}
             handleUpdateVariables={handleUpdateVariables}
             handleDeleteVariable={handleDeleteVariable}
