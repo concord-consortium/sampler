@@ -25,6 +25,7 @@ interface IProps {
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
   handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
+  handleUpdateVariablesToSeries: (series: string) => void;
   setModelIsRunning: (isRunning: boolean) => void;
 }
 export const Column = ({column, columnIndex, model, selectedDeviceId, modelIsRunning, numSamples,
@@ -33,8 +34,8 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, modelIsRun
     handleEditVarPct, handleEditVariable, handleUpdateViewType, handleUpdateVariablesToSeries, setModelIsRunning}: IProps) => {
   const hasBranch = model.columns.find(c =>  c.devices.length > 1);
   const multipleColumns = model.columns.length > 1;
-  const [attrName, setAttrName] = useState("output");
-  const [editing, setEditing] = useState(false);
+  const [attrName] = useState("output");
+  const [, setEditing] = useState(false);
   const attrNameInputRef = useRef<HTMLInputElement>(null);
 
   const resetAttrInput = useCallback(() => {
