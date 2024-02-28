@@ -87,7 +87,7 @@ export const DeviceFooter = ({device, handleUpdateVariables, handleDeleteVariabl
         <div className="add-remove-variables-buttons">
           <button onClick={handleAddVariable}>+</button>
           <button onClick={(e) => handleDeleteVariable(e)}>-</button>
-          <button>...</button>
+          <button onClick={handleSpecifyVariables}>...</button>
         </div>
       }
       <div className="device-buttons">

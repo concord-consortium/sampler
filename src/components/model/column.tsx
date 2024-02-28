@@ -11,7 +11,6 @@ import "./model-component.scss";
 interface IProps {
   column: IColumn;
   columnIndex: number;
-}
 
 export const Column = ({column, columnIndex}: IProps) => {
   const { globalState } = useGlobalStateContext();
@@ -37,6 +36,9 @@ export const Column = ({column, columnIndex}: IProps) => {
                 key={`${sourceDevice.id}-${device.id}`}
                 source={sourceDevice}
                 target={device}
+                modelIsRunning={modelIsRunning}
+                numSamples={numSamples}
+                setModelIsRunning={setModelIsRunning}
               />)
             )}
           </React.Fragment>

@@ -13,6 +13,7 @@ import { kDataContextName } from "../../contants";
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { createNewVarArray, getNextVariable, getPercentOfVar } from "../helpers";
 import { calculateWedgePercentage } from "./device-views/shared/helpers";
+import { SetVariableSeriesModal } from "./variable-setting-modal";
 import DeleteIcon from "../../assets/delete-icon.svg";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 
@@ -36,6 +37,7 @@ export const Device = (props: IProps) => {
   const [clippingDefs, setClippingDefs] = useState<ClippingDef[]>([]);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragOrigin, setDragOrigin] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const [showVariableEditor, setShowVariableEditor] = useState<boolean>(false);
   const { viewType, variables } = device;
   const svgRef = useRef<SVGSVGElement>(null);
   const multipleColumns = model.columns.length > 1;
@@ -119,6 +121,10 @@ export const Device = (props: IProps) => {
 
   const handleSelectDataContext = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedDataContext(e.target.value);
+  };
+
+  const handleSpecifyVariables = () => {
+    setShowVariableEditor(true);
   };
 
   const handleAddDefs = useCallback((def: { id: string, element: JSX.Element }) => {
@@ -359,6 +365,11 @@ export const Device = (props: IProps) => {
             handleSelectDataContext={handleSelectDataContext}
           />
       }
+      {showVariableEditor &&
+        <SetVariableSeriesModal
+          setShowVariableEditor={setShowVariableEditor}
+          handleUpdateVariablesToSeries={handleUpdateVariablesToSeries}
+        />}
     </div>
   );
 };
