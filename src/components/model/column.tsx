@@ -17,7 +17,6 @@ export const Column = ({column, columnIndex}: IProps) => {
   const { globalState } = useGlobalStateContext();
   const { model } = globalState;
   const hasBranch = model.columns.find( c => c.id === column.id && c.devices.length > 1);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
   return (
     <div key={columnIndex} className={`device-column ${hasBranch ? "centered" : ""}`}>

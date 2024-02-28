@@ -21,7 +21,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
   }, [column.name]);
 
   const handleNameChange = async () => {
-    const newName = getNewColumnName(columnName, model.columns, column.id);
+    const newName = getNewColumnName(columnName.trim(), model.columns, column.id);
     if (globalState.samplerContext) {
       const oldAttrName = globalState.attrMap[column.id].name;
       const attr = (await getAttribute(kDataContextName, "items", oldAttrName)).values;
