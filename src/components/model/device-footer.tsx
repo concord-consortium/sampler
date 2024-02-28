@@ -15,18 +15,19 @@ interface IDeviceFooter {
   dataContexts: IDataContext[];
   addButtonLabel: string;
   handleMergeDevices: () => void;
+  handleSpecifyVariables: () => void;
 }
 
 export const DeviceFooter = ({viewType, handleAddVariable, handleAddDevice, handleDeleteVariable,
   showCollectorButton, handleUpdateViewType, handleSelectDataContext, showMergeButton, dataContexts,
-  addButtonLabel, handleMergeDevices}: IDeviceFooter) => {
+  addButtonLabel, handleMergeDevices, handleSpecifyVariables}: IDeviceFooter) => {
   return (
     <div className="footer">
       { viewType !== "collector" &&
         <div className="add-remove-variables-buttons">
           <button onClick={handleAddVariable}>+</button>
           <button onClick={(e) => handleDeleteVariable(e)}>-</button>
-          <button>...</button>
+          <button onClick={handleSpecifyVariables}>...</button>
         </div>
       }
       <div className="device-buttons">

@@ -23,10 +23,11 @@ interface IProps {
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
   handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
   handleUpdateCollectorVariables: (collectorVariables: IDevice["collectorVariables"]) => void;
+  handleUpdateVariablesToSeries: (series: string) => void;
 }
 export const Column = ({column, columnIndex, model, selectedDeviceId, setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
     handleNameChange, handleUpdateCollectorVariables, handleAddVariable, handleDeleteVariable,
-    handleEditVarPct, handleEditVariable, handleUpdateViewType}: IProps) => {
+    handleEditVarPct, handleEditVariable, handleUpdateViewType, handleUpdateVariablesToSeries}: IProps) => {
   const hasBranch = model.columns.find(c =>  c.devices.length > 1);
   const multipleColumns = model.columns.length > 1;
   const [attrName, setAttrName] = useState("output");
@@ -92,6 +93,7 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, setSelecte
               handleUpdateViewType={handleUpdateViewType}
               handleEditVariable={handleEditVariable}
               handleEditVarPct={handleEditVarPct}
+              handleUpdateVariablesToSeries={handleUpdateVariablesToSeries}
             />
             {sourceDevices.map(sourceDevice => (
               <Arrow
