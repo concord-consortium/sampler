@@ -30,7 +30,7 @@ interface IProps {
 export const Column = ({column, columnIndex, model, selectedDeviceId, modelIsRunning, numSamples,
     setSelectedDeviceId, addDevice, mergeDevices, deleteDevice,
     handleNameChange, handleUpdateCollectorVariables, handleAddVariable, handleDeleteVariable,
-    handleEditVarPct, handleEditVariable, handleUpdateViewType, setModelIsRunning}: IProps) => {
+    handleEditVarPct, handleEditVariable, handleUpdateViewType, handleUpdateVariablesToSeries, setModelIsRunning}: IProps) => {
   const hasBranch = model.columns.find(c =>  c.devices.length > 1);
   const multipleColumns = model.columns.length > 1;
   const [attrName, setAttrName] = useState("output");
@@ -96,6 +96,7 @@ export const Column = ({column, columnIndex, model, selectedDeviceId, modelIsRun
               handleUpdateViewType={handleUpdateViewType}
               handleEditVariable={handleEditVariable}
               handleEditVarPct={handleEditVarPct}
+              handleUpdateVariablesToSeries={handleUpdateVariablesToSeries}
             />
             {sourceDevices.map(sourceDevice => (
               <Arrow

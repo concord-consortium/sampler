@@ -13,6 +13,7 @@ import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-pl
 import { kDataContextName } from "../../utils/codap-helpers";
 import { getNextVariable, getPercentOfVar } from "../helpers";
 import { calculateWedgePercentage } from "./device-views/shared/helpers";
+import { SetVariableSeriesModal } from "./variable-setting-modal";
 import DeleteIcon from "../../assets/delete-icon.svg";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 
@@ -33,13 +34,14 @@ interface IProps {
   handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
   handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
-  handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void
+  handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
+  handleUpdateVariablesToSeries: (series: string) => void;
 }
 
 export const Device = (props: IProps) => {
   const {model, device, selectedDeviceId, multipleColumns, setSelectedDeviceId, addDevice, mergeDevices,
     deleteDevice, handleUpdateCollectorVariables, handleAddVariable, handleUpdateViewType, handleDeleteVariable,
-    handleEditVariable, handleEditVarPct} = props;
+    handleEditVariable, handleEditVarPct, handleUpdateVariablesToSeries} = props;
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   const [selectedDataContext, setSelectedDataContext] = useState<string>("");
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
@@ -49,6 +51,7 @@ export const Device = (props: IProps) => {
   const [clippingDefs, setClippingDefs] = useState<ClippingDef[]>([]);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragOrigin, setDragOrigin] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const [showVariableEditor, setShowVariableEditor] = useState<boolean>(false);
   const { viewType, variables } = device;
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -92,6 +95,10 @@ export const Device = (props: IProps) => {
   const handleMergeDevices = () => mergeDevices(device);
   const handleSelectDataContext = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedDataContext(e.target.value);
+  };
+
+  const handleSpecifyVariables = () => {
+    setShowVariableEditor(true);
   };
 
   const handleAddDefs = useCallback((def: { id: string, element: JSX.Element }) => {
@@ -296,8 +303,14 @@ export const Device = (props: IProps) => {
             handleUpdateViewType={handleUpdateViewType}
             handleSelectDataContext={handleSelectDataContext}
             handleMergeDevices={handleMergeDevices}
+            handleSpecifyVariables={handleSpecifyVariables}
           />
       }
+      {showVariableEditor &&
+        <SetVariableSeriesModal
+          setShowVariableEditor={setShowVariableEditor}
+          handleUpdateVariablesToSeries={handleUpdateVariablesToSeries}
+        />}
     </div>
   );
 };

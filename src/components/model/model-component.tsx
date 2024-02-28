@@ -34,6 +34,7 @@ interface IProps {
   handleUpdateViewType: (viewType: IDevice["viewType"]) => void;
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
   handleEditVarPct: (variableIdx: number, pctStr: string, updateNext?: boolean) => void;
+  handleUpdateVariablesToSeries: (series: string) => void;
   setModelIsRunning: (isRunning: boolean) => void;
 }
 
@@ -41,7 +42,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
     addDevice, mergeDevices, deleteDevice, setSelectedDeviceId, handleNameChange,handleStartRun,
     handleUpdateCollectorVariables, handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat,
     handleSelectReplacement, handleClearData, handleAddVariable, handleDeleteVariable, handleUpdateViewType,
-    handleEditVariable, handleEditVarPct, setModelIsRunning}: IProps) => {
+    handleEditVariable, handleEditVarPct, handleUpdateVariablesToSeries, setModelIsRunning}: IProps) => {
   const [showHelp, setShowHelp] = useState(false);
   const [isWide, setIsWide] = useState(false);
 
@@ -103,6 +104,7 @@ export const ModelTab = ({ model, selectedDeviceId, repeat, sampleSize, numSampl
                   handleUpdateViewType={handleUpdateViewType}
                   handleEditVariable={handleEditVariable}
                   handleEditVarPct={handleEditVarPct}
+                  handleUpdateVariablesToSeries={handleUpdateVariablesToSeries}
                   setModelIsRunning={setModelIsRunning}
                 />
               );
