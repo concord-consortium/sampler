@@ -2,30 +2,65 @@ import React from "react";
 import { SpeedSlider } from "./model-speed-slider";
 import { HelpModal } from "./help-modal";
 import InfoIcon from "../../assets/help-icon.svg";
+import { useGlobalStateContext } from "../../hooks/useGlobalState";
+import { useCodapAPI } from "../../hooks/useCodapAPI";
 
 interface IModelHeader {
   modelHeaderStyle: React.CSSProperties;
-  enableRunButton: boolean;
-  repeat: boolean;
-  sampleSize: string;
-  numSamples: string;
   showHelp: boolean;
   isWide: boolean;
-  handleStartRun: () => void;
-  handleSampleSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleNumSamplesChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSelectRepeat: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  handleSelectReplacement: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  handleClearData: () => void;
   setShowHelp: (showHelp: boolean) => void;
-  setIsWide: (isWide: boolean) => void;
   handleOpenHelp: () => void;
 }
 
 export const ModelHeader = (props: IModelHeader) => {
-  const { modelHeaderStyle, enableRunButton, repeat, sampleSize, numSamples, handleStartRun,
-    handleSampleSizeChange, handleNumSamplesChange, handleSelectRepeat, handleSelectReplacement,
-    handleClearData, showHelp, setShowHelp, isWide, setIsWide, handleOpenHelp } = props;
+  const { modelHeaderStyle, showHelp, setShowHelp, isWide, handleOpenHelp } = props;
+  const { globalState, setGlobalState } = useGlobalStateContext();
+  const { repeat, sampleSize, numSamples, enableRunButton } = globalState;
+  const { handleStartRun, deleteAll } = useCodapAPI();
+
+  const handleClearData = () => {
+    deleteAll();
+  };
+
+  const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setGlobalState(draft => {
+      draft.repeat = e.target.value === "repeat";
+      draft.createNewExperiment = true;
+    });
+  };
+
+  const handleSampleSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setGlobalState(draft => {
+      draft.sampleSize = e.target.value;
+      if (e.target.value !== null && Number(e.target.value)) {
+        draft.createNewExperiment = true;
+        draft.enableRunButton = true;
+      } else {
+        draft.enableRunButton = false;
+      }
+    });
+  };
+
+  const handleSelectReplacement = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setGlobalState(draft => {
+      draft.replacement = e.target.value === "with";
+      draft.createNewExperiment = true;
+    });
+  };
+
+  const handleNumSamplesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setGlobalState(draft => {
+      draft.numSamples = e.target.value;
+      if (e.target.value !== null && Number(e.target.value)) {
+        draft.createNewExperiment = true;
+        draft.enableRunButton = true;
+      } else {
+        draft.enableRunButton = false;
+      }
+    });
+  };
+
   return (
     <div className="model-header" style={modelHeaderStyle}>
       <div className="model-controls">

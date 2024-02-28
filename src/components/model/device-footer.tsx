@@ -1,26 +1,87 @@
 import React from "react";
-import { IDataContext, kDeviceTypes } from "../../models/device-model";
+import { IDataContext, IDevice, IVariables, createDefaultDevice, kDeviceTypes } from "../../models/device-model";
+import { useGlobalStateContext } from "../../hooks/useGlobalState";
+import { getDeviceColumnIndex, getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
+import { getNewColumnName, getNewVariable, getProportionalVars } from "../helpers";
+import { createNewAttribute } from "@concord-consortium/codap-plugin-api";
+import { kDataContextName } from "../../contants";
+import { createId } from "../../utils/id";
 
 import "./device-footer.scss";
 
 interface IDeviceFooter {
-  viewType: string;
-  handleAddVariable: () => void;
-  handleAddDevice: () => void;
-  handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
-  showCollectorButton: boolean;
-  showMergeButton: boolean;
-  handleUpdateViewType: (viewType: "mixer" | "spinner" | "collector") => void;
-  handleSelectDataContext: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  device: IDevice;
   dataContexts: IDataContext[];
-  addButtonLabel: string;
-  handleMergeDevices: () => void;
+  handleUpdateVariables: (variables: IVariables) => void;
+  handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
+  handleSelectDataContext: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleSpecifyVariables: () => void;
 }
 
-export const DeviceFooter = ({viewType, handleAddVariable, handleAddDevice, handleDeleteVariable,
-  showCollectorButton, handleUpdateViewType, handleSelectDataContext, showMergeButton, dataContexts,
-  addButtonLabel, handleMergeDevices, handleSpecifyVariables}: IDeviceFooter) => {
+export const DeviceFooter = ({device, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, dataContexts}: IDeviceFooter) => {
+  const { globalState, setGlobalState } = useGlobalStateContext();
+  const { model, selectedDeviceId } = globalState;
+  const { viewType } = device;
+  const targetDevices = getTargetDevices(model, device);
+  const siblingDevices = getSiblingDevices(model, device);
+  const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
+  const showCollectorButton = getNumDevices(model) === 1;
+  const showMergeButton = siblingDevices.length > 0;
+
+  const handleAddVariable = () => {
+    const { variables } = device;
+    if (viewType === "spinner") {
+      handleUpdateVariables(getProportionalVars(variables));
+    } else {
+      const newVariable = getNewVariable(variables);
+      handleUpdateVariables([...variables, newVariable]);
+    }
+  };
+
+  const handleAddDevice = () => {
+    setGlobalState(draft => {
+      const newDevice = createDefaultDevice();
+      const newColumnIndex = getDeviceColumnIndex(draft.model, device) + 1;
+      if (draft.model.columns[newColumnIndex]) {
+        // column already exists so add the device
+        draft.model.columns[newColumnIndex].devices.push(newDevice);
+      } else {
+        // create the column and add the device
+        const name: string = getNewColumnName("output", model.columns);
+        const id: string = createId();
+        draft.model.columns.splice(newColumnIndex, 0, {name, id, devices: [newDevice]});
+        draft.attrMap[id] = {name, codapID: null};
+        if (draft.samplerContext) {
+          createNewAttribute(kDataContextName, "items", name);
+        }
+      }
+      draft.createNewExperiment = true;
+    });
+  };
+
+  const handleMergeDevices = () => {
+    setGlobalState(draft => {
+      const columnIndex = getDeviceColumnIndex(draft.model, device);
+      if (columnIndex !== -1) {
+        // remove the other devices
+        draft.model.columns[columnIndex].devices.splice(0, model.columns[columnIndex].devices.length, device);
+      }
+      draft.createNewExperiment = true;
+    });
+  };
+
+  const handleUpdateViewType = (view: IDevice["viewType"]) => {
+    setGlobalState(draft => {
+      const columnIndex = draft.model.columns.findIndex(c => c.devices.find(d => d.id === selectedDeviceId));
+      if (columnIndex !== -1) {
+        const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+        if (deviceToUpdate) {
+          deviceToUpdate.viewType = view;
+        }
+      }
+    });
+  };
+
   return (
     <div className="footer">
       { viewType !== "collector" &&
@@ -64,7 +125,6 @@ export const DeviceFooter = ({viewType, handleAddVariable, handleAddDevice, hand
               {showMergeButton && <button onClick={handleMergeDevices}>Merge</button>}
             </>
         }
-
       </div>
     </div>
   );

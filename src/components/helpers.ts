@@ -1,4 +1,5 @@
 import { IVariables } from "../models/device-model";
+import { IColumn } from "../models/model-model";
 
 export function calcPct (a: number, b: number) {
   return Math.round(100 * (a / b));
@@ -204,3 +205,32 @@ export function getRandomElement<T>(array: T[]): T {
   const randomIndex = Math.floor(Math.random() * array.length);
   return array[randomIndex];
 }
+
+export const getNewColumnName = (proposedName: string, columns: IColumn[], columnId?: string) => {
+  let name = proposedName;
+  const otherColumnsWithSameName = columns.filter(c => c.name.startsWith(proposedName) && c.id !== columnId);
+  const isNameUnique = otherColumnsWithSameName.length === 0 || otherColumnsWithSameName.every((col) => col.name !== proposedName);
+
+  if (isNameUnique) {
+    return name;
+  }
+
+  const indexes = otherColumnsWithSameName.map((col) => Number(col.name.slice(proposedName.length)));
+  const highestIndex = Math.max(...indexes);
+  if (!highestIndex) {
+    name = name + 2;
+  } else {
+    for (let i = 2; i <= highestIndex; i++) {
+      const nameWithIndex = name + i;
+      const isNameWithIndexUsed = otherColumnsWithSameName.find((col) => col.name === nameWithIndex);
+      if (!isNameWithIndexUsed) {
+        name = nameWithIndex;
+        break;
+      } else if (i === highestIndex) {
+        name = name + (highestIndex + 1);
+      }
+    }
+  }
+
+  return name;
+};

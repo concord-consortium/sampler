@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { ClippingDef, ICollectorVariables } from "../../../models/device-model";
+import { ClippingDef, IDevice } from "../../../models/device-model";
 import { MixerFrame } from "./shared/mixer-frame";
 import { Balls } from "./shared/balls";
 
 interface ICollector {
-  collectorVariables: ICollectorVariables;
-  deviceId: string;
+  device: IDevice;
   handleAddDefs: (def: ClippingDef) => void
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleSetEditingVarName: (variableIdx: number) => void;
 }
 
-export const Collector = ({collectorVariables, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, deviceId}: ICollector) => {
+export const Collector = ({device, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: ICollector) => {
   const [ballsArray, setBallsArray] = useState<Array<string>>([]);
+  const { collectorVariables, id: deviceId } = device;
 
   useEffect(() => {
     if (collectorVariables.length) {

@@ -1,4 +1,4 @@
-import { Id } from "../utils/id";
+import { Id, createId } from "../utils/id";
 
 export type View = "mixer" | "spinner" | "collector";
 
@@ -73,3 +73,6 @@ export function findCommonDenominator (percentages: number[]): number {
 export function findEquivNum(n: number, lcd: number) {
   return (n * (lcd / 100));
 }
+
+export const kDefaultVars: IVariables = ["a", "a", "b"];
+export const createDefaultDevice = (): IDevice => ({id: createId(), viewType: "mixer", variables: kDefaultVars, collectorVariables: []});

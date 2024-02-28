@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-
+import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { IDevice } from "../../models/device-model";
-import { IModel } from "../../models/model-model";
 import { useResizer } from "../../hooks/use-resizer";
 
 import "./arrow.scss";
@@ -14,11 +13,7 @@ interface IPoint {
 interface IProps {
   source: IDevice
   target: IDevice
-  model: IModel
   selectedDeviceId?: string
-  modelIsRunning: boolean
-  numSamples: string //temporary so we don't run forever
-  setModelIsRunning: (isRunning: boolean) => void
 }
 
 type Rect = Omit<DOMRect, "toJSON"> & {midY: number};
@@ -47,7 +42,9 @@ const getRect = (el: HTMLElement): Rect => {
   return {width, height, x, y, left: x, right: x + width, top: y, bottom: y + height, midY};
 };
 
-export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, numSamples, setModelIsRunning}: IProps) => {
+export const Arrow = ({source, target, selectedDeviceId}: IProps) => {
+  const { globalState, setGlobalState } = useGlobalStateContext();
+  const { model, modelIsRunning, numSamples } = globalState;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [drawCount, setDrawCount] = useState(0);
   const redraw = () => setDrawCount(prev => prev + 1);
@@ -175,14 +172,16 @@ export const Arrow = ({source, target, model, selectedDeviceId, modelIsRunning, 
           } else {
             setRunAnimation(false);
             numAnimationCycles.current = 0;
-            setModelIsRunning(false);
+            setGlobalState(draft => {
+              draft.modelIsRunning = false;
+            });
           }
         }
       };
 
       requestAnimationFrame(animate);
     }
-  }, [arrowLength, markerId, runAnimation, numAnimationCycles, numSamples, setModelIsRunning]);
+  }, [arrowLength, markerId, runAnimation, numAnimationCycles, numSamples, setGlobalState]);
 
   // wait until both the source and target div are drawn
   if (!sourceDiv || !targetDiv) {
