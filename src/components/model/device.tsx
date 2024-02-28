@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
-import { ClippingDef, IDataContext, IDevice, IItem, IItems, IVariables } from "../../models/device-model";
+import { ClippingDef, IDataContext, IDevice, IItem, IItems, IVariables, ViewType } from "../../models/device-model";
 import { Mixer } from "./device-views/mixer/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
@@ -48,14 +48,14 @@ export const Device = (props: IProps) => {
       return res.values;
     };
 
-    if (viewType === "collector") {
+    if (viewType === ViewType.Collector) {
       fetchDataContexts().then((contexts: Array<IDataContext>) => {
         const filteredCtxs = contexts.filter((context) => context.name !== kDataContextName);
         setDataContexts(filteredCtxs);
       });
     }
 
-    if (viewType === "spinner") {
+    if (viewType === ViewType.Spinner) {
       setViewBox(`0 0 ${kSpinnerContainerWidth + 10} ${kSpinnerContainerHeight}`);
     } else {
       setViewBox(`0 0 ${kMixerContainerWidth + 10} ${kMixerContainerHeight}`);
@@ -162,12 +162,11 @@ export const Device = (props: IProps) => {
 
   const handleDeleteVariable = (e: React.MouseEvent, selectedVariable?: string) => {
     if (selectedDeviceId !== device.id) return;
-    if ([...new Set(variables)].length === 1) {
-      return;
-    }
+    if (viewType === ViewType.Mixer && variables.length === 1) return;
+    if (viewType === ViewType.Spinner && [...new Set(variables)].length === 1) return;
 
     let newVariables: IVariables = [];
-    if (viewType === "mixer") {
+    if (viewType === ViewType.Mixer) {
       newVariables.push(...variables.slice(0, variables.length - 1));
     } else {
       if (selectedVariable) {
@@ -193,7 +192,7 @@ export const Device = (props: IProps) => {
 
   const handleEditVariable = (oldVariableIdx: number, newVariableName: string) => {
     const newVariables: IVariables = [];
-    if (viewType === "mixer" || viewType === "collector") {
+    if (viewType === ViewType.Mixer || viewType === ViewType.Collector) {
       newVariables.push(...variables);
       newVariables[oldVariableIdx] = newVariableName;
     } else {
@@ -296,14 +295,14 @@ export const Device = (props: IProps) => {
                 {clippingDefs.length && clippingDefs.map((def) => def.element)}
               </defs>
               {
-                viewType === "mixer" ?
+                viewType === ViewType.Mixer ?
                   <Mixer
                     device={device}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
                     handleSetEditingVarName={() => setIsEditingVarName(true)}
                   /> :
-                viewType === "spinner" ?
+                viewType === ViewType.Spinner ?
                   <Spinner
                     device={device}
                     selectedVariableIdx={selectedVariableIdx}
