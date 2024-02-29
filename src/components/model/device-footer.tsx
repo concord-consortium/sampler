@@ -1,5 +1,5 @@
 import React from "react";
-import { IDataContext, IDevice, IVariables, createDefaultDevice, kDeviceTypes } from "../../models/device-model";
+import { IDataContext, IDevice, IVariables, ViewType, createDefaultDevice } from "../../models/device-model";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
 import { getNewColumnName, getNewVariable, getProportionalVars } from "../helpers";
@@ -31,7 +31,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
 
   const handleAddVariable = () => {
     const { variables } = device;
-    if (viewType === "spinner") {
+    if (viewType === ViewType.Spinner) {
       handleUpdateVariables(getProportionalVars(variables));
     } else {
       const newVariable = getNewVariable(variables);
@@ -67,7 +67,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
     });
   };
 
-  const handleUpdateViewType = (view: IDevice["viewType"]) => {
+  const handleUpdateViewType = (view: ViewType) => {
     setGlobalState(draft => {
       const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
       if (deviceToUpdate) {
@@ -78,7 +78,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
 
   return (
     <div className="footer">
-      { viewType !== "collector" &&
+      { viewType !== ViewType.Collector &&
         <div className="add-remove-variables-buttons">
           <button onClick={handleAddVariable}>+</button>
           <button onClick={(e) => handleDeleteVariable(e)}>-</button>
@@ -87,8 +87,8 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
       }
       <div className="device-buttons">
         {
-          kDeviceTypes.map((deviceType) => {
-            const renderButton = deviceType !== "collector" || showCollectorButton;
+          Object.values(ViewType).map((deviceType) => {
+            const renderButton = deviceType !== ViewType.Collector || showCollectorButton;
             if (renderButton) {
               return (
                 <button
@@ -104,7 +104,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
       </div>
       <div className="device-buttons">
         {
-          viewType === "collector" ?
+          viewType === ViewType.Collector ?
             <select onChange={handleSelectDataContext}>
               <option value="">Select a data context</option>
               {

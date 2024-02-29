@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
+import { ViewType } from "../../models/device-model";
 
 interface IVariableLabelInput {
   variableIdx: number;
-  viewType: "mixer" | "spinner" | "collector";
+  viewType: ViewType;
   variableName: string;
   deviceId: string;
   handleEditVariable: (oldVariableIdx: number, newVariableName: string) => void;
@@ -15,7 +16,7 @@ export const NameLabelInput = ({variableIdx, variableName,
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const idStr = viewType === "spinner" ? "wedge" : "ball";
+    const idStr = viewType === ViewType.Spinner ? "wedge" : "ball";
     const textLabel = document.getElementById(`${deviceId}-${idStr}-label-${variableName}-${variableIdx}`);
     if (textLabel && ref.current) {
       ref.current.focus();
