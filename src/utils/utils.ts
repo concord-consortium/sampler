@@ -71,3 +71,49 @@ export function parseSpecifier(spec: string, rangeWord: string) {
   });
   return arr.length? arr : null;
 }
+
+export const formatFormula = (expression: string, replacement: string): string => {
+  // Function to wrap variable names in single quotes, except the replacement string
+  const wrapVariables = (match: string) => {
+    // If the match is the replacement string, do not wrap it in single quotes
+    return match === replacement ? match : `'${match}'`;
+  };
+
+  // Pattern to detect variable names and operators
+  const variableAndOperatorPattern = /([a-zA-Z_]\w*)|([\+\-\*\/%<>=!]+)/g;
+
+  // Replace variable names with their wrapped versions and handle operators
+  const formattedExpression = expression.replace(variableAndOperatorPattern, (match, variable) => {
+    if (variable) {
+      // Wrap variable names in single quotes, except the replacement string
+      return wrapVariables(variable);
+    } else {
+      // Directly return operators without modification
+      return match;
+    }
+  });
+
+  // Check if the entire expression is just a single variable equal to the replacement
+  if (formattedExpression.trim() === replacement) {
+    // If so, return the expression as is, without further modification
+    return formattedExpression;
+  }
+
+  // Check if the expression contains any operators
+  const containsOperators = /[+\-*/%<>=!]/.test(formattedExpression);
+
+  // If the expression does not contain operators, format it as an equality with the replacement string
+  if (!containsOperators) {
+    return `${replacement} = ${formattedExpression}`;
+  }
+
+  // For expressions with operators, ensure the replacement string is correctly positioned
+  return formattedExpression.includes(replacement) ? formattedExpression : `${replacement} ${formattedExpression}`;
+};
+
+export const extractVariablesFromFormula = (formula: string): string[] => {
+  const variablePattern = /[a-zA-Z_]\w*/g;
+  const variables = formula.match(variablePattern);
+  return variables ? Array.from(new Set(variables)) : [];
+};
+

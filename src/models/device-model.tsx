@@ -13,6 +13,7 @@ export interface IDevice {
   viewType: View;
   variables: IVariables;
   collectorVariables: ICollectorVariables;
+  formulas: Record<string, string>;
 }
 
 // a map of variables to their percentages
@@ -79,4 +80,6 @@ export function findEquivNum(n: number, lcd: number) {
 }
 
 export const kDefaultVars: IVariables = ["a", "a", "b"];
-export const createDefaultDevice = (): IDevice => ({id: createId(), viewType: ViewType.Mixer, variables: kDefaultVars, collectorVariables: []});
+export const createDefaultDevice = (): IDevice => {
+  return {id: createId(), viewType: ViewType.Mixer, variables: kDefaultVars, collectorVariables: [], formulas: {}};
+};
