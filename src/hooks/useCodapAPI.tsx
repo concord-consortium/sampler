@@ -55,8 +55,7 @@ export const useCodapAPI = () => {
           return acc;
         }, { [columnName]: selectedVariable });
 
-
-        const formattedFormula = formatFormula(formula, columnName);
+        const formattedFormula = formatFormula(formula, columnName, Object.keys(values));
         const evaluationResult = await evaluateResult(formattedFormula, values);
         if (evaluationResult) {
           nextDeviceId = deviceId;
@@ -81,14 +80,15 @@ export const useCodapAPI = () => {
     return outputs;
   };
 
-  const getResults = async (experimentNum: number) => {
+  const getResults = async (experimentNum: number, startingSampleNumber: number) => {
     const results: { [key: string]: string|number }[] = [];
     const firstDevice = model.columns[0].devices[0];
-    for (let sampleIndex = 0; sampleIndex < Number(numSamples); sampleIndex++) {
-      for (let i = 0; i < Number(sampleSize); i++) {
+    const endSampleNumber = startingSampleNumber + Number(numSamples);
+    for (let sampleIndex = startingSampleNumber; sampleIndex < endSampleNumber; sampleIndex++) {
+      for (let i = 0; i <  Number(sampleSize); i++) {
         const sample: { [key: string]: string|number } = {};
         sample[attrMap.experiment.name] = experimentNum;
-        sample[attrMap.sample.name] = sampleIndex + 1;
+        sample[attrMap.sample.name] = sampleIndex;
         const deviceStr = firstDevice.viewType.charAt(0).toUpperCase() + firstDevice.viewType.slice(1);
         sample[attrMap.description.name] = `${deviceStr} containing ${numSamples} items${replacement ? " (with replacement)" : ""}`;
         sample[attrMap.sample_size.name] = sampleSize && parseInt(sampleSize, 10);
@@ -217,7 +217,8 @@ export const useCodapAPI = () => {
         ? model.experimentNum + 1
         : model.experimentNum
     : 1;
-    const results = await getResults(experimentNum);
+    const startingSampleNumber = createNewExperiment ? 1 : model.mostRecentRunNumber + 1;
+    const results = await getResults(experimentNum, startingSampleNumber);
     const attrNames = model.columns.map(column => column.name);
     const ctxRes = await findOrCreateDataContext(attrNames);
     if (ctxRes === "success") {
@@ -226,6 +227,7 @@ export const useCodapAPI = () => {
         draft.model.experimentNum = experimentNum;
         draft.enableRunButton = true;
         draft.createNewExperiment = false;
+        draft.model.mostRecentRunNumber = model.mostRecentRunNumber + Number(numSamples);
       });
     }
   };

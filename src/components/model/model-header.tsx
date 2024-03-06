@@ -21,7 +21,7 @@ export const ModelHeader = (props: IModelHeader) => {
 
   const handleClearData = () => {
     setGlobalState(draft => {
-      draft.model.experimentNum = 0;
+      draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
     deleteAll();
@@ -30,6 +30,7 @@ export const ModelHeader = (props: IModelHeader) => {
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setGlobalState(draft => {
       draft.repeat = e.target.value === "repeat";
+      draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
   };
@@ -37,6 +38,7 @@ export const ModelHeader = (props: IModelHeader) => {
   const handleSampleSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGlobalState(draft => {
       if (draft.sampleSize !== e.target.value) {
+        draft.model.mostRecentRunNumber = 0;
         draft.createNewExperiment = true;
       }
       if (e.target.value !== null && Number(e.target.value)) {
@@ -57,6 +59,7 @@ export const ModelHeader = (props: IModelHeader) => {
   const handleNumSamplesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGlobalState(draft => {
       if (draft.numSamples !== e.target.value) {
+        draft.model.mostRecentRunNumber = 0;
         draft.createNewExperiment = true;
       }
       if (e.target.value !== null && Number(e.target.value)) {

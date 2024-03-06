@@ -80,6 +80,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
           createNewAttribute(kDataContextName, "items", name);
         }
       }
+      draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
     updateFormulas();
@@ -88,6 +89,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
   const handleMergeDevices = () => {
     setGlobalState(draft => {
       draft.model.columns[columnIndex].devices.splice(0, model.columns[columnIndex].devices.length, device);
+      draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
   };

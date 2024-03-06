@@ -16,7 +16,7 @@ const defaultAttrMap: AttrMap = {
 
 export const getDefaultState = (): IGlobalState => {
   return {
-    model: {columns: []},
+    model: {columns: [], experimentNum: 0, mostRecentRunNumber: 0, runNumberSentInCurrentSequence: 0},
     selectedTab: "Model",
     selectedDeviceId: undefined,
     repeat: false,
@@ -55,7 +55,9 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
             columns: [
               {name: "output", id: newColumnId, devices: [createDefaultDevice()]}
             ],
-            experimentNum: 0
+            experimentNum: 0,
+            mostRecentRunNumber: 0,
+            runNumberSentInCurrentSequence: 0
           };
           draft.attrMap[newColumnId] = {codapID: null, name: "output"};
         });
