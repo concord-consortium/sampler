@@ -73,6 +73,9 @@ export function parseSpecifier(spec: string, rangeWord: string) {
 }
 
 export const formatFormula = (expression: string, columnName: string, replacements: string[]): string => {
+  // remove  quotes from the expression
+  let cleanedExpression = expression.replace(/"/g, '').replace(/'/g, '');
+
   // the formulaEngine function from the CODAP API expects string values to be wrapped with single quotes
   // for example, if the expression is "output = a", the formula passed to the API should be "output = 'a'"
   const wrapVariables = (match: string) => {
@@ -81,7 +84,7 @@ export const formatFormula = (expression: string, columnName: string, replacemen
 
   const variableAndOperatorPattern = /([a-zA-Z_]\w*)|([\+\-\*\/%<>=!]+)/g;
 
-  let formattedExpression = expression.replace(variableAndOperatorPattern, (match, variable) => {
+  let formattedExpression = cleanedExpression.replace(variableAndOperatorPattern, (match, variable) => {
     if (variable) {
       return wrapVariables(variable);
     } else {
