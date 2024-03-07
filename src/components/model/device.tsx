@@ -103,6 +103,7 @@ export const Device = (props: IProps) => {
           draft.model.columns[columnIndex].devices = devices;
         }
       }
+      draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
   };
@@ -145,6 +146,7 @@ export const Device = (props: IProps) => {
       if (deviceToUpdate) {
         deviceToUpdate.variables = newVariables;
       }
+      draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
   }, [selectedDeviceId, setGlobalState, columnIndex]);

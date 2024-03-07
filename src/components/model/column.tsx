@@ -32,11 +32,12 @@ export const Column = ({column, columnIndex}: IProps) => {
               device={device}
               columnIndex={columnIndex}
             />
-            {sourceDevices.map(sourceDevice => (
+            {sourceDevices.map((sourceDevice) => (
               <Arrow
                 key={`${sourceDevice.id}-${device.id}`}
                 source={sourceDevice}
                 target={device}
+                columnIndex={columnIndex - 1}
               />)
             )}
           </React.Fragment>

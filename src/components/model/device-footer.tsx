@@ -39,12 +39,36 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
     }
   };
 
+  const updateFormulas = () => {
+    setGlobalState(draft => {
+      draft.model.columns.forEach((col) => {
+        col.devices.forEach((dev) => {
+          const targets = getTargetDevices(draft.model, dev);
+          if (targets.length) {
+            targets.forEach((target) => {
+              // add a formula if it doesn't exist
+              if (!dev.formulas[target.id]) {
+                dev.formulas[target.id] = "*";
+              }
+            });
+            // check if there are any formulas that are no longer needed
+            Object.keys(dev.formulas).forEach((key) => {
+              if (!targets.find((t) => t.id === key)) {
+                delete dev.formulas[key];
+              }
+            });
+          }
+        });
+      });
+    });
+  };
+
   const handleAddDevice = () => {
     setGlobalState(draft => {
       const newDevice = createDefaultDevice();
       const newColumnIndex = columnIndex + 1;
       if (draft.model.columns[newColumnIndex]) {
-        // column already exists so add the device
+        // add the device
         draft.model.columns[newColumnIndex].devices.push(newDevice);
       } else {
         // create the column and add the device
@@ -56,13 +80,16 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
           createNewAttribute(kDataContextName, "items", name);
         }
       }
+      draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
+    updateFormulas();
   };
 
   const handleMergeDevices = () => {
     setGlobalState(draft => {
       draft.model.columns[columnIndex].devices.splice(0, model.columns[columnIndex].devices.length, device);
+      draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
   };
