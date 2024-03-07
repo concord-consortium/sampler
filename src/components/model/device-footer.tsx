@@ -75,9 +75,17 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
         const name: string = getNewColumnName("output", model.columns);
         const id: string = createId();
         draft.model.columns.splice(newColumnIndex, 0, {name, id, devices: [newDevice]});
-        draft.attrMap[id] = {name, codapID: null};
-        if (draft.samplerContext) {
-          createNewAttribute(kDataContextName, "items", name);
+        // check if any attrs in attrMap have same name as new column name
+        // if so, replace the old attrMap key with the new id
+        const existingAttr = Object.keys(draft.attrMap).find((key) => draft.attrMap[key].name === name);
+        if (existingAttr) {
+          draft.attrMap[id] = {...draft.attrMap[existingAttr]};
+          delete draft.attrMap[existingAttr];
+        } else {
+          draft.attrMap[id] = {name, codapID: null};
+          if (draft.samplerContext) {
+            createNewAttribute(kDataContextName, "items", name);
+          }
         }
       }
       draft.model.mostRecentRunNumber = 0;
