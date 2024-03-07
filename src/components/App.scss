@@ -4,6 +4,12 @@
   color: #444;
   font-size: 11px;
 
+  button {
+    &:hover:not(.disabled) {
+      cursor: pointer;
+    }
+  }
+
   button, input, select {
     font-size: 11px;
   }
