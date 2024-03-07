@@ -1,6 +1,17 @@
 import { useGlobalStateContext } from "./useGlobalState";
 import { getRandomElement } from "../components/helpers";
-import { IResult, codapInterface, createChildCollection, createDataContext, createItems, createParentCollection, createTable, getDataContext } from "@concord-consortium/codap-plugin-api";
+import {
+  IResult,
+  codapInterface,
+  createChildCollection,
+  createDataContext,
+  createItems,
+  createNewAttribute,
+  createParentCollection,
+  createTable,
+  getAttributeList,
+  getDataContext
+} from "@concord-consortium/codap-plugin-api";
 import { AttrMap, IAttribute } from "../types";
 import { extractVariablesFromFormula, formatFormula } from "../utils/utils";
 import { getDeviceById } from "../models/model-model";
@@ -147,24 +158,22 @@ export const useCodapAPI = () => {
   };
 
   const findOrCreateDataContext = async (attrs: Array<string>) => {
+    const collectionNames = getCollectionNames();
     const dataContextRes = await getDataContext(kDataContextName);
     if (dataContextRes.success) {
-      // get the attributes ids + map them to their appropriate attributes.
-      // We use the ids just in case the attribute names have been changed
-      const onlyIds: string[] = [];
-      Object.keys(attrMap).map((key) => {
-        const { codapID } = attrMap[key];
-        if (codapID) {
-          onlyIds.push(codapID);
-        }
-      });
-      if (onlyIds.length <= 0) {
-        await updateAttributeIds(attrs);
+      // ensure that if a user deleted a CODAP attr representing a device column, it is reinstated
+      const attrList = (await getAttributeList(kDataContextName, collectionNames.items)).values;
+      const attrNames = attrList.map((attr: {id: number, name: string, title: string}) => attr.name);
+      const missingAttrs = attrs.filter(attr => !attrNames.includes(attr));
+      if (missingAttrs.length > 0) {
+        missingAttrs.forEach(async (attr) => {
+          await createNewAttribute(kDataContextName, collectionNames.items, attr);
+        });
       }
+      await updateAttributeIds(attrs);
       return "success";
     } else {
       const createRes = await createDataContext(kDataContextName);
-      const collectionNames = getCollectionNames();
       const itemsAttrs: IAttribute[] = [];
       if (createRes.success) {
         setGlobalState((draft) => {
