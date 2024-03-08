@@ -76,6 +76,9 @@ $pluginMinWidth: 304px;
     input[type='range']::-webkit-slider-thumb {
       -webkit-appearance: none;
       width: 45px;
+      &:hover {
+        cursor: pointer;
+      }
     }
 
     input[type='range']::-webkit-slider-runnable-track {
@@ -84,6 +87,9 @@ $pluginMinWidth: 304px;
       height: 4px;
       border-radius: 2px;
       background: #777;
+      &:hover {
+        cursor: pointer;
+      }
     }
 
     input[type='range']::-moz-range-track {
@@ -92,6 +98,9 @@ $pluginMinWidth: 304px;
       height: 4px;
       border-radius: 2px;
       background: #777;
+      &:hover {
+        cursor: pointer;
+      }
     }
 
     input[type='range']::-webkit-slider-thumb {
@@ -104,6 +113,9 @@ $pluginMinWidth: 304px;
       background-color: #f0f0f0;
       position: relative;
       z-index: 2;
+      &:hover {
+        cursor: pointer;
+      }
     }
 
     input[type='range']::-moz-range-thumb {
@@ -116,6 +128,9 @@ $pluginMinWidth: 304px;
       background-color: #f0f0f0;
       position: relative;
       z-index: 2;
+      &:hover {
+        cursor: pointer;
+      }
     }
 
 
