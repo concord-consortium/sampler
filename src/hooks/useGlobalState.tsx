@@ -29,7 +29,9 @@ export const getDefaultState = (): IGlobalState => {
     dataContexts: [],
     samplerContext: undefined,
     collectorContext: undefined,
-    modelIsRunning: false
+    isRunning: false,
+    isPaused: false,
+    speed: 1
   };
 };
 

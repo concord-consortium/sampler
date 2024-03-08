@@ -18,6 +18,20 @@ export interface AttrMap {
   [key: string]: IAttrForMap;
 }
 
+export enum Speed {
+  Slow = 0,
+  Medium = 1,
+  Fast = 2,
+  Fastest = 3
+}
+
+export const speedLabels: Record<Speed, string> = {
+  [Speed.Slow]: "Slow",
+  [Speed.Medium]: "Medium",
+  [Speed.Fast]: "Fast",
+  [Speed.Fastest]: "Fastest"
+};
+
 export interface IGlobalState {
   model: IModel;
   selectedDeviceId: Id | undefined;
@@ -32,7 +46,9 @@ export interface IGlobalState {
   dataContexts: Array<IDataContext>;
   collectorContext: IDataContext | undefined;
   samplerContext: IDataContext | undefined;
-  modelIsRunning: boolean;
+  isRunning: boolean;
+  isPaused: boolean;
+  speed: Speed;
 }
 
 export interface ICollection {

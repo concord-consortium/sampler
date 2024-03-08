@@ -300,6 +300,8 @@ export const Device = (props: IProps) => {
                 viewType === ViewType.Mixer ?
                   <Mixer
                     device={device}
+                    isRunning={globalState.isRunning}
+                    speed={globalState.speed}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
                     handleSetEditingVarName={() => setIsEditingVarName(true)}
@@ -318,6 +320,8 @@ export const Device = (props: IProps) => {
                   /> :
                   <Collector
                     device={device}
+                    isRunning={globalState.isRunning}
+                    speed={globalState.speed}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
                     handleSetEditingVarName={() => setIsEditingVarName(true)}

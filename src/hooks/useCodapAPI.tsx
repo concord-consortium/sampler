@@ -217,10 +217,14 @@ export const useCodapAPI = () => {
   };
 
   const handleStartRun = async () => {
-    // proof of concept that we can "run" the model and add items to CODAP
     setGlobalState(draft => {
-      draft.modelIsRunning = true;
+      draft.isRunning = true;
     });
+
+    run();
+  };
+
+  const run = async () => {
     const experimentNum = model.experimentNum
     ? createNewExperiment
         ? model.experimentNum + 1
@@ -237,6 +241,7 @@ export const useCodapAPI = () => {
         draft.enableRunButton = true;
         draft.createNewExperiment = false;
         draft.model.mostRecentRunNumber = model.mostRecentRunNumber + Number(numSamples);
+        draft.isRunning = false;
       });
     }
   };

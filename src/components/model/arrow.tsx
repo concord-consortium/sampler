@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { IDevice } from "../../models/device-model";
 import { useResizer } from "../../hooks/use-resizer";
+import { FormulaEditor } from "./formula-editor";
 
 import "./arrow.scss";
-import { FormulaEditor } from "./formula-editor";
 
 interface IPoint {
   x: number
@@ -46,7 +46,7 @@ const getRect = (el: HTMLElement): Rect => {
 
 export const Arrow = ({source, target, columnIndex, selectedDeviceId}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model, modelIsRunning, numSamples } = globalState;
+  const { model, isRunning, numSamples } = globalState;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [drawCount, setDrawCount] = useState(0);
   const redraw = () => setDrawCount(prev => prev + 1);
@@ -80,7 +80,7 @@ export const Arrow = ({source, target, columnIndex, selectedDeviceId}: IProps) =
     redraw();
   }, [model, selectedDeviceId]);
 
-  useEffect(() => {setRunAnimation(modelIsRunning);}, [modelIsRunning]);
+  useEffect(() => {setRunAnimation(isRunning);}, [isRunning]);
 
   // when the plugin is resized or the scrollbar appears/disappears redraw since the arrow is absolutely positioned
   useResizer(redraw);
@@ -121,9 +121,6 @@ export const Arrow = ({source, target, columnIndex, selectedDeviceId}: IProps) =
           } else {
             setRunAnimation(false);
             numAnimationCycles.current = 0;
-            setGlobalState(draft => {
-              draft.modelIsRunning = false;
-            });
           }
         }
       };
