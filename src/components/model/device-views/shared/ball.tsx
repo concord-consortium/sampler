@@ -5,6 +5,7 @@ import { ClippingDef } from "../../../../models/device-model";
 export interface IBall {
   x: number;
   y: number;
+  transform: string;
   radius: number;
   text: string;
   fontSize: number;
@@ -15,7 +16,8 @@ export interface IBall {
   i: number;
 }
 
-export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i, deviceId }: IBall) => {
+export const Ball = ({ x, y, transform, radius, text, fontSize,
+  handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i, deviceId }: IBall) => {
   useEffect(() => {
     const id = `${deviceId}-text-clip-${x}-${y}`;
     const clipPath = (
@@ -31,6 +33,7 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSel
       <circle
         cx={x}
         cy={y}
+        transform={transform}
         r={radius}
         fill={getVariableColor(0, 0, false)}
         stroke="#000"
@@ -42,6 +45,7 @@ export const Ball = ({ x, y, radius, text, fontSize, handleAddDefs, handleSetSel
         style={{ cursor: "pointer" }}
         x={x}
         y={y}
+        transform={transform}
         fontSize={fontSize}
         textAnchor="middle"
         dy=".25em"

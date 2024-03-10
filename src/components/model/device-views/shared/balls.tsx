@@ -17,8 +17,7 @@ interface IBalls {
 interface IBallPosition {
   x: number;
   y: number;
-  targetX?: number|null;
-  targetY?: number|null;
+  transform?: string;
 }
 
 export const Balls = ({ballsArray, deviceId, isRunning, speed, handleAddDefs,
@@ -27,7 +26,7 @@ export const Balls = ({ballsArray, deviceId, isRunning, speed, handleAddDefs,
   const radius = ballsArray.length < 15 ? 14 : Math.max(14 - (10 * (ballsArray.length - 15)/200), 4);
 
   useEffect(() => {
-
+    if (!isRunning) {
       const w = kMixerContainerWidth - kCapHeight - (kBorder * 2);
       const maxHeight = kMixerContainerHeight * 0.75;
       const maxInRow = Math.floor(w / (radius * 2));
@@ -40,7 +39,40 @@ export const Balls = ({ballsArray, deviceId, isRunning, speed, handleAddDefs,
         const y = kContainerY + kMixerContainerHeight - kBorder - radius - (rowHeight * rowNumber);
         return {x, y};
       }));
-  }, [ballsArray, radius]);
+    } else {
+      let animationFrameId: number;
+
+      const positionBallsRandomly = () => {
+        const minX = kContainerX + kBorder + radius;
+        const maxY = kContainerY + kMixerContainerHeight - kBorder - radius;
+        const width = kMixerContainerWidth - kBorder - kCapHeight - (radius * 2);
+        const height = kMixerContainerWidth - kBorder - (radius * 2);
+        setBallPositions((prevState: IBallPosition[]) => {
+          return prevState.map((position, i) => {
+            const prevX = position.x;
+            const prevY = position.y;
+            const x = minX + Math.random() * width;
+            const y = maxY - Math.random() * height;
+            const dx = x - prevX;
+            const dy = y - prevY;
+            return {x, y, dx, dy, transform: `t${dx},${dy}`};
+          });
+        });
+
+        if (isRunning) {
+          animationFrameId = requestAnimationFrame(positionBallsRandomly);
+        }
+      };
+
+      animationFrameId = requestAnimationFrame(positionBallsRandomly);
+
+      return () => {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      };
+    }
+  }, [ballsArray, radius, isRunning, speed]);
 
   const getLabelForVariable = (ball: string | ICollectorItem) => {
     if (typeof ball === "object"){
@@ -61,13 +93,14 @@ export const Balls = ({ballsArray, deviceId, isRunning, speed, handleAddDefs,
   return (
     <>
       { ballPositions.map((position, i) => {
-        const {x, y} = position;
+        const {x, y, transform} = position;
         const text = getLabelForVariable(ballsArray[i]);
         return (
           <Ball
             key={`${deviceId}-ball-${text}-${i}`}
             x={x}
             y={y}
+            transform={transform ? transform : ""}
             i={i}
             radius={radius}
             deviceId={deviceId}
