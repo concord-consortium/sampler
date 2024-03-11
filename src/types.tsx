@@ -32,6 +32,24 @@ export const speedLabels: Record<Speed, string> = {
   [Speed.Fastest]: "Fastest"
 };
 
+export type DeviceAnimationStep = {
+  kind: "device",
+  id: Id
+};
+
+export type ArrowAnimationStep = {
+  kind: "arrow"
+};
+
+export type FinalAnimationStep = {
+  kind: "final"
+};
+
+export type AnimationStep = {
+  duration: number,
+  onComplete?: (() => Promise<void>) | (() => void),
+} & (DeviceAnimationStep | ArrowAnimationStep | FinalAnimationStep);
+
 export interface IGlobalState {
   model: IModel;
   selectedDeviceId: Id | undefined;
@@ -50,6 +68,14 @@ export interface IGlobalState {
   isPaused: boolean;
   speed: Speed;
 }
+
+export type ISampleResultsForAnimation = {
+  sampleNumber: number,
+  results: ISampleResults
+};
+export type IExperimentResultsForAnimation = ISampleResultsForAnimation[][];
+export type ISampleResults = {[key: string]: any};
+export type IExperimentResults = ISampleResults[];
 
 export interface ICollection {
   areParentChildLinksConfigured: boolean,
