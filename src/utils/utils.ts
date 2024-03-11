@@ -71,3 +71,47 @@ export function parseSpecifier(spec: string, rangeWord: string) {
   });
   return arr.length? arr : null;
 }
+
+export const formatFormula = (expression: string, columnName: string, replacements: string[]): string => {
+  // remove  quotes from the expression
+  let cleanedExpression = expression.replace(/"/g, '').replace(/'/g, '');
+
+  // the formulaEngine function from the CODAP API expects string values to be wrapped with single quotes
+  // for example, if the expression is "output = a", the formula passed to the API should be "output = 'a'"
+  const wrapVariables = (match: string) => {
+    return replacements.includes(match) ? match : `'${match}'`;
+  };
+
+  const variableAndOperatorPattern = /([a-zA-Z_]\w*)|([\+\-\*\/%<>=!]+)/g;
+
+  let formattedExpression = cleanedExpression.replace(variableAndOperatorPattern, (match, variable) => {
+    if (variable) {
+      return wrapVariables(variable);
+    } else {
+      return match;
+    }
+  });
+
+  const containsOperators = /[+\-*/%<>=!]/.test(formattedExpression);
+  if (containsOperators) {
+    const firstOperatorIndex = formattedExpression.search(/[\+\-\*\/%<>=!]/);
+    const leftHandSide = formattedExpression.slice(0, firstOperatorIndex).trim();
+    const lhsContainsReplacement = replacements.some(replacement => leftHandSide.includes(replacement));
+    // if no replacement is found on the left-hand side, prepend the columnName
+    if (!lhsContainsReplacement) {
+      formattedExpression = `${columnName} ${formattedExpression}`;
+    }
+  } else {
+    // if the expression does not contain operators, format it as columnName = formattedExpression
+    formattedExpression = `${columnName} = ${formattedExpression}`;
+  }
+
+  return formattedExpression;
+};
+
+export const extractVariablesFromFormula = (formula: string): string[] => {
+  const variablePattern = /[a-zA-Z_]\w*/g;
+  const variables = formula.match(variablePattern);
+  return variables ? Array.from(new Set(variables)) : [];
+};
+

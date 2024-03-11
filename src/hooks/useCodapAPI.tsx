@@ -1,7 +1,20 @@
 import { useGlobalStateContext } from "./useGlobalState";
 import { getRandomElement } from "../components/helpers";
-import { codapInterface, createChildCollection, createDataContext, createItems, createParentCollection, createTable, getDataContext } from "@concord-consortium/codap-plugin-api";
+import {
+  IResult,
+  codapInterface,
+  createChildCollection,
+  createDataContext,
+  createItems,
+  createNewAttribute,
+  createParentCollection,
+  createTable,
+  getAttributeList,
+  getDataContext
+} from "@concord-consortium/codap-plugin-api";
 import { AttrMap, IAttribute } from "../types";
+import { extractVariablesFromFormula, formatFormula } from "../utils/utils";
+import { getDeviceById } from "../models/model-model";
 
 export const kDataContextName = "Sampler";
 type TCODAPRequest = { action: string; resource: string; };
@@ -10,25 +23,94 @@ export const useCodapAPI = () => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { model, sampleSize, numSamples, replacement, createNewExperiment, attrMap } = globalState;
 
-  const getResults = (experimentNum: number): { [key: string]: string|number }[] => {
+  const evaluateResult = async (formula: string, value: Record<string, string>) => {
+    const tMsg = {
+      "action": "notify",
+      "resource": "formulaEngine",
+      "values": {
+        "request": "evalExpression",
+        "source": formula,
+        "records": [
+          value
+        ]
+      }
+    };
+    const formulaRes = await codapInterface.sendRequest(tMsg) as IResult;
+    if (formulaRes.success) {
+      return formulaRes.values[0]; // boolean
+    }
+    throw new Error("Formula evaluation failed");
+  };
+
+  const runExperiment = async () => {
+    let currentDevice = model.columns[0].devices[0];
+    let outputs: Record<string, any> = {};
+    let previousOutputs: Record<string, any> = {};
+
+    while (currentDevice) {
+      const selectedVariable = getRandomElement(currentDevice.variables);
+      let nextDeviceId: string | null = null;
+      const columnName = model.columns.find(column => column.devices.some(device => device.id === currentDevice.id))?.name || "";
+
+      for (const [deviceId, formula] of Object.entries(currentDevice.formulas)) {
+        if (formula === "*") {
+          nextDeviceId = deviceId;
+          break;
+        }
+
+        const neededVariables = extractVariablesFromFormula(formula);
+        const values = neededVariables.reduce((acc, variable) => {
+          if (variable in previousOutputs) {
+              acc[variable] = previousOutputs[variable];
+          }
+          return acc;
+        }, { [columnName]: selectedVariable });
+
+        const formattedFormula = formatFormula(formula, columnName, Object.keys(values));
+        const evaluationResult = await evaluateResult(formattedFormula, values);
+        if (evaluationResult) {
+          nextDeviceId = deviceId;
+          break;
+        }
+      }
+
+      if (columnName) {
+        outputs[columnName] = selectedVariable;
+        previousOutputs[columnName] = selectedVariable;
+      }
+
+      if (nextDeviceId) {
+        const nextDevice = getDeviceById(model, nextDeviceId);
+        if (!nextDevice) break;
+        currentDevice = nextDevice;
+      } else {
+        break;
+      }
+    }
+
+    return outputs;
+  };
+
+  const getResults = async (experimentNum: number, startingSampleNumber: number) => {
     const results: { [key: string]: string|number }[] = [];
-    for (let sampleIndex = 0; sampleIndex < Number(numSamples); sampleIndex++) {
-      for (let i = 0; i < Number(sampleSize); i++) {
+    const firstDevice = model.columns[0].devices[0];
+    const endSampleNumber = startingSampleNumber + Number(numSamples);
+    for (let sampleIndex = startingSampleNumber; sampleIndex < endSampleNumber; sampleIndex++) {
+      for (let i = 0; i <  Number(sampleSize); i++) {
         const sample: { [key: string]: string|number } = {};
-        model.columns.forEach(column => {
-          // to-do: pick a device based on the user formula if there is one defined
-          const device = column.devices.length > 1 ? getRandomElement(column.devices): column.devices[0];
-          const variable = getRandomElement(device.variables);
-          sample[column.name] = variable;
-          sample[attrMap.experiment.name] = experimentNum;
-          sample[attrMap.sample.name] = sampleIndex + 1;
-          const deviceStr = device.viewType.charAt(0).toUpperCase() + device.viewType.slice(1);
-          sample[attrMap.description.name] = `${deviceStr} containing ${numSamples} items${replacement ? " (with replacement)" : ""}`;
-          sample[attrMap.sample_size.name] = sampleSize && parseInt(sampleSize, 10);
+        sample[attrMap.experiment.name] = experimentNum;
+        sample[attrMap.sample.name] = sampleIndex;
+        const deviceStr = firstDevice.viewType.charAt(0).toUpperCase() + firstDevice.viewType.slice(1);
+        sample[attrMap.description.name] = `${deviceStr} containing ${numSamples} items${replacement ? " (with replacement)" : ""}`;
+        sample[attrMap.sample_size.name] = sampleSize && parseInt(sampleSize, 10);
+        const result = await runExperiment();
+        Object.keys(result).forEach(key => {
+          sample[key] = result[key];
         });
         results.push(sample);
       }
     }
+
     return results;
   };
 
@@ -76,24 +158,22 @@ export const useCodapAPI = () => {
   };
 
   const findOrCreateDataContext = async (attrs: Array<string>) => {
+    const collectionNames = getCollectionNames();
     const dataContextRes = await getDataContext(kDataContextName);
     if (dataContextRes.success) {
-      // get the attributes ids + map them to their appropriate attributes.
-      // We use the ids just in case the attribute names have been changed
-      const onlyIds: string[] = [];
-      Object.keys(attrMap).map((key) => {
-        const { codapID } = attrMap[key];
-        if (codapID) {
-          onlyIds.push(codapID);
-        }
-      });
-      if (onlyIds.length <= 0) {
-        await updateAttributeIds(attrs);
+      // ensure that if a user deleted a CODAP attr representing a device column, it is reinstated
+      const attrList = (await getAttributeList(kDataContextName, collectionNames.items)).values;
+      const attrNames = attrList.map((attr: {id: number, name: string, title: string}) => attr.name);
+      const missingAttrs = attrs.filter(attr => !attrNames.includes(attr));
+      if (missingAttrs.length > 0) {
+        missingAttrs.forEach(async (attr) => {
+          await createNewAttribute(kDataContextName, collectionNames.items, attr);
+        });
       }
+      await updateAttributeIds(attrs);
       return "success";
     } else {
       const createRes = await createDataContext(kDataContextName);
-      const collectionNames = getCollectionNames();
       const itemsAttrs: IAttribute[] = [];
       if (createRes.success) {
         setGlobalState((draft) => {
@@ -146,7 +226,8 @@ export const useCodapAPI = () => {
         ? model.experimentNum + 1
         : model.experimentNum
     : 1;
-    const results = getResults(experimentNum);
+    const startingSampleNumber = createNewExperiment ? 1 : model.mostRecentRunNumber + 1;
+    const results = await getResults(experimentNum, startingSampleNumber);
     const attrNames = model.columns.map(column => column.name);
     const ctxRes = await findOrCreateDataContext(attrNames);
     if (ctxRes === "success") {
@@ -154,6 +235,8 @@ export const useCodapAPI = () => {
       setGlobalState(draft => {
         draft.model.experimentNum = experimentNum;
         draft.enableRunButton = true;
+        draft.createNewExperiment = false;
+        draft.model.mostRecentRunNumber = model.mostRecentRunNumber + Number(numSamples);
       });
     }
   };

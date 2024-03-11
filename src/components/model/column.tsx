@@ -20,7 +20,7 @@ export const Column = ({column, columnIndex}: IProps) => {
 
   return (
     <div key={columnIndex} className={`device-column ${hasBranch ? "centered" : ""}`}>
-      {column.devices.map((device, index) => {
+      {column.devices.map((device) => {
         const sourceDevices = getSourceDevices(model, device);
         const firstDeviceInColumn = column.devices[0].id === device.id;
         return (
@@ -30,13 +30,14 @@ export const Column = ({column, columnIndex}: IProps) => {
             }
             <Device
               device={device}
-              deviceIndex={index}
+              columnIndex={columnIndex}
             />
-            {sourceDevices.map(sourceDevice => (
+            {sourceDevices.map((sourceDevice) => (
               <Arrow
                 key={`${sourceDevice.id}-${device.id}`}
                 source={sourceDevice}
                 target={device}
+                columnIndex={columnIndex - 1}
               />)
             )}
           </React.Fragment>

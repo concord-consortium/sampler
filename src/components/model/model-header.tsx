@@ -20,44 +20,54 @@ export const ModelHeader = (props: IModelHeader) => {
   const { handleStartRun, deleteAll } = useCodapAPI();
 
   const handleClearData = () => {
+    setGlobalState(draft => {
+      draft.model.mostRecentRunNumber = 0;
+      draft.createNewExperiment = true;
+    });
     deleteAll();
   };
 
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setGlobalState(draft => {
       draft.repeat = e.target.value === "repeat";
+      draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
   };
 
   const handleSampleSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGlobalState(draft => {
-      draft.sampleSize = e.target.value;
-      if (e.target.value !== null && Number(e.target.value)) {
+      if (draft.sampleSize !== e.target.value) {
+        draft.model.mostRecentRunNumber = 0;
         draft.createNewExperiment = true;
+      }
+      if (e.target.value !== null && Number(e.target.value)) {
         draft.enableRunButton = true;
       } else {
         draft.enableRunButton = false;
       }
+      draft.sampleSize = e.target.value;
     });
   };
 
   const handleSelectReplacement = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setGlobalState(draft => {
       draft.replacement = e.target.value === "with";
-      draft.createNewExperiment = true;
     });
   };
 
   const handleNumSamplesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGlobalState(draft => {
-      draft.numSamples = e.target.value;
-      if (e.target.value !== null && Number(e.target.value)) {
+      if (draft.numSamples !== e.target.value) {
+        draft.model.mostRecentRunNumber = 0;
         draft.createNewExperiment = true;
+      }
+      if (e.target.value !== null && Number(e.target.value)) {
         draft.enableRunButton = true;
       } else {
         draft.enableRunButton = false;
       }
+      draft.numSamples = e.target.value;
     });
   };
 

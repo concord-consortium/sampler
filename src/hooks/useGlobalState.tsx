@@ -5,7 +5,6 @@ import { addDataContextChangeListener, codapInterface, initializePlugin } from "
 import { createDefaultDevice } from "../models/device-model";
 import { kDataContextName, kInitialDimensions, kPluginName, kVersion } from "../contants";
 import { createId } from "../utils/id";
-import { IModel } from "../models/model-model";
 
 const defaultAttrMap: AttrMap = {
   experiment: {codapID: null, name: "experiment"},
@@ -14,17 +13,11 @@ const defaultAttrMap: AttrMap = {
   sample: {codapID: null, name: "sample"},
 };
 
-const defaultModel: IModel = {
-  columns: [
-    {name: "output", id: createId(), devices: [createDefaultDevice()]}
-  ],
-  experimentNum: 0
-};
-
 
 export const getDefaultState = (): IGlobalState => {
   return {
-    model: defaultModel,
+    model: {columns: [{name: "output", id: createId(), devices: [createDefaultDevice()]}],
+            experimentNum: 0, mostRecentRunNumber: 0, runNumberSentInCurrentSequence: 0},
     selectedTab: "Model",
     selectedDeviceId: undefined,
     repeat: false,
@@ -63,7 +56,9 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
             columns: [
               {name: "output", id: newColumnId, devices: [createDefaultDevice()]}
             ],
-            experimentNum: 0
+            experimentNum: 0,
+            mostRecentRunNumber: 0,
+            runNumberSentInCurrentSequence: 0
           };
           draft.attrMap[newColumnId] = {codapID: null, name: "output"};
         });

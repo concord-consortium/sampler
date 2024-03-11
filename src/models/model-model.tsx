@@ -9,7 +9,9 @@ export interface IColumn {
 
 export interface IModel {
   columns: IColumn[];
-  experimentNum?: number;
+  experimentNum: number;
+  mostRecentRunNumber: number;  // Gets reset between experiments, but if the parameters haven't changed we keep incrementing
+  runNumberSentInCurrentSequence: number; // This gets reset when user presses start regardless of whether params have changed
 }
 
 export interface IExperiment {

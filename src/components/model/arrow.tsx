@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { IDevice } from "../../models/device-model";
 import { useResizer } from "../../hooks/use-resizer";
 
 import "./arrow.scss";
+import { FormulaEditor } from "./formula-editor";
 
 interface IPoint {
   x: number
@@ -14,6 +15,7 @@ interface IProps {
   source: IDevice
   target: IDevice
   selectedDeviceId?: string
+  columnIndex: number
 }
 
 type Rect = Omit<DOMRect, "toJSON"> & {midY: number};
@@ -42,17 +44,13 @@ const getRect = (el: HTMLElement): Rect => {
   return {width, height, x, y, left: x, right: x + width, top: y, bottom: y + height, midY};
 };
 
-export const Arrow = ({source, target, selectedDeviceId}: IProps) => {
+export const Arrow = ({source, target, columnIndex, selectedDeviceId}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { model, modelIsRunning, numSamples } = globalState;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [drawCount, setDrawCount] = useState(0);
   const redraw = () => setDrawCount(prev => prev + 1);
 
-  const [editing, setEditing] = useState(false);
-  const [label, setLabel] = useState("*");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const labelRef = useRef<HTMLDivElement>(null);
   const animationLineRef = useRef<SVGLineElement>(null);
   const [showFinalMarker, setShowFinalMarker] = useState(false);
   const [runAnimation, setRunAnimation] = useState(false);
@@ -66,58 +64,9 @@ export const Arrow = ({source, target, selectedDeviceId}: IProps) => {
   // lets us leverage the browser flexbox layout.
   const sourceDiv = document.querySelector(`[data-device-id="${source.id}"]`) as HTMLDivElement|null;
   const targetDiv = document.querySelector(`[data-device-id="${target.id}"]`) as HTMLDivElement|null;
-  const labelDivWidth = labelRef.current?.getBoundingClientRect().width || 22;
   const markerId = `arrow_${source.id}_${target.id}`;
   let arrowLength = 0;
 
-  const resetLabelInput = useCallback(() => {
-    if (inputRef.current) {
-      inputRef.current.value = label;
-    }
-  }, [label]);
-
-  const handleToggleEditing = () => {
-    setEditing(prev => {
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }, 1);
-      return !prev;
-    });
-  };
-
-  const handleUpdateLabel = useCallback(() => {
-    const trimmedLabel = (inputRef.current?.value ?? "").trim();
-
-    if (trimmedLabel.length > 0) {
-      // TODO LATER: update source device in model with trimmedLabel
-      setLabel(trimmedLabel);
-      handleToggleEditing();
-    } else {
-      if (inputRef.current) {
-        inputRef.current.value = "*";
-        setLabel("*");
-      }
-    }
-  }, [setLabel]);
-
-  useEffect(() => {
-    const handleMouseUp = (e: MouseEvent) => {
-      // clicks outside the label ref commits the edit
-      let walker = e.target as HTMLElement|null;
-      while (walker !== null) {
-        if (walker === labelRef.current) {
-          return;
-        }
-        walker = walker.parentElement;
-      }
-      handleUpdateLabel();
-    };
-    if (editing) {
-      addEventListener("mouseup", handleMouseUp);
-      return () => removeEventListener("mouseup", handleMouseUp);
-    }
-  }, [editing, handleUpdateLabel]);
 
   // on the initial render the target div will not exist as it is sibling of this component so force a redraw
   useEffect(() => {
@@ -196,7 +145,6 @@ export const Arrow = ({source, target, selectedDeviceId}: IProps) => {
   let svgTop = Math.min(sourceMidPointY + kMaxLabelHeight, targetMidPointY + kMaxLabelHeight);
   let svgBottom = Math.max(sourceRect.midY, targetRect.midY);
   let svgHeight = svgBottom - svgTop;
-  const horizontalArrow = sourceRect.midY === targetRect.midY;
   const minSvgHeight = Math.max(kMarkerHeight, kMarkerWidth) * 4;
   if (svgHeight < minSvgHeight) {
     const halfHeightDiff = (minSvgHeight + svgHeight) / 2;
@@ -204,37 +152,17 @@ export const Arrow = ({source, target, selectedDeviceId}: IProps) => {
     svgTop -= halfHeightDiff;
     svgBottom += halfHeightDiff;
   }
-
   const svgLeft = -kWidthBetweenDevices;
   const svgWidth = targetRect.left - sourceRect.right;
   const start: IPoint = {x: 0, y: sourceRect.midY - svgTop};
   const end: IPoint = {x: svgWidth, y: targetRect.midY - svgTop};
   arrowLength = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+
   const arrowMidPoint = (end.y - start.y) / 2;
-  const labelTop = horizontalArrow ? 0 : arrowMidPoint < 0 ? arrowMidPoint - kMaxLabelHeight/2 : -arrowMidPoint - kMaxLabelHeight;
-  const labelLeft = (svgWidth / 2) - (labelDivWidth / 2);
+  const horizontalArrow = sourceRect.midY === targetRect.midY;
+
 
   const arrowContainerStyle: React.CSSProperties = {top: 0, left: svgLeft, width: svgWidth, height: svgHeight + kMarkerHeight};
-  const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft};
-
-  const handleSubmitEdit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleUpdateLabel();
-  };
-
-  const handleLabelKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    switch(e.code) {
-      case "Escape":
-        handleToggleEditing();
-        resetLabelInput();
-        break;
-      case "Enter":
-        handleToggleEditing();
-        handleUpdateLabel();
-        break;
-    }
-  };
 
   return (
     <div className="arrow-container" style={arrowContainerStyle}>
@@ -284,15 +212,14 @@ export const Arrow = ({source, target, selectedDeviceId}: IProps) => {
           strokeDashoffset={arrowLength}
         />
       </svg>
-      <div ref={labelRef} className="arrow-label" style={labelStyle}>
-        { editing
-          ? <form className="label-form" onSubmit={handleSubmitEdit}>
-              <input type="text" ref={inputRef} defaultValue={label} onKeyDown={handleLabelKeyDown}
-                  style={{height: kMaxLabelHeight}} />
-            </form>
-          : <div className="label-span" tabIndex={0} onKeyDown={handleToggleEditing} onClick={handleToggleEditing}>{label}</div>
-        }
-      </div>
+      <FormulaEditor
+        source={source}
+        target={target}
+        columnIndex={columnIndex}
+        arrowMidPoint={arrowMidPoint}
+        svgWidth={svgWidth}
+        horizontalArrow={horizontalArrow}
+      />
     </div>
   );
 };

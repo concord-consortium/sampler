@@ -1,12 +1,19 @@
 import { Id, createId } from "../utils/id";
 
-export type View = "mixer" | "spinner" | "collector";
+export enum ViewType {
+  Mixer = "mixer",
+  Spinner = "spinner",
+  Collector = "collector"
+}
+
+export type View = ViewType.Mixer | ViewType.Spinner | ViewType.Collector;
 
 export interface IDevice {
   id: Id;
   viewType: View;
   variables: IVariables;
   collectorVariables: ICollectorVariables;
+  formulas: Record<string, string>;
 }
 
 // a map of variables to their percentages
@@ -25,8 +32,6 @@ export interface ICollectorItem {
 // i.e., one ball for "Dog", one ball for "Cat"
 // if "Dog" is selected by the collector, the entire item is sent to CODAP
 export type ICollectorVariables = Array<ICollectorItem>;
-
-export const kDeviceTypes = ["mixer", "spinner", "collector"] as const;
 export interface IDataContext {
   guid: number;
   id: number;
@@ -75,4 +80,6 @@ export function findEquivNum(n: number, lcd: number) {
 }
 
 export const kDefaultVars: IVariables = ["a", "a", "b"];
-export const createDefaultDevice = (): IDevice => ({id: createId(), viewType: "mixer", variables: kDefaultVars, collectorVariables: []});
+export const createDefaultDevice = (): IDevice => {
+  return {id: createId(), viewType: ViewType.Mixer, variables: kDefaultVars, collectorVariables: [], formulas: {}};
+};
