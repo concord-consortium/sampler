@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { AnimationStep, ArrowAnimationStep, DeviceAnimationStep, FinalAnimationStep, IExperimentResults, IExperimentResultsForAnimation } from "../types";
+import { AnimationStep, ArrowAnimationStep, DeviceAnimationStep, FinalAnimationStep, IExperimentResults, IExperimentResultsForAnimation, Speed } from "../types";
 import { createItems } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../contants";
 
-export const createAnimationSteps = (animationResults: IExperimentResultsForAnimation, results: IExperimentResults, onComplete: () => void): Array<AnimationStep> => {
+export const createAnimationSteps = (animationResults: IExperimentResultsForAnimation, results: IExperimentResults, speed: Speed, onComplete: () => void): Array<AnimationStep> => {
+  const timeout = speed === Speed.Fastest ? 0 : 600 / speed + 1;
   const steps = animationResults.reduce<Array<AnimationStep>>((acc, sample) => {
     return sample.reduce<Array<AnimationStep>>((acc2, run, runIndex) => {
       return Object.keys(run.results).reduce((acc3, id, deviceIdx) => {
@@ -13,9 +14,9 @@ export const createAnimationSteps = (animationResults: IExperimentResultsForAnim
             const sampleResults = results.filter((result) => result.sample === run.sampleNumber);
             await createItems(kDataContextName, sampleResults);
           };
-          acc3.push({duration: 500, kind: "device", id, onComplete: onSampleComplete});
+          acc3.push({duration: timeout, kind: "device", id, onComplete: onSampleComplete});
         } else {
-          acc3.push({duration: 500, kind: "device", id});
+          acc3.push({duration: timeout, kind: "device", id});
         }
         return acc3;
       }, acc2);

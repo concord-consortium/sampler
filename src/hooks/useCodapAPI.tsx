@@ -5,13 +5,14 @@ import {
   codapInterface,
   createChildCollection,
   createDataContext,
+  createItems,
   createNewAttribute,
   createParentCollection,
   createTable,
   getAttributeList,
   getDataContext
 } from "@concord-consortium/codap-plugin-api";
-import { AttrMap, IAttribute, IExperimentResults, IExperimentResultsForAnimation, ISampleResults } from "../types";
+import { AttrMap, IAttribute, IExperimentResults, IExperimentResultsForAnimation, ISampleResults, Speed } from "../types";
 import { extractVariablesFromFormula, formatFormula } from "../utils/utils";
 import { getDeviceById } from "../models/model-model";
 import { createAnimationSteps, useAnimationContext } from "./useAnimation";
@@ -21,7 +22,7 @@ type TCODAPRequest = { action: string; resource: string; };
 
 export const useCodapAPI = () => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model, sampleSize, numSamples, replacement, createNewExperiment, attrMap } = globalState;
+  const { model, speed, sampleSize, numSamples, replacement, createNewExperiment, attrMap } = globalState;
   const { setAnimationSteps } = useAnimationContext();
 
   const evaluateResult = async (formula: string, value: Record<string, string>) => {
@@ -224,10 +225,6 @@ export const useCodapAPI = () => {
   };
 
   const handleStartRun = async () => {
-    setGlobalState(draft => {
-      draft.isRunning = true;
-    });
-
     const attrNames = model.columns.map(column => column.name);
     await findOrCreateDataContext(attrNames);
 
@@ -250,8 +247,16 @@ export const useCodapAPI = () => {
       });
     };
 
-    const animationSteps = createAnimationSteps(resultsForAnimation, results, onEndRun);
-    setAnimationSteps(animationSteps);
+    if (speed === Speed.Fastest) {
+      await createItems(kDataContextName, results);
+      onEndRun();
+    } else {
+      setGlobalState(draft => {
+        draft.isRunning = true;
+      });
+      const animationSteps = createAnimationSteps(resultsForAnimation, results, speed, onEndRun);
+      setAnimationSteps(animationSteps);
+    }
   };
 
   const deleteAll = () => {

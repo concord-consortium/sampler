@@ -1,9 +1,9 @@
 import React from "react";
-import { useGlobalStateContextValue } from "../../hooks/useGlobalState";
+import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { Speed, speedLabels } from "../../types";
 
 export const SpeedSlider = () => {
-  const { globalState, setGlobalState } = useGlobalStateContextValue();
+  const { globalState, setGlobalState } = useGlobalStateContext();
   const { speed } = globalState;
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
