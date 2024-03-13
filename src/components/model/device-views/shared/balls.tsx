@@ -3,6 +3,7 @@ import { kBorder, kCapHeight, kMixerContainerHeight, kMixerContainerWidth, kCont
 import { ClippingDef, ICollectorItem } from "../../../../models/device-model";
 import { Ball } from "./ball";
 import { useAnimationContext } from "../../../../hooks/useAnimation";
+import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
 
 interface IBalls {
   ballsArray: Array<string>;
@@ -15,25 +16,18 @@ interface IBalls {
 interface IBallPosition {
   x: number;
   y: number;
-  targetX?: number;
-  targetY?: number;
-  transform?: string;
+  vy: number;
+  vx: number;
+  transform: string;
+  visibility: "visible" | "hidden";
 }
 
 export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IBalls) => {
+  const { globalState: { speed } } = useGlobalStateContext();
   const { deviceAnimationStep } = useAnimationContext();
   const [ballPositions, setBallPositions] = useState<Array<IBallPosition>>([]);
-  const [selectedVariableIdx, setSelectedVariableIdx] = useState<number | undefined>(undefined);
   const radius = ballsArray.length < 15 ? 14 : Math.max(14 - (10 * (ballsArray.length - 15)/200), 4);
 
-  useEffect(() => {
-    if (deviceAnimationStep?.selectedVariable && deviceAnimationStep?.id === deviceId) {
-      const {selectedVariable} = deviceAnimationStep;
-      const matchingIndices: number[] = ballsArray.map((ball, index) => ball === selectedVariable ? index : -1).filter(index => index !== -1);
-      const randomIndex = Math.floor(Math.random() * matchingIndices.length);
-      setSelectedVariableIdx(matchingIndices[randomIndex]);
-    }
-  }, [deviceAnimationStep, ballsArray, deviceId]);
 
   useEffect(() => {
     if (deviceAnimationStep?.id !== deviceId) {
@@ -47,68 +41,126 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
         const rowIndex = i % maxInRow;
         const x = (rowNumber % 2 === 0) ? kContainerX + kBorder + radius + (rowIndex * radius * 2) : kContainerX + kMixerContainerWidth - kBorder - kCapHeight - radius - (rowIndex * radius * 2);
         const y = kContainerY + kMixerContainerHeight - kBorder - radius - (rowHeight * rowNumber);
-        return {x, y};
+        const randomSpeed = 5 + (Math.random() * 7);
+        const direction = Math.PI + (Math.random() * Math.PI);
+        const vx = Math.cos(direction) * randomSpeed;
+        const vy = Math.sin(direction) * randomSpeed;
+        return {x, y, vx, vy, transform: "", visibility: "visible"};
       }));
     } else {
+      const {selectedVariable} = deviceAnimationStep;
+      const matchingIndices: number[] = ballsArray.map((ball, index) => ball === selectedVariable ? index : -1).filter(index => index !== -1);
+      const randomIndex = Math.floor(Math.random() * matchingIndices.length);
+      const selectedVariableIdx = matchingIndices[randomIndex];
+
       let animationFrameId: number;
+      let stepOffset = 0;
+      let animationSpeed: number;
+      let timeoutId: number;
 
-      const positionBallsRandomly = () => {
-        const duration = deviceAnimationStep?.duration || 1000; // Default duration if not specified
-        const speed = (kMixerContainerWidth / duration) * 16.666; // Example calculation, assuming 60 FPS (1000ms/60frames = 16.666ms per frame)
-        const minX = kContainerX + kBorder + radius;
-        const maxY = kContainerY + kMixerContainerHeight - kBorder - radius;
-        const width = kMixerContainerWidth - kBorder - kCapHeight - (radius * 2);
-        const height = kMixerContainerHeight - kBorder - (radius * 2);
+      const animateMixer = () => {
+        if (deviceAnimationStep?.id === deviceId) {
+          stepOffset += 1;
+          const timeout = Math.min(Math.max(30, ballsArray.length * 1.5), 200);
+          animationSpeed = timeout / 30;
 
-        setBallPositions((prevState: IBallPosition[]) => {
-          return prevState.map((position, i) => {
-            if (selectedVariableIdx !== i) {
-              // Check if the ball has a target, otherwise assign a new one
-              if (position.targetX === undefined || position.targetY === undefined || (position.x === position.targetX && position.y === position.targetY)) {
-                position.targetX = minX + Math.random() * width;
-                position.targetY = maxY - Math.random() * height;
+          if (deviceAnimationStep?.id === deviceId) {
+            timeoutId = setTimeout(() => {
+              animationFrameId = requestAnimationFrame(animateMixer);
+            }, timeout);
+          }
+
+          if (deviceAnimationStep?.id === deviceId) {
+            if (ballsArray.length < 100) {
+              mixerAnimationStep();
+            } else if (ballsArray.length < 400) {
+              positionBallsRandomly();
+            } else {
+              fakeMixerAnimationStep();
+            }
+          }
+        }
+      };
+
+      const mixerAnimationStep = () => {
+        const animationSpeedBoost = Math.min((speed + 1) / animationSpeed, 4);
+
+        setBallPositions((prevState) => {
+          return prevState.map((position, index) => {
+            if (index !== selectedVariableIdx) {
+              // calculate velocity and next position
+              let { vx, vy, x, y } = position;
+              const dx = vx * animationSpeedBoost;
+              const dy = vy * animationSpeedBoost;
+              let newX = x + dx;
+              let newY = y + dy;
+
+              // check for wall collisions and adjust velocity
+              if (newX - radius < kContainerX + kBorder || newX + radius > kContainerX + kMixerContainerWidth - kCapHeight - kBorder) {
+                vx = -vx;
+                newX = x; // reset the position since collision occurred
+              }
+              if (newY - radius < kContainerY + kBorder || newY + radius > kContainerY + kMixerContainerHeight - kBorder) {
+                vy = -vy;
+                newY = y; // reset the position since collision occurred
               }
 
-              // Calculate the direction and distance to move this frame
-              const dx = position.targetX - position.x;
-              const dy = position.targetY - position.y;
-              const distance = Math.sqrt(dx * dx + dy * dy);
-
-              if (distance > speed) {
-                const ratio = speed / distance;
-                const moveX = dx * ratio;
-                const moveY = dy * ratio;
-                position.x += moveX;
-                position.y += moveY;
-              } else {
-                // Snap to the target position if very close, and assign a new target in the next frame
-                position.x = position.targetX;
-                position.y = position.targetY;
-                delete position.targetX;
-                delete position.targetY;
-              }
-
-              return { ...position };
+              const transform = `translate(${dx},${dy})`;
+              return { ...position, x: newX, y: newY, vx, vy, transform};
             } else {
               return position;
             }
           });
         });
-
-        if (deviceAnimationStep?.id === deviceId) {
-          animationFrameId = requestAnimationFrame(positionBallsRandomly);
-        }
       };
 
-      animationFrameId = requestAnimationFrame(positionBallsRandomly);
+      const positionBallsRandomly = () => {
+        const minX = kContainerX + kBorder + radius;
+        const maxY = kContainerY + kMixerContainerHeight - kBorder - radius;
+        const width = kMixerContainerWidth - kBorder - kCapHeight - (radius * 2);
+        const height = kMixerContainerWidth - kBorder - (radius * 2);
+        setBallPositions((prevState: IBallPosition[]) => {
+          return prevState.map((position, i) => {
+            const prevX = position.x;
+            const prevY = position.y;
+            const x = minX + Math.random() * width;
+            const y = maxY - Math.random() * height;
+            const dx = x - prevX;
+            const dy = y - prevY;
+            const randomSpeed = 5 + (Math.random() * 7);
+            const direction = Math.PI + (Math.random() * Math.PI);
+            const vx = Math.cos(direction) * randomSpeed;
+            const vy = Math.sin(direction) * randomSpeed;
+            return {x, y, vx, vy, transform: `t${dx},${dy}`, visibility: "visible"};
+          });
+        });
+      };
+
+      const fakeMixerAnimationStep = () => {
+        const numBalls = ballsArray.length;
+        const skipEveryNthBall = Math.max(75 - Math.floor(numBalls / 2), 2);
+        setBallPositions((prevState: IBallPosition[]) => {
+          return prevState.map((position, i) => {
+            const isVisible = i === selectedVariableIdx || (i + stepOffset + 1) % skipEveryNthBall === 0;
+            return { ...position, visibility: isVisible ? "visible" : "hidden" };
+          });
+        });
+      };
+
+      if (deviceAnimationStep?.id === deviceId) {
+        animationFrameId = requestAnimationFrame(animateMixer);
+      }
 
       return () => {
         if (animationFrameId) {
           cancelAnimationFrame(animationFrameId);
         }
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       };
     }
-  }, [ballsArray, radius, deviceAnimationStep, selectedVariableIdx, deviceId]);
+  }, [ballsArray, speed, deviceAnimationStep, deviceId, radius]);
 
   const getLabelForVariable = (ball: string | ICollectorItem) => {
     if (typeof ball === "object"){
@@ -118,6 +170,7 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
       return ball;
     }
   };
+
   const maxVariableLength = ballsArray.reduce(function(max, ball) {
     const length = getLabelForVariable(ball).toString().length;
     return Math.max(max, length);
@@ -129,7 +182,7 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
   return (
     <>
       { ballPositions.map((position, i) => {
-        const {x, y, transform} = position;
+        const {x, y, transform, visibility} = position;
         const text = getLabelForVariable(ballsArray[i]);
         return (
           <Ball
@@ -138,6 +191,7 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
             y={y}
             transform={transform ? transform : ""}
             i={i}
+            visibility={visibility}
             radius={radius}
             deviceId={deviceId}
             text={`${text}`}

@@ -14,7 +14,7 @@ export const Mixer = ({device, handleAddDefs, handleSetSelectedVariable, handleS
   const { variables, id: deviceId } = device;
   return (
     <>
-      <MixerFrame withReplacement={false}/>
+      <MixerFrame/>
       <Balls
         ballsArray={variables}
         deviceId={deviceId}

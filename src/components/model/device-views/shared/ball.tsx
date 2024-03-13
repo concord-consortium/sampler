@@ -14,10 +14,11 @@ export interface IBall {
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleSetEditingVarName: (variableIdx: number) => void;
   i: number;
+  visibility: "visible" | "hidden";
 }
 
 export const Ball = ({ x, y, transform, radius, text, fontSize,
-  handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i, deviceId }: IBall) => {
+  handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i, deviceId, visibility }: IBall) => {
   useEffect(() => {
     const id = `${deviceId}-text-clip-${x}-${y}`;
     const clipPath = (
@@ -39,6 +40,7 @@ export const Ball = ({ x, y, transform, radius, text, fontSize,
         stroke="#000"
         strokeWidth={1}
         origin={`${x} ${y}`}
+        visibility={visibility}
       />
       <text
         id={`${deviceId}-ball-label-${text}-${i}`}
@@ -53,6 +55,7 @@ export const Ball = ({ x, y, transform, radius, text, fontSize,
         origin={`${x} ${y}`}
         clipPath={`url(#${deviceId}-text-clip-${x}-${y})`}
         onClick={() => handleSetSelectedVariable(i)}
+        visibility={visibility}
       >
         {text}
       </text>

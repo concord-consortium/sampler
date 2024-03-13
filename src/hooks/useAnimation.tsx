@@ -2,9 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { AnimationStep, ArrowAnimationStep, DeviceAnimationStep, FinalAnimationStep, IExperimentResults, IExperimentResultsForAnimation, Speed } from "../types";
 import { createItems } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../contants";
+import { useGlobalStateContext } from "./useGlobalState";
 
 export const createAnimationSteps = (animationResults: IExperimentResultsForAnimation, results: IExperimentResults, speed: Speed, onComplete: () => void): Array<AnimationStep> => {
-  const timeout = speed === Speed.Fastest ? 0 : 600 / (speed + 1);
+  const timeout = speed === Speed.Fastest ? 0 : 1200 / (speed + 1);
   const steps = animationResults.reduce<Array<AnimationStep>>((acc, sample) => {
     return sample.reduce<Array<AnimationStep>>((acc2, run, runIndex) => {
       return Object.keys(run.results).reduce((acc3, id, deviceIdx) => {
@@ -38,6 +39,7 @@ export interface IAnimationContext {
 
 
 export const useAnimationContextValue = () : IAnimationContext => {
+  const {globalState: {speed}} = useGlobalStateContext();
   const [animationSteps, setAnimationSteps] = useState<AnimationStep[]>([]);
   const animationTimeoutRef = useRef<number>();
 
@@ -65,7 +67,7 @@ export const useAnimationContextValue = () : IAnimationContext => {
     // to-do: animate current step
     clearTimeout(animationTimeoutRef.current);
     animationTimeoutRef.current = setTimeout(animationTimeout, animationSteps[0].duration);
-  }, [animationSteps, animationTimeout]);
+  }, [animationSteps, animationTimeout, speed]);
 
   if (animationSteps.length === 0) {
     return {
