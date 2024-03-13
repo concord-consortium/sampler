@@ -34,7 +34,9 @@ export const speedLabels: Record<Speed, string> = {
 
 export type DeviceAnimationStep = {
   kind: "device",
-  id: Id
+  duration: number,
+  id: Id,
+  selectedVariable: string,
 };
 
 export type ArrowAnimationStep = {

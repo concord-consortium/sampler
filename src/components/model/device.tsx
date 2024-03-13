@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { ClippingDef, IDataContext, IDevice, IItem, IItems, IVariables, ViewType } from "../../models/device-model";
-import { Mixer } from "./device-views/mixer/mixer";
+import { Mixer } from "./device-views/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
 import { NameLabelInput } from "./name-label-input";
@@ -312,8 +312,6 @@ export const Device = (props: IProps) => {
                 viewType === ViewType.Mixer ?
                   <Mixer
                     device={device}
-                    isRunning={globalState.isRunning}
-                    speed={globalState.speed}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
                     handleSetEditingVarName={() => setIsEditingVarName(true)}
@@ -332,8 +330,6 @@ export const Device = (props: IProps) => {
                   /> :
                   <Collector
                     device={device}
-                    isRunning={globalState.isRunning}
-                    speed={globalState.speed}
                     handleAddDefs={handleAddDefs}
                     handleSetSelectedVariable={handleSetSelectedVariable}
                     handleSetEditingVarName={() => setIsEditingVarName(true)}

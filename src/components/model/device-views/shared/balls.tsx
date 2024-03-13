@@ -2,13 +2,11 @@ import React, { useEffect, useState } from "react";
 import { kBorder, kCapHeight, kMixerContainerHeight, kMixerContainerWidth, kContainerX, kContainerY } from "./constants";
 import { ClippingDef, ICollectorItem } from "../../../../models/device-model";
 import { Ball } from "./ball";
-import { Speed } from "../../../../types";
+import { useAnimationContext } from "../../../../hooks/useAnimation";
 
 interface IBalls {
   ballsArray: Array<string>;
   deviceId: string;
-  isRunning: boolean;
-  speed: Speed;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleSetEditingVarName:  (variableIdx: number) => void;
@@ -17,16 +15,28 @@ interface IBalls {
 interface IBallPosition {
   x: number;
   y: number;
+  targetX?: number;
+  targetY?: number;
   transform?: string;
 }
 
-export const Balls = ({ballsArray, deviceId, isRunning, speed, handleAddDefs,
-  handleSetSelectedVariable, handleSetEditingVarName}: IBalls) => {
+export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IBalls) => {
+  const { deviceAnimationStep } = useAnimationContext();
   const [ballPositions, setBallPositions] = useState<Array<IBallPosition>>([]);
+  const [selectedVariableIdx, setSelectedVariableIdx] = useState<number | undefined>(undefined);
   const radius = ballsArray.length < 15 ? 14 : Math.max(14 - (10 * (ballsArray.length - 15)/200), 4);
 
   useEffect(() => {
-    if (!isRunning) {
+    if (deviceAnimationStep?.selectedVariable && deviceAnimationStep?.id === deviceId) {
+      const {selectedVariable} = deviceAnimationStep;
+      const matchingIndices: number[] = ballsArray.map((ball, index) => ball === selectedVariable ? index : -1).filter(index => index !== -1);
+      const randomIndex = Math.floor(Math.random() * matchingIndices.length);
+      setSelectedVariableIdx(matchingIndices[randomIndex]);
+    }
+  }, [deviceAnimationStep, ballsArray, deviceId]);
+
+  useEffect(() => {
+    if (deviceAnimationStep?.id !== deviceId) {
       const w = kMixerContainerWidth - kCapHeight - (kBorder * 2);
       const maxHeight = kMixerContainerHeight * 0.75;
       const maxInRow = Math.floor(w / (radius * 2));
@@ -43,23 +53,49 @@ export const Balls = ({ballsArray, deviceId, isRunning, speed, handleAddDefs,
       let animationFrameId: number;
 
       const positionBallsRandomly = () => {
+        const duration = deviceAnimationStep?.duration || 1000; // Default duration if not specified
+        const speed = (kMixerContainerWidth / duration) * 16.666; // Example calculation, assuming 60 FPS (1000ms/60frames = 16.666ms per frame)
         const minX = kContainerX + kBorder + radius;
         const maxY = kContainerY + kMixerContainerHeight - kBorder - radius;
         const width = kMixerContainerWidth - kBorder - kCapHeight - (radius * 2);
-        const height = kMixerContainerWidth - kBorder - (radius * 2);
+        const height = kMixerContainerHeight - kBorder - (radius * 2);
+
         setBallPositions((prevState: IBallPosition[]) => {
           return prevState.map((position, i) => {
-            const prevX = position.x;
-            const prevY = position.y;
-            const x = minX + Math.random() * width;
-            const y = maxY - Math.random() * height;
-            const dx = x - prevX;
-            const dy = y - prevY;
-            return {x, y, dx, dy, transform: `t${dx},${dy}`};
+            if (selectedVariableIdx !== i) {
+              // Check if the ball has a target, otherwise assign a new one
+              if (position.targetX === undefined || position.targetY === undefined || (position.x === position.targetX && position.y === position.targetY)) {
+                position.targetX = minX + Math.random() * width;
+                position.targetY = maxY - Math.random() * height;
+              }
+
+              // Calculate the direction and distance to move this frame
+              const dx = position.targetX - position.x;
+              const dy = position.targetY - position.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+
+              if (distance > speed) {
+                const ratio = speed / distance;
+                const moveX = dx * ratio;
+                const moveY = dy * ratio;
+                position.x += moveX;
+                position.y += moveY;
+              } else {
+                // Snap to the target position if very close, and assign a new target in the next frame
+                position.x = position.targetX;
+                position.y = position.targetY;
+                delete position.targetX;
+                delete position.targetY;
+              }
+
+              return { ...position };
+            } else {
+              return position;
+            }
           });
         });
 
-        if (isRunning) {
+        if (deviceAnimationStep?.id === deviceId) {
           animationFrameId = requestAnimationFrame(positionBallsRandomly);
         }
       };
@@ -72,7 +108,7 @@ export const Balls = ({ballsArray, deviceId, isRunning, speed, handleAddDefs,
         }
       };
     }
-  }, [ballsArray, radius, isRunning, speed]);
+  }, [ballsArray, radius, deviceAnimationStep, selectedVariableIdx, deviceId]);
 
   const getLabelForVariable = (ball: string | ICollectorItem) => {
     if (typeof ball === "object"){

@@ -4,20 +4,23 @@ import { createItems } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../contants";
 
 export const createAnimationSteps = (animationResults: IExperimentResultsForAnimation, results: IExperimentResults, speed: Speed, onComplete: () => void): Array<AnimationStep> => {
-  const timeout = speed === Speed.Fastest ? 0 : 600 / speed + 1;
+  const timeout = speed === Speed.Fastest ? 0 : 600 / (speed + 1);
   const steps = animationResults.reduce<Array<AnimationStep>>((acc, sample) => {
     return sample.reduce<Array<AnimationStep>>((acc2, run, runIndex) => {
       return Object.keys(run.results).reduce((acc3, id, deviceIdx) => {
         const isLastStepInSampleRun = runIndex === sample.length - 1 && deviceIdx === Object.keys(run.results).length - 1;
+        const selectedVariable = run.results[id];
+        const deviceAnimationStep: AnimationStep = {duration: timeout, kind: "device", selectedVariable, id};
+
         if (isLastStepInSampleRun) {
           const onSampleComplete = async () => {
             const sampleResults = results.filter((result) => result.sample === run.sampleNumber);
             await createItems(kDataContextName, sampleResults);
           };
-          acc3.push({duration: timeout, kind: "device", id, onComplete: onSampleComplete});
-        } else {
-          acc3.push({duration: timeout, kind: "device", id});
+          deviceAnimationStep.onComplete = onSampleComplete;
         }
+
+        acc3.push(deviceAnimationStep);
         return acc3;
       }, acc2);
     }, acc);
