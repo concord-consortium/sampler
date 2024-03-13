@@ -34,7 +34,6 @@ export const speedLabels: Record<Speed, string> = {
 
 export type DeviceAnimationStep = {
   kind: "device",
-  duration: number,
   id: Id,
   selectedVariable: string,
 };
@@ -48,7 +47,6 @@ export type FinalAnimationStep = {
 };
 
 export type AnimationStep = {
-  duration: number,
   onComplete?: (() => Promise<void>) | (() => void),
 } & (DeviceAnimationStep | ArrowAnimationStep | FinalAnimationStep);
 

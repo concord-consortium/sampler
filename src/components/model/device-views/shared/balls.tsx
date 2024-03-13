@@ -28,7 +28,6 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
   const [ballPositions, setBallPositions] = useState<Array<IBallPosition>>([]);
   const radius = ballsArray.length < 15 ? 14 : Math.max(14 - (10 * (ballsArray.length - 15)/200), 4);
 
-
   useEffect(() => {
     if (deviceAnimationStep?.id !== deviceId) {
       const w = kMixerContainerWidth - kCapHeight - (kBorder * 2);
@@ -89,24 +88,25 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
           return prevState.map((position, index) => {
             if (index !== selectedVariableIdx) {
               // calculate velocity and next position
-              let { vx, vy, x, y } = position;
+              const { vx, vy, x, y } = position;
               const dx = vx * animationSpeedBoost;
               const dy = vy * animationSpeedBoost;
               let newX = x + dx;
               let newY = y + dy;
-
+              let newVx = vx;
+              let newVy = vy;
               // check for wall collisions and adjust velocity
               if (newX - radius < kContainerX + kBorder || newX + radius > kContainerX + kMixerContainerWidth - kCapHeight - kBorder) {
-                vx = -vx;
+                newVx = -vx;
                 newX = x; // reset the position since collision occurred
               }
               if (newY - radius < kContainerY + kBorder || newY + radius > kContainerY + kMixerContainerHeight - kBorder) {
-                vy = -vy;
+                newVy = -vy;
                 newY = y; // reset the position since collision occurred
               }
 
               const transform = `translate(${dx},${dy})`;
-              return { ...position, x: newX, y: newY, vx, vy, transform};
+              return { ...position, x: newX, y: newY, vx: newVx, vy: newVy, transform};
             } else {
               return position;
             }

@@ -5,13 +5,12 @@ import { kDataContextName } from "../contants";
 import { useGlobalStateContext } from "./useGlobalState";
 
 export const createAnimationSteps = (animationResults: IExperimentResultsForAnimation, results: IExperimentResults, speed: Speed, onComplete: () => void): Array<AnimationStep> => {
-  const timeout = speed === Speed.Fastest ? 0 : 1200 / (speed + 1);
   const steps = animationResults.reduce<Array<AnimationStep>>((acc, sample) => {
     return sample.reduce<Array<AnimationStep>>((acc2, run, runIndex) => {
       return Object.keys(run.results).reduce((acc3, id, deviceIdx) => {
         const isLastStepInSampleRun = runIndex === sample.length - 1 && deviceIdx === Object.keys(run.results).length - 1;
         const selectedVariable = run.results[id];
-        const deviceAnimationStep: AnimationStep = {duration: timeout, kind: "device", selectedVariable, id};
+        const deviceAnimationStep: AnimationStep = {kind: "device", selectedVariable, id};
 
         if (isLastStepInSampleRun) {
           const onSampleComplete = async () => {
@@ -26,7 +25,7 @@ export const createAnimationSteps = (animationResults: IExperimentResultsForAnim
       }, acc2);
     }, acc);
   }, []);
-  steps.push({duration: 1000, kind: "final", onComplete});
+  steps.push({kind: "final", onComplete});
   return steps;
 };
 
@@ -63,10 +62,9 @@ export const useAnimationContextValue = () : IAnimationContext => {
     if (animationSteps.length === 0) {
       return;
     }
-
-    // to-do: animate current step
+    const timeout = speed === Speed.Fastest ? 0 : 1200 / (speed + 1);
     clearTimeout(animationTimeoutRef.current);
-    animationTimeoutRef.current = setTimeout(animationTimeout, animationSteps[0].duration);
+    animationTimeoutRef.current = setTimeout(animationTimeout, timeout);
   }, [animationSteps, animationTimeout, speed]);
 
   if (animationSteps.length === 0) {
