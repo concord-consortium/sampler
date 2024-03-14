@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { kBorder, kCapHeight, kMixerContainerHeight, kMixerContainerWidth, kContainerX, kContainerY } from "./constants";
 import { ClippingDef, ICollectorItem } from "../../../../models/device-model";
 import { Ball } from "./ball";
@@ -26,16 +26,16 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
   const { globalState: { speed } } = useGlobalStateContext();
   const { deviceAnimationStep } = useAnimationContext();
   const [ballPositions, setBallPositions] = useState<Array<IBallPosition>>([]);
+  const [startTime, setStartTime] = useState<number>(0);
   const radius = ballsArray.length < 15 ? 14 : Math.max(14 - (10 * (ballsArray.length - 15)/200), 4);
 
-  useEffect(() => {
-    if (deviceAnimationStep?.id !== deviceId) {
-      const w = kMixerContainerWidth - kCapHeight - (kBorder * 2);
+  const getStaticPositions = useCallback(() : IBallPosition[] => {
+    const w = kMixerContainerWidth - kCapHeight - (kBorder * 2);
       const maxHeight = kMixerContainerHeight * 0.75;
       const maxInRow = Math.floor(w / (radius * 2));
       const numRows = Math.ceil(ballsArray.length / maxInRow);
       const rowHeight = Math.min(radius * 2, maxHeight / numRows);
-      setBallPositions(ballsArray.map((ball, i) => {
+      return ballsArray.map((ball, i) => {
         const rowNumber = Math.floor(i / maxInRow);
         const rowIndex = i % maxInRow;
         const x = (rowNumber % 2 === 0) ? kContainerX + kBorder + radius + (rowIndex * radius * 2) : kContainerX + kMixerContainerWidth - kBorder - kCapHeight - radius - (rowIndex * radius * 2);
@@ -45,24 +45,38 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
         const vx = Math.cos(direction) * randomSpeed;
         const vy = Math.sin(direction) * randomSpeed;
         return {x, y, vx, vy, transform: "", visibility: "visible"};
-      }));
+      });
+  }, [ballsArray, radius]);
+
+
+  useEffect(() => {
+    if (deviceAnimationStep?.id !== deviceId) {
+      const defaultPositions = getStaticPositions();
+      setBallPositions(defaultPositions);
     } else {
+      setStartTime(Date.now());
       const {selectedVariable} = deviceAnimationStep;
       const matchingIndices: number[] = ballsArray.map((ball, index) => ball === selectedVariable ? index : -1).filter(index => index !== -1);
       const randomIndex = Math.floor(Math.random() * matchingIndices.length);
       const selectedVariableIdx = matchingIndices[randomIndex];
 
+      const timeFrame = 1200 / (speed + 1);
+      const timeout = Math.min(Math.max(30, ballsArray.length * 1.5), 200);
+      const animationSpeed = timeout / 30;
+      const skipEveryNthBall = Math.max(75 - Math.floor(ballsArray.length / 2), 2);
+
+      let reachedTarget = false;
       let animationFrameId: number;
       let stepOffset = 0;
-      let animationSpeed: number;
       let timeoutId: number;
+      let scrambledInitialSetup = false;
+      let skipOffset = stepOffset % ballsArray.length;
+
 
       const animateMixer = () => {
+        const timeElapsed = Date.now() - startTime;
         if (deviceAnimationStep?.id === deviceId) {
           stepOffset += 1;
-          const timeout = Math.min(Math.max(30, ballsArray.length * 1.5), 200);
-          animationSpeed = timeout / 30;
-
           if (deviceAnimationStep?.id === deviceId) {
             timeoutId = setTimeout(() => {
               animationFrameId = requestAnimationFrame(animateMixer);
@@ -70,8 +84,10 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
           }
 
           if (deviceAnimationStep?.id === deviceId) {
-            if (ballsArray.length < 100) {
-              mixerAnimationStep();
+            if (reachedTarget) {
+              moveBackToInitialPositions(timeElapsed);
+            } else if (ballsArray.length < 100) {
+              mixerAnimationStep(timeElapsed);
             } else if (ballsArray.length < 400) {
               positionBallsRandomly();
             } else {
@@ -81,12 +97,47 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
         }
       };
 
-      const mixerAnimationStep = () => {
+      const moveBackToInitialPositions = (timeElapsed: number) => {
+        const defaultPositions = getStaticPositions();
+        setBallPositions((prevState) => {
+          return prevState.map((position, i) => {
+            const {x, y} = position;
+            const targetX = defaultPositions[i].x;
+            const targetY = defaultPositions[i].y;
+
+            const angleToTarget = Math.atan2(targetY - y, targetX - x);
+            const distanceToTarget = Math.hypot(targetX - x, targetY - y);
+
+            const timeRemaining = timeFrame - timeElapsed;
+            const framesRemaining = timeRemaining / timeout;
+            const speedToTarget = distanceToTarget / framesRemaining;
+
+            const dx = Math.cos(angleToTarget) * speedToTarget;
+            const dy = Math.sin(angleToTarget) * speedToTarget;
+            const newX = x + dx;
+            const newY = y + dy;
+
+            const remainingDistanceAfterMove = Math.hypot(targetX - newX, targetY - newY);
+
+            if (remainingDistanceAfterMove < speedToTarget) {
+              return { ...position, x: targetX, y: targetY, transform: "" };
+            } else {
+              const transform = `translate(${dx},${dy})`;
+              return { ...position, x: newX, y: newY, transform };
+            }
+          });
+        });
+      };
+
+      const mixerAnimationStep = (timeElapsed: number) => {
         const animationSpeedBoost = Math.min((speed + 1) / animationSpeed, 4);
+        const randomMovementDuration = timeFrame * 0.5;
+        const threeQuartersPoint = timeFrame * 0.75;
 
         setBallPositions((prevState) => {
           return prevState.map((position, index) => {
-            if (index !== selectedVariableIdx) {
+            if (scrambledInitialSetup && (index + skipOffset + 1) % skipEveryNthBall === 0) return position;
+            if (index !== selectedVariableIdx || timeElapsed < randomMovementDuration) {
               // calculate velocity and next position
               const { vx, vy, x, y } = position;
               const dx = vx * animationSpeedBoost;
@@ -108,7 +159,30 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
               const transform = `translate(${dx},${dy})`;
               return { ...position, x: newX, y: newY, vx: newVx, vy: newVy, transform};
             } else {
-              return position;
+              const { x,y } = position;
+              const targetX = kContainerX + kMixerContainerWidth / 2;
+              const targetY = kContainerY + radius;
+              const angleToTarget = Math.atan2(targetY - y, targetX - x);
+              const distanceToTarget = Math.hypot(targetX - x, targetY - y);
+
+              const timeRemaining = threeQuartersPoint - timeElapsed;
+              const framesRemaining = timeRemaining / timeout;
+              const speedToTarget = distanceToTarget / framesRemaining;
+
+              const dx = Math.cos(angleToTarget) * speedToTarget;
+              const dy = Math.sin(angleToTarget) * speedToTarget;
+              const newX = x + dx;
+              const newY = y + dy;
+
+              const remainingDistanceAfterMove = Math.hypot(targetX - newX, targetY - newY);
+
+              if (remainingDistanceAfterMove <= speedToTarget) {
+                reachedTarget = true;
+                return { ...position, x: targetX, y: targetY, transform: "" };
+              } else {
+                const transform = `translate(${dx},${dy})`;
+                return { ...position, x: newX, y: newY, transform };
+              }
             }
           });
         });
@@ -137,8 +211,6 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
       };
 
       const fakeMixerAnimationStep = () => {
-        const numBalls = ballsArray.length;
-        const skipEveryNthBall = Math.max(75 - Math.floor(numBalls / 2), 2);
         setBallPositions((prevState: IBallPosition[]) => {
           return prevState.map((position, i) => {
             const isVisible = i === selectedVariableIdx || (i + stepOffset + 1) % skipEveryNthBall === 0;
@@ -160,7 +232,7 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
         }
       };
     }
-  }, [ballsArray, speed, deviceAnimationStep, deviceId, radius]);
+  }, [ballsArray, speed, deviceAnimationStep, deviceId, radius, startTime, getStaticPositions]);
 
   const getLabelForVariable = (ball: string | ICollectorItem) => {
     if (typeof ball === "object"){
