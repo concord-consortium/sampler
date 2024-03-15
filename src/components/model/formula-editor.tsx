@@ -14,7 +14,7 @@ interface IProps {
 const kMaxLabelHeight = 22;
 
 export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWidth, horizontalArrow}: IProps) => {
-  const {setGlobalState} = useGlobalStateContext();
+  const {globalState: { isRunning }, setGlobalState} = useGlobalStateContext();
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(source.formulas[target.id]);
   const labelRef = useRef<HTMLDivElement>(null);
@@ -28,7 +28,7 @@ export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWi
   }, [label]);
 
   const handleToggleEditing = () => {
-    setEditing(prev => {
+    setEditing((prev) => {
       setTimeout(() => {
         inputRef.current?.focus();
         inputRef.current?.select();
@@ -100,10 +100,17 @@ export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWi
     <div ref={labelRef} className="arrow-label" style={labelStyle}>
       { editing
         ? <form className="label-form" onSubmit={handleSubmitEdit}>
-            <input type="text" ref={inputRef} defaultValue={label} onKeyDown={handleLabelKeyDown}
+            <input disabled={isRunning} type="text" ref={inputRef} defaultValue={label} onKeyDown={handleLabelKeyDown}
                 style={{height: kMaxLabelHeight}} />
           </form>
-        : <div className={`label-span ${source.id}`} tabIndex={0} onKeyDown={handleToggleEditing} onClick={handleToggleEditing}>{label}</div>
+        : <div
+            className={`label-span ${source.id} ${isRunning ? "disabled" : ""}`}
+            tabIndex={0}
+            onKeyDown={handleToggleEditing}
+            onClick={isRunning ? undefined : handleToggleEditing}
+          >
+            {label}
+          </div>
       }
     </div>
   );

@@ -226,6 +226,10 @@ export const useCodapAPI = () => {
 
   const handleStartRun = async () => {
     const attrNames = model.columns.map(column => column.name);
+    setGlobalState(draft => {
+      draft.isRunning = true;
+      draft.enableRunButton = false;
+    });
     await findOrCreateDataContext(attrNames);
 
     const experimentNum = model.experimentNum

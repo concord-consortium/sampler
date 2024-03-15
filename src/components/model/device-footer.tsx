@@ -21,7 +21,7 @@ interface IDeviceFooter {
 
 export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, dataContexts}: IDeviceFooter) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model, selectedDeviceId } = globalState;
+  const { model, selectedDeviceId, isRunning } = globalState;
   const { viewType } = device;
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
@@ -115,9 +115,9 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
     <div className="footer">
       { viewType !== ViewType.Collector &&
         <div className="add-remove-variables-buttons">
-          <button onClick={handleAddVariable}>+</button>
-          <button onClick={(e) => handleDeleteVariable(e)}>-</button>
-          <button onClick={handleSpecifyVariables}>...</button>
+          <button disabled={isRunning} onClick={handleAddVariable}>+</button>
+          <button disabled={isRunning} onClick={(e) => handleDeleteVariable(e)}>-</button>
+          <button disabled={isRunning} onClick={handleSpecifyVariables}>...</button>
         </div>
       }
       <div className="device-buttons">
@@ -128,6 +128,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
               return (
                 <button
                   className={viewType === deviceType ? "selected" : ""}
+                  disabled={isRunning}
                   onClick={() => handleUpdateViewType(deviceType)}
                   key={deviceType}>
                     {deviceType}
@@ -140,7 +141,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
       <div className="device-buttons">
         {
           viewType === ViewType.Collector ?
-            <select onChange={handleSelectDataContext}>
+            <select disabled={isRunning} onChange={handleSelectDataContext}>
               <option value="">Select a data context</option>
               {
                 dataContexts.map((context) => {
@@ -150,8 +151,8 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
             </select>
             :
             <>
-              <button onClick={handleAddDevice}>{addButtonLabel}</button>
-              {showMergeButton && <button onClick={handleMergeDevices}>Merge</button>}
+              <button disabled={isRunning} onClick={handleAddDevice}>{addButtonLabel}</button>
+              {showMergeButton && <button disabled={isRunning} onClick={handleMergeDevices}>Merge</button>}
             </>
         }
       </div>

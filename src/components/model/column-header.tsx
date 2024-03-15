@@ -12,7 +12,7 @@ interface IProps {
 
 export const ColumnHeader = ({column, columnIndex}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model } = globalState;
+  const { model, isRunning } = globalState;
   const [columnName, setColumnName] = useState(column.name);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -63,6 +63,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
     <div className="device-column-header">
       <input
         ref={inputRef}
+        disabled={isRunning}
         className="attr-name"
         value={columnName}
         onChange={(e) => setColumnName(e.target.value)}

@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { getTextShift, getVariableColor } from "./helpers";
 import { ClippingDef } from "../../../../models/device-model";
+import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
 
 export interface IBall {
   x: number;
@@ -19,6 +20,8 @@ export interface IBall {
 
 export const Ball = ({ x, y, transform, radius, text, fontSize,
   handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i, deviceId, visibility }: IBall) => {
+  const { globalState: { isRunning } } = useGlobalStateContext();
+
   useEffect(() => {
     const id = `${deviceId}-text-clip-${x}-${y}`;
     const clipPath = (
@@ -29,8 +32,18 @@ export const Ball = ({ x, y, transform, radius, text, fontSize,
     handleAddDefs({ id, element: clipPath });
   }, [x, y, radius, text, handleAddDefs, deviceId]);
 
+  const handleGroupClick = () => {
+    if (isRunning) return;
+    handleSetEditingVarName(i);
+  };
+
+  const handleTextClick = () => {
+    if (isRunning) return;
+    handleSetSelectedVariable(i);
+  };
+
   return (
-    <g onClick={() => handleSetEditingVarName(i)}>
+    <g onClick={handleGroupClick}>
       <circle
         cx={x}
         cy={y}
@@ -44,7 +57,7 @@ export const Ball = ({ x, y, transform, radius, text, fontSize,
       />
       <text
         id={`${deviceId}-ball-label-${text}-${i}`}
-        style={{ cursor: "pointer" }}
+        style={{ cursor: isRunning ? "default"  : "pointer" }}
         x={x}
         y={y}
         transform={transform}
@@ -54,7 +67,7 @@ export const Ball = ({ x, y, transform, radius, text, fontSize,
         dx={getTextShift(text, (3.8*(radius/fontSize)))}
         origin={`${x} ${y}`}
         clipPath={`url(#${deviceId}-text-clip-${x}-${y})`}
-        onClick={() => handleSetSelectedVariable(i)}
+        onClick={handleTextClick}
         visibility={visibility}
       >
         {text}
