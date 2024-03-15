@@ -16,7 +16,6 @@ import { SetVariableSeriesModal } from "./variable-setting-modal";
 import DeleteIcon from "../../assets/delete-icon.svg";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { parseSpecifier } from "../../utils/utils";
-import { useAnimationContext } from "../../hooks/useAnimation";
 
 import "./device.scss";
 
@@ -42,17 +41,6 @@ export const Device = (props: IProps) => {
   const { viewType, variables } = device;
   const svgRef = useRef<SVGSVGElement>(null);
   const multipleColumns = model.columns.length > 1;
-  const [backgroundColor, setBackgroundColor] = useState<string>("");
-  const { deviceAnimationStep } = useAnimationContext();
-
-  useEffect(() => {
-    if (device.id === deviceAnimationStep?.id) {
-      setBackgroundColor("red");
-    } else {
-      setBackgroundColor("");
-    }
-
-  }, [deviceAnimationStep, device.id]);
 
   useEffect(() => {
     const fetchDataContexts = async () => {
@@ -294,7 +282,7 @@ export const Device = (props: IProps) => {
           {isSelectedDevice && <VisibleIcon />}
         </div>
         <div className="device-svg-container">
-          <div className={`device-frame ${viewType}`} style={{backgroundColor}}>
+          <div className={`device-frame ${viewType}`}>
             <svg
               className="svg"
               ref={svgRef}
