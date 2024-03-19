@@ -16,7 +16,8 @@ const defaultAttrMap: AttrMap = {
 
 export const getDefaultState = (): IGlobalState => {
   return {
-    model: {columns: [], experimentNum: 0, mostRecentRunNumber: 0, runNumberSentInCurrentSequence: 0},
+    model: {columns: [{name: "output", id: createId(), devices: [createDefaultDevice()]}],
+            experimentNum: 0, mostRecentRunNumber: 0, runNumberSentInCurrentSequence: 0},
     selectedTab: "Model",
     selectedDeviceId: undefined,
     repeat: false,
