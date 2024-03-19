@@ -24,7 +24,7 @@ export const Collector = ({device, handleAddDefs, handleSetSelectedVariable, han
 
   return (
     <>
-      <MixerFrame withReplacement={false}/>
+      <MixerFrame/>
       { ballsArray.length &&
         <Balls
           ballsArray={ballsArray}

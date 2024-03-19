@@ -36,6 +36,9 @@
       background-color: white;
       border-radius: 1.5px;
       border: solid 1px #8f8f9d;
+      &.disabled {
+        cursor: default;
+      }
     }
   }
 }

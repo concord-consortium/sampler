@@ -5,7 +5,7 @@
   font-size: 11px;
 
   button {
-    &:hover:not(.disabled) {
+    &:hover:not(:disabled):not(.disabled) {
       cursor: pointer;
     }
   }

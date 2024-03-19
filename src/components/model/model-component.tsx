@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
+import { AnimationContext, useAnimationContextValue } from "../../hooks/useAnimation";
 import { useResizer } from "../../hooks/use-resizer";
 import { Column } from "./column";
 import { ModelHeader } from "./model-header";
@@ -30,32 +31,36 @@ export const ModelTab = () => {
   };
 
   const modelHeaderStyle = {width: (model.columns.length * kMinColumnWidth) + kSelectedSamplesDivWidth};
+  const animationContext = useAnimationContextValue();
 
   return (
-    <div className="model-tab">
-      <ModelHeader
-        modelHeaderStyle={modelHeaderStyle}
-        showHelp={showHelp}
-        setShowHelp={setShowHelp}
-        isWide={isWide}
-        handleOpenHelp={handleOpenHelp}
-      />
-      <div className="model-container">
-        <div className={`device-outputs-container`}>
-            {model.columns.map((column, columnIndex) => {
-              return (
-                <Column
-                  key={`column-${columnIndex}`}
-                  column={column}
-                  columnIndex={columnIndex}
-                />
-              );
-            })}
-          <div className="outputs">
-            <div className="outputs-title">{`sample 1`}</div>
+    <AnimationContext.Provider value={animationContext}>
+      <div className="model-tab">
+        <ModelHeader
+          modelHeaderStyle={modelHeaderStyle}
+          showHelp={showHelp}
+          setShowHelp={setShowHelp}
+          isWide={isWide}
+          handleOpenHelp={handleOpenHelp}
+        />
+          <div className="model-container">
+            <div className={`device-outputs-container`}>
+                {model.columns.map((column, columnIndex) => {
+                  return (
+                    <Column
+                      key={`column-${columnIndex}`}
+                      column={column}
+                      columnIndex={columnIndex}
+                    />
+                  );
+                })}
+              <div className="outputs">
+                <div className="outputs-title">{`sample 1`}</div>
+              </div>
+            </div>
           </div>
-        </div>
       </div>
-    </div>
+    </AnimationContext.Provider>
+
   );
 };

@@ -1,7 +1,7 @@
 import React from "react";
-import { ClippingDef, IDevice } from "../../../../models/device-model";
-import { MixerFrame } from "../shared/mixer-frame";
-import { Balls } from "../shared/balls";
+import { ClippingDef, IDevice } from "../../../models/device-model";
+import { MixerFrame } from "./shared/mixer-frame";
+import { Balls } from "./shared/balls";
 
 interface IMixer {
   device: IDevice;
@@ -14,7 +14,7 @@ export const Mixer = ({device, handleAddDefs, handleSetSelectedVariable, handleS
   const { variables, id: deviceId } = device;
   return (
     <>
-      <MixerFrame withReplacement={false}/>
+      <MixerFrame/>
       <Balls
         ballsArray={variables}
         deviceId={deviceId}

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { ClippingDef, IDataContext, IDevice, IItem, IItems, IVariables, ViewType } from "../../models/device-model";
-import { Mixer } from "./device-views/mixer/mixer";
+import { Mixer } from "./device-views/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
 import { NameLabelInput } from "./name-label-input";

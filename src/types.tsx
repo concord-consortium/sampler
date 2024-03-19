@@ -18,6 +18,38 @@ export interface AttrMap {
   [key: string]: IAttrForMap;
 }
 
+export enum Speed {
+  Slow = 0,
+  Medium = 1,
+  Fast = 2,
+  Fastest = 3
+}
+
+export const speedLabels: Record<Speed, string> = {
+  [Speed.Slow]: "Slow",
+  [Speed.Medium]: "Medium",
+  [Speed.Fast]: "Fast",
+  [Speed.Fastest]: "Fastest"
+};
+
+export type DeviceAnimationStep = {
+  kind: "device",
+  id: Id,
+  selectedVariable: string,
+};
+
+export type ArrowAnimationStep = {
+  kind: "arrow"
+};
+
+export type FinalAnimationStep = {
+  kind: "final"
+};
+
+export type AnimationStep = {
+  onComplete?: (() => Promise<void>) | (() => void),
+} & (DeviceAnimationStep | ArrowAnimationStep | FinalAnimationStep);
+
 export interface IGlobalState {
   model: IModel;
   selectedDeviceId: Id | undefined;
@@ -32,8 +64,18 @@ export interface IGlobalState {
   dataContexts: Array<IDataContext>;
   collectorContext: IDataContext | undefined;
   samplerContext: IDataContext | undefined;
-  modelIsRunning: boolean;
+  isRunning: boolean;
+  isPaused: boolean;
+  speed: Speed;
 }
+
+export type ISampleResultsForAnimation = {
+  sampleNumber: number,
+  results: ISampleResults
+};
+export type IExperimentResultsForAnimation = ISampleResultsForAnimation[][];
+export type ISampleResults = {[key: string]: any};
+export type IExperimentResults = ISampleResults[];
 
 export interface ICollection {
   areParentChildLinksConfigured: boolean,

@@ -4,6 +4,7 @@ import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getTextShift, getVariableColor } from "../shared/helpers";
 import { Wedge } from "./wedge";
 import { SeparatorLine } from "./separator-lines";
+import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
 
 interface ISpinner {
   device: IDevice;
@@ -19,6 +20,7 @@ interface ISpinner {
 
 export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelectedVariable, handleDeleteWedge,
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: ISpinner) => {
+  const { globalState: { isRunning } } = useGlobalStateContext();
   const [fontSize, setFontSize] = useState(16);
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
   const [numUniqueVariables, setNumUniqueVariables] = useState(0);
@@ -53,6 +55,11 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
     return { lastPercent, currPercent };
   }
 
+  const handleCircleClick = () => {
+    if (isRunning) return;
+    handleSetSelectedVariable(0);
+  };
+
   return (
     [...new Set(variables)].length === 1 ?
       <>
@@ -73,7 +80,7 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
           dx={getTextShift(variables[0], variables[0].length)}
           fill="#000"
           fontSize={fontSize}
-          onClick={() => handleSetSelectedVariable(0)}
+          onClick={handleCircleClick}
           style={{ cursor: "pointer" }}
         >
           {variables[0]}

@@ -16,7 +16,7 @@ interface IModelHeader {
 export const ModelHeader = (props: IModelHeader) => {
   const { modelHeaderStyle, showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton } = globalState;
+  const { repeat, sampleSize, numSamples, enableRunButton, isRunning } = globalState;
   const { handleStartRun, deleteAll } = useCodapAPI();
 
   const handleClearData = () => {
@@ -74,23 +74,23 @@ export const ModelHeader = (props: IModelHeader) => {
   return (
     <div className="model-header" style={modelHeaderStyle}>
       <div className="model-controls">
-        <button className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
-        <button className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
+        <button disabled={isRunning} className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
+        <button disabled={!isRunning} className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
         <SpeedSlider />
-        <button className="clear-data-button" onClick={handleClearData}>CLEAR DATA</button>
+        <button disabled={isRunning} className={`clear-data-button ${isRunning ? "disabled" : ""}`} onClick={handleClearData}>CLEAR DATA</button>
       </div>
       <div className="select-repeat-controls">
         <div className="select-repeat-selection">
           <div className="select-repeat-dropdown">
-            <select onChange={handleSelectRepeat}>
+            <select disabled={isRunning} onChange={handleSelectRepeat}>
               <option className={`select-repeat-option`} value="select">Select</option>
               <option className={`select-repeat-option`} value="repeat">Repeat</option>
             </select>
           </div>
-          <input type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
+          <input disabled={isRunning} type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
           <span>{`${repeat ? "selecting" : ""} items`}</span>
           <div className="select-replacement-dropdown">
-            <select onChange={handleSelectReplacement}>
+            <select disabled={isRunning} onChange={handleSelectReplacement}>
               <option value="with">with replacement</option>
               <option value="without">without replacement</option>
             </select>
@@ -107,7 +107,7 @@ export const ModelHeader = (props: IModelHeader) => {
       </div>
       <div className="collect-controls">
         <span>Collect</span>
-        <input type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
+        <input disabled={isRunning} type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
         <span>samples</span>
       </div>
     </div>

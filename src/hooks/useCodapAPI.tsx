@@ -12,16 +12,18 @@ import {
   getAttributeList,
   getDataContext
 } from "@concord-consortium/codap-plugin-api";
-import { AttrMap, IAttribute } from "../types";
+import { AttrMap, IAttribute, IExperimentResults, IExperimentResultsForAnimation, ISampleResults, Speed } from "../types";
 import { extractVariablesFromFormula, formatFormula } from "../utils/utils";
 import { getDeviceById } from "../models/model-model";
+import { createAnimationSteps, useAnimationContext } from "./useAnimation";
 
 export const kDataContextName = "Sampler";
 type TCODAPRequest = { action: string; resource: string; };
 
 export const useCodapAPI = () => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model, sampleSize, numSamples, replacement, createNewExperiment, attrMap } = globalState;
+  const { model, speed, sampleSize, numSamples, replacement, createNewExperiment, attrMap } = globalState;
+  const { setAnimationSteps } = useAnimationContext();
 
   const evaluateResult = async (formula: string, value: Record<string, string>) => {
     const tMsg = {
@@ -44,13 +46,14 @@ export const useCodapAPI = () => {
 
   const runExperiment = async () => {
     let currentDevice = model.columns[0].devices[0];
-    let outputs: Record<string, any> = {};
+    let outputs: ISampleResults = {};
+    let outputsForAnimation: ISampleResults = {};
     let previousOutputs: Record<string, any> = {};
 
     while (currentDevice) {
       const selectedVariable = getRandomElement(currentDevice.variables);
       let nextDeviceId: string | null = null;
-      const columnName = model.columns.find(column => column.devices.some(device => device.id === currentDevice.id))?.name || "";
+      const columnName = model.columns.find(column => column.devices.find(device => device.id === currentDevice.id))?.name || "";
 
       for (const [deviceId, formula] of Object.entries(currentDevice.formulas)) {
         if (formula === "*") {
@@ -77,6 +80,7 @@ export const useCodapAPI = () => {
       if (columnName) {
         outputs[columnName] = selectedVariable;
         previousOutputs[columnName] = selectedVariable;
+        outputsForAnimation[currentDevice.id] = selectedVariable;
       }
 
       if (nextDeviceId) {
@@ -88,14 +92,16 @@ export const useCodapAPI = () => {
       }
     }
 
-    return outputs;
+    return {outputs, outputsForAnimation};
   };
 
   const getResults = async (experimentNum: number, startingSampleNumber: number) => {
-    const results: { [key: string]: string|number }[] = [];
+    const results: IExperimentResults = [];
+    const resultsForAnimation: IExperimentResultsForAnimation = [];
     const firstDevice = model.columns[0].devices[0];
     const endSampleNumber = startingSampleNumber + Number(numSamples);
     for (let sampleIndex = startingSampleNumber; sampleIndex < endSampleNumber; sampleIndex++) {
+      const sampleResultsForAnimation = [];
       for (let i = 0; i <  Number(sampleSize); i++) {
         const sample: { [key: string]: string|number } = {};
         sample[attrMap.experiment.name] = experimentNum;
@@ -103,15 +109,17 @@ export const useCodapAPI = () => {
         const deviceStr = firstDevice.viewType.charAt(0).toUpperCase() + firstDevice.viewType.slice(1);
         sample[attrMap.description.name] = `${deviceStr} containing ${numSamples} items${replacement ? " (with replacement)" : ""}`;
         sample[attrMap.sample_size.name] = sampleSize && parseInt(sampleSize, 10);
-        const result = await runExperiment();
-        Object.keys(result).forEach(key => {
-          sample[key] = result[key];
+        const {outputs, outputsForAnimation} = await runExperiment();
+        Object.keys(outputs).forEach(key => {
+          sample[key] = outputs[key];
         });
+        sampleResultsForAnimation.push({sampleNumber: sampleIndex, results: outputsForAnimation});
         results.push(sample);
       }
+      resultsForAnimation.push(sampleResultsForAnimation);
     }
 
-    return results;
+    return {results, resultsForAnimation};
   };
 
 
@@ -217,27 +225,41 @@ export const useCodapAPI = () => {
   };
 
   const handleStartRun = async () => {
-    // proof of concept that we can "run" the model and add items to CODAP
+    const attrNames = model.columns.map(column => column.name);
     setGlobalState(draft => {
-      draft.modelIsRunning = true;
+      draft.isRunning = true;
+      draft.enableRunButton = false;
     });
+    await findOrCreateDataContext(attrNames);
+
     const experimentNum = model.experimentNum
     ? createNewExperiment
         ? model.experimentNum + 1
         : model.experimentNum
     : 1;
+
     const startingSampleNumber = createNewExperiment ? 1 : model.mostRecentRunNumber + 1;
-    const results = await getResults(experimentNum, startingSampleNumber);
-    const attrNames = model.columns.map(column => column.name);
-    const ctxRes = await findOrCreateDataContext(attrNames);
-    if (ctxRes === "success") {
-      await createItems(kDataContextName, results);
+    const {results, resultsForAnimation} = await getResults(experimentNum, startingSampleNumber);
+
+    const onEndRun = () => {
       setGlobalState(draft => {
         draft.model.experimentNum = experimentNum;
         draft.enableRunButton = true;
         draft.createNewExperiment = false;
         draft.model.mostRecentRunNumber = model.mostRecentRunNumber + Number(numSamples);
+        draft.isRunning = false;
       });
+    };
+
+    if (speed === Speed.Fastest) {
+      await createItems(kDataContextName, results);
+      onEndRun();
+    } else {
+      setGlobalState(draft => {
+        draft.isRunning = true;
+      });
+      const animationSteps = createAnimationSteps(resultsForAnimation, results, speed, onEndRun);
+      setAnimationSteps(animationSteps);
     }
   };
 
