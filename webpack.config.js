@@ -20,6 +20,7 @@ module.exports = (env, argv) => {
     context: __dirname, // to automatically find tsconfig.json
     devServer: {
       static: 'dist',
+      allowedHosts: 'all',
       hot: true,
       https: {
         key: path.resolve(os.homedir(), '.localhost-ssl/localhost.key'),
