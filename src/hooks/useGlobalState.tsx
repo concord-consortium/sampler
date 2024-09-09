@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect } from "react";
 import { Updater, useImmer } from "use-immer";
-import { AttrMap, IGlobalState } from "../types";
+import { AnimationMode, AttrMap, IGlobalState } from "../types";
 import { addDataContextChangeListener, codapInterface, initializePlugin } from "@concord-consortium/codap-plugin-api";
 import { createDefaultDevice } from "../models/device-model";
 import { kDataContextName, kInitialDimensions, kPluginName, kVersion } from "../contants";
@@ -30,8 +30,7 @@ export const getDefaultState = (): IGlobalState => {
     dataContexts: [],
     samplerContext: undefined,
     collectorContext: undefined,
-    isRunning: false,
-    isPaused: false,
+    animationMode: AnimationMode.NotRunning,
     speed: 1
   };
 };

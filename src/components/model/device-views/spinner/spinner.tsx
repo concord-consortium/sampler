@@ -5,6 +5,7 @@ import { getTextShift, getVariableColor } from "../shared/helpers";
 import { Wedge } from "./wedge";
 import { SeparatorLine } from "./separator-lines";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
+import { isAnimationRunningOrPaused } from "../../../../utils/animation-mode-helpers";
 
 interface ISpinner {
   device: IDevice;
@@ -20,7 +21,7 @@ interface ISpinner {
 
 export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelectedVariable, handleDeleteWedge,
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: ISpinner) => {
-  const { globalState: { isRunning } } = useGlobalStateContext();
+  const { globalState: { animationMode } } = useGlobalStateContext();
   const [fontSize, setFontSize] = useState(16);
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
   const [numUniqueVariables, setNumUniqueVariables] = useState(0);
@@ -56,7 +57,7 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
   }
 
   const handleCircleClick = () => {
-    if (isRunning) return;
+    if (isAnimationRunningOrPaused(animationMode)) return;
     handleSetSelectedVariable(0);
   };
 

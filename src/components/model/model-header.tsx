@@ -4,6 +4,7 @@ import { HelpModal } from "./help-modal";
 import InfoIcon from "../../assets/help-icon.svg";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { useCodapAPI } from "../../hooks/useCodapAPI";
+import { isAnimationNotRunning, isAnimationRunning, isAnimationRunningOrPaused } from "../../utils/animation-mode-helpers";
 
 interface IModelHeader {
   modelHeaderStyle: React.CSSProperties;
@@ -16,9 +17,12 @@ interface IModelHeader {
 export const ModelHeader = (props: IModelHeader) => {
   const { modelHeaderStyle, showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton, isRunning } = globalState;
+  const { repeat, sampleSize, numSamples, enableRunButton, animationMode } = globalState;
   const { handleStartRun, deleteAll } = useCodapAPI();
-  const startToggleDisabled = !isRunning && !enableRunButton;
+  const startToggleDisabled = isAnimationNotRunning(animationMode) && !enableRunButton;
+  const isRunning = isAnimationRunning(animationMode);
+  const isNotRunning = isAnimationNotRunning(animationMode);
+  const isRunningOrPaused = isAnimationRunningOrPaused(animationMode);
 
   const handleToggleRun = () => {
     if (isRunning) {
@@ -90,22 +94,22 @@ export const ModelHeader = (props: IModelHeader) => {
     <div className="model-header" style={modelHeaderStyle}>
       <div className="model-controls">
         <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? "PAUSE" : "START"}</button>
-        <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>STOP</button>
+        <button disabled={isNotRunning} className={`stop-button ${isNotRunning ? "disabled" : ""}`} onClick={handleStopRun}>STOP</button>
         <SpeedSlider />
-        <button disabled={isRunning} className={`clear-data-button ${isRunning ? "disabled" : ""}`} onClick={handleClearData}>CLEAR DATA</button>
+        <button disabled={isRunningOrPaused} className={`clear-data-button ${isRunningOrPaused ? "disabled" : ""}`} onClick={handleClearData}>CLEAR DATA</button>
       </div>
       <div className="select-repeat-controls">
         <div className="select-repeat-selection">
           <div className="select-repeat-dropdown">
-            <select disabled={isRunning} onChange={handleSelectRepeat}>
+            <select disabled={isRunningOrPaused} onChange={handleSelectRepeat}>
               <option className={`select-repeat-option`} value="select">Select</option>
               <option className={`select-repeat-option`} value="repeat">Repeat</option>
             </select>
           </div>
-          <input disabled={isRunning} type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
+          <input disabled={isRunningOrPaused} type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
           <span>{`${repeat ? "selecting" : ""} items`}</span>
           <div className="select-replacement-dropdown">
-            <select disabled={isRunning} onChange={handleSelectReplacement}>
+            <select disabled={isRunningOrPaused} onChange={handleSelectReplacement}>
               <option value="with">with replacement</option>
               <option value="without">without replacement</option>
             </select>
@@ -122,7 +126,7 @@ export const ModelHeader = (props: IModelHeader) => {
       </div>
       <div className="collect-controls">
         <span>Collect</span>
-        <input disabled={isRunning} type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
+        <input disabled={isRunningOrPaused} type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
         <span>samples</span>
       </div>
     </div>

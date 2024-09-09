@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { getTextShift, getVariableColor } from "./helpers";
 import { ClippingDef } from "../../../../models/device-model";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
+import { isAnimationRunningOrPaused } from "../../../../utils/animation-mode-helpers";
 
 export interface IBall {
   x: number;
@@ -20,7 +21,8 @@ export interface IBall {
 
 export const Ball = ({ x, y, transform, radius, text, fontSize,
   handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i, deviceId, visibility }: IBall) => {
-  const { globalState: { isRunning } } = useGlobalStateContext();
+  const { globalState: { animationMode } } = useGlobalStateContext();
+  const isRunningOrPaused = isAnimationRunningOrPaused(animationMode);
 
   useEffect(() => {
     const id = `${deviceId}-text-clip-${x}-${y}`;
@@ -33,12 +35,12 @@ export const Ball = ({ x, y, transform, radius, text, fontSize,
   }, [x, y, radius, text, handleAddDefs, deviceId]);
 
   const handleGroupClick = () => {
-    if (isRunning) return;
+    if (isRunningOrPaused) return;
     handleSetEditingVarName(i);
   };
 
   const handleTextClick = () => {
-    if (isRunning) return;
+    if (isRunningOrPaused) return;
     handleSetSelectedVariable(i);
   };
 
@@ -57,7 +59,7 @@ export const Ball = ({ x, y, transform, radius, text, fontSize,
       />
       <text
         id={`${deviceId}-ball-label-${text}-${i}`}
-        style={{ cursor: isRunning ? "default"  : "pointer" }}
+        style={{ cursor: isRunningOrPaused ? "default"  : "pointer" }}
         x={x}
         y={y}
         transform={transform}

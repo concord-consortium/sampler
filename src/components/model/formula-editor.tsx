@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { IDevice } from "../../models/device-model";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
+import { isAnimationRunningOrPaused } from "../../utils/animation-mode-helpers";
 
 interface IProps {
   source: IDevice;
@@ -14,7 +15,7 @@ interface IProps {
 const kMaxLabelHeight = 22;
 
 export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWidth, horizontalArrow}: IProps) => {
-  const {globalState: { isRunning }, setGlobalState} = useGlobalStateContext();
+  const {globalState: { animationMode }, setGlobalState} = useGlobalStateContext();
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(source.formulas[target.id]);
   const labelRef = useRef<HTMLDivElement>(null);
@@ -94,20 +95,20 @@ export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWi
   const labelTop = horizontalArrow ? 0 : arrowMidPoint < 0 ? arrowMidPoint - kMaxLabelHeight/2 : -arrowMidPoint - kMaxLabelHeight;
   const labelLeft = (svgWidth / 2) - (labelDivWidth / 2);
   const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft};
-
+  const disableButtons = isAnimationRunningOrPaused(animationMode);
 
   return (
     <div ref={labelRef} className="arrow-label" style={labelStyle}>
       { editing
         ? <form className="label-form" onSubmit={handleSubmitEdit}>
-            <input disabled={isRunning} type="text" ref={inputRef} defaultValue={label} onKeyDown={handleLabelKeyDown}
+            <input disabled={disableButtons} type="text" ref={inputRef} defaultValue={label} onKeyDown={handleLabelKeyDown}
                 style={{height: kMaxLabelHeight}} />
           </form>
         : <div
-            className={`label-span ${source.id} ${isRunning ? "disabled" : ""}`}
+            className={`label-span ${source.id} ${disableButtons ? "disabled" : ""}`}
             tabIndex={0}
             onKeyDown={handleToggleEditing}
-            onClick={isRunning ? undefined : handleToggleEditing}
+            onClick={disableButtons ? undefined : handleToggleEditing}
           >
             {label}
           </div>

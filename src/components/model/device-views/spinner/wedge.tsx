@@ -3,6 +3,7 @@ import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getCoordinatesForPercent, getTextShift, getVariableColor } from "../shared/helpers";
 import { ClippingDef } from "../../../../models/device-model";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
+import { isAnimationRunningOrPaused } from "../../../../utils/animation-mode-helpers";
 
 interface IWedge {
   percent: number;
@@ -49,7 +50,7 @@ const getEllipseCoords = (percent: number) => {
 export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize, numUniqueVariables,
   varArrayIdx, selectedWedge, isLastVariable, isDragging, deviceId, handleSetSelectedVariable, handleDeleteWedge,
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: IWedge) => {
-  const { globalState: { isRunning } } = useGlobalStateContext();
+  const { globalState: { animationMode } } = useGlobalStateContext();
   const [wedgePath, setWedgePath] = useState("");
   const [wedgeColor, setWedgeColor] = useState(selectedWedge === variableName ? kDarkTeal : "");
   const [labelPos, setLabelPos] = useState<{x: number, y: number}>({x: 0, y: 0});
@@ -58,6 +59,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
   const [delBtnPos, setDelBtnPos] = useState<{x: number, y: number}>({x: 0, y: 0});
   const [edgePath, setEdgePath] = useState("");
   const [point1, setPoint1] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const isRunningOrPaused = isAnimationRunningOrPaused(animationMode);
 
   useEffect(() => {
     const perc2 = lastPercent + percent;
@@ -105,18 +107,18 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
   }, [percent, lastPercent, index, variableName, selectedWedge, handleAddDefs, deviceId, varArrayIdx, numUniqueVariables]);
 
   const handleLabelClick = (e: React.MouseEvent) => {
-    if (isRunning) return;
+    if (isRunningOrPaused) return;
     handleSetEditingVarName(varArrayIdx);
     handleSetSelectedVariable(varArrayIdx);
   };
 
   const handleWedgeClick = (e: React.MouseEvent) => {
-    if (isRunning) return;
+    if (isRunningOrPaused) return;
     handleSetSelectedVariable(varArrayIdx);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isRunning) return;
+    if (isRunningOrPaused) return;
     handleSetSelectedVariable(varArrayIdx);
     handleStartDrag({x: point1.x, y: point1.y});
   };
@@ -139,14 +141,14 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
         fill={wedgeColor}
         className="wedge"
         onClick={handleWedgeClick}
-        style={{ cursor: isRunning ? "default" : isDragging? "grabbing" : "pointer" }}
+        style={{ cursor: isRunningOrPaused ? "default" : isDragging? "grabbing" : "pointer" }}
       >
         <title>{Math.round(percent * 100)}%</title>
       </path>
       {/* variable name label */}
       <text
         id={`${deviceId}-wedge-label-${variableName}-${varArrayIdx}`}
-        style={{ cursor: isRunning ? "default" : isDragging? "grabbing" : "pointer" }}
+        style={{ cursor: isRunningOrPaused ? "default" : isDragging? "grabbing" : "pointer" }}
         x={labelPos.x}
         y={labelPos.y}
         textAnchor="middle"
@@ -167,7 +169,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
           d={edgePath}
           stroke={wedgeColor}
           strokeWidth={10}
-          style={{cursor: isRunning ? "default" : isDragging ? "grabbing" : "grab"}}
+          style={{cursor: isRunningOrPaused ? "default" : isDragging ? "grabbing" : "grab"}}
           onMouseDown={handleMouseDown}
           clipPath={`url(#${deviceId}-wedge-clip-${variableName}`}
         />

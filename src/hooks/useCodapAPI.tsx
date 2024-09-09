@@ -11,7 +11,7 @@ import {
   getAttributeList,
   getDataContext
 } from "@concord-consortium/codap-plugin-api";
-import { AttrMap, IAttribute, IExperimentResults, IExperimentResultsForAnimation, ISampleResults, Speed } from "../types";
+import { AnimationMode, AttrMap, IAttribute, IExperimentResults, IExperimentResultsForAnimation, ISampleResults, Speed } from "../types";
 import { extractVariablesFromFormula, formatFormula } from "../utils/utils";
 import { getDeviceById } from "../models/model-model";
 import { createAnimationSteps, useAnimationContext } from "./useAnimation";
@@ -244,7 +244,7 @@ export const useCodapAPI = () => {
   const handleStartRun = async () => {
     const attrNames = model.columns.map(column => column.name);
     setGlobalState(draft => {
-      draft.isRunning = true;
+      draft.animationMode = AnimationMode.Running;
       draft.enableRunButton = false;
     });
     await findOrCreateDataContext(attrNames);
@@ -264,7 +264,7 @@ export const useCodapAPI = () => {
         draft.enableRunButton = true;
         draft.createNewExperiment = false;
         draft.model.mostRecentRunNumber = model.mostRecentRunNumber + Number(numSamples);
-        draft.isRunning = false;
+        draft.animationMode = AnimationMode.NotRunning;
       });
     };
 
@@ -273,7 +273,7 @@ export const useCodapAPI = () => {
       onEndRun();
     } else {
       setGlobalState(draft => {
-        draft.isRunning = true;
+        draft.animationMode = AnimationMode.Running;
       });
       const animationSteps = createAnimationSteps(resultsForAnimation, results, speed, onEndRun);
       setAnimationSteps(animationSteps);

@@ -25,6 +25,12 @@ export enum Speed {
   Fastest = 3
 }
 
+export enum AnimationMode {
+  NotRunning = 0,
+  Running = 1,
+  Paused = 2,
+}
+
 export const speedLabels: Record<Speed, string> = {
   [Speed.Slow]: "Slow",
   [Speed.Medium]: "Medium",
@@ -64,8 +70,7 @@ export interface IGlobalState {
   dataContexts: Array<IDataContext>;
   collectorContext: IDataContext | undefined;
   samplerContext: IDataContext | undefined;
-  isRunning: boolean;
-  isPaused: boolean;
+  animationMode: AnimationMode;
   speed: Speed;
 }
 

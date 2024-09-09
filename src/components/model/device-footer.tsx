@@ -6,6 +6,7 @@ import { getNewColumnName, getNewVariable, getProportionalVars } from "../helper
 import { createNewAttribute } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../contants";
 import { createId } from "../../utils/id";
+import { isAnimationRunningOrPaused } from "../../utils/animation-mode-helpers";
 
 import "./device-footer.scss";
 
@@ -21,13 +22,14 @@ interface IDeviceFooter {
 
 export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, dataContexts}: IDeviceFooter) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model, selectedDeviceId, isRunning } = globalState;
+  const { model, selectedDeviceId, animationMode } = globalState;
   const { viewType } = device;
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
   const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
   const showCollectorButton = getNumDevices(model) === 1;
   const showMergeButton = siblingDevices.length > 0;
+  const disableButtons = isAnimationRunningOrPaused(animationMode);
 
   const handleAddVariable = () => {
     const { variables } = device;
@@ -115,9 +117,9 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
     <div className="footer">
       { viewType !== ViewType.Collector &&
         <div className="add-remove-variables-buttons">
-          <button disabled={isRunning} onClick={handleAddVariable}>+</button>
-          <button disabled={isRunning} onClick={(e) => handleDeleteVariable(e)}>-</button>
-          <button disabled={isRunning} onClick={handleSpecifyVariables}>...</button>
+          <button disabled={disableButtons} onClick={handleAddVariable}>+</button>
+          <button disabled={disableButtons} onClick={(e) => handleDeleteVariable(e)}>-</button>
+          <button disabled={disableButtons} onClick={handleSpecifyVariables}>...</button>
         </div>
       }
       <div className="device-buttons">
@@ -128,7 +130,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
               return (
                 <button
                   className={viewType === deviceType ? "selected" : ""}
-                  disabled={isRunning}
+                  disabled={disableButtons}
                   onClick={() => handleUpdateViewType(deviceType)}
                   key={deviceType}>
                     {deviceType}
@@ -141,7 +143,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
       <div className="device-buttons">
         {
           viewType === ViewType.Collector ?
-            <select disabled={isRunning} onChange={handleSelectDataContext}>
+            <select disabled={disableButtons} onChange={handleSelectDataContext}>
               <option value="">Select a data context</option>
               {
                 dataContexts.map((context) => {
@@ -151,8 +153,8 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
             </select>
             :
             <>
-              <button disabled={isRunning} onClick={handleAddDevice}>{addButtonLabel}</button>
-              {showMergeButton && <button disabled={isRunning} onClick={handleMergeDevices}>Merge</button>}
+              <button disabled={disableButtons} onClick={handleAddDevice}>{addButtonLabel}</button>
+              {showMergeButton && <button disabled={disableButtons} onClick={handleMergeDevices}>Merge</button>}
             </>
         }
       </div>

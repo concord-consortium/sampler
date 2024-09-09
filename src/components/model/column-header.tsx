@@ -4,6 +4,7 @@ import { IColumn } from "../../models/model-model";
 import { getAttribute, updateAttribute } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../contants";
 import { getNewColumnName } from "../helpers";
+import { isAnimationRunningOrPaused } from "../../utils/animation-mode-helpers";
 
 interface IProps {
   column: IColumn;
@@ -12,7 +13,7 @@ interface IProps {
 
 export const ColumnHeader = ({column, columnIndex}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model, isRunning } = globalState;
+  const { model, animationMode } = globalState;
   const [columnName, setColumnName] = useState(column.name);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -63,7 +64,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
     <div className="device-column-header">
       <input
         ref={inputRef}
-        disabled={isRunning}
+        disabled={isAnimationRunningOrPaused(animationMode)}
         className="attr-name"
         value={columnName}
         onChange={(e) => setColumnName(e.target.value)}
