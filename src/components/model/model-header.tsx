@@ -18,6 +18,21 @@ export const ModelHeader = (props: IModelHeader) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { repeat, sampleSize, numSamples, enableRunButton, isRunning } = globalState;
   const { handleStartRun, deleteAll } = useCodapAPI();
+  const startToggleDisabled = !isRunning && !enableRunButton;
+
+  const handleToggleRun = () => {
+    if (isRunning) {
+      // TODO: implement after updating animation loop
+      alert("TODO: PAUSE implemented in follow on PR...");
+    } else {
+      handleStartRun();
+    }
+  };
+
+  const handleStopRun = () => {
+    // TODO: implement after updating animation loop
+    alert("TODO: STOP implemented in follow on PR...");
+  };
 
   const handleClearData = () => {
     setGlobalState(draft => {
@@ -74,8 +89,8 @@ export const ModelHeader = (props: IModelHeader) => {
   return (
     <div className="model-header" style={modelHeaderStyle}>
       <div className="model-controls">
-        <button disabled={isRunning} className={`start-button ${!enableRunButton ? "disabled" : ""}`} onClick={handleStartRun}>START</button>
-        <button disabled={!isRunning} className={`stop-button ${enableRunButton ? "disabled" : ""}`}>STOP</button>
+        <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? "PAUSE" : "START"}</button>
+        <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>STOP</button>
         <SpeedSlider />
         <button disabled={isRunning} className={`clear-data-button ${isRunning ? "disabled" : ""}`} onClick={handleClearData}>CLEAR DATA</button>
       </div>
