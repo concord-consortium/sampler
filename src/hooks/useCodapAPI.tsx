@@ -8,7 +8,6 @@ import {
   createItems,
   createNewAttribute,
   createParentCollection,
-  createTable,
   getAttributeList,
   getDataContext
 } from "@concord-consortium/codap-plugin-api";
@@ -165,6 +164,24 @@ export const useCodapAPI = () => {
     });
   };
 
+  // the current @concord-consortium/codap-plugin-api createTable method does not have a way to pass width (or title) options so
+  // this has to be done with a direct CODAP api request
+  const createWideTable = async () => {
+    return codapInterface.sendRequest({
+      action: "create",
+      resource: "component",
+      values: {
+        type: "caseTable",
+        dataContext: kDataContextName,
+        title: "Sampler Data",
+        dimensions: {
+          width: 1000,
+          height: 200
+        }
+      }
+    }) as unknown as IResult;
+  };
+
   const findOrCreateDataContext = async (attrs: Array<string>) => {
     const collectionNames = getCollectionNames();
     const dataContextRes = await getDataContext(kDataContextName);
@@ -202,7 +219,7 @@ export const useCodapAPI = () => {
             const createOutputCollection =
               await createChildCollection(kDataContextName, collectionNames.items, collectionNames.samples, itemsAttrs);
             if (createOutputCollection.success) {
-              const tableRes = await createTable(kDataContextName);
+              const tableRes = await createWideTable();
               if (tableRes.success) {
                 await updateAttributeIds(attrs);
                 return "success";
