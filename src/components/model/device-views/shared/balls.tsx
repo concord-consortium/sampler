@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { kBorder, kCapHeight, kMixerContainerHeight, kMixerContainerWidth, kContainerX, kContainerY } from "./constants";
+import { kBorder, kCapHeight, kMixerContainerHeight, kMixerContainerWidth, kContainerX, kContainerY, kContainerCollisionBottom, kContainerCollisionLeft, kContainerCollisionRight, kContainerCollisionTop } from "./constants";
 import { ClippingDef, ICollectorItem } from "../../../../models/device-model";
 import { Ball } from "./ball";
 import { useAnimationContext } from "../../../../hooks/useAnimation";
@@ -20,6 +20,17 @@ interface IBallPosition {
   vx: number;
   transform: string;
   visibility: "visible" | "hidden";
+}
+
+interface IFinalPosition {
+  x: number;
+  y: number;
+  vy: number;
+  vx: number;
+}
+interface IFinalPositionInput extends IFinalPosition {
+  dx: number;
+  dy: number;
 }
 
 export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IBalls) => {
@@ -97,11 +108,34 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
         }
       };
 
+      const getFinalPosition = ({x, y, dx, dy, vx, vy}: IFinalPositionInput): IFinalPosition => {
+        let newX = x + dx;
+        let newY = y + dy;
+        let newVx = vx;
+        let newVy = vy;
+
+        const leftX = newX - radius;
+        const rightX = newX + radius;
+        const topY = newY - radius;
+        const bottomY = newY + radius;
+
+        if ((leftX < kContainerCollisionLeft) || (rightX > kContainerCollisionRight)) {
+          newVx = -vx;
+          newX = x;
+        }
+        if ((topY < kContainerCollisionTop) || (bottomY > kContainerCollisionBottom)) {
+          newVy = -vy;
+          newY = y;
+        }
+
+        return {x: newX, y: newY, vx: newVx, vy: newVy};
+      };
+
       const moveBackToInitialPositions = (timeElapsed: number) => {
         const defaultPositions = getStaticPositions();
         setBallPositions((prevState) => {
           return prevState.map((position, i) => {
-            const {x, y} = position;
+            const {x, y, vx, vy} = position;
             const targetX = defaultPositions[i].x;
             const targetY = defaultPositions[i].y;
 
@@ -114,17 +148,13 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
 
             const dx = Math.cos(angleToTarget) * speedToTarget;
             const dy = Math.sin(angleToTarget) * speedToTarget;
-            const newX = x + dx;
-            const newY = y + dy;
 
-            const remainingDistanceAfterMove = Math.hypot(targetX - newX, targetY - newY);
+            const final = getFinalPosition({x, y, dx, dy, vx, vy});
 
-            if (remainingDistanceAfterMove < speedToTarget) {
-              return { ...position, x: targetX, y: targetY, transform: "" };
-            } else {
-              const transform = `translate(${dx},${dy})`;
-              return { ...position, x: newX, y: newY, transform };
-            }
+            const transform = "";
+            // TODO: after animation loop is updated so we know when the final sample is taken add a transform
+            // to css animate to the final position, like this: `translate(${final.x - x},${final.y - y})`;
+            return { ...position, x: final.x, y: final.y, transform };
           });
         });
       };
@@ -137,29 +167,16 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
         setBallPositions((prevState) => {
           return prevState.map((position, index) => {
             if (scrambledInitialSetup && (index + skipOffset + 1) % skipEveryNthBall === 0) return position;
+            let final: IFinalPosition;
+            const { vx, vy, x, y } = position;
+
             if (index !== selectedVariableIdx || timeElapsed < randomMovementDuration) {
               // calculate velocity and next position
-              const { vx, vy, x, y } = position;
               const dx = vx * animationSpeedBoost;
               const dy = vy * animationSpeedBoost;
-              let newX = x + dx;
-              let newY = y + dy;
-              let newVx = vx;
-              let newVy = vy;
-              // check for wall collisions and adjust velocity
-              if (newX - radius < kContainerX + kBorder || newX + radius > kContainerX + kMixerContainerWidth - kCapHeight - kBorder) {
-                newVx = -vx;
-                newX = x; // reset the position since collision occurred
-              }
-              if (newY - radius < kContainerY + kBorder || newY + radius > kContainerY + kMixerContainerHeight - kBorder) {
-                newVy = -vy;
-                newY = y; // reset the position since collision occurred
-              }
 
-              const transform = `translate(${dx},${dy})`;
-              return { ...position, x: newX, y: newY, vx: newVx, vy: newVy, transform};
+              final = getFinalPosition({x, y, dx, dy, vx, vy});
             } else {
-              const { x,y } = position;
               const targetX = kContainerX + kMixerContainerWidth / 2;
               const targetY = kContainerY + radius;
               const angleToTarget = Math.atan2(targetY - y, targetX - x);
@@ -171,41 +188,35 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
 
               const dx = Math.cos(angleToTarget) * speedToTarget;
               const dy = Math.sin(angleToTarget) * speedToTarget;
-              const newX = x + dx;
-              const newY = y + dy;
 
-              const remainingDistanceAfterMove = Math.hypot(targetX - newX, targetY - newY);
+              final = getFinalPosition({x, y, dx, dy, vx, vy});
+
+              const remainingDistanceAfterMove = Math.hypot(targetX - final.x, targetY - final.y);
 
               if (remainingDistanceAfterMove <= speedToTarget) {
                 reachedTarget = true;
-                return { ...position, x: targetX, y: targetY, transform: "" };
-              } else {
-                const transform = `translate(${dx},${dy})`;
-                return { ...position, x: newX, y: newY, transform };
               }
             }
+
+            return { ...position, x: final.x, y: final.y, vx: final.vx, vy: final.vy, transform: ""};
           });
         });
       };
 
       const positionBallsRandomly = () => {
-        const minX = kContainerX + kBorder + radius;
-        const maxY = kContainerY + kMixerContainerHeight - kBorder - radius;
-        const width = kMixerContainerWidth - kBorder - kCapHeight - (radius * 2);
-        const height = kMixerContainerWidth - kBorder - (radius * 2);
         setBallPositions((prevState: IBallPosition[]) => {
           return prevState.map((position, i) => {
-            const prevX = position.x;
-            const prevY = position.y;
-            const x = minX + Math.random() * width;
-            const y = maxY - Math.random() * height;
-            const dx = x - prevX;
-            const dy = y - prevY;
+            const {x, y} = position;
+            const randomX = kContainerCollisionLeft + (Math.random() * (kContainerCollisionRight - kContainerCollisionLeft));
+            const randomY = kContainerCollisionTop + (Math.random() * (kContainerCollisionBottom - kContainerCollisionTop));
+            const dx = randomX - x;
+            const dy = randomY - y;
             const randomSpeed = 5 + (Math.random() * 7);
             const direction = Math.PI + (Math.random() * Math.PI);
             const vx = Math.cos(direction) * randomSpeed;
             const vy = Math.sin(direction) * randomSpeed;
-            return {x, y, vx, vy, transform: `t${dx},${dy}`, visibility: "visible"};
+            const final = getFinalPosition({x, y, dx, dy, vx, vy});
+            return {x: final.x, y: final.y, vx: final.vx, vy: final.vy, transform: "", visibility: "visible"};
           });
         });
       };

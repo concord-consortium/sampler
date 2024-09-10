@@ -10,3 +10,7 @@ export const kSpinnerContainerHeight = 209;
 export const kSpinnerRadius = Math.min(kMixerContainerWidth, kMixerContainerHeight) / 2;
 export const kSpinnerX = (kContainerX / 2) + (kSpinnerContainerWidth / 2); //x center of spinner
 export const kSpinnerY = (kContainerY / 2) + (kSpinnerContainerHeight / 2); //y center of spinner
+export const kContainerCollisionTop = kContainerY + kBorder;
+export const kContainerCollisionLeft = kContainerX + kBorder;
+export const kContainerCollisionRight = kContainerCollisionLeft + kMixerContainerWidth - kBorder;
+export const kContainerCollisionBottom = kContainerCollisionTop + kMixerContainerHeight - kBorder;
