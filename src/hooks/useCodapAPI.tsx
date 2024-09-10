@@ -99,6 +99,7 @@ export const useCodapAPI = () => {
     const resultsForAnimation: IExperimentResultsForAnimation = [];
     const firstDevice = model.columns[0].devices[0];
     const endSampleNumber = startingSampleNumber + Number(numSamples);
+    const numItems = firstDevice.variables.length;
     for (let sampleIndex = startingSampleNumber; sampleIndex < endSampleNumber; sampleIndex++) {
       const sampleResultsForAnimation = [];
       for (let i = 0; i <  Number(sampleSize); i++) {
@@ -106,7 +107,7 @@ export const useCodapAPI = () => {
         sample[attrMap.experiment.name] = experimentNum;
         sample[attrMap.sample.name] = sampleIndex;
         const deviceStr = firstDevice.viewType.charAt(0).toUpperCase() + firstDevice.viewType.slice(1);
-        sample[attrMap.description.name] = `${deviceStr} containing ${numSamples} items${replacement ? " (with replacement)" : ""}`;
+        sample[attrMap.description.name] = `${deviceStr} containing ${numItems} items${replacement ? " (with replacement)" : ""}`;
         sample[attrMap.sample_size.name] = sampleSize && parseInt(sampleSize, 10);
         const {outputs, outputsForAnimation} = await runExperiment();
         Object.keys(outputs).forEach(key => {
