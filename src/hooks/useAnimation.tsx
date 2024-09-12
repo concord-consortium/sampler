@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AnimationStep, ArrowAnimationStep, DeviceAnimationStep, FinalAnimationStep, IExperimentResults, IExperimentResultsForAnimation, Speed } from "../types";
-import { createItems } from "@concord-consortium/codap-plugin-api";
+import { createItems, selectCases } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../contants";
 import { useGlobalStateContext } from "./useGlobalState";
 
@@ -15,7 +15,10 @@ export const createAnimationSteps = (animationResults: IExperimentResultsForAnim
         if (isLastStepInSampleRun) {
           const onSampleComplete = async () => {
             const sampleResults = results.filter((result) => result.sample === run.sampleNumber);
-            await createItems(kDataContextName, sampleResults);
+            const createItemsResult = await createItems(kDataContextName, sampleResults) as any;
+            if (createItemsResult?.caseIDs) {
+              await selectCases(kDataContextName, createItemsResult.caseIDs);
+            }
           };
           deviceAnimationStep.onComplete = onSampleComplete;
         }
