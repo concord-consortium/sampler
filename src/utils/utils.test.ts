@@ -67,3 +67,4 @@ describe("formatFormula", () => {
     expect(formatFormula(expression, columnName, replacements)).toBe(expected);
   });
 });
+
