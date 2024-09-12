@@ -72,6 +72,8 @@ export function parseSpecifier(spec: string, rangeWord: string) {
   return arr.length? arr : null;
 }
 
+const booleanWordOperatorRegex = /^(and|or)$/i;
+
 export const formatFormula = (expression: string, columnName: string, replacements: string[]): string => {
   // remove  quotes from the expression
   let cleanedExpression = expression.replace(/"/g, '').replace(/'/g, '');
@@ -79,7 +81,7 @@ export const formatFormula = (expression: string, columnName: string, replacemen
   // the formulaEngine function from the CODAP API expects string values to be wrapped with single quotes
   // for example, if the expression is "output = a", the formula passed to the API should be "output = 'a'"
   const wrapVariables = (match: string) => {
-    return replacements.includes(match) ? match : `'${match}'`;
+    return replacements.includes(match) || booleanWordOperatorRegex.test(match) ? match : `'${match}'`;
   };
 
   const variableAndOperatorPattern = /([a-zA-Z_]\w*)|([\+\-\*\/%<>=!]+)/g;
