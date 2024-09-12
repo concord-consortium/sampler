@@ -5,6 +5,7 @@ import { getTextShift, getVariableColor } from "../shared/helpers";
 import { Wedge } from "./wedge";
 import { SeparatorLine } from "./separator-lines";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
+import { ITextBackerPos, TextBacker, updateTextBackerRefFn } from "./text-backer";
 
 interface ISpinner {
   device: IDevice;
@@ -25,6 +26,7 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
   const [numUniqueVariables, setNumUniqueVariables] = useState(0);
   const { variables, id } = device;
+  const [textBackerPos, setTextBackerPos] = useState<ITextBackerPos|undefined>(undefined);
 
   useEffect(() => {
     const numUnique = [...new Set(variables)].length;
@@ -55,8 +57,9 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
     return { lastPercent, currPercent };
   }
 
-  const handleCircleClick = () => {
+  const handleLabelClick = () => {
     if (isRunning) return;
+    handleSetEditingVarName(0);
     handleSetSelectedVariable(0);
   };
 
@@ -71,6 +74,9 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
           strokeWidth={1}
           fill={getVariableColor(0, 0, false)}
         />
+        {/* Safari does not support cursor styling or click handling on svg text elements so this invisible element that
+            is drawn behind the text acts as the styling and click handler source */}
+        <TextBacker pos={textBackerPos} isDragging={isDragging} onClick={handleLabelClick} />
         <text
           id={`${id}-wedge-label-${variables[0]}-0`}
           x={kSpinnerX}
@@ -80,8 +86,8 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
           dx={getTextShift(variables[0], variables[0].length)}
           fill="#000"
           fontSize={fontSize}
-          onClick={handleCircleClick}
-          style={{ cursor: "pointer" }}
+          style={{ pointerEvents: "none"}}
+          ref={updateTextBackerRefFn(setTextBackerPos)}
         >
           {variables[0]}
         </text>

@@ -54,10 +54,11 @@ export const Ball = ({ x, y, transform, radius, text, fontSize,
         strokeWidth={1}
         origin={`${x} ${y}`}
         visibility={visibility}
+        style={{ cursor: isRunning ? "default"  : "pointer" }}
+        onClick={handleTextClick}
       />
       <text
         id={`${deviceId}-ball-label-${text}-${i}`}
-        style={{ cursor: isRunning ? "default"  : "pointer" }}
         x={x}
         y={y}
         transform={transform}
@@ -67,8 +68,8 @@ export const Ball = ({ x, y, transform, radius, text, fontSize,
         dx={getTextShift(text, (3.8*(radius/fontSize)))}
         origin={`${x} ${y}`}
         clipPath={`url(#${deviceId}-text-clip-${x}-${y})`}
-        onClick={handleTextClick}
         visibility={visibility}
+        style={{ pointerEvents: "none"}}
       >
         {text}
       </text>
