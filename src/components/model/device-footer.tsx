@@ -100,6 +100,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
       draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
+    updateFormulas();
   };
 
   const handleUpdateViewType = (view: ViewType) => {
