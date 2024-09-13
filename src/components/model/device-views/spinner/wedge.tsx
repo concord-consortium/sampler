@@ -3,6 +3,7 @@ import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getCoordinatesForPercent, getTextShift, getVariableColor } from "../shared/helpers";
 import { ClippingDef } from "../../../../models/device-model";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
+import { ITextBackerPos, TextBacker, updateTextBackerRefFn } from "./text-backer";
 
 interface IWedge {
   percent: number;
@@ -58,6 +59,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
   const [delBtnPos, setDelBtnPos] = useState<{x: number, y: number}>({x: 0, y: 0});
   const [edgePath, setEdgePath] = useState("");
   const [point1, setPoint1] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const [textBackerPos, setTextBackerPos] = useState<ITextBackerPos|undefined>(undefined);
 
   useEffect(() => {
     const perc2 = lastPercent + percent;
@@ -104,7 +106,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
     handleAddDefs({ id: clipPathId, element: clipPath });
   }, [percent, lastPercent, index, variableName, selectedWedge, handleAddDefs, deviceId, varArrayIdx, numUniqueVariables]);
 
-  const handleLabelClick = (e: React.MouseEvent) => {
+  const handleLabelClick = () => {
     if (isRunning) return;
     handleSetEditingVarName(varArrayIdx);
     handleSetSelectedVariable(varArrayIdx);
@@ -143,10 +145,12 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
       >
         <title>{Math.round(percent * 100)}%</title>
       </path>
+      {/* Safari does not support cursor styling or click handling on svg text elements so this invisible element that
+          is drawn behind the text acts as the styling and click handler source */}
+      <TextBacker pos={textBackerPos} isDragging={isDragging} onClick={handleLabelClick} />
       {/* variable name label */}
       <text
         id={`${deviceId}-wedge-label-${variableName}-${varArrayIdx}`}
-        style={{ cursor: isRunning ? "default" : isDragging? "grabbing" : "pointer" }}
         x={labelPos.x}
         y={labelPos.y}
         textAnchor="middle"
@@ -155,8 +159,9 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
         fill={selectedWedge === variableName ? "#FFF" : "#000"}
         fontSize={labelFontSize}
         fontWeight={selectedWedge === variableName ? "bold" : "normal"}
-        onClick={handleLabelClick}
         clipPath={`url(#${deviceId}-wedge-clip-${variableName}`}
+        style={{ pointerEvents: "none"}}
+        ref={updateTextBackerRefFn(setTextBackerPos)}
       >
         {variableName}
       </text>
