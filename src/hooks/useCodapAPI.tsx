@@ -9,7 +9,8 @@ import {
   createNewAttribute,
   createParentCollection,
   getAttributeList,
-  getDataContext
+  getDataContext,
+  selectCases
 } from "@concord-consortium/codap-plugin-api";
 import { AttrMap, IAttribute, IExperimentResults, IExperimentResultsForAnimation, ISampleResults, Speed } from "../types";
 import { extractVariablesFromFormula, formatFormula } from "../utils/utils";
@@ -270,7 +271,10 @@ export const useCodapAPI = () => {
     };
 
     if (speed === Speed.Fastest) {
-      await createItems(kDataContextName, results);
+      const createItemsResult = await createItems(kDataContextName, results) as any;
+      if (createItemsResult?.caseIDs) {
+        await selectCases(kDataContextName, createItemsResult.caseIDs);
+      }
       onEndRun();
     } else {
       setGlobalState(draft => {

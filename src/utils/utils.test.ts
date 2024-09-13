@@ -58,4 +58,12 @@ describe("formatFormula", () => {
     const expected3 = "output2 + output2 > 6";
     expect(formatFormula(expression3, columnName3, replacements3)).toBe(expected3);
   });
+
+  it("should handle boolean word operators", () => {
+    const expression = "a and b or c and rand or ror";
+    const columnName = "output";
+    const replacements = ["output"];
+    const expected = "output = 'a' and 'b' or 'c' and 'rand' or 'ror'";
+    expect(formatFormula(expression, columnName, replacements)).toBe(expected);
+  });
 });

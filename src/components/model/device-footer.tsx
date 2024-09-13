@@ -100,12 +100,16 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
       draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
+    updateFormulas();
   };
 
   const handleUpdateViewType = (view: ViewType) => {
     setGlobalState(draft => {
       const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
       if (deviceToUpdate) {
+        if (deviceToUpdate.viewType !== view) {
+          draft.createNewExperiment = true;
+        }
         deviceToUpdate.viewType = view;
       }
     });
