@@ -66,4 +66,37 @@ describe("formatFormula", () => {
     const expected = "output = 'a' and 'b' or 'c' and 'rand' or 'ror'";
     expect(formatFormula(expression, columnName, replacements)).toBe(expected);
   });
+
+  it("should handle function calls", () => {
+    const expression = "max(a, b)";
+    const columnName = "output";
+    const replacements = ["output"];
+    const expected = "output = max('a', 'b')";
+    expect(formatFormula(expression, columnName, replacements)).toBe(expected);
+  });
+
+  it("should handle parenthesis", () => {
+    const expression = "(a or b) & (d | (foo and bar))";
+    const columnName = "output";
+    const replacements = ["output", "foo", "bar"];
+    const expected = "output = ('a' or 'b') & ('d' | (foo and bar))";
+    expect(formatFormula(expression, columnName, replacements)).toBe(expected);
+  });
+
+  it("should handle numeric comparison", () => {
+    const expression = "1=1";
+    const columnName = "output";
+    const replacements = ["output"];
+    const expected = "output = 1 = 1";
+    expect(formatFormula(expression, columnName, replacements)).toBe(expected);
+  });
+
+  it("should handle negative numbers", () => {
+    const expression = "-1";
+    const columnName = "output";
+    const replacements = ["output"];
+    const expected = "output = -1";
+    expect(formatFormula(expression, columnName, replacements)).toBe(expected);
+  });
+
 });
