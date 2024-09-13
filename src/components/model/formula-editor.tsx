@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { IDevice } from "../../models/device-model";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
+import { validateFormula } from "../../utils/utils";
 
 interface IProps {
   source: IDevice;
@@ -16,16 +17,15 @@ const kMaxLabelHeight = 22;
 export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWidth, horizontalArrow}: IProps) => {
   const {globalState: { isRunning }, setGlobalState} = useGlobalStateContext();
   const [editing, setEditing] = useState(false);
-  const [label, setLabel] = useState(source.formulas[target.id]);
+  const [formula, setFormula] = useState(source.formulas[target.id]);
   const labelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const labelDivWidth = labelRef.current?.getBoundingClientRect().width || 22;
 
   const resetLabelInput = useCallback(() => {
     if (inputRef.current) {
-      inputRef.current.value = label;
+      inputRef.current.value = formula.value;
     }
-  }, [label]);
+  }, [formula]);
 
   const handleToggleEditing = () => {
     setEditing((prev) => {
@@ -40,19 +40,20 @@ export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWi
   const handleUpdateLabel = useCallback(() => {
     const trimmedLabel = (inputRef.current?.value ?? "").trim();
     if (trimmedLabel.length > 0) {
-      setLabel(trimmedLabel);
+      const newFormula = {value: trimmedLabel, valid: validateFormula(trimmedLabel)};
+      setFormula(newFormula);
       setGlobalState(draft => {
         const sourceIdx = draft.model.columns[columnIndex].devices.findIndex(d => d.id === source.id);
-        draft.model.columns[columnIndex].devices[sourceIdx].formulas[target.id] = trimmedLabel;
+        draft.model.columns[columnIndex].devices[sourceIdx].formulas[target.id] = newFormula;
       });
       handleToggleEditing();
     } else {
       if (inputRef.current) {
         inputRef.current.value = "*";
-        setLabel("*");
+        setFormula({value: "*", valid: true});
       }
     }
-  }, [source.id, target.id, columnIndex, setLabel, setGlobalState]);
+  }, [source.id, target.id, columnIndex, setFormula, setGlobalState]);
 
   useEffect(() => {
     const handleMouseUp = (e: MouseEvent) => {
@@ -92,24 +93,22 @@ export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWi
   };
 
   const labelTop = horizontalArrow ? 0 : arrowMidPoint < 0 ? arrowMidPoint - kMaxLabelHeight/2 : -arrowMidPoint - kMaxLabelHeight;
-  const labelLeft = (svgWidth / 2) - (labelDivWidth / 2);
-  const labelStyle: React.CSSProperties = {top: labelTop, left: labelLeft};
-
+  const labelStyle: React.CSSProperties = {top: labelTop};
 
   return (
     <div ref={labelRef} className="arrow-label" style={labelStyle}>
       { editing
         ? <form className="label-form" onSubmit={handleSubmitEdit}>
-            <input disabled={isRunning} type="text" ref={inputRef} defaultValue={label} onKeyDown={handleLabelKeyDown}
-                style={{height: kMaxLabelHeight}} />
+            <input disabled={isRunning} type="text" ref={inputRef} defaultValue={formula.value} onKeyDown={handleLabelKeyDown}
+                style={{height: kMaxLabelHeight}}/>
           </form>
         : <div
-            className={`label-span ${source.id} ${isRunning ? "disabled" : ""}`}
+            className={`label-span ${source.id} ${isRunning ? "disabled" : ""} ${!formula.valid ? "invalid" : ""}`}
             tabIndex={0}
             onKeyDown={handleToggleEditing}
             onClick={isRunning ? undefined : handleToggleEditing}
           >
-            {label}
+            {formula.value}
           </div>
       }
     </div>

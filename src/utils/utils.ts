@@ -1,3 +1,5 @@
+import { parseExpression, stringify, tokenize } from "./formula-parser";
+
 function bothStringsWithSameCaps(s1: string, s2: string) {
   if (typeof s1 !== "string" || typeof s2 !== "string") return false;
   const isCaps1 = s1 === s1.toUpperCase();
@@ -72,43 +74,25 @@ export function parseSpecifier(spec: string, rangeWord: string) {
   return arr.length? arr : null;
 }
 
-const booleanWordOperatorRegex = /^(and|or)$/i;
-
 export const formatFormula = (expression: string, columnName: string, replacements: string[]): string => {
-  // remove  quotes from the expression
-  let cleanedExpression = expression.replace(/"/g, '').replace(/'/g, '');
+  const cleanedExpression = expression.replace(/"/g, '').replace(/'/g, '');
+  const tokens = tokenize(cleanedExpression);
+  const tree = parseExpression(tokens, { value: 0, columnName, replacements });
+  return stringify(tree, replacements);
+};
 
-  // the formulaEngine function from the CODAP API expects string values to be wrapped with single quotes
-  // for example, if the expression is "output = a", the formula passed to the API should be "output = 'a'"
-  const wrapVariables = (match: string) => {
-    return replacements.includes(match) || booleanWordOperatorRegex.test(match) ? match : `'${match}'`;
-  };
-
-  const variableAndOperatorPattern = /([a-zA-Z_]\w*)|([\+\-\*\/%<>=!]+)/g;
-
-  let formattedExpression = cleanedExpression.replace(variableAndOperatorPattern, (match, variable) => {
-    if (variable) {
-      return wrapVariables(variable);
-    } else {
-      return match;
-    }
-  });
-
-  const containsOperators = /[+\-*/%<>=!]/.test(formattedExpression);
-  if (containsOperators) {
-    const firstOperatorIndex = formattedExpression.search(/[\+\-\*\/%<>=!]/);
-    const leftHandSide = formattedExpression.slice(0, firstOperatorIndex).trim();
-    const lhsContainsReplacement = replacements.some(replacement => leftHandSide.includes(replacement));
-    // if no replacement is found on the left-hand side, prepend the columnName
-    if (!lhsContainsReplacement) {
-      formattedExpression = `${columnName} ${formattedExpression}`;
-    }
-  } else {
-    // if the expression does not contain operators, format it as columnName = formattedExpression
-    formattedExpression = `${columnName} = ${formattedExpression}`;
+export const validateFormula = (expression: string): boolean => {
+  if (expression === "*") {
+    return true;
   }
 
-  return formattedExpression;
+  try {
+    // format will throw an exception if it can't be parsed
+    formatFormula(expression, "_", []);
+    return true;
+  } catch (e) {
+    return false;
+  }
 };
 
 export const extractVariablesFromFormula = (formula: string): string[] => {

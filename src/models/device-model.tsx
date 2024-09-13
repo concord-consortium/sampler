@@ -13,7 +13,7 @@ export interface IDevice {
   viewType: View;
   variables: IVariables;
   collectorVariables: ICollectorVariables;
-  formulas: Record<string, string>;
+  formulas: Record<string, {value: string, valid: boolean}>;
 }
 
 // a map of variables to their percentages

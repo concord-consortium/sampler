@@ -56,12 +56,12 @@ export const useCodapAPI = () => {
       const columnName = model.columns.find(column => column.devices.find(device => device.id === currentDevice.id))?.name || "";
 
       for (const [deviceId, formula] of Object.entries(currentDevice.formulas)) {
-        if (formula === "*") {
+        if (formula.value === "*") {
           nextDeviceId = deviceId;
           break;
         }
 
-        const neededVariables = extractVariablesFromFormula(formula);
+        const neededVariables = extractVariablesFromFormula(formula.value);
         const values = neededVariables.reduce((acc, variable) => {
           if (variable in previousOutputs) {
               acc[variable] = previousOutputs[variable];
@@ -69,7 +69,7 @@ export const useCodapAPI = () => {
           return acc;
         }, { [columnName]: selectedVariable });
 
-        const formattedFormula = formatFormula(formula, columnName, Object.keys(values));
+        const formattedFormula = formatFormula(formula.value, columnName, Object.keys(values));
         const evaluationResult = await evaluateResult(formattedFormula, values);
         if (evaluationResult) {
           nextDeviceId = deviceId;
@@ -244,44 +244,53 @@ export const useCodapAPI = () => {
   };
 
   const handleStartRun = async () => {
-    const attrNames = model.columns.map(column => column.name);
-    setGlobalState(draft => {
-      draft.isRunning = true;
-      draft.enableRunButton = false;
-    });
-    await findOrCreateDataContext(attrNames);
+    try {
+      const experimentNum = model.experimentNum
+      ? createNewExperiment
+          ? model.experimentNum + 1
+          : model.experimentNum
+      : 1;
 
-    const experimentNum = model.experimentNum
-    ? createNewExperiment
-        ? model.experimentNum + 1
-        : model.experimentNum
-    : 1;
+      const startingSampleNumber = createNewExperiment ? 1 : model.mostRecentRunNumber + 1;
+      const {results, resultsForAnimation} = await getResults(experimentNum, startingSampleNumber);
 
-    const startingSampleNumber = createNewExperiment ? 1 : model.mostRecentRunNumber + 1;
-    const {results, resultsForAnimation} = await getResults(experimentNum, startingSampleNumber);
-
-    const onEndRun = () => {
-      setGlobalState(draft => {
-        draft.model.experimentNum = experimentNum;
-        draft.enableRunButton = true;
-        draft.createNewExperiment = false;
-        draft.model.mostRecentRunNumber = model.mostRecentRunNumber + Number(numSamples);
-        draft.isRunning = false;
-      });
-    };
-
-    if (speed === Speed.Fastest) {
-      const createItemsResult = await createItems(kDataContextName, results) as any;
-      if (createItemsResult?.caseIDs) {
-        await selectCases(kDataContextName, createItemsResult.caseIDs);
-      }
-      onEndRun();
-    } else {
+      const attrNames = model.columns.map(column => column.name);
       setGlobalState(draft => {
         draft.isRunning = true;
+        draft.enableRunButton = false;
       });
-      const animationSteps = createAnimationSteps(resultsForAnimation, results, speed, onEndRun);
-      setAnimationSteps(animationSteps);
+      await findOrCreateDataContext(attrNames);
+
+      const onEndRun = () => {
+        setGlobalState(draft => {
+          draft.model.experimentNum = experimentNum;
+          draft.enableRunButton = true;
+          draft.createNewExperiment = false;
+          draft.model.mostRecentRunNumber = model.mostRecentRunNumber + Number(numSamples);
+          draft.isRunning = false;
+        });
+      };
+
+      if (speed === Speed.Fastest) {
+        const createItemsResult = await createItems(kDataContextName, results) as any;
+        if (createItemsResult?.caseIDs) {
+          await selectCases(kDataContextName, createItemsResult.caseIDs);
+        }
+        onEndRun();
+      } else {
+        setGlobalState(draft => {
+          draft.isRunning = true;
+        });
+        const animationSteps = createAnimationSteps(resultsForAnimation, results, speed, onEndRun);
+        setAnimationSteps(animationSteps);
+      }
+    } catch (e) {
+      setGlobalState(draft => {
+        draft.isRunning = false;
+        draft.enableRunButton = true;
+      });
+      console.log(e);
+      alert("Error running model! Please check your formulas.");
     }
   };
 
