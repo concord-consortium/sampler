@@ -20,10 +20,11 @@ export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWi
   const [formula, setFormula] = useState(source.formulas[target.id]);
   const labelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [formulaValid, setFormulaValid] = useState(validateFormula(source.formulas[target.id]));
 
   const resetLabelInput = useCallback(() => {
     if (inputRef.current) {
-      inputRef.current.value = formula.value;
+      inputRef.current.value = formula;
     }
   }, [formula]);
 
@@ -40,20 +41,20 @@ export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWi
   const handleUpdateLabel = useCallback(() => {
     const trimmedLabel = (inputRef.current?.value ?? "").trim();
     if (trimmedLabel.length > 0) {
-      const newFormula = {value: trimmedLabel, valid: validateFormula(trimmedLabel)};
-      setFormula(newFormula);
+      setFormula(trimmedLabel);
+      setFormulaValid(validateFormula(trimmedLabel));
       setGlobalState(draft => {
         const sourceIdx = draft.model.columns[columnIndex].devices.findIndex(d => d.id === source.id);
-        draft.model.columns[columnIndex].devices[sourceIdx].formulas[target.id] = newFormula;
+        draft.model.columns[columnIndex].devices[sourceIdx].formulas[target.id] = trimmedLabel;
       });
       handleToggleEditing();
     } else {
       if (inputRef.current) {
         inputRef.current.value = "*";
-        setFormula({value: "*", valid: true});
+        setFormula("*");
       }
     }
-  }, [source.id, target.id, columnIndex, setFormula, setGlobalState]);
+  }, [source.id, target.id, columnIndex, setFormula, setFormulaValid, setGlobalState]);
 
   useEffect(() => {
     const handleMouseUp = (e: MouseEvent) => {
@@ -99,16 +100,16 @@ export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWi
     <div ref={labelRef} className="arrow-label" style={labelStyle}>
       { editing
         ? <form className="label-form" onSubmit={handleSubmitEdit}>
-            <input disabled={isRunning} type="text" ref={inputRef} defaultValue={formula.value} onKeyDown={handleLabelKeyDown}
+            <input disabled={isRunning} type="text" ref={inputRef} defaultValue={formula} onKeyDown={handleLabelKeyDown}
                 style={{height: kMaxLabelHeight}}/>
           </form>
         : <div
-            className={`label-span ${source.id} ${isRunning ? "disabled" : ""} ${!formula.valid ? "invalid" : ""}`}
+            className={`label-span ${source.id} ${isRunning ? "disabled" : ""} ${!formulaValid ? "invalid" : ""}`}
             tabIndex={0}
             onKeyDown={handleToggleEditing}
             onClick={isRunning ? undefined : handleToggleEditing}
           >
-            {formula.value}
+            {formula}
           </div>
       }
     </div>
