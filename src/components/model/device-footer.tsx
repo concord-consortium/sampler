@@ -48,7 +48,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
             targets.forEach((target) => {
               // add a formula if it doesn't exist
               if (!dev.formulas[target.id]) {
-                dev.formulas[target.id] = {value: "*", valid: true};
+                dev.formulas[target.id] = "*";
               }
             });
             // check if there are any formulas that are no longer needed

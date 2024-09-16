@@ -56,12 +56,12 @@ export const useCodapAPI = () => {
       const columnName = model.columns.find(column => column.devices.find(device => device.id === currentDevice.id))?.name || "";
 
       for (const [deviceId, formula] of Object.entries(currentDevice.formulas)) {
-        if (formula.value === "*") {
+        if (formula === "*") {
           nextDeviceId = deviceId;
           break;
         }
 
-        const neededVariables = extractVariablesFromFormula(formula.value);
+        const neededVariables = extractVariablesFromFormula(formula);
         const values = neededVariables.reduce((acc, variable) => {
           if (variable in previousOutputs) {
               acc[variable] = previousOutputs[variable];
@@ -69,7 +69,7 @@ export const useCodapAPI = () => {
           return acc;
         }, { [columnName]: selectedVariable });
 
-        const formattedFormula = formatFormula(formula.value, columnName, Object.keys(values));
+        const formattedFormula = formatFormula(formula, columnName, Object.keys(values));
         const evaluationResult = await evaluateResult(formattedFormula, values);
         if (evaluationResult) {
           nextDeviceId = deviceId;
