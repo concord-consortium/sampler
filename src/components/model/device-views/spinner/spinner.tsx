@@ -116,17 +116,23 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
               handleSetEditingVarName={handleSetEditingVarName}
               handleSetEditingPct={handleSetEditingPct}
               handleDeleteWedge={handleDeleteWedge}
-              handleStartDrag={handleStartDrag}
             />
           );
         })}
+        {isDragging && <circle cx={kSpinnerX} cy={kSpinnerY} r={5} fill="#fff" />}
         {[...new Set(variables)].map((variableName, index) => {
+          const varArrayIdx = variables.findIndex((v) => v === variableName);
           const {lastPercent, currPercent} = getCurrentAndLastPct(variableName, index);
+          const isLastVariable = index === [...new Set(variables)].length - 1;
           return (
             <SeparatorLine
               key={`${id}-separator-line-${variableName}-${index}`}
               percent={currPercent}
               lastPercent={lastPercent}
+              varArrayIdx={varArrayIdx}
+              isDragging={isDragging}
+              handleSetSelectedVariable={isLastVariable ? undefined : handleSetSelectedVariable}
+              handleStartDrag={isLastVariable ? undefined : handleStartDrag}
             />
           );
         })}
