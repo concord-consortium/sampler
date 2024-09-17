@@ -6,6 +6,7 @@ import { Wedge } from "./wedge";
 import { SeparatorLine } from "./separator-lines";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
 import { ITextBackerPos, TextBacker, updateTextBackerRefFn } from "./text-backer";
+import { Needle } from "./needle";
 
 interface ISpinner {
   device: IDevice;
@@ -136,6 +137,7 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
             />
           );
         })}
+        <Needle deviceId={id} />
       </>
     );
   };
