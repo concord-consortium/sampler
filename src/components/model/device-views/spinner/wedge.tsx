@@ -23,7 +23,6 @@ interface IWedge {
   handleDeleteWedge: (e: React.MouseEvent, variableName: string) => void;
   handleSetEditingPct: () => void;
   handleSetEditingVarName: (variableIdx: number) => void
-  handleStartDrag: (originPt: {x: number; y: number;}) => void;
 }
 
 const kDarkTeal = "#008cba";
@@ -49,7 +48,7 @@ const getEllipseCoords = (percent: number) => {
 
 export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize, numUniqueVariables,
   varArrayIdx, selectedWedge, isLastVariable, isDragging, deviceId, handleSetSelectedVariable, handleDeleteWedge,
-  handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: IWedge) => {
+  handleSetEditingPct, handleSetEditingVarName, handleAddDefs}: IWedge) => {
   const { globalState: { isRunning } } = useGlobalStateContext();
   const [wedgePath, setWedgePath] = useState("");
   const [wedgeColor, setWedgeColor] = useState(selectedWedge === variableName ? kDarkTeal : "");
@@ -57,8 +56,6 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
   const [labelLinePath, setLabelLinePath] = useState("");
   const [pctPos, setPctPos] = useState<{x: number, y: number}>({x: 0, y: 0});
   const [delBtnPos, setDelBtnPos] = useState<{x: number, y: number}>({x: 0, y: 0});
-  const [edgePath, setEdgePath] = useState("");
-  const [point1, setPoint1] = useState<{x: number, y: number}>({x: 0, y: 0});
   const [textBackerPos, setTextBackerPos] = useState<ITextBackerPos|undefined>(undefined);
 
   useEffect(() => {
@@ -92,8 +89,6 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
     setPctPos({x: pctLabelLoc[0], y: pctLabelLoc[1]});
     setLabelLinePath(`M ${labelLineP1.join(" ")} L ${labelLineP2.join(" ")}`);
     setDelBtnPos({x: pctLabelLoc[0], y: deleteBtnLocY});
-    setEdgePath(`M ${kSpinnerX} ${kSpinnerY} L ${p2[0]} ${p2[1]}`);
-    setPoint1({x: p1[0], y: p1[1]});
     const color = selectedWedge === variableName ? kDarkTeal : getVariableColor(index, 2, false);
     setWedgeColor(color);
 
@@ -115,12 +110,6 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
   const handleWedgeClick = (e: React.MouseEvent) => {
     if (isRunning) return;
     handleSetSelectedVariable(varArrayIdx);
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (isRunning) return;
-    handleSetSelectedVariable(varArrayIdx);
-    handleStartDrag({x: point1.x, y: point1.y});
   };
 
   const buttonSize = 15;
@@ -165,18 +154,6 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
       >
         {variableName}
       </text>
-      {/* draggable edge */}
-      { !isLastVariable &&
-        <path
-          id={`${deviceId}-wedge-edge-${variableName}`}
-          d={edgePath}
-          stroke={wedgeColor}
-          strokeWidth={10}
-          style={{cursor: isRunning ? "default" : isDragging ? "grabbing" : "grab"}}
-          onMouseDown={handleMouseDown}
-          clipPath={`url(#${deviceId}-wedge-clip-${variableName}`}
-        />
-      }
       { selectedWedge === variableName &&
         <>
           {/* percentage label */}
