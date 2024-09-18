@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { kBorder, kCapHeight, kMixerContainerHeight, kMixerContainerWidth, kContainerX, kContainerY, kContainerCollisionBottom, kContainerCollisionLeft, kContainerCollisionRight, kContainerCollisionTop } from "./constants";
 import { ClippingDef, ICollectorItem } from "../../../../models/device-model";
 import { Ball } from "./ball";
 import { useAnimationContext } from "../../../../hooks/useAnimation";
-import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
+import { IAnimationStepSettings, AnimationStep } from "../../../../types";
 
 interface IBalls {
   ballsArray: Array<string>;
@@ -27,223 +27,175 @@ interface IFinalPosition {
   y: number;
   vy: number;
   vx: number;
+  radius: number;
 }
 interface IFinalPositionInput extends IFinalPosition {
   dx: number;
   dy: number;
 }
 
-export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IBalls) => {
-  const { globalState: { speed } } = useGlobalStateContext();
-  const { deviceAnimationStep } = useAnimationContext();
-  const [ballPositions, setBallPositions] = useState<Array<IBallPosition>>([]);
-  const [startTime, setStartTime] = useState<number>(0);
-  const radius = ballsArray.length < 15 ? 14 : Math.max(14 - (10 * (ballsArray.length - 15)/200), 4);
+const animateToExitT = 0.5;
+const animateOutOfExitT = 0.9;
 
-  const getStaticPositions = useCallback(() : IBallPosition[] => {
-    const w = kMixerContainerWidth - kCapHeight - (kBorder * 2);
-      const maxHeight = kMixerContainerHeight * 0.75;
-      const maxInRow = Math.floor(w / (radius * 2));
-      const numRows = Math.ceil(ballsArray.length / maxInRow);
-      const rowHeight = Math.min(radius * 2, maxHeight / numRows);
-      return ballsArray.map((ball, i) => {
-        const rowNumber = Math.floor(i / maxInRow);
-        const rowIndex = i % maxInRow;
-        const x = (rowNumber % 2 === 0) ? kContainerX + kBorder + radius + (rowIndex * radius * 2) : kContainerX + kMixerContainerWidth - kBorder - kCapHeight - radius - (rowIndex * radius * 2);
-        const y = kContainerY + kMixerContainerHeight - kBorder - radius - (rowHeight * rowNumber);
-        const randomSpeed = 5 + (Math.random() * 7);
-        const direction = Math.PI + (Math.random() * Math.PI);
-        const vx = Math.cos(direction) * randomSpeed;
-        const vy = Math.sin(direction) * randomSpeed;
-        return {x, y, vx, vy, transform: "", visibility: "visible"};
-      });
-  }, [ballsArray, radius]);
+const getInitialPositions = (numBalls: number, radius: number) : IBallPosition[] => {
+  const w = kMixerContainerWidth - kCapHeight - (kBorder * 2);
+  const maxHeight = kMixerContainerHeight * 0.75;
+  const maxInRow = Math.floor(w / (radius * 2));
+  const numRows = Math.ceil(numBalls / maxInRow);
+  const rowHeight = Math.min(radius * 2, maxHeight / numRows);
+  const ballPositions: IBallPosition[] = [];
 
+  for (let i = 0; i < numBalls; i++) {
+    const rowNumber = Math.floor(i / maxInRow);
+    const rowIndex = i % maxInRow;
+    const x = (rowNumber % 2 === 0) ? kContainerX + kBorder + radius + (rowIndex * radius * 2) : kContainerX + kMixerContainerWidth - kBorder - kCapHeight - radius - (rowIndex * radius * 2);
+    const y = kContainerY + kMixerContainerHeight - kBorder - radius - (rowHeight * rowNumber);
+    const randomSpeed = 5 + (Math.random() * 7);
+    const direction = Math.PI + (Math.random() * Math.PI);
+    const vx = Math.cos(direction) * randomSpeed;
+    const vy = Math.sin(direction) * randomSpeed;
+    ballPositions.push({x, y, vx, vy, transform: "", visibility: "visible"});
+  }
+  return ballPositions;
+};
 
-  useEffect(() => {
-    if (deviceAnimationStep?.id !== deviceId) {
-      const defaultPositions = getStaticPositions();
-      setBallPositions(defaultPositions);
+const getFinalPosition = ({x, y, dx, dy, vx, vy, radius}: IFinalPositionInput): IFinalPosition => {
+  let newX = x + dx;
+  let newY = y + dy;
+  let newVx = vx;
+  let newVy = vy;
+
+  const leftX = newX - radius;
+  const rightX = newX + radius;
+  const topY = newY - radius;
+  const bottomY = newY + radius;
+
+  if ((leftX < kContainerCollisionLeft) || (rightX > kContainerCollisionRight)) {
+    newVx = -vx;
+    newX = x;
+  }
+  if ((topY < kContainerCollisionTop) || (bottomY > kContainerCollisionBottom)) {
+    newVy = -vy;
+    newY = y;
+  }
+
+  return {x: newX, y: newY, vx: newVx, vy: newVy, radius};
+};
+
+const animatePositions = (positions: IBallPosition[], speed: number, t: number, radius: number, selectedVariableIdx: number) => {
+  return positions.map((position, index) => {
+    let final: IFinalPosition;
+    const { vx, vy, x, y } = position;
+    const animationSpeed = speed + 1;
+
+    // calculate velocity and next position of all balls or the selected ball until we start animating to the exit
+    if (index !== selectedVariableIdx || t < animateToExitT) {
+      const dx = vx * animationSpeed;
+      const dy = vy * animationSpeed;
+
+      final = getFinalPosition({x, y, dx, dy, vx, vy, radius});
     } else {
-      setStartTime(Date.now());
-      const {selectedVariable} = deviceAnimationStep;
-      const matchingIndices: number[] = ballsArray.map((ball, index) => ball === selectedVariable ? index : -1).filter(index => index !== -1);
-      const randomIndex = Math.floor(Math.random() * matchingIndices.length);
-      const selectedVariableIdx = matchingIndices[randomIndex];
+      const targetX = kContainerX + kMixerContainerWidth / 2;
+      const targetY = kContainerY + radius;
+      const angleToTarget = Math.atan2(targetY - y, targetX - x);
+      const distanceToTarget = Math.hypot(targetX - x, targetY - y);
+      const speedToTarget = distanceToTarget * Math.min(1, (animateToExitT + (t - animateToExitT)));
 
-      const timeFrame = 1200 / (speed + 1);
-      const timeout = Math.min(Math.max(30, ballsArray.length * 1.5), 200);
-      const animationSpeed = timeout / 30;
-      const skipEveryNthBall = Math.max(75 - Math.floor(ballsArray.length / 2), 2);
+      const dx = Math.cos(angleToTarget) * speedToTarget;
+      const dy = Math.sin(angleToTarget) * speedToTarget;
 
-      let reachedTarget = false;
-      let animationFrameId: number;
-      let stepOffset = 0;
-      let timeoutId: number;
-      let scrambledInitialSetup = false;
-      let skipOffset = stepOffset % ballsArray.length;
+      final = getFinalPosition({x, y, dx, dy, vx, vy, radius});
 
+      // float it out of the exit
+      if (t >= animateOutOfExitT) {
+        final.y -= radius;
+      }
+    }
 
-      const animateMixer = () => {
-        const timeElapsed = Date.now() - startTime;
-        if (deviceAnimationStep?.id === deviceId) {
-          stepOffset += 1;
-          if (deviceAnimationStep?.id === deviceId) {
-            timeoutId = setTimeout(() => {
-              animationFrameId = requestAnimationFrame(animateMixer);
-            }, timeout);
-          }
+    return { ...position, x: final.x, y: final.y, vx: final.vx, vy: final.vy, transform: ""};
+  });
+};
 
-          if (deviceAnimationStep?.id === deviceId) {
-            if (reachedTarget) {
-              moveBackToInitialPositions(timeElapsed);
-            } else if (ballsArray.length < 100) {
-              mixerAnimationStep(timeElapsed);
-            } else if (ballsArray.length < 400) {
-              positionBallsRandomly();
-            } else {
-              fakeMixerAnimationStep();
-            }
-          }
-        }
-      };
+const getRandomPositions = (positions: IBallPosition[], radius: number) => {
+  return positions.map((position, i) => {
+    const {x, y} = position;
+    const randomX = kContainerCollisionLeft + (Math.random() * (kContainerCollisionRight - kContainerCollisionLeft));
+    const randomY = kContainerCollisionTop + (Math.random() * (kContainerCollisionBottom - kContainerCollisionTop));
+    const dx = randomX - x;
+    const dy = randomY - y;
+    const randomSpeed = 5 + (Math.random() * 7);
+    const direction = Math.PI + (Math.random() * Math.PI);
+    const vx = Math.cos(direction) * randomSpeed;
+    const vy = Math.sin(direction) * randomSpeed;
+    const final = getFinalPosition({x, y, dx, dy, vx, vy, radius});
+    return { ...position, x: final.x, y: final.y, vx: final.vx, vy: final.vy, transform: "", visibility: "visible"} as IBallPosition;
+  });
+};
 
-      const getFinalPosition = ({x, y, dx, dy, vx, vy}: IFinalPositionInput): IFinalPosition => {
-        let newX = x + dx;
-        let newY = y + dy;
-        let newVx = vx;
-        let newVy = vy;
+const getCycledPositions = (positions: IBallPosition[], selectedVariableIdx: number) => {
+  const skipEveryNthBall = Math.max(75 - Math.floor(positions.length / 2), 2);
+  return positions.map((position, i) => {
+    const isVisible = i === selectedVariableIdx || (i + 1) % skipEveryNthBall === 0;
+    return { ...position, visibility: isVisible ? "visible" : "hidden" } as IBallPosition;
+  });
+};
 
-        const leftX = newX - radius;
-        const rightX = newX + radius;
-        const topY = newY - radius;
-        const bottomY = newY + radius;
+export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IBalls) => {
+  const { registerAnimationCallback } = useAnimationContext();
+  const [ballPositions, setBallPositions] = useState<Array<IBallPosition>>([]);
 
-        if ((leftX < kContainerCollisionLeft) || (rightX > kContainerCollisionRight)) {
-          newVx = -vx;
-          newX = x;
-        }
-        if ((topY < kContainerCollisionTop) || (bottomY > kContainerCollisionBottom)) {
-          newVy = -vy;
-          newY = y;
-        }
+  // keep these are refs so the values aren't closed over in the animation function
+  const ballsArrayRef = useRef(ballsArray);
+  const numBallsRef = useRef(0);
+  const radiusRef = useRef(0);
+  const selectedVariableIndexRef = useRef(-1);
+  const initialPositionsRef = useRef<IBallPosition[]>([]);
+  const currentPositionsRef = useRef<IBallPosition[]>([]);
 
-        return {x: newX, y: newY, vx: newVx, vy: newVy};
-      };
+  // these are kept up to date on each render - they don't change during the animation as the inputs to change them are disabled
+  ballsArrayRef.current = ballsArray;
+  numBallsRef.current = ballsArray.length;
+  radiusRef.current = ballsArray.length < 15 ? 14 : Math.max(14 - (10 * (ballsArray.length - 15)/200), 4);
 
-      const moveBackToInitialPositions = (timeElapsed: number) => {
-        const defaultPositions = getStaticPositions();
-        setBallPositions((prevState) => {
-          return prevState.map((position, i) => {
-            const {x, y, vx, vy} = position;
-            const targetX = defaultPositions[i].x;
-            const targetY = defaultPositions[i].y;
+  const animate = (step: AnimationStep, settings?: IAnimationStepSettings) => {
+    const { kind } = step;
+    const {speed, t} = settings ?? {speed: 0, t: 0};
 
-            const angleToTarget = Math.atan2(targetY - y, targetX - x);
-            const distanceToTarget = Math.hypot(targetX - x, targetY - y);
+    const updateBallPositions = (newPositions: IBallPosition[]) => {
+      currentPositionsRef.current = newPositions;
+      setBallPositions(newPositions);
+    };
 
-            const timeRemaining = timeFrame - timeElapsed;
-            const framesRemaining = timeRemaining / timeout;
-            const speedToTarget = distanceToTarget / framesRemaining;
-
-            const dx = Math.cos(angleToTarget) * speedToTarget;
-            const dy = Math.sin(angleToTarget) * speedToTarget;
-
-            const final = getFinalPosition({x, y, dx, dy, vx, vy});
-
-            const transform = "";
-            // TODO: after animation loop is updated so we know when the final sample is taken add a transform
-            // to css animate to the final position, like this: `translate(${final.x - x},${final.y - y})`;
-            return { ...position, x: final.x, y: final.y, transform };
-          });
-        });
-      };
-
-      const mixerAnimationStep = (timeElapsed: number) => {
-        const animationSpeedBoost = Math.min((speed + 1) / animationSpeed, 4);
-        const randomMovementDuration = timeFrame * 0.5;
-        const threeQuartersPoint = timeFrame * 0.75;
-
-        setBallPositions((prevState) => {
-          return prevState.map((position, index) => {
-            if (scrambledInitialSetup && (index + skipOffset + 1) % skipEveryNthBall === 0) return position;
-            let final: IFinalPosition;
-            const { vx, vy, x, y } = position;
-
-            if (index !== selectedVariableIdx || timeElapsed < randomMovementDuration) {
-              // calculate velocity and next position
-              const dx = vx * animationSpeedBoost;
-              const dy = vy * animationSpeedBoost;
-
-              final = getFinalPosition({x, y, dx, dy, vx, vy});
-            } else {
-              const targetX = kContainerX + kMixerContainerWidth / 2;
-              const targetY = kContainerY + radius;
-              const angleToTarget = Math.atan2(targetY - y, targetX - x);
-              const distanceToTarget = Math.hypot(targetX - x, targetY - y);
-
-              const timeRemaining = threeQuartersPoint - timeElapsed;
-              const framesRemaining = timeRemaining / timeout;
-              const speedToTarget = distanceToTarget / framesRemaining;
-
-              const dx = Math.cos(angleToTarget) * speedToTarget;
-              const dy = Math.sin(angleToTarget) * speedToTarget;
-
-              final = getFinalPosition({x, y, dx, dy, vx, vy});
-
-              const remainingDistanceAfterMove = Math.hypot(targetX - final.x, targetY - final.y);
-
-              if (remainingDistanceAfterMove <= speedToTarget) {
-                reachedTarget = true;
-              }
-            }
-
-            return { ...position, x: final.x, y: final.y, vx: final.vx, vy: final.vy, transform: ""};
-          });
-        });
-      };
-
-      const positionBallsRandomly = () => {
-        setBallPositions((prevState: IBallPosition[]) => {
-          return prevState.map((position, i) => {
-            const {x, y} = position;
-            const randomX = kContainerCollisionLeft + (Math.random() * (kContainerCollisionRight - kContainerCollisionLeft));
-            const randomY = kContainerCollisionTop + (Math.random() * (kContainerCollisionBottom - kContainerCollisionTop));
-            const dx = randomX - x;
-            const dy = randomY - y;
-            const randomSpeed = 5 + (Math.random() * 7);
-            const direction = Math.PI + (Math.random() * Math.PI);
-            const vx = Math.cos(direction) * randomSpeed;
-            const vy = Math.sin(direction) * randomSpeed;
-            const final = getFinalPosition({x, y, dx, dy, vx, vy});
-            return {x: final.x, y: final.y, vx: final.vx, vy: final.vy, transform: "", visibility: "visible"};
-          });
-        });
-      };
-
-      const fakeMixerAnimationStep = () => {
-        setBallPositions((prevState: IBallPosition[]) => {
-          return prevState.map((position, i) => {
-            const isVisible = i === selectedVariableIdx || (i + stepOffset + 1) % skipEveryNthBall === 0;
-            return { ...position, visibility: isVisible ? "visible" : "hidden" };
-          });
-        });
-      };
-
-      if (deviceAnimationStep?.id === deviceId) {
-        animationFrameId = requestAnimationFrame(animateMixer);
+    if (kind === "modelChanged" || kind === "startExperiment") {
+      initialPositionsRef.current = getInitialPositions(ballsArrayRef.current.length, radiusRef.current);
+      updateBallPositions(initialPositionsRef.current);
+    } else if ((kind === "startSelectItem") || (kind === "endSelectItem") || (kind === "endExperiment")) {
+      selectedVariableIndexRef.current = -1;
+      updateBallPositions(initialPositionsRef.current);
+    } else if ((kind === "animateDevice") && (step.deviceId === deviceId)) {
+      // pick the ball to animate to the exit
+      if (selectedVariableIndexRef.current === -1) {
+        const matchingIndices = ballsArray.map((ball, index) => ball === step.selectedVariable ? index : -1).filter(index => index !== -1);
+        const randomIndex = Math.floor(Math.random() * matchingIndices.length);
+        selectedVariableIndexRef.current = matchingIndices[randomIndex];
       }
 
-      return () => {
-        if (animationFrameId) {
-          cancelAnimationFrame(animationFrameId);
-        }
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-      };
+      if (t === 1) {
+        updateBallPositions(initialPositionsRef.current);
+      } else if (numBallsRef.current < 100) {
+        updateBallPositions(animatePositions(currentPositionsRef.current, speed, t, radiusRef.current, selectedVariableIndexRef.current));
+      } else if (numBallsRef.current < 400) {
+        updateBallPositions(getRandomPositions(currentPositionsRef.current, radiusRef.current));
+      } else {
+        updateBallPositions(getCycledPositions(currentPositionsRef.current, selectedVariableIndexRef.current));
+      }
     }
-  }, [ballsArray, speed, deviceAnimationStep, deviceId, radius, startTime, getStaticPositions]);
+  };
+
+  useEffect(() => {
+    return registerAnimationCallback(animate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getLabelForVariable = (ball: string | ICollectorItem) => {
     if (typeof ball === "object"){
@@ -260,7 +212,7 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
   }, 0);
 
   const fontScaling = 1 - Math.min(Math.max((maxVariableLength - 5) * 0.1, 0), 0.4);
-  const fontSize = radius * fontScaling;
+  const fontSize = radiusRef.current * fontScaling;
 
   return (
     <>
@@ -275,7 +227,7 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
             transform={transform ? transform : ""}
             i={i}
             visibility={visibility}
-            radius={radius}
+            radius={radiusRef.current}
             deviceId={deviceId}
             text={`${text}`}
             fontSize={fontSize}

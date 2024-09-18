@@ -31,10 +31,10 @@ export const ModelTab = () => {
   };
 
   const modelHeaderStyle = {width: (model.columns.length * kMinColumnWidth) + kSelectedSamplesDivWidth};
-  const animationContext = useAnimationContextValue();
+  const animationContextValue = useAnimationContextValue();
 
   return (
-    <AnimationContext.Provider value={animationContext}>
+    <AnimationContext.Provider value={animationContextValue}>
       <div className="model-tab">
         <ModelHeader
           modelHeaderStyle={modelHeaderStyle}
@@ -43,24 +43,23 @@ export const ModelTab = () => {
           isWide={isWide}
           handleOpenHelp={handleOpenHelp}
         />
-          <div className="model-container">
-            <div className={`device-outputs-container`}>
-                {model.columns.map((column, columnIndex) => {
-                  return (
-                    <Column
-                      key={`column-${columnIndex}`}
-                      column={column}
-                      columnIndex={columnIndex}
-                    />
-                  );
-                })}
-              <div className="outputs">
-                <div className="outputs-title">{`sample 1`}</div>
-              </div>
+        <div className="model-container">
+          <div className={`device-outputs-container`}>
+            {model.columns.map((column, columnIndex) => {
+              return (
+                <Column
+                  key={`column-${columnIndex}`}
+                  column={column}
+                  columnIndex={columnIndex}
+                />
+              );
+            })}
+            <div className="outputs">
+              <div className="outputs-title">{`sample 1`}</div>
             </div>
           </div>
+        </div>
       </div>
     </AnimationContext.Provider>
-
   );
 };

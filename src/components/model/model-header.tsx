@@ -3,7 +3,8 @@ import { SpeedSlider } from "./model-speed-slider";
 import { HelpModal } from "./help-modal";
 import InfoIcon from "../../assets/help-icon.svg";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
-import { useCodapAPI } from "../../hooks/useCodapAPI";
+import { deleteAll } from "../../helpers/codap-helpers";
+import { useAnimationContext } from "../../hooks/useAnimation";
 
 interface IModelHeader {
   modelHeaderStyle: React.CSSProperties;
@@ -16,22 +17,16 @@ interface IModelHeader {
 export const ModelHeader = (props: IModelHeader) => {
   const { modelHeaderStyle, showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton, isRunning } = globalState;
-  const { handleStartRun, deleteAll } = useCodapAPI();
+  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap } = globalState;
+  const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
   const startToggleDisabled = !isRunning && !enableRunButton;
 
   const handleToggleRun = () => {
     if (isRunning) {
-      // TODO: implement after updating animation loop
-      alert("TODO: PAUSE implemented in follow on PR...");
+      handleTogglePauseRun(!isPaused);
     } else {
       handleStartRun();
     }
-  };
-
-  const handleStopRun = () => {
-    // TODO: implement after updating animation loop
-    alert("TODO: STOP implemented in follow on PR...");
   };
 
   const handleClearData = () => {
@@ -39,7 +34,7 @@ export const ModelHeader = (props: IModelHeader) => {
       draft.model.mostRecentRunNumber = 0;
       draft.createNewExperiment = true;
     });
-    deleteAll();
+    deleteAll(attrMap);
   };
 
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -89,7 +84,7 @@ export const ModelHeader = (props: IModelHeader) => {
   return (
     <div className="model-header" style={modelHeaderStyle}>
       <div className="model-controls">
-        <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? "PAUSE" : "START"}</button>
+        <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? (isPaused ? "START" : "PAUSE") : "START"}</button>
         <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>STOP</button>
         <SpeedSlider />
         <button disabled={isRunning} className={`clear-data-button ${isRunning ? "disabled" : ""}`} onClick={handleClearData}>CLEAR DATA</button>

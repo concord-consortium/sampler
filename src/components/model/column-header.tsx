@@ -4,6 +4,8 @@ import { IColumn } from "../../models/model-model";
 import { getAttribute, updateAttribute } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../contants";
 import { getNewColumnName } from "../helpers";
+import { useAnimationContext } from "../../hooks/useAnimation";
+import { AnimationStep, IAnimationStepSettings } from "../../types";
 
 interface IProps {
   column: IColumn;
@@ -12,9 +14,30 @@ interface IProps {
 
 export const ColumnHeader = ({column, columnIndex}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
+  const { registerAnimationCallback } = useAnimationContext();
   const { model, isRunning } = globalState;
   const [columnName, setColumnName] = useState(column.name);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [label, setLabel] = useState("");
+  const [opacity, setOpacity] = useState(0);
+
+  const animate = (step: AnimationStep, settings?: IAnimationStepSettings) => {
+    const { kind } = step;
+    if (kind === "showLabel") {
+      if (step.columnIndex === columnIndex) {
+        setOpacity(settings?.t ?? 1);
+        setLabel(step.selectedVariable);
+      }
+    } else if ((kind === "startSelectItem") || (kind === "endSelectItem") || (kind === "endExperiment")) {
+      setOpacity(0);
+      setLabel("");
+    }
+  };
+
+  useEffect(() => {
+    return registerAnimationCallback(animate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     setColumnName(column.name);
@@ -71,6 +94,9 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
         onBlur={handleNameChange}
       >
       </input>
+      <div className="device-column-header-label" style={{opacity}}>
+        {label}
+      </div>
     </div>
   );
 };
