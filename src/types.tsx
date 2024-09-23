@@ -36,13 +36,16 @@ export type ModelChangedAnimationStep = {
   kind: "modelChanged"
 };
 export type StartExperimentAnimationStep = {
-  kind: "startExperiment"
+  kind: "startExperiment",
+  numSamples: number
+  numItems: number
 };
 export type EndExperimentAnimationStep = {
   kind: "endExperiment"
 };
 export type StartSampleAnimationStep = {
   kind: "startSample"
+  sampleIndex: number;
 };
 export type EndSampleAnimationStep = {
   kind: "endSample"
@@ -51,7 +54,8 @@ export type StartSelectItemAnimationStep = {
   kind: "startSelectItem"
 };
 export type EndSelectItemAnimationStep = {
-  kind: "endSelectItem"
+  kind: "endSelectItem";
+  variables: string[];
 };
 export type CollectVariablesAnimationStep = {
   kind: "collectVariables";

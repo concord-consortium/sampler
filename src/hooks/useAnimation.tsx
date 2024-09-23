@@ -34,10 +34,10 @@ const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
 
 export const createAnimationSteps = (model: IModel, animationResults: IExperimentResultsForAnimation, results: IExperimentResults, onComplete?: () => void): Array<AnimationStep> => {
   const steps: AnimationStep[] = [];
-  steps.push({kind: "startExperiment"});
+  steps.push({kind: "startExperiment", numSamples: animationResults.length, numItems: animationResults[0]?.length ?? 0});
 
   animationResults.forEach((sample, sampleIndex) => {
-    steps.push({kind: "startSample"});
+    steps.push({kind: "startSample", sampleIndex});
 
     sample.forEach((run) => {
       steps.push({kind: "startSelectItem"});
@@ -64,7 +64,7 @@ export const createAnimationSteps = (model: IModel, animationResults: IExperimen
 
       steps.push({kind: "collectVariables", variables});
 
-      steps.push({kind: "endSelectItem"});
+      steps.push({kind: "endSelectItem", variables});
     });
 
     steps.push({kind: "pushVariables", onComplete: async () => {
