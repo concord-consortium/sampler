@@ -324,10 +324,15 @@ $pluginMinWidth: 304px;
 
       .attr-name {
         width: 40px;
-        margin: 0 70px 27px;
+        margin: 0 70px 8px;
         border-radius: 1.5px;
         border: solid 1px #8f8f9d;
         background-color: #fff;
+      }
+
+      .device-column-header-label {
+        font-size: 16px;
+        font-weight: 500;
       }
     }
   }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ClippingDef, IDevice } from "../../../../models/device-model";
 import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getTextShift, getVariableColor } from "../shared/helpers";
@@ -6,7 +6,7 @@ import { Wedge } from "./wedge";
 import { SeparatorLine } from "./separator-lines";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
 import { ITextBackerPos, TextBacker, updateTextBackerRefFn } from "./text-backer";
-import { Needle } from "./needle";
+import { IVariableLocation, Needle } from "./needle";
 
 interface ISpinner {
   device: IDevice;
@@ -23,20 +23,11 @@ interface ISpinner {
 export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelectedVariable, handleDeleteWedge,
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: ISpinner) => {
   const { globalState: { isRunning } } = useGlobalStateContext();
-  const [fontSize, setFontSize] = useState(16);
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
-  const [numUniqueVariables, setNumUniqueVariables] = useState(0);
   const { variables, id } = device;
   const [textBackerPos, setTextBackerPos] = useState<ITextBackerPos|undefined>(undefined);
 
   useEffect(() => {
-    const numUnique = [...new Set(variables)].length;
-    const size = numUnique >= 20 ? 6
-      : numUnique >= 10 ? 10
-      : 16;
-    setFontSize(size);
-    setNumUniqueVariables(numUnique);
-
     if (selectedVariableIdx !== null) {
       setSelectedWedge(variables[selectedVariableIdx]);
     } else {
@@ -44,19 +35,23 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
     }
   }, [variables, selectedVariableIdx]);
 
-  function getCurrentAndLastPct(variableName: string, index: number): { lastPercent: number, currPercent: number } {
-    const counts = variables.reduce((acc, val) => {
-      acc[val] = (acc[val] || 0) + 1;
-      return acc;
+  const uniqueVariables = useMemo(() => [...new Set(variables)], [variables]);
+  const fontSize = useMemo(() => uniqueVariables.length >= 20 ? 6 : (uniqueVariables.length >= 10 ? 10 : 16), [uniqueVariables]);
+
+  // calculate the location of all the variables
+  const variableLocations = useMemo(() => uniqueVariables.reduce<Record<string,IVariableLocation>>((acc, variableName, index) => {
+    const counts = variables.reduce((acc2, val) => {
+      acc2[val] = (acc2[val] || 0) + 1;
+      return acc2;
     }, {} as Record<string, number>);
-    const uniqueVariables = [...new Set(variables)];
     let lastPercent = 0;
     for (let i = 0; i < index; i++) {
       lastPercent += (counts[uniqueVariables[i]] / variables.length);
     }
     const currPercent = (counts[variableName] / variables.length);
-    return { lastPercent, currPercent };
-  }
+    acc[variableName] = {lastPercent, currPercent};
+    return acc;
+  }, {}), [variables, uniqueVariables]);
 
   const handleLabelClick = () => {
     if (isRunning) return;
@@ -65,7 +60,7 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
   };
 
   return (
-    [...new Set(variables)].length === 1 ?
+    uniqueVariables.length === 1 ?
       <>
         <circle
           cx={kSpinnerX}
@@ -94,9 +89,9 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
         </text>
       </> :
       <>
-        {[...new Set(variables)].map((variableName, index) => {
+        {uniqueVariables.map((variableName, index) => {
           const varArrayIdx = variables.findIndex((v) => v === variableName);
-          const {lastPercent, currPercent} = getCurrentAndLastPct(variableName, index);
+          const {lastPercent, currPercent} = variableLocations[variableName];
           return (
             <Wedge
               key={`${variableName}-${index}`}
@@ -108,9 +103,9 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
               labelFontSize={fontSize}
               varArrayIdx={varArrayIdx}
               selectedWedge={selectedWedge}
-              numUniqueVariables={numUniqueVariables}
-              nextVariable={[...new Set(variables)][index + 1]}
-              isLastVariable={index === [...new Set(variables)].length - 1}
+              numUniqueVariables={uniqueVariables.length}
+              nextVariable={uniqueVariables[index + 1]}
+              isLastVariable={index === uniqueVariables.length - 1}
               isDragging={isDragging}
               handleAddDefs={handleAddDefs}
               handleSetSelectedVariable={handleSetSelectedVariable}
@@ -121,10 +116,10 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
           );
         })}
         {isDragging && <circle cx={kSpinnerX} cy={kSpinnerY} r={5} fill="#fff" />}
-        {[...new Set(variables)].map((variableName, index) => {
+        {uniqueVariables.map((variableName, index) => {
           const varArrayIdx = variables.findIndex((v) => v === variableName);
-          const {lastPercent, currPercent} = getCurrentAndLastPct(variableName, index);
-          const isLastVariable = index === [...new Set(variables)].length - 1;
+          const {lastPercent, currPercent} = variableLocations[variableName];
+          const isLastVariable = index === uniqueVariables.length - 1;
           return (
             <SeparatorLine
               key={`${id}-separator-line-${variableName}-${index}`}
@@ -137,7 +132,10 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
             />
           );
         })}
-        <Needle deviceId={id} />
+        <Needle
+          deviceId={id}
+          variableLocations={variableLocations}
+        />
       </>
     );
   };

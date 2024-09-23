@@ -32,23 +32,79 @@ export const speedLabels: Record<Speed, string> = {
   [Speed.Fastest]: "Fastest"
 };
 
+export type ModelChangedAnimationStep = {
+  kind: "modelChanged"
+};
+export type StartExperimentAnimationStep = {
+  kind: "startExperiment"
+};
+export type EndExperimentAnimationStep = {
+  kind: "endExperiment"
+};
+export type StartSampleAnimationStep = {
+  kind: "startSample"
+};
+export type EndSampleAnimationStep = {
+  kind: "endSample"
+};
+export type StartSelectItemAnimationStep = {
+  kind: "startSelectItem"
+};
+export type EndSelectItemAnimationStep = {
+  kind: "endSelectItem"
+};
+export type CollectVariablesAnimationStep = {
+  kind: "collectVariables";
+  variables: string[];
+};
+export type PushVariablesAnimationStep = {
+  kind: "pushVariables";
+};
+
 export type DeviceAnimationStep = {
-  kind: "device",
-  id: Id,
-  selectedVariable: string,
+  kind: "animateDevice";
+  deviceId: Id;
+  selectedVariable: string;
 };
 
 export type ArrowAnimationStep = {
-  kind: "arrow"
+  kind: "animateArrow"
+  sourceDeviceId: Id;
+  targetDeviceId: Id;
 };
 
-export type FinalAnimationStep = {
-  kind: "final"
+export type LabelAnimationStep = {
+  kind: "showLabel";
+  columnIndex: number;
+  selectedVariable: string;
 };
+
 
 export type AnimationStep = {
   onComplete?: (() => Promise<void>) | (() => void),
-} & (DeviceAnimationStep | ArrowAnimationStep | FinalAnimationStep);
+} & (
+  ModelChangedAnimationStep |
+  StartExperimentAnimationStep |
+  EndExperimentAnimationStep |
+  StartSampleAnimationStep |
+  EndSampleAnimationStep |
+  StartSelectItemAnimationStep |
+  EndSelectItemAnimationStep |
+  DeviceAnimationStep |
+  ArrowAnimationStep |
+  LabelAnimationStep |
+  CollectVariablesAnimationStep |
+  PushVariablesAnimationStep
+);
+
+export interface IAnimationStepSettings {
+  t: number;
+  speed: Speed;
+}
+
+export type AnimationCallback = (step: AnimationStep, settings?: IAnimationStepSettings) => void;
+export type UnregisterAnimationCallbackFn = () => void;
+export type RegisterAnimationCallbackFn = (animationCallback: AnimationCallback) => UnregisterAnimationCallbackFn;
 
 export interface IGlobalState {
   model: IModel;
