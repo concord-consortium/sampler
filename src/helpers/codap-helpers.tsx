@@ -88,6 +88,13 @@ const createWideTable = async () => {
   }) as unknown as IResult;
 };
 
+export const hasSamplesCollection = async (): Promise<boolean> => {
+  const collectionNames = getCollectionNames();
+  const dataContextRes = await getDataContext(kDataContextName);
+  const collections = (dataContextRes.success ? dataContextRes.values?.collections ?? [] : []) as Array<{name: string}>;
+  return !!collections.find(c => c.name === collectionNames.samples);
+};
+
 export const findOrCreateDataContext = async (attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>): Promise<boolean> => {
   const collectionNames = getCollectionNames();
   const dataContextRes = await getDataContext(kDataContextName);
@@ -152,4 +159,66 @@ export const deleteAll = (attrMap: AttrMap) => {
     action: "delete",
     resource: `dataContext[${kDataContextName}].collection[${attrMap.experiment.name}].allCases`
   });
+};
+
+export const addMeasure = (measureName: string, measureType: string, formula: string) => {
+  const samplesColl = getCollectionNames().samples;
+
+  codapInterface.sendRequest({
+    action: "get",
+    resource: `dataContext[${kDataContextName}].collection[${samplesColl}].attributeList`
+  }).then((res: any) => {
+    const attrs = res.values;
+    let newAttributeName = measureName ? measureName : measureType;
+    // check if attr name is already used. user could add "conditional count" twice, for example,
+    // but have difference formulas (output = a, output = b)
+    const attrNameAlreadyUsed = attrs.find((attr: any) => attr.name === newAttributeName);
+
+      if (!attrNameAlreadyUsed) {
+        codapInterface.sendRequest({
+          action: 'create',
+          resource: `dataContext[${kDataContextName}].collection[${samplesColl}].attribute`,
+          values: [{
+            name: newAttributeName,
+            type: "numerical",
+            formula
+          }]
+        });
+      } else if (attrNameAlreadyUsed && !measureName) {
+        const attrsWithSameName = attrs.filter((attr: any) => attr.name.startsWith(newAttributeName));
+        const indexes = attrsWithSameName.map((attr: any) => Number(attr.name.slice(newAttributeName.length)));
+        const highestIndex = Math.max(...indexes);
+        if (!highestIndex) {
+          newAttributeName = newAttributeName + 1;
+        } else {
+          for (let i = 1; i <= highestIndex; i++) {
+            const nameWithIndex = newAttributeName + i;
+            const isNameWithIndexUsed = attrsWithSameName.find((attr: any) => attr.name === nameWithIndex);
+            if (!isNameWithIndexUsed) {
+              newAttributeName = nameWithIndex;
+              break;
+            } else if (i === highestIndex) {
+              newAttributeName = newAttributeName + (highestIndex + 1);
+            }
+          }
+        }
+        codapInterface.sendRequest({
+          action: 'create',
+          resource: `dataContext[${kDataContextName}].collection[${samplesColl}].attribute`,
+          values: [{
+            name: newAttributeName,
+            type: "numerical",
+            formula
+          }]
+        });
+      } else if (attrNameAlreadyUsed && measureName) {
+        codapInterface.sendRequest({
+          action: 'update',
+          resource: `dataContext[${kDataContextName}].collection[${samplesColl}].attribute[${measureName}]`,
+          values: {
+            formula
+          }
+        });
+      }
+    });
 };
