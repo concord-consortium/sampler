@@ -6,6 +6,7 @@ import { Column } from "./column";
 import { ModelHeader } from "./model-header";
 
 import "./model-component.scss";
+import { Outputs } from "./outputs";
 
 const kMinColumnWidth = 220; // device + gap width
 const kSelectedSamplesDivWidth = 65; //includes margin-right
@@ -54,9 +55,7 @@ export const ModelTab = () => {
                 />
               );
             })}
-            <div className="outputs">
-              <div className="outputs-title">{`sample 1`}</div>
-            </div>
+            <Outputs />
           </div>
         </div>
       </div>

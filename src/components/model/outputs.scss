@@ -1,0 +1,23 @@
+.outputs {
+  margin: 120px 10px 10px -10px;
+  text-align: left;
+  font-weight: 500;
+
+  .outputs-title {
+    font-size: 13px;
+  }
+
+  .outputs-variables {
+    margin-top: 5px;
+
+    .outputs-variable {
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+    }
+
+    .outputs-variable-bracket {
+      font-size: 20px;
+    }
+  }
+}
