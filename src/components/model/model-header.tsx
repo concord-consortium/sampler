@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { SpeedSlider } from "./model-speed-slider";
 import { HelpModal } from "./help-modal";
 import InfoIcon from "../../assets/help-icon.svg";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { deleteAll } from "../../helpers/codap-helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
+import { modelHasSpinner } from "../../helpers/model-helpers";
 
 interface IProps {
   showHelp: boolean;
@@ -16,9 +17,12 @@ interface IProps {
 export const ModelHeader = (props: IProps) => {
   const { showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap } = globalState;
+  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap, model, replacement } = globalState;
   const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
   const startToggleDisabled = !isRunning && !enableRunButton;
+
+  // allowReplacement when there are no spinners
+  const allowReplacement = useMemo(() => !modelHasSpinner(model), [model]);
 
   const handleToggleRun = () => {
     if (isRunning) {
@@ -99,7 +103,7 @@ export const ModelHeader = (props: IProps) => {
           <input disabled={isRunning} type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
           <span>{`${repeat ? "selecting" : ""} items`}</span>
           <div className="select-replacement-dropdown">
-            <select disabled={isRunning} onChange={handleSelectReplacement}>
+            <select disabled={isRunning || !allowReplacement} value={replacement ? "with" : "without"} onChange={handleSelectReplacement}>
               <option value="with">with replacement</option>
               <option value="without">without replacement</option>
             </select>
@@ -122,3 +126,4 @@ export const ModelHeader = (props: IProps) => {
     </div>
   );
 };
+

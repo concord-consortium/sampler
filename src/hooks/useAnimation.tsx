@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect, useRef } from "react";
-import { AnimationCallback, AnimationStep, IAnimationContext, IAnimationRuntime, IAnimationStepSettings, IExperimentResults, IExperimentResultsForAnimation, IModel, ISampleResults, Speed } from "../types";
+import { AnimationCallback, AnimationStep, IAnimationContext, IAnimationRuntime, IAnimationStepSettings, IExperimentResults, IExperimentAnimationResults, IModel, ISampleResults, Speed, ISampleVariableIndexes, AvailableDeviceVariableIndexes } from "../types";
 import { createItems, selectCases } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../contants";
 import { useGlobalStateContext } from "./useGlobalState";
 import { evaluateResult, findOrCreateDataContext } from "../helpers/codap-helpers";
-import { getRandomElement } from "../components/helpers";
 import { getDeviceById } from "../models/model-model";
 import { extractVariablesFromFormula, formatFormula } from "../utils/utils";
+import { modelHasSpinner } from "../helpers/model-helpers";
 
 const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
   "animateDevice": 1200,
@@ -16,7 +16,7 @@ const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
   "pushVariables": 1200,
 };
 
-export const createAnimationSteps = (model: IModel, animationResults: IExperimentResultsForAnimation, results: IExperimentResults, onComplete?: () => void): Array<AnimationStep> => {
+export const createAnimationSteps = (model: IModel, animationResults: IExperimentAnimationResults, results: IExperimentResults, replacement: boolean, onComplete?: () => void): Array<AnimationStep> => {
   const steps: AnimationStep[] = [];
   steps.push({kind: "startExperiment", numSamples: animationResults.length, numItems: animationResults[0]?.length ?? 0});
 
@@ -32,11 +32,11 @@ export const createAnimationSteps = (model: IModel, animationResults: IExperimen
 
       deviceIds.forEach((deviceId, deviceIdx) => {
         const selectedVariable = run.results[deviceId];
-        const deviceAnimationStep: AnimationStep = { kind: "animateDevice", deviceId, selectedVariable };
+        const selectedVariableIndex = run.resultsVariableIndex[deviceId];
 
-        steps.push(deviceAnimationStep);
+        steps.push({ kind: "animateDevice", deviceId, selectedVariable, selectedVariableIndex, hideAfter: !replacement });
+
         const columnIndex = model.columns.findIndex(column => column.devices.find(device => device.id === deviceId));
-
         steps.push({kind: "showLabel", columnIndex, selectedVariable});
 
         if (deviceIdx !== lastDeviceIdx) {
@@ -70,7 +70,10 @@ export const createAnimationSteps = (model: IModel, animationResults: IExperimen
 
 export const useAnimationContextValue = (): IAnimationContext => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { speed, attrMap, model, numSamples, sampleSize, createNewExperiment, replacement } = globalState;
+  const { speed, attrMap, model, numSamples, sampleSize, createNewExperiment } = globalState;
+  // do not allow without replacement when there is a spinner
+  const hasSpinner = modelHasSpinner(model);
+  const replacement = globalState.replacement || hasSpinner;
   const animationRef = useRef<IAnimationRuntime>({
     frame: 0,
     steps: [],
@@ -80,14 +83,28 @@ export const useAnimationContextValue = (): IAnimationContext => {
   const animationsCallbacksRef = useRef<AnimationCallback[]>([]);
   const speedRef = useRef<Speed>(Speed.Slow);
 
-  const runExperiment = async () => {
+  const runExperiment = async (variableIndexes: AvailableDeviceVariableIndexes) => {
     let currentDevice = model.columns[0].devices[0];
     let outputs: ISampleResults = {};
     let outputsForAnimation: ISampleResults = {};
     let previousOutputs: Record<string, any> = {};
 
+    const resultsVariableIndex: ISampleVariableIndexes = {};
+
     while (currentDevice) {
-      const selectedVariable = getRandomElement(currentDevice.variables);
+      const availableVariableIndexes = variableIndexes[currentDevice.id];
+      if (availableVariableIndexes.length === 0) {
+        break;
+      }
+
+      const randomIndex = Math.floor(Math.random() * availableVariableIndexes.length);
+      const selectedIndex = availableVariableIndexes[randomIndex];
+      const selectedVariable = currentDevice.variables[selectedIndex];
+
+      if (!replacement) {
+        availableVariableIndexes.splice(selectedIndex, 1);
+      }
+
       let nextDeviceId: string | null = null;
       const columnName = model.columns.find(column => column.devices.find(device => device.id === currentDevice.id))?.name || "";
 
@@ -117,6 +134,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
         outputs[columnName] = selectedVariable;
         previousOutputs[columnName] = selectedVariable;
         outputsForAnimation[currentDevice.id] = selectedVariable;
+        resultsVariableIndex[currentDevice.id] = selectedIndex;
       }
 
       if (nextDeviceId) {
@@ -128,17 +146,25 @@ export const useAnimationContextValue = (): IAnimationContext => {
       }
     }
 
-    return { outputs, outputsForAnimation };
+    return { outputs, outputsForAnimation, resultsVariableIndex };
   };
 
   const getResults = async (experimentNum: number, startingSampleNumber: number) => {
     const results: IExperimentResults = [];
-    const resultsForAnimation: IExperimentResultsForAnimation = [];
+    const animationResults: IExperimentAnimationResults = [];
     const firstDevice = model.columns[0].devices[0];
     const endSampleNumber = startingSampleNumber + Number(numSamples);
     const numItems = firstDevice.variables.length;
+
     for (let sampleIndex = startingSampleNumber; sampleIndex < endSampleNumber; sampleIndex++) {
       const sampleResultsForAnimation = [];
+      const variableIndexes = model.columns.reduce<AvailableDeviceVariableIndexes>((acc, column) => {
+        return column.devices.reduce<typeof acc>((acc2, device) => {
+          acc2[device.id] = device.variables.map((_, index) => index);
+          return acc2;
+        }, acc);
+      }, {});
+
       for (let i = 0; i < Number(sampleSize); i++) {
         const sample: { [key: string]: string | number } = {};
         sample[attrMap.experiment.name] = experimentNum;
@@ -146,17 +172,22 @@ export const useAnimationContextValue = (): IAnimationContext => {
         const deviceStr = firstDevice.viewType.charAt(0).toUpperCase() + firstDevice.viewType.slice(1);
         sample[attrMap.description.name] = `${deviceStr} containing ${numItems} items${replacement ? " (with replacement)" : ""}`;
         sample[attrMap.sample_size.name] = sampleSize && parseInt(sampleSize, 10);
-        const { outputs, outputsForAnimation } = await runExperiment();
-        Object.keys(outputs).forEach(key => {
-          sample[key] = outputs[key];
-        });
-        sampleResultsForAnimation.push({ sampleNumber: sampleIndex, results: outputsForAnimation });
-        results.push(sample);
+
+        const { outputs, outputsForAnimation, resultsVariableIndex } = await runExperiment(variableIndexes);
+        sampleResultsForAnimation.push({ sampleNumber: sampleIndex, results: outputsForAnimation, resultsVariableIndex });
+
+        const outputKeys = Object.keys(outputs);
+        if (outputKeys.length > 0) {
+          outputKeys.forEach(key => {
+            sample[key] = outputs[key];
+          });
+          results.push(sample);
+        }
       }
-      resultsForAnimation.push(sampleResultsForAnimation);
+      animationResults.push(sampleResultsForAnimation);
     }
 
-    return { results, resultsForAnimation };
+    return { results, animationResults };
   };
 
   const animate = (timestamp: number) => {
@@ -238,7 +269,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
         : 1;
 
       const startingSampleNumber = createNewExperiment ? 1 : model.mostRecentRunNumber + 1;
-      const { results, resultsForAnimation } = await getResults(experimentNum, startingSampleNumber);
+      const { results, animationResults } = await getResults(experimentNum, startingSampleNumber);
 
       const attrNames = model.columns.map(column => column.name);
       const result = await findOrCreateDataContext(attrNames, attrMap, setGlobalState);
@@ -265,7 +296,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
         draft.isPaused = false;
         draft.isRunning = true;
       });
-      const newAnimationSteps = createAnimationSteps(model, resultsForAnimation, results, onEndRun);
+      const newAnimationSteps = createAnimationSteps(model, animationResults, results, replacement, onEndRun);
       startAnimation(newAnimationSteps);
     } catch (e) {
       stopAnimation();

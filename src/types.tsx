@@ -69,6 +69,8 @@ export type DeviceAnimationStep = {
   kind: "animateDevice";
   deviceId: Id;
   selectedVariable: string;
+  selectedVariableIndex: number;
+  hideAfter: boolean;
 };
 
 export type ArrowAnimationStep = {
@@ -129,12 +131,14 @@ export interface IGlobalState {
   speed: Speed;
 }
 
-export type ISampleResultsForAnimation = {
-  sampleNumber: number,
-  results: ISampleResults
+export type ISampleAnimationResults = {
+  sampleNumber: number;
+  results: ISampleResults;
+  resultsVariableIndex: ISampleVariableIndexes;
 };
-export type IExperimentResultsForAnimation = ISampleResultsForAnimation[][];
+export type IExperimentAnimationResults = ISampleAnimationResults[][];
 export type ISampleResults = {[key: string]: any};
+export type ISampleVariableIndexes = Record<Id, number>;
 export type IExperimentResults = ISampleResults[];
 
 export interface ICollection {
@@ -313,3 +317,6 @@ export interface IGetNewPcts {
   variables: IVariables;
   updateNext?: boolean;
 }
+
+export type AvailableDeviceVariables = Record<Id, IVariables>;
+export type AvailableDeviceVariableIndexes = Record<Id, number[]>;
