@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect } from "react";
 import { Updater, useImmer } from "use-immer";
 import { AttrMap, IGlobalState } from "../types";
-import { addDataContextChangeListener, codapInterface, initializePlugin } from "@concord-consortium/codap-plugin-api";
+import { addDataContextChangeListener, codapInterface, IInitializePlugin, initializePlugin } from "@concord-consortium/codap-plugin-api";
 import { createDefaultDevice } from "../models/device-model";
 import { kDataContextName, kInitialDimensions, kPluginName, kVersion } from "../contants";
 import { createId } from "../utils/id";
@@ -46,7 +46,12 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
 
   useEffect(() => {
     const init = async () => {
-      const interactiveState = await initializePlugin({pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions});
+      const options: IInitializePlugin = {pluginName: kPluginName, version: kVersion, dimensions: kInitialDimensions};
+      // In the current @concord-consortium/codap-plugin-api library dimensions are required but are optional in the underlying CODAP api.
+      // Sending the dimensions overrides any saved dimensions in a document so we are not going to send them.
+      // Using the delete, after casting to any, lets us typecheck the options instead of casting the options to any at the initializePlugin call.
+      delete (options as any).dimensions;
+      const interactiveState = await initializePlugin(options);
       if (Object.keys(interactiveState || {}).length > 0) {
         setGlobalState(draft => {
           return interactiveState;
