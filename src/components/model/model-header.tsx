@@ -100,7 +100,7 @@ export const ModelHeader = (props: IProps) => {
               <option className={`select-repeat-option`} value="repeat">Repeat</option>
             </select>
           </div>
-          <input disabled={isRunning} type="text" id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
+          <input disabled={isRunning} type="number" min={1} id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
           <span>{`${repeat ? "selecting" : ""} items`}</span>
           <div className="select-replacement-dropdown">
             <select disabled={isRunning || !allowReplacement} value={replacement ? "with" : "without"} onChange={handleSelectReplacement}>
@@ -120,7 +120,7 @@ export const ModelHeader = (props: IProps) => {
       </div>
       <div className="collect-controls">
         <span>Collect</span>
-        <input disabled={isRunning} type="text" id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
+        <input disabled={isRunning} type="number" min={1} id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
         <span>samples</span>
       </div>
     </div>
