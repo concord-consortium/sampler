@@ -7,7 +7,6 @@ import { deleteAll } from "../../helpers/codap-helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
 
 interface IModelHeader {
-  modelHeaderStyle: React.CSSProperties;
   showHelp: boolean;
   isWide: boolean;
   setShowHelp: (showHelp: boolean) => void;
@@ -15,7 +14,7 @@ interface IModelHeader {
 }
 
 export const ModelHeader = (props: IModelHeader) => {
-  const { modelHeaderStyle, showHelp, setShowHelp, isWide, handleOpenHelp } = props;
+  const { showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap } = globalState;
   const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
@@ -82,7 +81,7 @@ export const ModelHeader = (props: IModelHeader) => {
   };
 
   return (
-    <div className="model-header" style={modelHeaderStyle}>
+    <div className="model-header">
       <div className="model-controls">
         <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? (isPaused ? "START" : "PAUSE") : "START"}</button>
         <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>STOP</button>
