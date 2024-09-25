@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect } from "react";
-import { Updater, useImmer } from "use-immer";
-import { AttrMap, IGlobalState } from "../types";
+import { useImmer } from "use-immer";
+import { AttrMap, IGlobalState, IGlobalStateContext } from "../types";
 import { addDataContextChangeListener, codapInterface, IInitializePlugin, initializePlugin } from "@concord-consortium/codap-plugin-api";
 import { createDefaultDevice } from "../models/device-model";
 import { kDataContextName, kInitialDimensions, kPluginName, kVersion } from "../contants";
@@ -12,7 +12,6 @@ const defaultAttrMap: AttrMap = {
   sample_size: {codapID: null, name: "sample size"},
   sample: {codapID: null, name: "sample"},
 };
-
 
 export const getDefaultState = (): IGlobalState => {
   return {
@@ -35,11 +34,6 @@ export const getDefaultState = (): IGlobalState => {
     speed: 1
   };
 };
-
-export interface IGlobalStateContext {
-  globalState: IGlobalState;
-  setGlobalState: Updater<IGlobalState>;
-}
 
 export const useGlobalStateContextValue = (): IGlobalStateContext => {
   const [globalState, setGlobalState] = useImmer<IGlobalState>(getDefaultState());

@@ -1,15 +1,16 @@
 import React from "react";
-import { IDataContext, IDevice, IVariables, ViewType, createDefaultDevice } from "../../models/device-model";
+import { createDefaultDevice } from "../../models/device-model";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
 import { getNewColumnName, getNewVariable, getProportionalVars } from "../helpers";
 import { createNewAttribute } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../contants";
 import { createId } from "../../utils/id";
+import { IDataContext, IDevice, IVariables, ViewType } from "../../types";
 
 import "./device-footer.scss";
 
-interface IDeviceFooter {
+interface IProps {
   device: IDevice;
   columnIndex: number;
   dataContexts: IDataContext[];
@@ -19,7 +20,7 @@ interface IDeviceFooter {
   handleSpecifyVariables: () => void;
 }
 
-export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, dataContexts}: IDeviceFooter) => {
+export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, dataContexts}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { model, selectedDeviceId, isRunning } = globalState;
   const { viewType } = device;

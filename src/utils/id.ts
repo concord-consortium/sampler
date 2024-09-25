@@ -1,4 +1,4 @@
-export type Id = string;
+import { Id } from "../types";
 
 const idChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 export const createId = (): Id => {

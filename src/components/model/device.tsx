@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
-import { ClippingDef, IDataContext, IDevice, IItem, IItems, IVariables, ViewType } from "../../models/device-model";
 import { Mixer } from "./device-views/mixer";
 import { Spinner } from "./device-views/spinner/spinner";
 import { Collector } from "./device-views/collector";
@@ -16,6 +15,7 @@ import { SetVariableSeriesModal } from "./variable-setting-modal";
 import DeleteIcon from "../../assets/delete-icon.svg";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { parseSpecifier } from "../../utils/utils";
+import { IDevice, IDataContext, ClippingDef, ViewType, IItems, IItem, IVariables } from "../../types";
 
 import "./device.scss";
 

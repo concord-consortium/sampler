@@ -1,37 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { kBorder, kCapHeight, kMixerContainerHeight, kMixerContainerWidth, kContainerX, kContainerY, kContainerCollisionBottom, kContainerCollisionLeft, kContainerCollisionRight, kContainerCollisionTop } from "./constants";
-import { ClippingDef, ICollectorItem } from "../../../../models/device-model";
 import { Ball } from "./ball";
 import { useAnimationContext } from "../../../../hooks/useAnimation";
-import { IAnimationStepSettings, AnimationStep } from "../../../../types";
+import { IAnimationStepSettings, AnimationStep, ClippingDef, ICollectorItem, IBallPosition, IFinalPosition, IFinalPositionInput } from "../../../../types";
 
-interface IBalls {
+interface IProps {
   ballsArray: Array<string>;
   deviceId: string;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleSetEditingVarName:  (variableIdx: number) => void;
-}
-
-interface IBallPosition {
-  x: number;
-  y: number;
-  vy: number;
-  vx: number;
-  transform: string;
-  visibility: "visible" | "hidden";
-}
-
-interface IFinalPosition {
-  x: number;
-  y: number;
-  vy: number;
-  vx: number;
-  radius: number;
-}
-interface IFinalPositionInput extends IFinalPosition {
-  dx: number;
-  dy: number;
 }
 
 const animateToExitT = 0.5;
@@ -140,7 +118,7 @@ const getCycledPositions = (positions: IBallPosition[], selectedVariableIdx: num
   });
 };
 
-export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IBalls) => {
+export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IProps) => {
   const { registerAnimationCallback } = useAnimationContext();
   const [ballPositions, setBallPositions] = useState<Array<IBallPosition>>([]);
 

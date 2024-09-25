@@ -1,10 +1,10 @@
 import React from "react";
 
-interface IHelpModal {
+interface IProps {
   setShowHelp: (show: boolean) => void;
 }
 
-export const HelpModal = ({setShowHelp}: IHelpModal) => {
+export const HelpModal = ({setShowHelp}: IProps) => {
   const handleCloseModal = () => {
     setShowHelp(false);
   };

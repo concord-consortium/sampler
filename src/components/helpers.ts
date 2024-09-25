@@ -1,5 +1,4 @@
-import { IVariables } from "../models/device-model";
-import { IColumn } from "../models/model-model";
+import { IVariables, IColumn, IGetNewPcts } from "../types";
 
 export function calcPct (a: number, b: number) {
   return Math.round(100 * (a / b));
@@ -122,14 +121,6 @@ export const getFirstAndLastIndexOfVar = (variable: string, variables: IVariable
   const lastIndexOfVar = (variables.filter(v => v === variable).length - 1) + firstIndexOfVar;
   return {firstIndexOfVar, lastIndexOfVar};
 };
-
-interface IGetNewPcts {
-  newPct: number;
-  oldPct: number;
-  selectedVar: string;
-  variables: IVariables;
-  updateNext?: boolean;
-}
 
 export const getNewPcts = ({newPct, oldPct, selectedVar, variables, updateNext}: IGetNewPcts) => {
   const diffOfPcts = newPct - oldPct;

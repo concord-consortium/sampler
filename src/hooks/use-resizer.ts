@@ -1,6 +1,5 @@
 import { useEffect } from "react";
-
-export type ResizerListener = () => void;
+import { ResizerListener } from "../types";
 
 const listeners: ResizerListener[] = [];
 

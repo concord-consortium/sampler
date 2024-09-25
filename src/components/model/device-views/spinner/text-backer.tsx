@@ -1,17 +1,11 @@
 import React from "react";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
+import { ITextBackerPos } from "../../../../types";
 
-interface ITextBacker {
+interface IProps {
   pos?: ITextBackerPos;
   onClick: () => void;
   isDragging: boolean;
-}
-
-export interface ITextBackerPos {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
 }
 
 export const updateTextBackerRefFn = (setTextBackerPos: (value: React.SetStateAction<ITextBackerPos | undefined>) => void) => (svgText: SVGTextElement | null) => {
@@ -28,7 +22,7 @@ export const updateTextBackerRefFn = (setTextBackerPos: (value: React.SetStateAc
   });
 };
 
-export const TextBacker = ({pos, onClick, isDragging}: ITextBacker) => {
+export const TextBacker = ({pos, onClick, isDragging}: IProps) => {
   const { globalState: { isRunning } } = useGlobalStateContext();
 
   if (!pos) {

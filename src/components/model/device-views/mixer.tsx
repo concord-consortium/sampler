@@ -1,16 +1,16 @@
 import React from "react";
-import { ClippingDef, IDevice } from "../../../models/device-model";
 import { MixerFrame } from "./shared/mixer-frame";
 import { Balls } from "./shared/balls";
+import { ClippingDef, IDevice } from "../../../types";
 
-interface IMixer {
+interface IProps {
   device: IDevice;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleSetEditingVarName: (variableIdx: number) => void;
 }
 
-export const Mixer = ({device, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IMixer) => {
+export const Mixer = ({device, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IProps) => {
   const { variables, id: deviceId } = device;
   return (
     <>

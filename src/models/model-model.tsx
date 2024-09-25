@@ -1,34 +1,4 @@
-import { Id } from "../utils/id";
-import { IDevice } from "./device-model";
-
-export interface IColumn {
-  name: string;
-  id: Id;
-  devices: IDevice[];
-}
-
-export interface IModel {
-  columns: IColumn[];
-  experimentNum: number;
-  mostRecentRunNumber: number;  // Gets reset between experiments, but if the parameters haven't changed we keep incrementing
-  runNumberSentInCurrentSequence: number; // This gets reset when user presses start regardless of whether params have changed
-}
-
-export interface IExperiment {
-  experimentAttr: number;
-  descriptionAttr: string;
-  sampleSizeAttr: number;
-}
-
-export interface ISample {
-  [sampleAttr: string]: number;
-}
-// as model runs, new key-value pairs are added to the result object
-export interface IRunResult {
-  [attr: string]: string | number;
-}
-
-export type DeviceMap = Record<Id,IDevice>;
+import { IModel, IDevice, Id, DeviceMap } from "../types";
 
 export const getNumDevices = (model: IModel): number => {
   return getDevices(model).length;

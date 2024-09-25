@@ -1,10 +1,10 @@
 import React from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { Device } from "./device";
-import { IColumn, getSourceDevices } from "../../models/model-model";
+import { getSourceDevices } from "../../models/model-model";
 import { Arrow } from "./arrow";
 import { ColumnHeader } from "./column-header";
-
+import { IColumn } from "../../types";
 
 import "./model-component.scss";
 

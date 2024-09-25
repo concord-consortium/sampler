@@ -6,14 +6,14 @@ import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { deleteAll } from "../../helpers/codap-helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
 
-interface IModelHeader {
+interface IProps {
   showHelp: boolean;
   isWide: boolean;
   setShowHelp: (showHelp: boolean) => void;
   handleOpenHelp: () => void;
 }
 
-export const ModelHeader = (props: IModelHeader) => {
+export const ModelHeader = (props: IProps) => {
   const { showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap } = globalState;

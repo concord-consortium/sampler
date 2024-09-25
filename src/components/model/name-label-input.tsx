@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ViewType } from "../../models/device-model";
+import { ViewType } from "../../types";
 
-interface IVariableLabelInput {
+interface IProps {
   variableIdx: number;
   viewType: ViewType;
   variableName: string;
@@ -11,7 +11,7 @@ interface IVariableLabelInput {
 }
 
 export const NameLabelInput = ({variableIdx, variableName,
-  handleEditVariable, onBlur, viewType, deviceId}: IVariableLabelInput) => {
+  handleEditVariable, onBlur, viewType, deviceId}: IProps) => {
   const [text, setText] = useState<string>(variableName);
   const ref = useRef<HTMLInputElement>(null);
 
