@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { IDevice } from "../../models/device-model";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { validateFormula } from "../../utils/utils";
+import { IDevice } from "../../types";
 
 interface IProps {
   source: IDevice;

@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ClippingDef, IDevice } from "../../../../models/device-model";
 import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getTextShift, getVariableColor } from "../shared/helpers";
 import { Wedge } from "./wedge";
 import { SeparatorLine } from "./separator-lines";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
-import { ITextBackerPos, TextBacker, updateTextBackerRefFn } from "./text-backer";
-import { IVariableLocation, Needle } from "./needle";
+import { TextBacker, updateTextBackerRefFn } from "./text-backer";
+import { Needle } from "./needle";
+import { ClippingDef, IDevice, ITextBackerPos, IVariableLocation } from "../../../../types";
 
-interface ISpinner {
+interface IProps {
   device: IDevice;
   selectedVariableIdx: number|null;
   isDragging: boolean;
@@ -21,7 +21,7 @@ interface ISpinner {
 }
 
 export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelectedVariable, handleDeleteWedge,
-  handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: ISpinner) => {
+  handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: IProps) => {
   const { globalState: { isRunning } } = useGlobalStateContext();
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
   const { variables, id } = device;

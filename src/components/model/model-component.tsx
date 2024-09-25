@@ -4,9 +4,9 @@ import { AnimationContext, useAnimationContextValue } from "../../hooks/useAnima
 import { useResizer } from "../../hooks/use-resizer";
 import { Column } from "./column";
 import { ModelHeader } from "./model-header";
+import { Outputs } from "./outputs";
 
 import "./model-component.scss";
-import { Outputs } from "./outputs";
 
 export const ModelTab = () => {
   const { globalState } = useGlobalStateContext();

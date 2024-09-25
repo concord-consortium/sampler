@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { ClippingDef, IDevice } from "../../../models/device-model";
 import { MixerFrame } from "./shared/mixer-frame";
 import { Balls } from "./shared/balls";
+import { IDevice, ClippingDef } from "../../../types";
 
-interface ICollector {
+interface IProps {
   device: IDevice;
   handleAddDefs: (def: ClippingDef) => void
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleSetEditingVarName: (variableIdx: number) => void;
 }
 
-export const Collector = ({device, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: ICollector) => {
+export const Collector = ({device, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IProps) => {
   const [ballsArray, setBallsArray] = useState<Array<string>>([]);
   const { collectorVariables, id: deviceId } = device;
 

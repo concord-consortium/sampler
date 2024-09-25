@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getCoordinatesForPercent, getTextShift, getVariableColor } from "../shared/helpers";
-import { ClippingDef } from "../../../../models/device-model";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
-import { ITextBackerPos, TextBacker, updateTextBackerRefFn } from "./text-backer";
+import { TextBacker, updateTextBackerRefFn } from "./text-backer";
+import { ClippingDef, ITextBackerPos } from "../../../../types";
 
-interface IWedge {
+interface IProps {
   percent: number;
   lastPercent: number;
   variableName: string;
@@ -45,10 +45,9 @@ const getEllipseCoords = (percent: number) => {
   return [x, y];
 };
 
-
 export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize, numUniqueVariables,
   varArrayIdx, selectedWedge, isLastVariable, isDragging, deviceId, handleSetSelectedVariable, handleDeleteWedge,
-  handleSetEditingPct, handleSetEditingVarName, handleAddDefs}: IWedge) => {
+  handleSetEditingPct, handleSetEditingVarName, handleAddDefs}: IProps) => {
   const { globalState: { isRunning } } = useGlobalStateContext();
   const [wedgePath, setWedgePath] = useState("");
   const [wedgeColor, setWedgeColor] = useState(selectedWedge === variableName ? kDarkTeal : "");

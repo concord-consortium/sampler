@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
-import { IColumn } from "../../models/model-model";
 import { getAttribute, updateAttribute } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../contants";
 import { getNewColumnName } from "../helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
-import { AnimationStep, IAnimationStepSettings } from "../../types";
+import { AnimationStep, IAnimationStepSettings, IColumn } from "../../types";
 
 interface IProps {
   column: IColumn;

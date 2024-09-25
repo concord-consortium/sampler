@@ -3,7 +3,7 @@ import { kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getCoordinatesForPercent } from "../shared/helpers";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
 
-interface IWedge {
+interface IProps {
   percent: number;
   lastPercent: number;
   varArrayIdx: number;
@@ -12,7 +12,7 @@ interface IWedge {
   handleStartDrag?: (originPt: {x: number; y: number;}) => void;
 }
 
-export const SeparatorLine = ({percent, lastPercent, varArrayIdx, isDragging, handleSetSelectedVariable, handleStartDrag}: IWedge) => {
+export const SeparatorLine = ({percent, lastPercent, varArrayIdx, isDragging, handleSetSelectedVariable, handleStartDrag}: IProps) => {
   const { globalState: { isRunning } } = useGlobalStateContext();
   const [edgePath, setEdgePath] = useState("");
   const [style, setStyle] = useState<React.CSSProperties|undefined>(undefined);

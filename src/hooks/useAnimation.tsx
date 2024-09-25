@@ -1,28 +1,12 @@
 import { createContext, useContext, useEffect, useRef } from "react";
-import { AnimationCallback, AnimationStep, IAnimationStepSettings, IExperimentResults, IExperimentResultsForAnimation, ISampleResults, RegisterAnimationCallbackFn, Speed } from "../types";
+import { AnimationCallback, AnimationStep, IAnimationContext, IAnimationRuntime, IAnimationStepSettings, IExperimentResults, IExperimentResultsForAnimation, IModel, ISampleResults, Speed } from "../types";
 import { createItems, selectCases } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../contants";
 import { useGlobalStateContext } from "./useGlobalState";
 import { evaluateResult, findOrCreateDataContext } from "../helpers/codap-helpers";
 import { getRandomElement } from "../components/helpers";
-import { getDeviceById, IModel } from "../models/model-model";
+import { getDeviceById } from "../models/model-model";
 import { extractVariablesFromFormula, formatFormula } from "../utils/utils";
-
-export interface IAnimationContext {
-  handleStartRun: () => Promise<void>
-  handleTogglePauseRun: (pause: boolean) => Promise<void>
-  handleStopRun: () => Promise<void>
-  registerAnimationCallback: RegisterAnimationCallbackFn
-}
-
-interface IAnimationRuntime {
-  frame: number,
-  steps: AnimationStep[],
-  stepIndex: number,
-  elapsed?: number,
-  lastTimestamp?: number,
-  mode: "running"|"paused"|"stopped"
-}
 
 const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
   "animateDevice": 1200,

@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
-import { IDevice } from "../../models/device-model";
 import { useResizer } from "../../hooks/use-resizer";
 import { FormulaEditor } from "./formula-editor";
 import { useAnimationContext } from "../../hooks/useAnimation";
-import { AnimationStep, IAnimationStepSettings } from "../../types";
+import { AnimationStep, IAnimationStepSettings, IDevice, IPoint } from "../../types";
 
 import "./arrow.scss";
-
-interface IPoint {
-  x: number
-  y: number;
-}
 
 interface IProps {
   source: IDevice

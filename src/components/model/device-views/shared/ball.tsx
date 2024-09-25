@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { getTextShift, getVariableColor } from "./helpers";
-import { ClippingDef } from "../../../../models/device-model";
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
+import { ClippingDef } from "../../../../types";
 
-export interface IBall {
+interface IProps {
   x: number;
   y: number;
   transform: string;
@@ -19,7 +19,7 @@ export interface IBall {
 }
 
 export const Ball = ({ x, y, transform, radius, text, fontSize,
-  handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i, deviceId, visibility }: IBall) => {
+  handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, i, deviceId, visibility }: IProps) => {
   const { globalState: { isRunning } } = useGlobalStateContext();
 
   useEffect(() => {

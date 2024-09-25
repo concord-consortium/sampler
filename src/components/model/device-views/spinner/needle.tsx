@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { kSpinnerRadius, kSpinnerX, kSpinnerY } from "../shared/constants";
 import { getCoordinatesForPercent } from "../shared/helpers";
 import { useAnimationContext } from "../../../../hooks/useAnimation";
-import { AnimationStep, IAnimationStepSettings } from "../../../../types";
+import { AnimationStep, IAnimationStepSettings, IVariableLocation } from "../../../../types";
 
 const needleNorthLength = kSpinnerRadius * 2/3;
 const needleSouthLength = kSpinnerRadius / 5;
@@ -16,11 +16,6 @@ const path = `M ${n.join(" ")} L ${e.join(" ")} L ${so.join(" ")} L ${w.join(" "
 interface IProps {
   deviceId: string;
   variableLocations: Record<string,IVariableLocation>;
-}
-
-export interface IVariableLocation {
-  lastPercent: number;
-  currPercent: number;
 }
 
 export const Needle = ({deviceId, variableLocations}: IProps) => {

@@ -1,6 +1,6 @@
-import { IDataContext } from "./models/device-model";
-import { IModel } from "./models/model-model";
-import { Id } from "./utils/id";
+import { Updater } from "use-immer";
+
+export type Id = string;
 
 const navTabs = ["Model", "Measures", "About"] as const;
 type NavTab = typeof navTabs[number];
@@ -166,4 +166,150 @@ export interface IAttribute {
   renameable?: boolean;
   deleteable?: boolean;
   hidden?: boolean;
+}
+
+export interface IVariableLocation {
+  lastPercent: number;
+  currPercent: number;
+}
+
+export interface ITextBackerPos {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface IAnimationContext {
+  handleStartRun: () => Promise<void>
+  handleTogglePauseRun: (pause: boolean) => Promise<void>
+  handleStopRun: () => Promise<void>
+  registerAnimationCallback: RegisterAnimationCallbackFn
+}
+
+export interface IAnimationRuntime {
+  frame: number,
+  steps: AnimationStep[],
+  stepIndex: number,
+  elapsed?: number,
+  lastTimestamp?: number,
+  mode: "running"|"paused"|"stopped"
+}
+
+export enum ViewType {
+  Mixer = "mixer",
+  Spinner = "spinner",
+  Collector = "collector"
+}
+
+export type View = ViewType.Mixer | ViewType.Spinner | ViewType.Collector;
+
+export interface IDevice {
+  id: Id;
+  viewType: View;
+  variables: IVariables;
+  collectorVariables: ICollectorVariables;
+  formulas: Record<string, string>;
+}
+
+// a map of variables to their percentages
+// i.e.: { a: 50, b: 50 }
+// the view (mixer / spinner) decides how to best represent these percentages
+export type IVariables = Array<string>;
+// a map of attributes to their values
+// { "Mammal": "Dog", "Color": "Brown"}
+export interface ICollectorItem {
+  [attr: string]: string | number;
+}
+
+// an array of items that come from a linked dataset
+// i.e.: [ { "Mammal": "Dog", "Color": "Brown"}, { "Mammal": "Cat", "Color": "Black"} ]
+// the collector view will represent the values of the first key-value pair of each object in the array
+// i.e., one ball for "Dog", one ball for "Cat"
+// if "Dog" is selected by the collector, the entire item is sent to CODAP
+export type ICollectorVariables = Array<ICollectorItem>;
+export interface IDataContext {
+  guid: number;
+  id: number;
+  name: string;
+  title: string;
+}
+
+export interface IItem {
+  id: number;
+  values: ICollectorItem;
+}
+
+export type IItems = Array<IItem>;
+
+export type ClippingDef = { id: string, element: JSX.Element };
+
+export interface IColumn {
+  name: string;
+  id: Id;
+  devices: IDevice[];
+}
+
+export interface IModel {
+  columns: IColumn[];
+  experimentNum: number;
+  mostRecentRunNumber: number;  // Gets reset between experiments, but if the parameters haven't changed we keep incrementing
+  runNumberSentInCurrentSequence: number; // This gets reset when user presses start regardless of whether params have changed
+}
+
+export interface IExperiment {
+  experimentAttr: number;
+  descriptionAttr: string;
+  sampleSizeAttr: number;
+}
+
+export interface ISample {
+  [sampleAttr: string]: number;
+}
+// as model runs, new key-value pairs are added to the result object
+export interface IRunResult {
+  [attr: string]: string | number;
+}
+
+export type DeviceMap = Record<Id,IDevice>;
+
+export interface IGlobalStateContext {
+  globalState: IGlobalState;
+  setGlobalState: Updater<IGlobalState>;
+}
+
+export type ResizerListener = () => void;
+
+export interface IBallPosition {
+  x: number;
+  y: number;
+  vy: number;
+  vx: number;
+  transform: string;
+  visibility: "visible" | "hidden";
+}
+
+export interface IFinalPosition {
+  x: number;
+  y: number;
+  vy: number;
+  vx: number;
+  radius: number;
+}
+export interface IFinalPositionInput extends IFinalPosition {
+  dx: number;
+  dy: number;
+}
+
+export interface IPoint {
+  x: number
+  y: number;
+}
+
+export interface IGetNewPcts {
+  newPct: number;
+  oldPct: number;
+  selectedVar: string;
+  variables: IVariables;
+  updateNext?: boolean;
 }

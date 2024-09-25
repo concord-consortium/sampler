@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-interface IVariableLabelInput {
+interface IProps {
   percent: string;
   variableIdx: number;
   variableName: string;
@@ -10,7 +10,7 @@ interface IVariableLabelInput {
 }
 
 export const PctLabelInput = ({percent, variableIdx, variableName, deviceId,
-  handlePctChange, onBlur}: IVariableLabelInput) => {
+  handlePctChange, onBlur}: IProps) => {
   const [text, setText] = useState<string>(percent);
   const ref = useRef<HTMLInputElement>(null);
 
