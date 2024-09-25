@@ -3,6 +3,11 @@
   background-color: white;
   color: #444;
   font-size: 11px;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
 
   button {
     &:hover:not(:disabled):not(.disabled) {

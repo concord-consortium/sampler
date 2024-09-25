@@ -8,9 +8,6 @@ import { ModelHeader } from "./model-header";
 import "./model-component.scss";
 import { Outputs } from "./outputs";
 
-const kMinColumnWidth = 220; // device + gap width
-const kSelectedSamplesDivWidth = 65; //includes margin-right
-
 export const ModelTab = () => {
   const { globalState } = useGlobalStateContext();
   const { model } = globalState;
@@ -31,14 +28,12 @@ export const ModelTab = () => {
     setShowHelp(!showHelp);
   };
 
-  const modelHeaderStyle = {width: (model.columns.length * kMinColumnWidth) + kSelectedSamplesDivWidth};
   const animationContextValue = useAnimationContextValue();
 
   return (
     <AnimationContext.Provider value={animationContextValue}>
       <div className="model-tab">
         <ModelHeader
-          modelHeaderStyle={modelHeaderStyle}
           showHelp={showHelp}
           setShowHelp={setShowHelp}
           isWide={isWide}
