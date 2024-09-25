@@ -81,3 +81,4 @@ const getMatchingDevices = (model: IModel, device: IDevice, columnDelta: number)
 export const getDeviceById = (model: IModel, id: Id) => {
   return getDevices(model).find(device => device.id === id) as IDevice;
 };
+

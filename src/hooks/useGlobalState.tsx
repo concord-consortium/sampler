@@ -20,7 +20,7 @@ export const getDefaultState = (): IGlobalState => {
     selectedTab: "Model",
     selectedDeviceId: undefined,
     repeat: false,
-    replacement: false,
+    replacement: true,
     sampleSize: "5",
     numSamples: "3",
     createNewExperiment: true,

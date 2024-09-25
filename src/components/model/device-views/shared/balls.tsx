@@ -121,6 +121,7 @@ const getCycledPositions = (positions: IBallPosition[], selectedVariableIdx: num
 export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IProps) => {
   const { registerAnimationCallback } = useAnimationContext();
   const [ballPositions, setBallPositions] = useState<Array<IBallPosition>>([]);
+  const [hiddenBallIndexes, setHiddenBallIndexes] = useState<number[]>([]);
 
   // keep these are refs so the values aren't closed over in the animation function
   const ballsArrayRef = useRef(ballsArray);
@@ -144,21 +145,26 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
       setBallPositions(newPositions);
     };
 
-    if (kind === "modelChanged" || kind === "startExperiment") {
+    if (kind === "modelChanged" || kind === "startExperiment" || (kind === "endExperiment")) {
       initialPositionsRef.current = getInitialPositions(ballsArrayRef.current.length, radiusRef.current);
       updateBallPositions(initialPositionsRef.current);
-    } else if ((kind === "startSelectItem") || (kind === "endSelectItem") || (kind === "endExperiment")) {
+      setHiddenBallIndexes([]);
+      selectedVariableIndexRef.current = -1;
+    } else if ((kind === "startSample") || (kind === "endSample")) {
+      setHiddenBallIndexes([]);
+    } else if ((kind === "startSelectItem") || (kind === "endSelectItem")) {
       selectedVariableIndexRef.current = -1;
       updateBallPositions(initialPositionsRef.current);
     } else if ((kind === "animateDevice") && (step.deviceId === deviceId)) {
       // pick the ball to animate to the exit
       if (selectedVariableIndexRef.current === -1) {
-        const matchingIndices = ballsArray.map((ball, index) => ball === step.selectedVariable ? index : -1).filter(index => index !== -1);
-        const randomIndex = Math.floor(Math.random() * matchingIndices.length);
-        selectedVariableIndexRef.current = matchingIndices[randomIndex];
+        selectedVariableIndexRef.current = step.selectedVariableIndex;
       }
 
       if (t === 1) {
+        if (step.hideAfter) {
+          setHiddenBallIndexes(prev => [...prev, step.selectedVariableIndex]);
+        }
         updateBallPositions(initialPositionsRef.current);
       } else if (numBallsRef.current < 100) {
         updateBallPositions(animatePositions(currentPositionsRef.current, speed, t, radiusRef.current, selectedVariableIndexRef.current));
@@ -195,7 +201,13 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
   return (
     <>
       { ballPositions.map((position, i) => {
-        const {x, y, transform, visibility} = position;
+        const {x, y, transform} = position;
+
+        let {visibility} = position;
+        if (hiddenBallIndexes.indexOf(i) !== -1) {
+          visibility = "hidden";
+        }
+
         const text = getLabelForVariable(ballsArray[i]);
         return (
           <Ball
