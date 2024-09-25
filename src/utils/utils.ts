@@ -1,4 +1,4 @@
-import { parseExpression, stringify, tokenize } from "./formula-parser";
+import { ExpressionNode, parseExpression, stringify, tokenize } from "./formula-parser";
 
 function bothStringsWithSameCaps(s1: string, s2: string) {
   if (typeof s1 !== "string" || typeof s2 !== "string") return false;
@@ -74,6 +74,12 @@ export function parseSpecifier(spec: string, rangeWord: string) {
   return arr.length? arr : null;
 }
 
+export const parseFormula = (expression: string, columnName: string): ExpressionNode => {
+  const cleanedExpression = expression.replace(/"/g, '').replace(/'/g, '');
+  const tokens = tokenize(cleanedExpression);
+  return parseExpression(tokens, { value: 0, columnName, replacements: [] });
+};
+
 export const formatFormula = (expression: string, columnName: string, replacements: string[]): string => {
   const cleanedExpression = expression.replace(/"/g, '').replace(/'/g, '');
   const tokens = tokenize(cleanedExpression);
@@ -94,10 +100,3 @@ export const validateFormula = (expression: string): boolean => {
     return false;
   }
 };
-
-export const extractVariablesFromFormula = (formula: string): string[] => {
-  const variablePattern = /[a-zA-Z_]\w*/g;
-  const variables = formula.match(variablePattern);
-  return variables ? Array.from(new Set(variables)) : [];
-};
-

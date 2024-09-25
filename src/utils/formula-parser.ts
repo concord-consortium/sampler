@@ -1,4 +1,4 @@
-type ExpressionNode =
+export type ExpressionNode =
   | BinaryExpression
   | UnaryExpression
   | Literal
@@ -290,4 +290,34 @@ export const stringify = (node: ExpressionNode, replace: string[]): string => {
     default:
       throw new Error("Unknown node type");
   }
+};
+
+const extractVariables = (node: ExpressionNode, variableSet: Set<string>) => {
+  switch (node.type) {
+    case "BinaryExpression":
+      extractVariables(node.left, variableSet);
+      extractVariables(node.right, variableSet);
+      break;
+    case "UnaryExpression":
+      extractVariables(node.argument, variableSet);
+      break;
+    case "Literal":
+      // no-op
+      break;
+    case "Variable":
+      variableSet.add(node.name);
+      break;
+    case "FunctionCall":
+      node.arguments.forEach(arg => extractVariables(arg, variableSet));
+      break;
+    case "GroupingExpression":
+      extractVariables(node.expression, variableSet);
+      break;
+  }
+};
+
+export const getVariables = (parsedFormula: ExpressionNode): string[] => {
+  const variableSet = new Set<string>();
+  extractVariables(parsedFormula, variableSet);
+  return Array.from(variableSet);
 };
