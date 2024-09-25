@@ -1,15 +1,19 @@
 .measures-tab {
   padding: 20px;
+  text-align: left;
+  font-size: 1rem;
 
-  #select-measure-container, #measure-name-container {
+  #measures-instructions {
+    margin-bottom: 30px;
+  }
+
+  #select-measure-container, #measure-name-container, #define-measure-container {
     display: flex;
     align-items: center;
-    margin-top: 20px;
+    margin-top: 10px;
     .select-measure-dropdown {
       position: relative;
-      width: 160px;
-      height: 22px;
-      margin: 0 5px 0 0;
+      width: 100%;
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -19,7 +23,7 @@
         -webkit-appearance: none;
         width: 100%;
         height: 100%;
-        padding: 1px 8px 1px 8px;
+        padding: 5px;
         border-radius: 1.5px;
         border: solid 1px #008cba;
         background-color: #dbf6ff;
@@ -34,26 +38,33 @@
     }
   }
 
-  #select-measure {
-    padding: 1px 2px;
+  #select-measure-label, #measure-name-label, #define-measure-label {
+    min-width: 140px;
   }
 
-  #measure-name-container, #measure-formulas {
-    margin-top: 15px;
+  #select-measure {
+    padding: 3px 5px;
+    width: 100%;
   }
 
   #measure-name {
-    width: 123px;
+    width: 100%;
+    padding: 5px;
   }
 
   #measure-formulas {
     display: flex;
     flex-direction: row;
     align-items: center;
+    margin-left: 10px;
+    font-family: monospace;
+
     .formula {
       display: flex;
       flex-direction: row;
       align-items: center;
+      font-size: 12px;
+
       &.hidden {
         display: none;
       }
@@ -64,9 +75,8 @@
 
         .formula-dropdown {
           position: relative;
-          width: 160px;
-          height: 22px;
           margin: 0 5px;
+          padding: 5px;
           display: flex;
           flex-direction: row;
           align-items: center;
@@ -76,7 +86,7 @@
             -webkit-appearance: none;
             width: 100%;
             height: 100%;
-            padding: 1px 8px 1px 8px;
+            padding: 5px;
             border-radius: 1.5px;
             border: solid 1px #008cba;
             background-color: #dbf6ff;
@@ -131,11 +141,10 @@
 
   button#add-measure {
     margin-top: 15px;
-    border-radius: 1.5px;
     color: black;
-    width: 84px;
-    border-radius: 1.5px;
+    padding: 5px 10px;
     border: solid 1px #008cba;
+    border-radius: 1.5px;
     background-color: #dbf6ff;
     cursor: pointer;
     -webkit-transition: background-color 0.4s, color 0.4s;

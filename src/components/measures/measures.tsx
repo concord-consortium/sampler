@@ -1,294 +1,199 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useGlobalStateContext } from "../../hooks/useGlobalState";
+import { addMeasure, hasSamplesCollection } from "../../helpers/codap-helpers";
 
 import "./measures.scss";
 
+type Measure = "default" | "conditional_count" | "sum" | "mean" | "median" | "conditional_percentage";
+
+const getFormula = (measure: Measure, left: string, op: string, right: string) => {
+  switch (measure) {
+    case "sum":
+    case "mean":
+    case "median":
+      return `${measure}(\`${left}\`)`;
+    case "conditional_count":
+      return `count(\`${left}\`${op}'${right}')`;
+    case "conditional_percentage":
+      return `100 * count(\`${left}\`${op} '${right}')/count()`;
+    default:
+      return "";
+  }
+};
+
 export const MeasuresTab = () => {
-  const [selectedMeasure, setSelectedMeasure] = useState("default");
-  const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedMeasure(event.target.value);
+  const { globalState: { model: { columns } } } = useGlobalStateContext();
+  const [selectedMeasure, setSelectedMeasure] = useState<Measure>("default");
+  const [measureName, setMeasureName] = useState("");
+  const [lValue, setLValue] = useState("");
+  const [opValue, setOpValue] = useState("=");
+  const [rValue, setRValue] = useState("");
+  const [hasSamples, setHasSamples] = useState(false);
+
+  useEffect(() => {
+    const checkForSamples = async () => {
+      const result = await hasSamplesCollection();
+      setHasSamples(result);
+    };
+    checkForSamples();
+  }, []);
+
+  const disableAddButton = useMemo(() => {
+    let disable = selectedMeasure === "default" || lValue.length === 0;  // measureName is optional
+    if (!disable) {
+      switch (selectedMeasure) {
+        case "conditional_count":
+        case "conditional_percentage":
+          disable = rValue.length === 0;
+          break;
+      }
+    }
+    return disable;
+  }, [selectedMeasure, lValue, rValue]);
+
+  const handleSelectMeasureChange = (e: React.ChangeEvent<HTMLSelectElement>) => setSelectedMeasure(e.target.value as Measure);
+  const handleChangeMeasureName = (e:  React.ChangeEvent<HTMLInputElement>) => setMeasureName(e.target.value);
+  const handleChangeLValue = (e: React.ChangeEvent<HTMLSelectElement>) => setLValue(e.target.value);
+  const handleChangeOpValue = (e: React.ChangeEvent<HTMLSelectElement>) => setOpValue(e.target.value);
+  const handleChangeRValue = (e: React.ChangeEvent<HTMLSelectElement>) => setRValue(e.target.value);
+
+  const handleAddMeasure = () => {
+    const formula = getFormula(selectedMeasure, lValue, opValue, rValue);
+    addMeasure(measureName, selectedMeasure, formula);
   };
+
+  const renderAttributes = () => {
+    return (
+      <>
+        <option value="">Select an attribute!</option>
+        {columns.map(column => <option key={column.id} value={column.name}>{column.name}</option>)}
+      </>
+    );
+  };
+
+  const renderLValue = () => {
+    return (
+      <div className="formula-dropdown">
+        <select onChange={handleChangeLValue} value={lValue}>
+          {renderAttributes()}
+        </select>
+      </div>
+    );
+  };
+
+  const renderOpValue = () => {
+    return (
+      <div className="formula-operator-dropdown">
+        <select onChange={handleChangeOpValue} value={opValue}>
+          <option value="=">=</option>
+          <option value="≠">≠</option>
+        </select>
+      </div>
+    );
+  };
+
+  const renderRValue = () => {
+    return (
+      <div className="formula-dropdown">
+        <select onChange={handleChangeRValue} value={rValue}>
+        {renderAttributes()}
+        </select>
+      </div>
+    );
+  };
+
+  const renderFormulaInput = () => {
+    switch (selectedMeasure) {
+      case "sum":
+      case "mean":
+      case "median":
+        return (
+          <>
+            <span>{selectedMeasure}</span>
+            <span className="formula-paren">
+              ( {renderLValue()} )
+            </span>
+          </>
+        );
+      case "conditional_count":
+        return (
+          <>
+            <span>count</span>
+            <span className="formula-paren">
+              (
+                {renderLValue()}
+                {renderOpValue()}
+                {renderRValue()}
+              )
+            </span>
+          </>
+        );
+      case "conditional_percentage":
+        return (
+          <>
+            100 * count
+            <span className="formula-paren">
+              (
+                {renderLValue()}
+                {renderOpValue()}
+                {renderRValue()}
+              )
+            </span> / count( )
+          </>
+        );
+    }
+    return null;
+  };
+
+  if (!hasSamples) {
+    return (
+      <div className="measures-tab">
+        <div id="measures-instructions">
+          Please run at least one experiment first.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="measures-tab">
-      <div id="measures-instructions" data-text="DG.plugin.Sampler.measures-instructions">
-        Compute common measures for each sample using the template below.
+      <div id="measures-instructions">
+        Add common measures using formulas for each sample using the form below.
       </div>
       <div id="select-measure-container">
-        <label htmlFor="select-measure" id="select-measure-label" data-text="DG.plugin.Sampler.select-measure">
-          Select a measure:
+        <label htmlFor="select-measure" id="select-measure-label">
+          Select formula:
         </label>
         <div className="select-measure-dropdown">
-          <select id="select-measure" onChange={handleSelectChange}>
-            <option id="default" value="default">Select a formula</option>
-            <option id="conditional_count" value="conditional_count" data-text="DG.plugin.Sampler.conditional_count">Count</option>
-            <option id="sum" value="sum" data-text="DG.plugin.Sampler.sum">Sum</option>
-            <option id="mean" value="mean" data-text="DG.plugin.Sampler.mean">Mean</option>
-            <option id="median" value="median" data-text="DG.plugin.Sampler.median">Median</option>
-            {/* <option id="conditional_sum" value="conditional_sum" data-text="DG.plugin.Sampler.conditional_sum"></option> */}
-            <option id="conditional_percentage" value="conditional_percentage" data-text="DG.plugin.Sampler.conditional_percentage">Conditional percentage</option>
-            {/* <option id="conditional_mean" value="conditional_mean" data-text="DG.plugin.Sampler.conditional_mean"></option> */}
-            {/* <option id="conditional_median" value="conditional_median" data-text="DG.plugin.Sampler.conditional_median"></option> */}
-            {/* <option id="difference_of_means" value="difference_of_means" data-text="DG.plugin.Sampler.difference_of_means"></option> */}
-            {/* <option id="difference_of_medians" value="difference_of_medians" data-text="DG.plugin.Sampler.difference_of_medians"></option> */}
+          <select id="select-measure" onChange={handleSelectMeasureChange} value={selectedMeasure}>
+            <option value="default">Select a formula</option>
+            <option value="conditional_count">Count</option>
+            <option value="sum">Sum</option>
+            <option value="mean">Mean</option>
+            <option value="median">Median</option>
+            <option value="conditional_percentage">Conditional percentage</option>
           </select>
         </div>
       </div>
+      {selectedMeasure !== "default" && (
+        <div id="define-measure-container">
+          <label id="define-measure-label">
+            Customize formula:
+          </label>
+          <div id="measure-formulas">
+            <div className="formula">
+              {renderFormulaInput()}
+            </div>
+          </div>
+        </div>
+      )}
       <div id="measure-name-container">
-        <label htmlFor="measure-name" id="measure-name-label" data-text="DG.plugin.Sampler.measure-name-label">Name the measure: </label>
-        <input type="text" id="measure-name" />
+        <label htmlFor="measure-name" id="measure-name-label">Name the measure: </label>
+        <input type="text" id="measure-name" placeholder="Enter measure name here (optional)" value={measureName} onChange={handleChangeMeasureName} />
       </div>
-      <div id="measure-formulas">
-        <div id="sum-formula-container" className={`formula ${selectedMeasure === "sum" ? "" : "hidden"}`}>
-          <span id="sum-formula" data-text="DG.plugin.Sampler.sum-formula">sum</span>
-          <span className="formula-paren">
-            ( <div className="formula-dropdown">
-                <select id="sum-select-attribute">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-            )
-          </span>
-        </div>
-        <div id="mean-formula-container" className={`formula ${selectedMeasure === "mean" ? "" : "hidden" }`}>
-          <span id="mean-formula" data-text="DG.plugin.Sampler.mean-formula">mean</span>
-          <span className="formula-paren">
-            ( <div className="formula-dropdown">
-                <select id="mean-select-attribute">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-            )
-          </span>
-        </div>
-        <div id="median-formula-container" className={`formula ${selectedMeasure === "median" ? "" : "hidden"}`}>
-          <span id="median-formula" data-text="DG.plugin.Sampler.median-formula">median</span>
-          <span className="formula-paren">
-            ( <div className="formula-dropdown">
-                <select id="median-select-attribute">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>)
-          </span>
-        </div>
-        <div id="conditional_count-formula-container" className={`formula ${selectedMeasure === "conditional_count" ? "" : "hidden"}`}>
-          <span id="conditional_count-formula" data-text="DG.plugin.Sampler.conditional_count-formula">count</span>
-          <span className="formula-paren">
-            ( <div className="formula-dropdown">
-                <select id="conditional_count-select-attribute">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-operator-dropdown">
-                <select id="conditional_count-select-operator">
-                  <option value="=">=</option>
-                  <option value="≠">≠</option>
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="conditional_count-select-value">
-                  <option value="">Select a value</option>
-                </select>
-              </div>
-            )
-          </span>
-        </div>
-        <div id="conditional_sum-formula-container" className={`formula ${selectedMeasure === "conditional_sum" ? "" : "hidden"}`}>
-          <span id="conditional_sum-formula" data-text="DG.plugin.Sampler.conditional_sum-formula">sum</span>
-          <span className="formula-paren">
-            ( <div className="formula-dropdown">
-                <select id="conditional_sum-select-attribute"> ,
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="conditional_sum-select-attribute-2">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-operator-dropdown">
-                <select id="conditional_sum-select-operator">
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="conditional_sum-select-value">
-                  <option value="">Select a value</option>
-                </select>
-              </div>
-            )
-          </span>
-        </div>
-        <div id="conditional_percentage-formula-container" className={`formula ${selectedMeasure === "conditional_percentage" ? "" : "hidden"}`}>
-          <span id="conditional_percentage-formula" data-text="DG.plugin.Sampler.conditional_percentage-formula-pt-1">100 * count</span>
-          <span className="formula-paren">
-            ( <div className="formula-dropdown">
-                <select id="conditional_percentage-select-attribute">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-operator-dropdown">
-                <select id="conditional_percentage-select-operator">
-                  <option value="=">=</option>
-                  <option value="≠">≠</option>
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="conditional_percentage-select-value">
-                  <option value="">Select a value</option>
-                </select>
-              </div>
-            )
-          </span>
-          <span id="conditional_percentage-formula" data-text="DG.plugin.Sampler.conditional_percentage-formula-pt-2"> / count( )</span>
-        </div>
-        <div id="conditional_mean-formula-container" className={`formula ${selectedMeasure === "conditional_mean" ? "" : "hidden"}`}>
-          <span id="conditional_mean-formula" data-text="DG.plugin.Sampler.conditional_mean-formula">mean</span>
-          <span className="formula-paren">
-            ( <div className="formula-dropdown">
-                <select id="conditional_mean-select-attribute"> ,
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="conditional_mean-select-attribute-2">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-operator-dropdown">
-                <select id="conditional_mean-select-operator">
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="conditional_mean-select-value">
-                  <option value="">Select a value</option>
-                </select>
-              </div>
-            )
-          </span>
-        </div>
-        <div id="conditional_median-formula-container" className={`formula ${selectedMeasure === "conditional_median" ? "" : "hidden"}`}>
-          <span id="conditional_median-formula" data-text="DG.plugin.Sampler.conditional_median-formula">median</span>
-          <span className="formula-paren">
-            ( <div className="formula-dropdown">
-                <select id="conditional_median-select-attribute"> ,
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="conditional_median-select-attribute-2">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-operator-dropdown">
-                <select id="conditional_median-select-operator">
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="conditional_median-select-value">
-                  <option value="">Select a value</option>
-                </select>
-              </div>
-            )
-          </span>
-        </div>
-        <div id="difference_of_means-formula-container" className={`formula ${selectedMeasure === "difference_of_means" ? "" : "hidden"}`}>
-          <span id="difference_of_means-formula-pt-1" data-text="DG.plugin.Sampler.difference_of_means-formula-pt-1">mean</span>
-          <span className="formula-paren">
-            ( <div className="formula-dropdown">
-                <select id="difference_of_means-select-attribute-pt-1"> ,
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="difference_of_means-select-attribute-pt-1-2">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-operator-dropdown">
-                <select id="difference_of_means-select-operator-pt-1">
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="difference_of_means-select-value-pt-1">
-                  <option value="">Select a value</option>
-                </select>
-              </div>
-            )
-          </span>
-          <span id="difference_of_means-formula-pt-2" data-text="DG.plugin.Sampler.difference_of_means-formula-pt-2">– mean</span>
-          <span className="formula-paren">
-           (  <div className="formula-dropdown">
-                <select id="difference_of_means-select-attribute-pt-2"> ,
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="difference_of_means-select-attribute-pt-2-2">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-operator-dropdown">
-                <select id="difference_of_means-select-operator-pt-2">
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="difference_of_means-select-value-pt-2">
-                  <option value="">Select a value</option>
-                </select>
-              </div>
-            )
-          </span>
-        </div>
-        <div id="difference_of_medians-formula-container" className={`formula ${selectedMeasure === "difference_of_medians" ? "" : "hidden"}`}>
-          <span id="difference_of_medians-formula-pt-1" data-text="DG.plugin.Sampler.difference_of_medians-formula-pt-1">median</span>
-          <span className="formula-paren">
-            ( <div className="formula-dropdown">
-                <select id="difference_of_medians-select-attribute-pt-1"> ,
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="difference_of_medians-select-attribute-pt-1-2">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-operator-dropdown">
-                <select id="difference_of_medians-select-operator-pt-1">
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="difference_of_medians-select-value-pt-1">
-                  <option value="">Select a value</option>
-                </select>
-              </div>
-            )
-          </span>
-          <span id="difference_of_means-formula-pt-2" data-text="DG.plugin.Sampler.difference_of_medians-formula-pt-2"> - median</span>
-          <span className="formula-paren">
-            ( <div className="formula-dropdown">
-                <select id="difference_of_medians-select-attribute-pt-2"> ,
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="difference_of_medians-select-attribute-pt-2-2">
-                  <option value="">Select an attribute</option>
-                </select>
-              </div>
-              <div className="formula-operator-dropdown">
-                <select id="difference_of_medians-select-operator-pt-2">
-                </select>
-              </div>
-              <div className="formula-dropdown">
-                <select id="difference_of_medians-select-value-pt-2">
-                  <option value="">Select a value</option>
-                </select>
-              </div>
-            )
-          </span>
-        </div>
-      </div>
+
       <div id="measures-bottom">
-        <button id="add-measure" data-text="DG.plugin.Sampler.add-measure" className="disabled">
+        <button id="add-measure" onClick={handleAddMeasure} disabled={disableAddButton} className={disableAddButton ? "disabled" : ""}>
           Add Measure
         </button>
       </div>
