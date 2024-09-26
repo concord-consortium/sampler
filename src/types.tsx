@@ -14,6 +14,7 @@ export interface AttrMap {
   experiment: IAttrForMap;
   description: IAttrForMap;
   sample_size: IAttrForMap;
+  experimentHash: IAttrForMap;
   sample: IAttrForMap;
   [key: string]: IAttrForMap;
 }
@@ -120,7 +121,6 @@ export interface IGlobalState {
   replacement: boolean;
   sampleSize: string;
   numSamples: string;
-  createNewExperiment: boolean;
   enableRunButton: boolean;
   attrMap: AttrMap;
   dataContexts: Array<IDataContext>;
@@ -256,9 +256,6 @@ export interface IColumn {
 
 export interface IModel {
   columns: IColumn[];
-  experimentNum: number;
-  mostRecentRunNumber: number;  // Gets reset between experiments, but if the parameters haven't changed we keep incrementing
-  runNumberSentInCurrentSequence: number; // This gets reset when user presses start regardless of whether params have changed
 }
 
 export interface IExperiment {

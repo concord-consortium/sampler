@@ -89,8 +89,6 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
           }
         }
       }
-      draft.model.mostRecentRunNumber = 0;
-      draft.createNewExperiment = true;
     });
     updateFormulas();
   };
@@ -98,8 +96,6 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
   const handleMergeDevices = () => {
     setGlobalState(draft => {
       draft.model.columns[columnIndex].devices.splice(0, model.columns[columnIndex].devices.length, device);
-      draft.model.mostRecentRunNumber = 0;
-      draft.createNewExperiment = true;
     });
     updateFormulas();
   };
@@ -108,9 +104,6 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
     setGlobalState(draft => {
       const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
       if (deviceToUpdate) {
-        if (deviceToUpdate.viewType !== view) {
-          draft.createNewExperiment = true;
-        }
         deviceToUpdate.viewType = view;
       }
     });

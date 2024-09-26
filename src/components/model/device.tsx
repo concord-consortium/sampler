@@ -16,6 +16,7 @@ import DeleteIcon from "../../assets/delete-icon.svg";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { parseSpecifier } from "../../utils/utils";
 import { IDevice, IDataContext, ClippingDef, ViewType, IItems, IItem, IVariables } from "../../types";
+import { removeDeviceFromFormulas } from "../../helpers/model-helpers";
 
 import "./device.scss";
 
@@ -95,6 +96,8 @@ export const Device = (props: IProps) => {
       const hasColumnsToTheRight = draft.model.columns.length > columnIndex + 1;
       const question = noMoreDevicesInThisColumn && hasColumnsToTheRight ? "Delete this device and all the devices to the right of it?" : "Delete this device?";
       if (confirm(question)) {
+        removeDeviceFromFormulas(draft.model, device.id);
+
         if (noMoreDevicesInThisColumn) {
           // when last device in a column is deleted delete this column and all the devices to the right if they exist
           draft.model.columns.splice(columnIndex, draft.model.columns.length - columnIndex);
@@ -103,8 +106,6 @@ export const Device = (props: IProps) => {
           draft.model.columns[columnIndex].devices = devices;
         }
       }
-      draft.model.mostRecentRunNumber = 0;
-      draft.createNewExperiment = true;
     });
   };
 
@@ -146,8 +147,6 @@ export const Device = (props: IProps) => {
       if (deviceToUpdate) {
         deviceToUpdate.variables = newVariables;
       }
-      draft.model.mostRecentRunNumber = 0;
-      draft.createNewExperiment = true;
     });
   }, [selectedDeviceId, setGlobalState, columnIndex]);
 

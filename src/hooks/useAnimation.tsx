@@ -3,10 +3,10 @@ import { AnimationCallback, AnimationStep, IAnimationContext, IAnimationRuntime,
 import { createItems, selectCases } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../contants";
 import { useGlobalStateContext } from "./useGlobalState";
-import { evaluateResult, findOrCreateDataContext } from "../helpers/codap-helpers";
+import { evaluateResult, findOrCreateDataContext, getNewExperimentInfo } from "../helpers/codap-helpers";
 import { getDeviceById } from "../models/model-model";
 import { formatFormula, parseFormula } from "../utils/utils";
-import { modelHasSpinner } from "../helpers/model-helpers";
+import { computeExperimentHash, modelHasSpinner } from "../helpers/model-helpers";
 import { getVariables } from "../utils/formula-parser";
 
 const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
@@ -71,7 +71,7 @@ export const createAnimationSteps = (model: IModel, animationResults: IExperimen
 
 export const useAnimationContextValue = (): IAnimationContext => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { speed, attrMap, model, numSamples, sampleSize, createNewExperiment } = globalState;
+  const { speed, attrMap, model, numSamples, sampleSize } = globalState;
   // do not allow without replacement when there is a spinner
   const hasSpinner = modelHasSpinner(model);
   const replacement = globalState.replacement || hasSpinner;
@@ -152,7 +152,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
     return { outputs, outputsForAnimation, resultsVariableIndex };
   };
 
-  const getResults = async (experimentNum: number, startingSampleNumber: number) => {
+  const getResults = async (experimentNum: number, startingSampleNumber: number, experimentHash: string) => {
     const results: IExperimentResults = [];
     const animationResults: IExperimentAnimationResults = [];
     const firstDevice = model.columns[0].devices[0];
@@ -175,6 +175,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
         const deviceStr = firstDevice.viewType.charAt(0).toUpperCase() + firstDevice.viewType.slice(1);
         sample[attrMap.description.name] = `${deviceStr} containing ${numItems} items${replacement ? " (with replacement)" : ""}`;
         sample[attrMap.sample_size.name] = sampleSize && parseInt(sampleSize, 10);
+        sample[attrMap.experimentHash.name] = experimentHash;
 
         const { outputs, outputsForAnimation, resultsVariableIndex } = await runExperiment(variableIndexes);
         sampleResultsForAnimation.push({ sampleNumber: sampleIndex, results: outputsForAnimation, resultsVariableIndex });
@@ -267,15 +268,6 @@ export const useAnimationContextValue = (): IAnimationContext => {
 
   const handleStartRun = async () => {
     try {
-      const experimentNum = model.experimentNum
-        ? createNewExperiment
-          ? model.experimentNum + 1
-          : model.experimentNum
-        : 1;
-
-      const startingSampleNumber = createNewExperiment ? 1 : model.mostRecentRunNumber + 1;
-      const { results, animationResults } = await getResults(experimentNum, startingSampleNumber);
-
       const attrNames = model.columns.map(column => column.name);
       const result = await findOrCreateDataContext(attrNames, attrMap, setGlobalState);
       if (!result) {
@@ -283,13 +275,15 @@ export const useAnimationContextValue = (): IAnimationContext => {
         return;
       }
 
+      const experimentHash = await computeExperimentHash(globalState);
+      const {experimentNum, startingSampleNumber} = await getNewExperimentInfo(experimentHash);
+
+      const { results, animationResults } = await getResults(experimentNum, startingSampleNumber, experimentHash);
+
       setGlobalState(draft => {
         draft.isRunning = true;
         draft.isPaused = false;
         draft.enableRunButton = false;
-        draft.model.experimentNum = experimentNum;
-        draft.createNewExperiment = false;
-        draft.model.mostRecentRunNumber = model.mostRecentRunNumber + Number(numSamples);
       });
 
       const onEndRun = () => {

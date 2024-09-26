@@ -5,6 +5,7 @@ import {
   createDataContext,
   createNewAttribute,
   createParentCollection,
+  getAllItems,
   getAttributeList,
   getDataContext} from "@concord-consortium/codap-plugin-api";
 import { AttrMap, IAttribute, IGlobalState } from "../types";
@@ -45,6 +46,7 @@ const updateAttributeIds = async (attrs: Array<string>, attrMap: AttrMap, setGlo
     {collection: "experiments", attrName: attrMap.experiment.name},
     {collection: "experiments", attrName: attrMap.description.name},
     {collection: "experiments", attrName: attrMap.sample_size.name},
+    {collection: "experiments", attrName: attrMap.experimentHash.name},
     {collection: "samples", attrName: attrMap.sample.name},
   ];
   const isKeyOfAttrMap = (key: any): key is keyof AttrMap => key in attrMap;
@@ -120,11 +122,12 @@ export const findOrCreateDataContext = async (attrs: Array<string>, attrMap: Att
       const parentAttrs = [
         {name: attrMap.experiment.name, type: "categorical"},
         {name: attrMap.description.name, type: "categorical"},
-        {name: attrMap.sample_size.name, type: "categorical"}
+        {name: attrMap.sample_size.name, type: "categorical"},
+        {name: attrMap.experimentHash.name, type: "categorical", hidden: "true"}
       ];
       const sampleAttrs = [{name: attrMap.sample.name, type: "categorical"}];
       attrs.forEach( attr => itemsAttrs.push({name: attr}));
-      const createExperimentsCollection = await createParentCollection(kDataContextName, collectionNames.experiments, parentAttrs);
+      const createExperimentsCollection = await createParentCollection(kDataContextName, collectionNames.experiments, parentAttrs as any);
       if (createExperimentsCollection.success) {
         const createSamplesCollection =
           await createChildCollection(kDataContextName, collectionNames.samples, collectionNames.experiments, sampleAttrs);
@@ -221,4 +224,38 @@ export const addMeasure = (measureName: string, measureType: string, formula: st
         });
       }
     });
+};
+
+export const getNewExperimentInfo = async (experimentHash: string) => {
+  let experimentNum = 1;
+  let startingSampleNumber = 1;
+
+  const result = await getAllItems(kDataContextName);
+  if (!result.success) {
+    throw new Error("Sorry, the data context was not found!");
+  }
+
+  // any cases?
+  if (result.values.length > 0) {
+    // check if the experiment already exists
+    const matchingHashItems = result.values.filter((item: any) => item.values?.experimentHash === experimentHash);
+
+    if (matchingHashItems.length > 0) {
+      // matching experiment found
+      experimentNum = matchingHashItems[0].values.experiment;
+
+      const maxSample = matchingHashItems.reduce((acc: number, cur: any) => {
+        return Math.max(acc, cur.values.sample);
+      }, 0);
+      startingSampleNumber = maxSample + 1;
+    } else {
+      // no matching experiments so add an experiment
+      const maxExperimentNum = result.values.reduce((acc: number, cur: any) => {
+        return Math.max(acc, cur.values.experiment);
+      }, 0);
+      experimentNum = maxExperimentNum + 1;
+    }
+  }
+
+  return {experimentNum, startingSampleNumber};
 };
