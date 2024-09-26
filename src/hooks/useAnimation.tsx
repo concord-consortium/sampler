@@ -185,6 +185,8 @@ export const useAnimationContextValue = (): IAnimationContext => {
             sample[key] = outputs[key];
           });
           results.push(sample);
+        } else {
+          break;
         }
       }
       animationResults.push(sampleResultsForAnimation);
