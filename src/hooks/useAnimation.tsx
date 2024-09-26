@@ -5,8 +5,9 @@ import { kDataContextName } from "../contants";
 import { useGlobalStateContext } from "./useGlobalState";
 import { evaluateResult, findOrCreateDataContext } from "../helpers/codap-helpers";
 import { getDeviceById } from "../models/model-model";
-import { extractVariablesFromFormula, formatFormula } from "../utils/utils";
+import { formatFormula, parseFormula } from "../utils/utils";
 import { modelHasSpinner } from "../helpers/model-helpers";
+import { getVariables } from "../utils/formula-parser";
 
 const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
   "animateDevice": 1200,
@@ -114,7 +115,9 @@ export const useAnimationContextValue = (): IAnimationContext => {
           break;
         }
 
-        const neededVariables = extractVariablesFromFormula(formula);
+        const parsedFormula = parseFormula(formula, columnName);
+        const neededVariables = getVariables(parsedFormula);
+
         const values = neededVariables.reduce((acc, variable) => {
           if (variable in previousOutputs) {
             acc[variable] = previousOutputs[variable];
