@@ -5,25 +5,25 @@ import { addDataContextChangeListener, codapInterface, IInitializePlugin, initia
 import { createDefaultDevice } from "../models/device-model";
 import { kDataContextName, kInitialDimensions, kPluginName, kVersion } from "../contants";
 import { createId } from "../utils/id";
+import { removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
 
 const defaultAttrMap: AttrMap = {
   experiment: {codapID: null, name: "experiment"},
   description: {codapID: null, name: "description"},
   sample_size: {codapID: null, name: "sample size"},
+  experimentHash: {codapID: null, name: "experimentHash"},
   sample: {codapID: null, name: "sample"},
 };
 
 export const getDefaultState = (): IGlobalState => {
   return {
-    model: {columns: [{name: "output", id: createId(), devices: [createDefaultDevice()]}],
-            experimentNum: 0, mostRecentRunNumber: 0, runNumberSentInCurrentSequence: 0},
+    model: {columns: [{name: "output", id: createId(), devices: [createDefaultDevice()]}]},
     selectedTab: "Model",
     selectedDeviceId: undefined,
     repeat: false,
     replacement: true,
     sampleSize: "5",
     numSamples: "3",
-    createNewExperiment: true,
     enableRunButton: true,
     attrMap: defaultAttrMap,
     dataContexts: [],
@@ -47,8 +47,17 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
       delete (options as any).dimensions;
       const interactiveState = await initializePlugin(options);
       if (Object.keys(interactiveState || {}).length > 0) {
+        // ensure there is a experiment hash on existing documents created before that attribute was added
+        const newGlobalState = interactiveState as IGlobalState;
+        if (!newGlobalState.attrMap.experimentHash) {
+          newGlobalState.attrMap.experimentHash = {...defaultAttrMap.experimentHash};
+        }
+
+        // remove any devices that don't exist from formulas (to fix bug in previous saved documents)
+        removeMissingDevicesFromFormulas(newGlobalState.model);
+
         setGlobalState(draft => {
-          return interactiveState;
+          return newGlobalState;
         });
       } else {
         setGlobalState(draft => {
@@ -56,10 +65,7 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
           draft.model = {
             columns: [
               {name: "output", id: newColumnId, devices: [createDefaultDevice()]}
-            ],
-            experimentNum: 0,
-            mostRecentRunNumber: 0,
-            runNumberSentInCurrentSequence: 0
+            ]
           };
           draft.attrMap[newColumnId] = {codapID: null, name: "output"};
         });

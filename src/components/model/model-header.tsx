@@ -33,27 +33,17 @@ export const ModelHeader = (props: IProps) => {
   };
 
   const handleClearData = () => {
-    setGlobalState(draft => {
-      draft.model.mostRecentRunNumber = 0;
-      draft.createNewExperiment = true;
-    });
     deleteAll(attrMap);
   };
 
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setGlobalState(draft => {
       draft.repeat = e.target.value === "repeat";
-      draft.model.mostRecentRunNumber = 0;
-      draft.createNewExperiment = true;
     });
   };
 
   const handleSampleSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGlobalState(draft => {
-      if (draft.sampleSize !== e.target.value) {
-        draft.model.mostRecentRunNumber = 0;
-        draft.createNewExperiment = true;
-      }
       if (e.target.value !== null && Number(e.target.value)) {
         draft.enableRunButton = true;
       } else {
@@ -71,10 +61,6 @@ export const ModelHeader = (props: IProps) => {
 
   const handleNumSamplesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGlobalState(draft => {
-      if (draft.numSamples !== e.target.value) {
-        draft.model.mostRecentRunNumber = 0;
-        draft.createNewExperiment = true;
-      }
       if (e.target.value !== null && Number(e.target.value)) {
         draft.enableRunButton = true;
       } else {
@@ -112,6 +98,7 @@ export const ModelHeader = (props: IProps) => {
         {repeat &&
           <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
             <span>until</span>
+            {/* note: when this feature is implemented the model-helpers#computeExperimentHash method needs to be updated to include the until value */}
             <input type="text"></input>
             <InfoIcon onClick={handleOpenHelp}/>
             {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
