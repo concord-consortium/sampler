@@ -17,7 +17,7 @@ const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
   "pushVariables": 1200,
 };
 
-export const createAnimationSteps = (model: IModel, animationResults: IExperimentAnimationResults, results: IExperimentResults, replacement: boolean, onComplete?: () => void): Array<AnimationStep> => {
+export const createExperimentAnimationSteps = (model: IModel, animationResults: IExperimentAnimationResults, results: IExperimentResults, replacement: boolean, onComplete?: () => void): Array<AnimationStep> => {
   const steps: AnimationStep[] = [];
   steps.push({kind: "startExperiment", numSamples: animationResults.length, numItems: animationResults[0]?.length ?? 0});
 
@@ -84,7 +84,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
   const animationsCallbacksRef = useRef<AnimationCallback[]>([]);
   const speedRef = useRef<Speed>(Speed.Slow);
 
-  const runExperiment = async (variableIndexes: AvailableDeviceVariableIndexes) => {
+  const getExperimentSample = async (variableIndexes: AvailableDeviceVariableIndexes) => {
     let currentDevice = model.columns[0].devices[0];
     let outputs: ISampleResults = {};
     let outputsForAnimation: ISampleResults = {};
@@ -103,7 +103,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
       const selectedVariable = currentDevice.variables[selectedIndex];
 
       if (!replacement) {
-        availableVariableIndexes.splice(selectedIndex, 1);
+        availableVariableIndexes.splice(randomIndex, 1);
       }
 
       let nextDeviceId: string | null = null;
@@ -152,7 +152,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
     return { outputs, outputsForAnimation, resultsVariableIndex };
   };
 
-  const getResults = async (experimentNum: number, startingSampleNumber: number, experimentHash: string) => {
+  const getAllExperimentSamples = async (experimentNum: number, startingSampleNumber: number, experimentHash: string) => {
     const results: IExperimentResults = [];
     const animationResults: IExperimentAnimationResults = [];
     const firstDevice = model.columns[0].devices[0];
@@ -177,7 +177,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
         sample[attrMap.sample_size.name] = sampleSize && parseInt(sampleSize, 10);
         sample[attrMap.experimentHash.name] = experimentHash;
 
-        const { outputs, outputsForAnimation, resultsVariableIndex } = await runExperiment(variableIndexes);
+        const { outputs, outputsForAnimation, resultsVariableIndex } = await getExperimentSample(variableIndexes);
         sampleResultsForAnimation.push({ sampleNumber: sampleIndex, results: outputsForAnimation, resultsVariableIndex });
 
         const outputKeys = Object.keys(outputs);
@@ -278,7 +278,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
       const experimentHash = await computeExperimentHash(globalState);
       const {experimentNum, startingSampleNumber} = await getNewExperimentInfo(experimentHash);
 
-      const { results, animationResults } = await getResults(experimentNum, startingSampleNumber, experimentHash);
+      const { results, animationResults } = await getAllExperimentSamples(experimentNum, startingSampleNumber, experimentHash);
 
       setGlobalState(draft => {
         draft.isRunning = true;
@@ -295,7 +295,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
         draft.isPaused = false;
         draft.isRunning = true;
       });
-      const newAnimationSteps = createAnimationSteps(model, animationResults, results, replacement, onEndRun);
+      const newAnimationSteps = createExperimentAnimationSteps(model, animationResults, results, replacement, onEndRun);
       startAnimation(newAnimationSteps);
     } catch (e) {
       stopAnimation();
