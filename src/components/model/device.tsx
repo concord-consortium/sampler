@@ -13,10 +13,10 @@ import { createNewVarArray, getNextVariable, getPercentOfVar } from "../helpers"
 import { calculateWedgePercentage } from "./device-views/shared/helpers";
 import { SetVariableSeriesModal } from "./variable-setting-modal";
 import DeleteIcon from "../../assets/delete-icon.svg";
-import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { parseSpecifier } from "../../utils/utils";
 import { IDevice, IDataContext, ClippingDef, ViewType, IItems, IItem, IVariables } from "../../types";
 import { removeDeviceFromFormulas } from "../../helpers/model-helpers";
+import { DeviceVisibility } from "./device-visibility";
 
 import "./device.scss";
 
@@ -277,9 +277,7 @@ export const Device = (props: IProps) => {
   return (
     <div className={`device-controls-container ${multipleColumns ? "multiple-columns" : ""}`} onClick={handleSelectDevice}>
       <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id}>
-        <div className="device-status-icon">
-          {isSelectedDevice && <VisibleIcon />}
-        </div>
+        <DeviceVisibility device={device} columnIndex={columnIndex} />
         <div className="device-svg-container">
           <div className={`device-frame ${viewType}`}>
             <svg

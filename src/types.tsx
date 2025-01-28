@@ -214,6 +214,8 @@ export interface IDevice {
   variables: IVariables;
   collectorVariables: ICollectorVariables;
   formulas: Record<string, string>;
+  hidden: boolean;
+  lockPassword: string;
 }
 
 // a map of variables to their percentages

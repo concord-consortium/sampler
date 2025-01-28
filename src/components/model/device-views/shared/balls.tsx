@@ -7,6 +7,7 @@ import { IAnimationStepSettings, AnimationStep, ClippingDef, ICollectorItem, IBa
 interface IProps {
   ballsArray: Array<string>;
   deviceId: string;
+  hidden: boolean;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleSetEditingVarName:  (variableIdx: number) => void;
@@ -118,7 +119,7 @@ const getCycledPositions = (positions: IBallPosition[], selectedVariableIdx: num
   });
 };
 
-export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IProps) => {
+export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName, hidden}: IProps) => {
   const { registerAnimationCallback } = useAnimationContext();
   const [ballPositions, setBallPositions] = useState<Array<IBallPosition>>([]);
   const [hiddenBallIndexes, setHiddenBallIndexes] = useState<number[]>([]);
@@ -197,6 +198,10 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
 
   const fontScaling = 1 - Math.min(Math.max((maxVariableLength - 5) * 0.1, 0), 0.4);
   const fontSize = radiusRef.current * fontScaling;
+
+  if (hidden) {
+    return null;
+  }
 
   return (
     <>
