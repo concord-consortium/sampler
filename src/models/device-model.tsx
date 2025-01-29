@@ -33,5 +33,5 @@ export function findEquivNum(n: number, lcd: number) {
 
 export const kDefaultVars: IVariables = ["a", "a", "b"];
 export const createDefaultDevice = (): IDevice => {
-  return {id: createId(), viewType: ViewType.Mixer, variables: kDefaultVars, collectorVariables: [], formulas: {}};
+  return {id: createId(), viewType: ViewType.Mixer, variables: kDefaultVars, collectorVariables: [], formulas: {}, hidden: false, lockPassword: ""};
 };

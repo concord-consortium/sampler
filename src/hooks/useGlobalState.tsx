@@ -5,7 +5,7 @@ import { addDataContextChangeListener, codapInterface, IInitializePlugin, initia
 import { createDefaultDevice } from "../models/device-model";
 import { kDataContextName, kInitialDimensions, kPluginName, kVersion } from "../contants";
 import { createId } from "../utils/id";
-import { removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
+import { migrateModel, removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
 
 const defaultAttrMap: AttrMap = {
   experiment: {codapID: null, name: "experiment"},
@@ -55,6 +55,9 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
 
         // remove any devices that don't exist from formulas (to fix bug in previous saved documents)
         removeMissingDevicesFromFormulas(newGlobalState.model);
+
+        // set the default values for any new attributes
+        migrateModel(newGlobalState.model);
 
         setGlobalState(draft => {
           return newGlobalState;

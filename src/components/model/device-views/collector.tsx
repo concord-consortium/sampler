@@ -12,7 +12,7 @@ interface IProps {
 
 export const Collector = ({device, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IProps) => {
   const [ballsArray, setBallsArray] = useState<Array<string>>([]);
-  const { collectorVariables, id: deviceId } = device;
+  const { collectorVariables, id: deviceId, hidden } = device;
 
   useEffect(() => {
     if (collectorVariables.length) {
@@ -24,7 +24,7 @@ export const Collector = ({device, handleAddDefs, handleSetSelectedVariable, han
 
   return (
     <>
-      <MixerFrame/>
+      <MixerFrame hidden={hidden} />
       { ballsArray.length &&
         <Balls
           ballsArray={ballsArray}
@@ -32,6 +32,7 @@ export const Collector = ({device, handleAddDefs, handleSetSelectedVariable, han
           handleAddDefs={handleAddDefs}
           handleSetSelectedVariable={handleSetSelectedVariable}
           handleSetEditingVarName={handleSetEditingVarName}
+          hidden={hidden}
         />
       }
     </>

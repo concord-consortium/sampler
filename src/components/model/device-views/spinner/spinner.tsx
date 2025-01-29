@@ -24,7 +24,7 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: IProps) => {
   const { globalState: { isRunning } } = useGlobalStateContext();
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
-  const { variables, id } = device;
+  const { variables, id, hidden } = device;
   const [textBackerPos, setTextBackerPos] = useState<ITextBackerPos|undefined>(undefined);
 
   useEffect(() => {
@@ -58,6 +58,31 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
     handleSetEditingVarName(0);
     handleSetSelectedVariable(0);
   };
+
+  if (hidden) {
+    return (
+      <>
+        <circle
+            cx={kSpinnerX}
+            cy={kSpinnerY}
+            r={kSpinnerRadius}
+            stroke="#000"
+            strokeWidth={1}
+            fill="#e8e8e8"
+        />
+        <text
+          x={kSpinnerX}
+          y={kSpinnerY + 10}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="100px"
+          fontWeight="bold"
+          fill="white">
+          ?
+        </text>
+      </>
+    );
+  }
 
   return (
     uniqueVariables.length === 1 ?

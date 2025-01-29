@@ -11,16 +11,17 @@ interface IProps {
 }
 
 export const Mixer = ({device, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IProps) => {
-  const { variables, id: deviceId } = device;
+  const { variables, id: deviceId, hidden } = device;
   return (
     <>
-      <MixerFrame/>
+      <MixerFrame hidden={hidden} />
       <Balls
         ballsArray={variables}
         deviceId={deviceId}
         handleAddDefs={handleAddDefs}
         handleSetSelectedVariable={handleSetSelectedVariable}
         handleSetEditingVarName={handleSetEditingVarName}
+        hidden={hidden}
       />
     </>
   );

@@ -23,7 +23,7 @@ interface IProps {
 export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, dataContexts}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { model, selectedDeviceId, isRunning } = globalState;
-  const { viewType } = device;
+  const { viewType, hidden } = device;
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
   const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
@@ -113,9 +113,9 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
     <div className="footer">
       { viewType !== ViewType.Collector &&
         <div className="add-remove-variables-buttons">
-          <button disabled={isRunning} onClick={handleAddVariable}>+</button>
-          <button disabled={isRunning} onClick={(e) => handleDeleteVariable(e)}>-</button>
-          <button disabled={isRunning} onClick={handleSpecifyVariables}>...</button>
+          <button disabled={isRunning || hidden} onClick={handleAddVariable}>+</button>
+          <button disabled={isRunning || hidden} onClick={(e) => handleDeleteVariable(e)}>-</button>
+          <button disabled={isRunning || hidden} onClick={handleSpecifyVariables}>...</button>
         </div>
       }
       <div className="device-buttons">
@@ -126,7 +126,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
               return (
                 <button
                   className={viewType === deviceType ? "selected" : ""}
-                  disabled={isRunning}
+                  disabled={isRunning || hidden}
                   onClick={() => handleUpdateViewType(deviceType)}
                   key={deviceType}>
                     {deviceType}
