@@ -51,6 +51,20 @@ export const MeasuresTab = () => {
     return disable;
   }, [selectedMeasure, lValue, rValue]);
 
+  const uniqueVariables = useMemo(() => {
+    const set = new Set<string>();
+    columns.forEach((column) => {
+      column.devices.forEach((device) => {
+        device.variables.forEach((variable) => {
+          set.add(variable);
+        });
+      });
+    });
+    const array = Array.from(set);
+    array.sort();
+    return array;
+  }, [columns]);
+
   const handleSelectMeasureChange = (e: React.ChangeEvent<HTMLSelectElement>) => setSelectedMeasure(e.target.value as Measure);
   const handleChangeMeasureName = (e:  React.ChangeEvent<HTMLInputElement>) => setMeasureName(e.target.value);
   const handleChangeLValue = (e: React.ChangeEvent<HTMLSelectElement>) => setLValue(e.target.value);
@@ -67,6 +81,15 @@ export const MeasuresTab = () => {
       <>
         <option value="">Select an attribute!</option>
         {columns.map(column => <option key={column.id} value={column.name}>{column.name}</option>)}
+      </>
+    );
+  };
+
+  const renderVariables = () => {
+    return (
+      <>
+        <option value="">Select a value!</option>
+        {uniqueVariables.map(variable => <option key={variable} value={variable}>{variable}</option>)}
       </>
     );
   };
@@ -96,7 +119,7 @@ export const MeasuresTab = () => {
     return (
       <div className="formula-dropdown">
         <select onChange={handleChangeRValue} value={rValue}>
-        {renderAttributes()}
+        {renderVariables()}
         </select>
       </div>
     );
