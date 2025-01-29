@@ -5,6 +5,7 @@ import { kDataContextName } from "../../contants";
 import { getNewColumnName } from "../helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { AnimationStep, IAnimationStepSettings, IColumn } from "../../types";
+import { renameAttributeInFormulas } from "../../helpers/codap-helpers";
 
 interface IProps {
   column: IColumn;
@@ -48,6 +49,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
       const oldAttrName = globalState.attrMap[column.id].name;
       const attr = (await getAttribute(kDataContextName, "items", oldAttrName)).values;
       await updateAttribute(kDataContextName, "items", oldAttrName, attr, {name: newName});
+      await renameAttributeInFormulas(kDataContextName, oldAttrName, newName);
       setColumnName(newName);
       setGlobalState(draft => {
         draft.model.columns[columnIndex].name = newName;

@@ -321,3 +321,40 @@ export const getVariables = (parsedFormula: ExpressionNode): string[] => {
   extractVariables(parsedFormula, variableSet);
   return Array.from(variableSet);
 };
+
+export const renameVariable = (parsedFormula: ExpressionNode, oldName: string, newName: string): ExpressionNode => {
+  switch (parsedFormula.type) {
+    case "BinaryExpression":
+      return {
+        type: "BinaryExpression",
+        operator: parsedFormula.operator,
+        left: renameVariable(parsedFormula.left, oldName, newName),
+        right: renameVariable(parsedFormula.right, oldName, newName),
+      };
+    case "UnaryExpression":
+      return {
+        type: "UnaryExpression",
+        operator: parsedFormula.operator,
+        argument: renameVariable(parsedFormula.argument, oldName, newName),
+      };
+    case "Literal":
+      return parsedFormula;
+    case "Variable":
+      return {
+        type: "Variable",
+        name: parsedFormula.name === oldName ? newName : parsedFormula.name,
+      };
+    case "FunctionCall":
+      return {
+        type: "FunctionCall",
+        callee: parsedFormula.callee,
+        arguments: parsedFormula.arguments.map(arg => renameVariable(arg, oldName, newName)),
+      };
+    case "GroupingExpression":
+      return {
+        type: "GroupingExpression",
+        expression: renameVariable(parsedFormula.expression, oldName, newName),
+      };
+  }
+};
+
