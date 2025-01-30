@@ -299,3 +299,23 @@ export const renameAttributeInFormulas = async (dataContextName: string, oldName
     }
   }
 };
+
+
+type Dimensions = {width: number; height: number};
+const getWindowDimensions = (): Dimensions => {
+  const { innerWidth: width, innerHeight: height } = window;
+  return { width, height };
+};
+
+export const ensureMinimumDimensions = async (min: Dimensions) => {
+  const current = getWindowDimensions();
+  if (current.width >= min.width && current.height >= min.height) {
+    return;
+  }
+
+  const width = Math.max(min.width, current.width);
+  const height = Math.max(min.height, current.height);
+  const values = {dimensions: {width, height}};
+
+  await codapInterface.sendRequest({ action: "update", resource: "interactiveFrame", values});
+};
