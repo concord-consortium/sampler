@@ -6,10 +6,15 @@ import {
   createNewAttribute,
   createParentCollection,
   getAllItems,
+  getAttribute,
   getAttributeList,
-  getDataContext} from "@concord-consortium/codap-plugin-api";
+  getCollectionList,
+  getDataContext,
+  updateAttribute} from "@concord-consortium/codap-plugin-api";
 import { AttrMap, IAttribute, IGlobalState } from "../types";
 import { Updater } from "use-immer";
+import { parseFormula } from "../utils/utils";
+import { renameVariable, stringify } from "../utils/formula-parser";
 
 export const kDataContextName = "Sampler";
 type TCODAPRequest = { action: string; resource: string; };
@@ -258,4 +263,39 @@ export const getNewExperimentInfo = async (experimentHash: string) => {
   }
 
   return {experimentNum, startingSampleNumber};
+};
+
+export const renameAttributeInFormulas = async (dataContextName: string, oldName: string, newName: string) => {
+  const collectionListResult = await getCollectionList(dataContextName);
+  if (!collectionListResult.success) {
+    return;
+  }
+
+  const collections = collectionListResult.values.map((c: any) => c.name);
+  for (const collection of collections) {
+    const attrListResult = await getAttributeList(dataContextName, collection);
+    if (!attrListResult.success) {
+      continue;
+    }
+
+    const attributes = attrListResult.values;
+    for (const attr of attributes) {
+      const attributeResult = await getAttribute(dataContextName, collection, attr.name);
+      if (!attributeResult.success) {
+        continue;
+      }
+      const { formula } = attributeResult.values;
+
+      if (formula?.includes(oldName)) {
+        // this returns a binary expression of left: "", op: =, right: parsedFormula
+        // so we only need to update the variable name in the right side
+        const parsed = parseFormula(formula, "");
+        if (parsed.type === "BinaryExpression") {
+          const renamed = renameVariable(parsed.right, oldName, newName);
+          const newFormula = stringify(renamed, [newName]);
+          await updateAttribute(dataContextName, collection, attr.name, attr, {formula: newFormula});
+        }
+      }
+    }
+  }
 };
