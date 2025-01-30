@@ -188,7 +188,7 @@ export const addMeasure = (measureName: string, measureType: string, formula: st
           resource: `dataContext[${kDataContextName}].collection[${samplesColl}].attribute`,
           values: [{
             name: newAttributeName,
-            type: "numerical",
+            type: "numeric",
             formula
           }]
         });
@@ -215,7 +215,7 @@ export const addMeasure = (measureName: string, measureType: string, formula: st
           resource: `dataContext[${kDataContextName}].collection[${samplesColl}].attribute`,
           values: [{
             name: newAttributeName,
-            type: "numerical",
+            type: "numeric",
             formula
           }]
         });
