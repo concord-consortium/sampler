@@ -17,7 +17,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
   const { registerAnimationCallback } = useAnimationContext();
   const { model, isRunning } = globalState;
   const [columnName, setColumnName] = useState(column.name);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [label, setLabel] = useState("");
   const [opacity, setOpacity] = useState(0);
 
@@ -43,8 +43,26 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
     setColumnName(column.name);
   }, [column.name]);
 
+  useEffect(() => {
+    if (inputRef.current) {
+      // We need to reset the height momentarily to get the correct scrollHeight for the textarea
+      inputRef.current.style.height = "0px";
+      const scrollHeight = inputRef.current.scrollHeight;
+
+      // We then set the height directly, outside of the render loop, subtracting 2 to account for the border.
+      inputRef.current.style.height = (scrollHeight - 2) + "px";
+    }
+  }, [inputRef, columnName]);
+
   const handleNameChange = async () => {
     const newName = getNewColumnName(columnName.trim(), model.columns, column.id);
+
+    // do not allow the user to clear the input and leave it empty
+    if (newName.length === 0) {
+      setColumnName(column.name);
+      return;
+    }
+
     if (globalState.samplerContext) {
       const oldAttrName = globalState.attrMap[column.id].name;
       const attr = (await getAttribute(kDataContextName, "items", oldAttrName)).values;
@@ -70,7 +88,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
     }
   }, [columnName]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     switch(e.code) {
       case "Escape":
         inputRef.current?.blur();
@@ -85,7 +103,8 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
 
   return (
     <div className="device-column-header">
-      <input
+      <textarea
+        rows={1}
         ref={inputRef}
         disabled={isRunning}
         className="attr-name"
@@ -94,7 +113,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
         onKeyDown={(e) => handleKeyDown(e)}
         onBlur={handleNameChange}
       >
-      </input>
+      </textarea>
       <div className="device-column-header-label" style={{opacity}}>
         {label}
       </div>

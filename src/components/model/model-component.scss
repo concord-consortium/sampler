@@ -319,21 +319,22 @@ $pluginMinWidth: 304px;
       flex-direction: column;
     }
     .device-column-header {
-      margin: 5px;
-      position: absolute;
-      top: 0;
+      margin: 5px 0 20px 0;
 
       .attr-name {
-        width: 40px;
-        margin: 0 70px 8px;
+        width: auto;
         border-radius: 1.5px;
         border: solid 1px #8f8f9d;
         background-color: #fff;
+        text-align: center;
+        resize: none;
       }
 
       .device-column-header-label {
         font-size: 16px;
         font-weight: 500;
+        position: absolute;
+        width: 100%;
       }
     }
   }
