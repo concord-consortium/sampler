@@ -66,16 +66,18 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
 
   const handleAddDevice = () => {
     setGlobalState(draft => {
-      const newDevice = createDefaultDevice();
       const newColumnIndex = columnIndex + 1;
       if (draft.model.columns[newColumnIndex]) {
         // add the device
+        const newDevice = createDefaultDevice();
         draft.model.columns[newColumnIndex].devices.push(newDevice);
       } else {
-        // create the column and add the device
+        // create the column and add the same number devices as the current column
         const name: string = getNewColumnName("output", model.columns);
         const id: string = createId();
-        draft.model.columns.splice(newColumnIndex, 0, {name, id, devices: [newDevice]});
+        const numNewDevices = model.columns[columnIndex].devices.length;
+        const newDevices = Array.from({length: numNewDevices}, () => createDefaultDevice());
+        draft.model.columns.splice(newColumnIndex, 0, {name, id, devices: newDevices});
         // check if any attrs in attrMap have same name as new column name
         // if so, replace the old attrMap key with the new id
         const existingAttr = Object.keys(draft.attrMap).find((key) => draft.attrMap[key].name === name);
