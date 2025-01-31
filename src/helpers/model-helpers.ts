@@ -28,10 +28,23 @@ export const computeExperimentHash = async (globalState: IGlobalState): Promise<
 };
 
 export const removeDeviceFromFormulas = (model: IModel, deviceId: Id) => {
-  model.columns.forEach(column => {
+  model.columns.forEach((column, columnIndex) => {
     column.devices.forEach(d => {
       if (d.formulas?.[deviceId]) {
+        const formula = d.formulas[deviceId];
         delete d.formulas[deviceId];
+
+        // move the formula to the next device in the next column if we are not
+        // in the last column and there is more than one device in the next column
+        if (columnIndex < model.columns.length - 1) {
+          const nextColumn = model.columns[columnIndex + 1];
+          if (nextColumn.devices.length > 1) {
+            const deviceIndex = nextColumn.devices.findIndex(d2 => d2.id === deviceId);
+            const newDeviceIndex = deviceIndex > 0 ? deviceIndex - 1 : 1;
+            const newDeviceId = nextColumn.devices[newDeviceIndex].id;
+            d.formulas[newDeviceId] = formula;
+          }
+        }
       }
     });
   });
