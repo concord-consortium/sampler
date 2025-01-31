@@ -100,7 +100,7 @@ export const DeviceVisibility = ({device, columnIndex }: IProps) => {
         <div className="device-visibility-title">{hidden ? "Show/Unlock" : "Hide/Lock"} Device</div>
         <div className="device-visibility-contents">
           <div className="device-visibility-input">
-            <label>Add password to {hidden ? "unlock" : "lock"}</label>
+            <label>{hidden ? "Unlock with password" : "Lock with optional password"}</label>
             <form onSubmit={handleSubmit}>
               <input
                 type="text"
