@@ -73,42 +73,48 @@ export const ModelHeader = (props: IProps) => {
   return (
     <div className="model-header">
       <div className="model-controls">
-        <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? (isPaused ? "START" : "PAUSE") : "START"}</button>
-        <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>STOP</button>
-        <SpeedSlider />
-        <button disabled={isRunning} className={`clear-data-button ${isRunning ? "disabled" : ""}`} onClick={handleClearData}>CLEAR DATA</button>
+        <div className="inner-controls">
+          <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? (isPaused ? "START" : "PAUSE") : "START"}</button>
+          <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>STOP</button>
+          <SpeedSlider />
+          <button disabled={isRunning} className={`clear-data-button ${isRunning ? "disabled" : ""}`} onClick={handleClearData}>CLEAR DATA</button>
+        </div>
       </div>
       <div className="select-repeat-controls">
-        <div className="select-repeat-selection">
-          <div className="select-repeat-dropdown">
-            <select disabled={isRunning} onChange={handleSelectRepeat}>
-              <option className={`select-repeat-option`} value="select">Select</option>
-              <option className={`select-repeat-option`} value="repeat">Repeat</option>
-            </select>
+        <div className="inner-controls">
+          <div className="select-repeat-selection">
+            <div className="select-repeat-dropdown">
+              <select disabled={isRunning} onChange={handleSelectRepeat}>
+                <option className={`select-repeat-option`} value="select">Select</option>
+                <option className={`select-repeat-option`} value="repeat">Repeat</option>
+              </select>
+            </div>
+            <input disabled={isRunning} type="number" min={1} id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
+            <span>{`${repeat ? "selecting" : ""} items`}</span>
+            <div className="select-replacement-dropdown">
+              <select disabled={isRunning || !allowReplacement} value={replacement ? "with" : "without"} onChange={handleSelectReplacement}>
+                <option value="with">with replacement</option>
+                <option value="without">without replacement</option>
+              </select>
+            </div>
           </div>
-          <input disabled={isRunning} type="number" min={1} id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
-          <span>{`${repeat ? "selecting" : ""} items`}</span>
-          <div className="select-replacement-dropdown">
-            <select disabled={isRunning || !allowReplacement} value={replacement ? "with" : "without"} onChange={handleSelectReplacement}>
-              <option value="with">with replacement</option>
-              <option value="without">without replacement</option>
-            </select>
-          </div>
+          {repeat &&
+            <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
+              <span>until</span>
+              {/* note: when this feature is implemented the model-helpers#computeExperimentHash method needs to be updated to include the until value */}
+              <input type="text"></input>
+              <InfoIcon onClick={handleOpenHelp}/>
+              {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
+            </div>
+          }
         </div>
-        {repeat &&
-          <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
-            <span>until</span>
-            {/* note: when this feature is implemented the model-helpers#computeExperimentHash method needs to be updated to include the until value */}
-            <input type="text"></input>
-            <InfoIcon onClick={handleOpenHelp}/>
-            {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
-          </div>
-        }
       </div>
       <div className="collect-controls">
-        <span>Collect</span>
-        <input disabled={isRunning} type="number" min={1} id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
-        <span>samples</span>
+        <div className="inner-controls">
+          <span>Collect</span>
+          <input disabled={isRunning} type="number" min={1} id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
+          <span>samples</span>
+        </div>
       </div>
     </div>
   );

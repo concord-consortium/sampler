@@ -4,5 +4,5 @@ export const kPluginName = "Sampler";
 export const kVersion = "v0.3.0";
 export const kInitialDimensions = {
   width: kPluginMidWidth,
-  height: 500
+  height: 550
 };

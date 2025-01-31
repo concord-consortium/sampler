@@ -6,6 +6,7 @@ import { createDefaultDevice } from "../models/device-model";
 import { kDataContextName, kInitialDimensions, kPluginName, kVersion } from "../contants";
 import { createId } from "../utils/id";
 import { migrateModel, removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
+import { ensureMinimumDimensions } from "../helpers/codap-helpers";
 
 const defaultAttrMap: AttrMap = {
   experiment: {codapID: null, name: "experiment"},
@@ -46,6 +47,10 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
       // Using the delete, after casting to any, lets us typecheck the options instead of casting the options to any at the initializePlugin call.
       delete (options as any).dimensions;
       const interactiveState = await initializePlugin(options);
+
+      // ensure that the plugin has the minimum dimensions
+      await ensureMinimumDimensions(kInitialDimensions);
+
       if (Object.keys(interactiveState || {}).length > 0) {
         // ensure there is a experiment hash on existing documents created before that attribute was added
         const newGlobalState = interactiveState as IGlobalState;
