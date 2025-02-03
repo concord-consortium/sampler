@@ -10,13 +10,13 @@ import {
   getAttributeList,
   getCollectionList,
   getDataContext,
+  getListOfDataContexts,
   updateAttribute} from "@concord-consortium/codap-plugin-api";
 import { AttrMap, IAttribute, IGlobalState } from "../types";
 import { Updater } from "use-immer";
 import { parseFormula } from "../utils/utils";
 import { renameVariable, stringify } from "../utils/formula-parser";
 
-export const kDataContextName = "Sampler";
 type TCODAPRequest = { action: string; resource: string; };
 
 export const evaluateResult = async (formula: string, value: Record<string, string>) => {
@@ -46,7 +46,7 @@ const getCollectionNames = () => {
   };
 };
 
-const updateAttributeIds = async (attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>) => {
+const updateAttributeIds = async (dataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>) => {
   const allAttrs = [
     {collection: "experiments", attrName: attrMap.experiment.name},
     {collection: "experiments", attrName: attrMap.description.name},
@@ -60,7 +60,7 @@ const updateAttributeIds = async (attrs: Array<string>, attrMap: AttrMap, setGlo
 
   const reqs: TCODAPRequest[] = allAttrs.map(collectionAttr => ({
     "action": "get",
-    "resource": `dataContext[${kDataContextName}].collection[${collectionAttr.collection}].attribute[${collectionAttr.attrName}]`
+    "resource": `dataContext[${dataContextName}].collection[${collectionAttr.collection}].attribute[${collectionAttr.attrName}]`
   }));
 
   await codapInterface.sendRequest(reqs, (getAttrsResult: any[]) => {
@@ -79,13 +79,13 @@ const updateAttributeIds = async (attrs: Array<string>, attrMap: AttrMap, setGlo
 
 // the current @concord-consortium/codap-plugin-api createTable method does not have a way to pass width (or title) options so
 // this has to be done with a direct CODAP api request
-const createWideTable = async () => {
+const createWideTable = async (dataContextName: string) => {
   return codapInterface.sendRequest({
     action: "create",
     resource: "component",
     values: {
       type: "caseTable",
-      dataContext: kDataContextName,
+      dataContext: dataContextName,
       title: "Sampler Data",
       dimensions: {
         width: 1000,
@@ -95,30 +95,51 @@ const createWideTable = async () => {
   }) as unknown as IResult;
 };
 
-export const hasSamplesCollection = async (): Promise<boolean> => {
+export const hasSamplesCollection = async (dataContextName: string): Promise<boolean> => {
   const collectionNames = getCollectionNames();
-  const dataContextRes = await getDataContext(kDataContextName);
+  const dataContextRes = await getDataContext(dataContextName);
   const collections = (dataContextRes.success ? dataContextRes.values?.collections ?? [] : []) as Array<{name: string}>;
   return !!collections.find(c => c.name === collectionNames.samples);
 };
 
-export const findOrCreateDataContext = async (attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>): Promise<boolean> => {
+export const findOrCreateDataContext = async (initialDataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>): Promise<string|null> => {
   const collectionNames = getCollectionNames();
-  const dataContextRes = await getDataContext(kDataContextName);
+
+  // if the plugin is being loaded from a CODAP document, the initialDataContextName will be provided
+  // in the saved state. If not, we need to find the first non-existent data context name so
+  // that we can create a new one to allow for multiple sampler plugins in the same document.
+  let finalDataContextName = initialDataContextName;
+  if (!finalDataContextName) {
+    const listOfDataContextsRes = await getListOfDataContexts();
+    if (!listOfDataContextsRes.success) {
+      return null;
+    }
+    const names = listOfDataContextsRes.values.map((dc: {name: string}) => dc.name);
+
+    let index = 0;
+    const baseName = 'Sampler';
+    finalDataContextName = baseName;
+    while (names.indexOf(finalDataContextName) >= 0) {
+      index++;
+      finalDataContextName = `${baseName}${index}`;
+    }
+  }
+
+  const dataContextRes = await getDataContext(finalDataContextName);
   if (dataContextRes.success) {
     // ensure that if a user deleted a CODAP attr representing a device column, it is reinstated
-    const attrList = (await getAttributeList(kDataContextName, collectionNames.items)).values;
+    const attrList = (await getAttributeList(finalDataContextName, collectionNames.items)).values;
     const attrNames = attrList.map((attr: {id: number, name: string, title: string}) => attr.name);
     const missingAttrs = attrs.filter(attr => !attrNames.includes(attr));
     if (missingAttrs.length > 0) {
       missingAttrs.forEach(async (attr) => {
-        await createNewAttribute(kDataContextName, collectionNames.items, attr);
+        await createNewAttribute(finalDataContextName, collectionNames.items, attr);
       });
     }
-    await updateAttributeIds(attrs, attrMap, setGlobalState);
-    return true;
+    await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState);
+    return finalDataContextName;
   } else {
-    const createRes = await createDataContext(kDataContextName);
+    const createRes = await createDataContext(finalDataContextName);
     const itemsAttrs: IAttribute[] = [];
     if (createRes.success) {
       setGlobalState((draft) => {
@@ -132,49 +153,41 @@ export const findOrCreateDataContext = async (attrs: Array<string>, attrMap: Att
       ];
       const sampleAttrs = [{name: attrMap.sample.name, type: "categorical"}];
       attrs.forEach( attr => itemsAttrs.push({name: attr}));
-      const createExperimentsCollection = await createParentCollection(kDataContextName, collectionNames.experiments, parentAttrs as any);
+      const createExperimentsCollection = await createParentCollection(finalDataContextName, collectionNames.experiments, parentAttrs as any);
       if (createExperimentsCollection.success) {
         const createSamplesCollection =
-          await createChildCollection(kDataContextName, collectionNames.samples, collectionNames.experiments, sampleAttrs);
+          await createChildCollection(finalDataContextName, collectionNames.samples, collectionNames.experiments, sampleAttrs);
         if (createSamplesCollection.success) {
           const createOutputCollection =
-            await createChildCollection(kDataContextName, collectionNames.items, collectionNames.samples, itemsAttrs);
+            await createChildCollection(finalDataContextName, collectionNames.items, collectionNames.samples, itemsAttrs);
           if (createOutputCollection.success) {
-            const tableRes = await createWideTable();
+            const tableRes = await createWideTable(finalDataContextName);
             if (tableRes.success) {
-              await updateAttributeIds(attrs, attrMap, setGlobalState);
-              return true;
-            } else {
-              return false;
+              await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState);
+              return finalDataContextName;
             }
-          } else {
-            return false;
           }
-        } else {
-          return false;
         }
-      } else {
-        return false;
       }
-    } else {
-      return false;
     }
   }
+
+  return null;
 };
 
-export const deleteAll = (attrMap: AttrMap) => {
+export const deleteAll = (dataContextName: string, attrMap: AttrMap) => {
   codapInterface.sendRequest({
     action: "delete",
-    resource: `dataContext[${kDataContextName}].collection[${attrMap.experiment.name}].allCases`
+    resource: `dataContext[${dataContextName}].collection[${attrMap.experiment.name}].allCases`
   });
 };
 
-export const addMeasure = (measureName: string, measureType: string, formula: string) => {
+export const addMeasure = (dataContextName: string, measureName: string, measureType: string, formula: string) => {
   const samplesColl = getCollectionNames().samples;
 
   codapInterface.sendRequest({
     action: "get",
-    resource: `dataContext[${kDataContextName}].collection[${samplesColl}].attributeList`
+    resource: `dataContext[${dataContextName}].collection[${samplesColl}].attributeList`
   }).then((res: any) => {
     const attrs = res.values;
     let newAttributeName = measureName ? measureName : measureType;
@@ -185,7 +198,7 @@ export const addMeasure = (measureName: string, measureType: string, formula: st
       if (!attrNameAlreadyUsed) {
         codapInterface.sendRequest({
           action: 'create',
-          resource: `dataContext[${kDataContextName}].collection[${samplesColl}].attribute`,
+          resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute`,
           values: [{
             name: newAttributeName,
             type: "numeric",
@@ -212,7 +225,7 @@ export const addMeasure = (measureName: string, measureType: string, formula: st
         }
         codapInterface.sendRequest({
           action: 'create',
-          resource: `dataContext[${kDataContextName}].collection[${samplesColl}].attribute`,
+          resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute`,
           values: [{
             name: newAttributeName,
             type: "numeric",
@@ -222,7 +235,7 @@ export const addMeasure = (measureName: string, measureType: string, formula: st
       } else if (attrNameAlreadyUsed && measureName) {
         codapInterface.sendRequest({
           action: 'update',
-          resource: `dataContext[${kDataContextName}].collection[${samplesColl}].attribute[${measureName}]`,
+          resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute[${measureName}]`,
           values: {
             formula
           }
@@ -231,11 +244,11 @@ export const addMeasure = (measureName: string, measureType: string, formula: st
     });
 };
 
-export const getNewExperimentInfo = async (experimentHash: string) => {
+export const getNewExperimentInfo = async (dataContextName: string, experimentHash: string) => {
   let experimentNum = 1;
   let startingSampleNumber = 1;
 
-  const result = await getAllItems(kDataContextName);
+  const result = await getAllItems(dataContextName);
   if (!result.success) {
     throw new Error("Sorry, the data context was not found!");
   }

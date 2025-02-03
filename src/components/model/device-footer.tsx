@@ -4,7 +4,6 @@ import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
 import { getNewColumnName, getNewVariable, getProportionalVars } from "../helpers";
 import { createNewAttribute } from "@concord-consortium/codap-plugin-api";
-import { kDataContextName } from "../../contants";
 import { createId } from "../../utils/id";
 import { IDataContext, IDevice, IVariables, ViewType } from "../../types";
 
@@ -87,7 +86,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
         } else {
           draft.attrMap[id] = {name, codapID: null};
           if (draft.samplerContext) {
-            createNewAttribute(kDataContextName, "items", name);
+            createNewAttribute(draft.samplerContext.name, "items", name);
           }
         }
       }

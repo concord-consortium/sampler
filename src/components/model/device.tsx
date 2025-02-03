@@ -7,7 +7,6 @@ import { NameLabelInput } from "./name-label-input";
 import { PctLabelInput } from "./percent-label-input";
 import { DeviceFooter } from "./device-footer";
 import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth, kSpinnerX, kSpinnerY } from "./device-views/shared/constants";
-import { kDataContextName } from "../../contants";
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { createNewVarArray, getNextVariable, getPercentOfVar } from "../helpers";
 import { calculateWedgePercentage } from "./device-views/shared/helpers";
@@ -51,7 +50,7 @@ export const Device = (props: IProps) => {
 
     if (viewType === ViewType.Collector) {
       fetchDataContexts().then((contexts: Array<IDataContext>) => {
-        const filteredCtxs = contexts.filter((context) => context.name !== kDataContextName);
+        const filteredCtxs = contexts.filter((context) => context.name !== globalState.dataContextName);
         setDataContexts(filteredCtxs);
       });
     }
@@ -61,7 +60,7 @@ export const Device = (props: IProps) => {
     } else {
       setViewBox(`0 0 ${kMixerContainerWidth + 10} ${kMixerContainerHeight}`);
     }
-  }, [viewType]);
+  }, [viewType, globalState.dataContextName]);
 
   useEffect(() => {
     if (selectedDataContext) {

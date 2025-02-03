@@ -123,6 +123,7 @@ export interface IGlobalState {
   numSamples: string;
   enableRunButton: boolean;
   attrMap: AttrMap;
+  dataContextName: string;
   dataContexts: Array<IDataContext>;
   collectorContext: IDataContext | undefined;
   samplerContext: IDataContext | undefined;
