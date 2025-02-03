@@ -3,7 +3,7 @@ import { useImmer } from "use-immer";
 import { AttrMap, IGlobalState, IGlobalStateContext } from "../types";
 import { addDataContextChangeListener, codapInterface, IInitializePlugin, initializePlugin } from "@concord-consortium/codap-plugin-api";
 import { createDefaultDevice } from "../models/device-model";
-import { kDataContextName, kInitialDimensions, kPluginName, kVersion } from "../contants";
+import { kInitialDimensions, kPluginName, kVersion } from "../contants";
 import { createId } from "../utils/id";
 import { migrateModel, removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
 import { ensureMinimumDimensions } from "../helpers/codap-helpers";
@@ -28,6 +28,7 @@ export const getDefaultState = (): IGlobalState => {
     enableRunButton: true,
     attrMap: defaultAttrMap,
     dataContexts: [],
+    dataContextName: "",
     samplerContext: undefined,
     collectorContext: undefined,
     isRunning: false,
@@ -89,7 +90,7 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
 
   useEffect(() => {
     if (globalState.samplerContext) {
-      addDataContextChangeListener(kDataContextName, (msg: any) => {
+      addDataContextChangeListener(globalState.samplerContext.name, (msg: any) => {
         if (msg.values.operation === "updateAttributes") {
           msg.values.result.attrIDs.forEach((id: string, i: number) => {
             const newName = msg.values.result.attrs[i].name;

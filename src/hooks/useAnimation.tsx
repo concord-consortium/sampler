@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useRef } from "react";
 import { AnimationCallback, AnimationStep, IAnimationContext, IAnimationRuntime, IAnimationStepSettings, IExperimentResults, IExperimentAnimationResults, IModel, ISampleResults, Speed, ISampleVariableIndexes, AvailableDeviceVariableIndexes } from "../types";
 import { createItems, selectCases } from "@concord-consortium/codap-plugin-api";
-import { kDataContextName } from "../contants";
 import { useGlobalStateContext } from "./useGlobalState";
 import { evaluateResult, findOrCreateDataContext, getNewExperimentInfo } from "../helpers/codap-helpers";
 import { getDeviceById } from "../models/model-model";
@@ -17,7 +16,7 @@ const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
   "pushVariables": 1200,
 };
 
-export const createExperimentAnimationSteps = (model: IModel, animationResults: IExperimentAnimationResults, results: IExperimentResults, replacement: boolean, onComplete?: () => void): Array<AnimationStep> => {
+export const createExperimentAnimationSteps = (model: IModel, dataContextName: string, animationResults: IExperimentAnimationResults, results: IExperimentResults, replacement: boolean, onComplete?: () => void): Array<AnimationStep> => {
   const steps: AnimationStep[] = [];
   steps.push({kind: "startExperiment", numSamples: animationResults.length, numItems: animationResults[0]?.length ?? 0});
 
@@ -55,9 +54,9 @@ export const createExperimentAnimationSteps = (model: IModel, animationResults: 
     steps.push({kind: "pushVariables", onComplete: async () => {
       if (sample.length > 0) {
         const sampleResults = results.filter((result) => result.sample === sample[0].sampleNumber);
-        const createItemsResult = await createItems(kDataContextName, sampleResults) as any;
+        const createItemsResult = await createItems(dataContextName, sampleResults) as any;
         if (createItemsResult?.caseIDs) {
-          await selectCases(kDataContextName, createItemsResult.caseIDs);
+          await selectCases(dataContextName, createItemsResult.caseIDs);
         }
       }
     }});
@@ -71,7 +70,7 @@ export const createExperimentAnimationSteps = (model: IModel, animationResults: 
 
 export const useAnimationContextValue = (): IAnimationContext => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { speed, attrMap, model, numSamples, sampleSize } = globalState;
+  const { speed, attrMap, model, numSamples, sampleSize, dataContextName } = globalState;
   // do not allow without replacement when there is a spinner
   const hasSpinner = modelHasSpinner(model);
   const replacement = globalState.replacement || hasSpinner;
@@ -269,14 +268,18 @@ export const useAnimationContextValue = (): IAnimationContext => {
   const handleStartRun = async () => {
     try {
       const attrNames = model.columns.map(column => column.name);
-      const result = await findOrCreateDataContext(attrNames, attrMap, setGlobalState);
-      if (!result) {
+      const finalDataContextName = await findOrCreateDataContext(dataContextName, attrNames, attrMap, setGlobalState);
+      if (!finalDataContextName) {
         alert("Unable to setup CODAP table");
         return;
       }
 
+      setGlobalState(draft => {
+        draft.dataContextName = finalDataContextName;
+      });
+
       const experimentHash = await computeExperimentHash(globalState);
-      const {experimentNum, startingSampleNumber} = await getNewExperimentInfo(experimentHash);
+      const {experimentNum, startingSampleNumber} = await getNewExperimentInfo(finalDataContextName, experimentHash);
 
       const { results, animationResults } = await getAllExperimentSamples(experimentNum, startingSampleNumber, experimentHash);
 
@@ -295,7 +298,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
         draft.isPaused = false;
         draft.isRunning = true;
       });
-      const newAnimationSteps = createExperimentAnimationSteps(model, animationResults, results, replacement, onEndRun);
+      const newAnimationSteps = createExperimentAnimationSteps(model, finalDataContextName, animationResults, results, replacement, onEndRun);
       startAnimation(newAnimationSteps);
     } catch (e) {
       stopAnimation();

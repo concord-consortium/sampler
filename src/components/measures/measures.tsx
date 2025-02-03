@@ -22,7 +22,7 @@ const getFormula = (measure: Measure, left: string, op: string, right: string) =
 };
 
 export const MeasuresTab = () => {
-  const { globalState: { model: { columns } } } = useGlobalStateContext();
+  const { globalState: { model: { columns }, dataContextName } } = useGlobalStateContext();
   const [selectedMeasure, setSelectedMeasure] = useState<Measure>("default");
   const [measureName, setMeasureName] = useState("");
   const [lValue, setLValue] = useState("");
@@ -32,11 +32,11 @@ export const MeasuresTab = () => {
 
   useEffect(() => {
     const checkForSamples = async () => {
-      const result = await hasSamplesCollection();
+      const result = await hasSamplesCollection(dataContextName);
       setHasSamples(result);
     };
     checkForSamples();
-  }, []);
+  }, [dataContextName]);
 
   const disableAddButton = useMemo(() => {
     let disable = selectedMeasure === "default" || lValue.length === 0;  // measureName is optional
@@ -73,7 +73,7 @@ export const MeasuresTab = () => {
 
   const handleAddMeasure = () => {
     const formula = getFormula(selectedMeasure, lValue, opValue, rValue);
-    addMeasure(measureName, selectedMeasure, formula);
+    addMeasure(dataContextName, measureName, selectedMeasure, formula);
   };
 
   const renderAttributes = () => {
