@@ -3,7 +3,7 @@ import { useImmer } from "use-immer";
 import { AttrMap, IGlobalState, IGlobalStateContext } from "../types";
 import { addDataContextChangeListener, codapInterface, IInitializePlugin, initializePlugin } from "@concord-consortium/codap-plugin-api";
 import { createDefaultDevice } from "../models/device-model";
-import { kInitialDimensions, kPluginName, kVersion } from "../contants";
+import { kInitialDimensions, kPluginName, kVersion } from "../constants";
 import { createId } from "../utils/id";
 import { migrateModel, removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
 import { ensureMinimumDimensions } from "../helpers/codap-helpers";
