@@ -9,13 +9,13 @@ export const modelHasSpinner = (model: IModel) => {
 };
 
 export const computeExperimentHash = async (globalState: IGlobalState): Promise<string> => {
-  const {model, repeat, replacement, sampleSize, numSamples} = globalState;
+  const {model, repeat, replacement, sampleSize, numSamples, untilFormula} = globalState;
 
   const signature = model.columns.reduce<string[]>((acc, column) => {
     acc.push(JSON.stringify(column));
     return acc;
   }, [])
-  .concat(JSON.stringify({repeat, replacement, sampleSize, numSamples}))
+  .concat(JSON.stringify({repeat, replacement, sampleSize, numSamples, untilFormula}))
   .join("+");
 
   const encoder = new TextEncoder();
@@ -70,18 +70,4 @@ export const removeMissingDevicesFromFormulas = (model: IModel) => {
   });
 };
 
-export const migrateModel = (model: IModel) => {
-  model.columns.forEach(column => {
-    column.devices.forEach(device => {
-
-      // ensure all devices have a hidden and lockPassword attribute
-      if (device.hidden === undefined) {
-        device.hidden = false;
-      }
-      if (device.lockPassword === undefined) {
-        device.lockPassword = "";
-      }
-    });
-  });
-};
 

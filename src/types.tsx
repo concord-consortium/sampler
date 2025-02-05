@@ -14,6 +14,7 @@ export interface AttrMap {
   experiment: IAttrForMap;
   description: IAttrForMap;
   sample_size: IAttrForMap;
+  until_formula: IAttrForMap;
   experimentHash: IAttrForMap;
   sample: IAttrForMap;
   [key: string]: IAttrForMap;
@@ -130,6 +131,7 @@ export interface IGlobalState {
   isRunning: boolean;
   isPaused: boolean;
   speed: Speed;
+  untilFormula: string;
 }
 
 export type ISampleAnimationResults = {

@@ -17,7 +17,7 @@ interface IProps {
 export const ModelHeader = (props: IProps) => {
   const { showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap, model, replacement, dataContextName } = globalState;
+  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap, model, replacement, dataContextName, untilFormula } = globalState;
   const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
   const startToggleDisabled = !isRunning && !enableRunButton;
 
@@ -39,6 +39,11 @@ export const ModelHeader = (props: IProps) => {
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setGlobalState(draft => {
       draft.repeat = e.target.value === "repeat";
+      if (draft.repeat) {
+        draft.enableRunButton = draft.untilFormula.trim() !== "";
+      } else {
+        draft.enableRunButton = draft.sampleSize.length > 0;
+      }
     });
   };
 
@@ -70,6 +75,13 @@ export const ModelHeader = (props: IProps) => {
     });
   };
 
+  const handleUntilFormulaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setGlobalState(draft => {
+      draft.untilFormula = e.target.value;
+      draft.enableRunButton = draft.untilFormula.trim() !== "";
+    });
+  };
+
   return (
     <div className="model-header">
       <div className="model-controls">
@@ -84,12 +96,12 @@ export const ModelHeader = (props: IProps) => {
         <div className="inner-controls">
           <div className="select-repeat-selection">
             <div className="select-repeat-dropdown">
-              <select disabled={isRunning} onChange={handleSelectRepeat}>
+              <select disabled={isRunning} value={repeat ? "repeat" : "select"} onChange={handleSelectRepeat}>
                 <option className={`select-repeat-option`} value="select">Select</option>
                 <option className={`select-repeat-option`} value="repeat">Repeat</option>
               </select>
             </div>
-            <input disabled={isRunning} type="number" min={1} id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
+            {!repeat && <input disabled={isRunning} type="number" min={1} id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>}
             <span>{`${repeat ? "selecting" : ""} items`}</span>
             <div className="select-replacement-dropdown">
               <select disabled={isRunning || !allowReplacement} value={replacement ? "with" : "without"} onChange={handleSelectReplacement}>
@@ -101,8 +113,7 @@ export const ModelHeader = (props: IProps) => {
           {repeat &&
             <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
               <span>until</span>
-              {/* note: when this feature is implemented the model-helpers#computeExperimentHash method needs to be updated to include the until value */}
-              <input type="text"></input>
+              <input type="text" value={untilFormula} onChange={handleUntilFormulaChange}></input>
               <InfoIcon onClick={handleOpenHelp}/>
               {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
             </div>

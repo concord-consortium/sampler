@@ -160,33 +160,37 @@ $pluginMinWidth: 304px;
     }
     button.clear-data-button {
       width: 85px;
+      white-space: nowrap;
     }
   }
 }
 
 .select-repeat-controls {
   background-color: rgba(0, 140, 186, 0.2);
+  font-weight: 500;
+  font-size: 11px;
 
   .inner-controls {
-    margin: 0 12px;
     padding: 4px 0;
+    margin: 0 12px;
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: left;
     justify-content: left;
     flex-wrap: wrap;
 
     .select-repeat-selection {
       display: flex;
+      gap: 5px;
       flex-direction: row;
       align-items: center;
-      width: 350px;
+      width: 300px;
 
       .select-repeat-dropdown {
         position: relative;
         width: 67px;
         height: 22px;
-        margin: 0 5px 0 0;
+        margin: 0;
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -214,7 +218,7 @@ $pluginMinWidth: 304px;
         position: relative;
         width: 138px;
         height: 22px;
-        margin: 0 5px 0 0;
+        margin: 0;
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -246,37 +250,31 @@ $pluginMinWidth: 304px;
         }
       }
 
-      span {
-        margin: 0 4px;
-      }
-
       input {
         width: 34px;
         height: 22px;
         border-radius: 1.5px;
         border: solid 1px #8f8f9d;
         background-color: #fff;
-        margin: 0 2px;
+        margin: 0;
         padding: 0 5px;
       }
     }
 
     .repeat-until-controls {
-      width: 350px;
-      height: 30px;
+      width: 300px;
+      padding: 5px 0 0 0;
       display: flex;
+      gap: 5px;
       flex-direction: row;
       align-items: center;
       justify-content: center;
-      &.wide {
-        width: 200px;
-        justify-content: left;
-      }
       span {
-        margin: 0 4px;
+        margin: 0;
       }
       input {
-        margin: 0 5px;
+        margin: 0;
+        padding: 2px 5px;
       }
     }
   }
@@ -350,48 +348,59 @@ $pluginMinWidth: 304px;
 
 .help-modal {
   position: absolute;
-  top: 150px;
-  width: 268px;
-  height: 311px;
+  top: 100px;
+  left: 25px;
   border-radius: 6px;
   box-shadow: 0 1px 20px 0 rgba(0, 0, 0, 0.25);
-  padding: 0 0 75px;
+  padding: 0;
   background-color: #fff;
   z-index: 10;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   .modal-header {
     width: 100%;
     height: 25px;
+    min-height: 25px;
     border-radius: 6px 6px 0 0;
     background-color: $teal-dark;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: grab;
   }
+
   .modal-body {
-    padding: 12px;
+    margin: 0 0 0 12px;
+    padding: 0 12px 0 0;
     text-align: left;
+    overflow-y: auto;
+    flex-grow: 1;
 
     .help-section-title {
       color: black;
       font-size: 12.5px;
       font-weight: bold;
     }
+
     .help-section-body {
       color: black;
       font-weight: 500;
     }
   }
+
   .modal-footer {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 22px;
+    height: 40px;
+    min-height: 40px;
     width: 100%;
-    bottom: 0;
-    bottom: 12px;
-    position: absolute;
+    position: relative;
 
     .modal-button {
       width: 48px;
@@ -402,6 +411,17 @@ $pluginMinWidth: 304px;
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
     }
+  }
+
+  // Resize handle
+  .resize-handle {
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    cursor: se-resize;
   }
 }

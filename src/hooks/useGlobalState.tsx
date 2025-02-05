@@ -5,13 +5,14 @@ import { addDataContextChangeListener, codapInterface, IInitializePlugin, initia
 import { createDefaultDevice } from "../models/device-model";
 import { kInitialDimensions, kPluginName, kVersion } from "../constants";
 import { createId } from "../utils/id";
-import { migrateModel, removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
+import { removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
 import { ensureMinimumDimensions } from "../helpers/codap-helpers";
 
 const defaultAttrMap: AttrMap = {
   experiment: {codapID: null, name: "experiment"},
   description: {codapID: null, name: "description"},
   sample_size: {codapID: null, name: "sample size"},
+  until_formula: {codapID: null, name: "formula for until"},
   experimentHash: {codapID: null, name: "experimentHash"},
   sample: {codapID: null, name: "sample"},
 };
@@ -33,8 +34,32 @@ export const getDefaultState = (): IGlobalState => {
     collectorContext: undefined,
     isRunning: false,
     isPaused: false,
-    speed: 1
+    speed: 1,
+    untilFormula: ""
   };
+};
+
+export const migrateState = (state: IGlobalState) => {
+  state.model.columns.forEach(column => {
+    column.devices.forEach(device => {
+
+      // ensure all devices have a hidden and lockPassword attribute
+      if (device.hidden === undefined) {
+        device.hidden = false;
+      }
+      if (device.lockPassword === undefined) {
+        device.lockPassword = "";
+      }
+    });
+  });
+
+  // ensure the state has the default until formula values
+  if (state.untilFormula === undefined) {
+    state.untilFormula = "";
+  }
+  if (state.attrMap.until_formula === undefined) {
+    state.attrMap.until_formula = defaultAttrMap.until_formula;
+  }
 };
 
 export const useGlobalStateContextValue = (): IGlobalStateContext => {
@@ -63,7 +88,7 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
         removeMissingDevicesFromFormulas(newGlobalState.model);
 
         // set the default values for any new attributes
-        migrateModel(newGlobalState.model);
+        migrateState(newGlobalState);
 
         setGlobalState(draft => {
           return newGlobalState;
