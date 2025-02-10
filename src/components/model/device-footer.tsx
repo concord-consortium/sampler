@@ -21,7 +21,7 @@ interface IProps {
 
 export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, dataContexts}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model, selectedDeviceId, isRunning } = globalState;
+  const { model, selectedDeviceId, isRunning, collectorContextName } = globalState;
   const { viewType, hidden } = device;
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
@@ -105,6 +105,13 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
     setGlobalState(draft => {
       const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
       if (deviceToUpdate) {
+
+        if (deviceToUpdate.viewType === ViewType.Collector && view !== ViewType.Collector) {
+          // reset the collector device to a default device
+          draft.model.columns[columnIndex].name = "output";
+          deviceToUpdate.variables = createDefaultDevice().variables;
+        }
+        draft.enableRunButton = view !== ViewType.Collector || (draft.collectorContextName !== "");
         deviceToUpdate.viewType = view;
       }
     });
@@ -139,16 +146,22 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
       </div>
       <div className="device-buttons">
         {
-          viewType === ViewType.Collector ?
-            <select disabled={isRunning} onChange={handleSelectDataContext}>
-              <option value="">Select a data context</option>
-              {
-                dataContexts.map((context) => {
-                  return <option value={context.name} key={context.id}>{context.name}</option>;
-                })
-              }
-            </select>
-            :
+          viewType === ViewType.Collector ? (
+            dataContexts.length > 0 ?
+              <select disabled={isRunning} value={collectorContextName} onChange={handleSelectDataContext}>
+                <option value="">Select a data context</option>
+                {
+                  dataContexts.map((context) => {
+                    return <option value={context.name} key={context.id}>{context.name}</option>;
+                  })
+                }
+              </select>
+              :
+              <div style={{display: "flex", flexDirection: "column", alignItems: "center", gap: 3}}>
+                <div>No data available for the collector to use.</div>
+                <div>Add a table or import a CSV file.</div>
+              </div>
+            ):
             <>
               <button disabled={isRunning} onClick={handleAddDevice}>{addButtonLabel}</button>
               {showMergeButton && <button disabled={isRunning} onClick={handleMergeDevices}>Merge</button>}
