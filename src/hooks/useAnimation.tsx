@@ -271,6 +271,11 @@ export const useAnimationContextValue = (): IAnimationContext => {
         animationRef.current.elapsed = undefined;
         animationRef.current.lastTimestamp = undefined;
         animationRef.current.stepIndex++;
+
+        // instantly finish all the steps if we start or change to fastest speed
+        if ((currentSpeed === Speed.Fastest) && (animationRef.current.stepIndex < animationRef.current.steps.length)) {
+          animate(timestamp + 1);
+        }
       }
     }
 
