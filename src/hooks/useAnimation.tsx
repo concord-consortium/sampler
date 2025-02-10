@@ -8,6 +8,9 @@ import { formatFormula, parseFormula } from "../utils/utils";
 import { computeExperimentHash, modelHasSpinner } from "../helpers/model-helpers";
 import { getVariables } from "../utils/formula-parser";
 
+// maximum number of items to collect before stopping when the repeat until formula is not satisfied
+const maxRepeatUntilItems = 1000;
+
 const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
   "animateDevice": 1200,
   "showLabel": 1200,
@@ -70,7 +73,7 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
 
 export const useAnimationContextValue = (): IAnimationContext => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { speed, attrMap, model, numSamples, sampleSize, dataContextName } = globalState;
+  const { speed, attrMap, model, numSamples, sampleSize, dataContextName, repeat, untilFormula } = globalState;
   // do not allow without replacement when there is a spinner
   const hasSpinner = modelHasSpinner(model);
   const replacement = globalState.replacement || hasSpinner;
@@ -125,10 +128,14 @@ export const useAnimationContextValue = (): IAnimationContext => {
         }, { [columnName]: selectedVariable });
 
         const formattedFormula = formatFormula(formula, columnName, Object.keys(values));
-        const evaluationResult = await evaluateResult(formattedFormula, values);
-        if (evaluationResult) {
-          nextDeviceId = deviceId;
-          break;
+        try {
+          const evaluationResult = await evaluateResult(formattedFormula, values);
+          if (evaluationResult) {
+            nextDeviceId = deviceId;
+            break;
+          }
+        } catch (e) {
+          throw new Error(`Error evaluating transition formula: ${formula}`);
         }
       }
 
@@ -157,6 +164,10 @@ export const useAnimationContextValue = (): IAnimationContext => {
     const firstDevice = model.columns[0].devices[0];
     const endSampleNumber = startingSampleNumber + Number(numSamples);
     const numItems = firstDevice.variables.length;
+    const counts = {
+      totalSamples: 0,
+      failedSamples: 0
+    };
 
     for (let sampleIndex = startingSampleNumber; sampleIndex < endSampleNumber; sampleIndex++) {
       const sampleResultsForAnimation = [];
@@ -167,29 +178,63 @@ export const useAnimationContextValue = (): IAnimationContext => {
         }, acc);
       }, {});
 
-      for (let i = 0; i < Number(sampleSize); i++) {
+      const sampleSizeNum =  Number(sampleSize);
+      let itemIndex = 0;
+      let doneSampling = repeat ? false : sampleSizeNum === 0;
+
+      counts.totalSamples++;
+
+      while (!doneSampling) {
         const sample: { [key: string]: string | number } = {};
         sample[attrMap.experiment.name] = experimentNum;
         sample[attrMap.sample.name] = sampleIndex;
         const deviceStr = firstDevice.viewType.charAt(0).toUpperCase() + firstDevice.viewType.slice(1);
         sample[attrMap.description.name] = `${deviceStr} containing ${numItems} items${replacement ? " (with replacement)" : ""}`;
-        sample[attrMap.sample_size.name] = sampleSize && parseInt(sampleSize, 10);
+        if (repeat) {
+          sample[attrMap.until_formula.name] = untilFormula;
+        } else {
+          sample[attrMap.sample_size.name] = sampleSize && parseInt(sampleSize, 10);
+        }
         sample[attrMap.experimentHash.name] = experimentHash;
 
         const { outputs, outputsForAnimation, resultsVariableIndex } = await getExperimentSample(variableIndexes);
         sampleResultsForAnimation.push({ sampleNumber: sampleIndex, results: outputsForAnimation, resultsVariableIndex });
 
         const outputKeys = Object.keys(outputs);
-        if (outputKeys.length > 0) {
+        doneSampling = outputKeys.length === 0;
+
+        if (!doneSampling) {
           outputKeys.forEach(key => {
             sample[key] = outputs[key];
           });
           results.push(sample);
-        } else {
-          break;
+
+          itemIndex++;
+
+          if (repeat) {
+            try {
+              const evaluationResult = await evaluateResult(untilFormula, outputs);
+              doneSampling = !!evaluationResult;
+            } catch (e) {
+              throw new Error(`Error evaluating "until" formula: ${untilFormula}`);
+            }
+            if (!doneSampling && (itemIndex >= maxRepeatUntilItems)) {
+              counts.failedSamples++;
+              doneSampling = true;
+              continue;
+            }
+          } else {
+            doneSampling = itemIndex >= sampleSizeNum;
+          }
         }
       }
+
       animationResults.push(sampleResultsForAnimation);
+    }
+
+    if (counts.failedSamples > 0) {
+      const message = counts.totalSamples === counts.failedSamples ? "All of the samples" : `${counts.failedSamples} of the ${counts.totalSamples} samples`;
+      throw new Error(`Aborting! ${message} reached the maximum number of attempts (${maxRepeatUntilItems}) without satisfying the "formula for until" of "${untilFormula}"`);
     }
 
     return { results, animationResults };
@@ -268,7 +313,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
   const handleStartRun = async () => {
     try {
       const attrNames = model.columns.map(column => column.name);
-      const finalDataContextName = await findOrCreateDataContext(dataContextName, attrNames, attrMap, setGlobalState);
+      const finalDataContextName = await findOrCreateDataContext(dataContextName, attrNames, attrMap, setGlobalState, repeat);
       if (!finalDataContextName) {
         alert("Unable to setup CODAP table");
         return;
@@ -303,8 +348,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
     } catch (e) {
       stopAnimation();
       enableNewRun();
-      console.log(e);
-      alert("Error running model! Please check your formulas.");
+      alert(e);
     }
   };
 

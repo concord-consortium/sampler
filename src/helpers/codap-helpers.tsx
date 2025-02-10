@@ -51,6 +51,7 @@ const updateAttributeIds = async (dataContextName: string, attrs: Array<string>,
     {collection: "experiments", attrName: attrMap.experiment.name},
     {collection: "experiments", attrName: attrMap.description.name},
     {collection: "experiments", attrName: attrMap.sample_size.name},
+    {collection: "experiments", attrName: attrMap.until_formula.name},
     {collection: "experiments", attrName: attrMap.experimentHash.name},
     {collection: "samples", attrName: attrMap.sample.name},
   ];
@@ -102,7 +103,7 @@ export const hasSamplesCollection = async (dataContextName: string): Promise<boo
   return !!collections.find(c => c.name === collectionNames.samples);
 };
 
-export const findOrCreateDataContext = async (initialDataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>): Promise<string|null> => {
+export const findOrCreateDataContext = async (initialDataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>, repeat: boolean): Promise<string|null> => {
   const collectionNames = getCollectionNames();
 
   // if the plugin is being loaded from a CODAP document, the initialDataContextName will be provided
@@ -125,10 +126,18 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
     }
   }
 
+  const experimentAttrName = repeat ? attrMap.until_formula.name : attrMap.sample_size.name;
+
   const dataContextRes = await getDataContext(finalDataContextName);
   if (dataContextRes.success) {
+    // ensure that the sample size or repeat formula column exists based on the current experiment type
+    let attrList = (await getAttributeList(finalDataContextName, collectionNames.experiments)).values;
+    if (!attrList.find((attr: {name: string}) => attr.name === experimentAttrName)) {
+      await createNewAttribute(finalDataContextName, collectionNames.experiments, experimentAttrName);
+    }
+
     // ensure that if a user deleted a CODAP attr representing a device column, it is reinstated
-    const attrList = (await getAttributeList(finalDataContextName, collectionNames.items)).values;
+    attrList = (await getAttributeList(finalDataContextName, collectionNames.items)).values;
     const attrNames = attrList.map((attr: {id: number, name: string, title: string}) => attr.name);
     const missingAttrs = attrs.filter(attr => !attrNames.includes(attr));
     if (missingAttrs.length > 0) {
@@ -148,7 +157,7 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
       const parentAttrs = [
         {name: attrMap.experiment.name, type: "categorical"},
         {name: attrMap.description.name, type: "categorical"},
-        {name: attrMap.sample_size.name, type: "categorical"},
+        {name: experimentAttrName, type: "categorical"},
         {name: attrMap.experimentHash.name, type: "categorical", hidden: "true"}
       ];
       const sampleAttrs = [{name: attrMap.sample.name, type: "categorical"}];
