@@ -140,20 +140,6 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
     attrList = (await getAttributeList(finalDataContextName, collectionNames.items)).values;
     const attrNames: string[] = attrList.map((attr: {id: number, name: string, title: string}) => attr.name);
 
-    // if this is a collector run and there are no existing items remove all non-collector attributes
-    if (isCollector) {
-      const itemCountResult = await getCaseCount(finalDataContextName, collectionNames.items);
-      if (itemCountResult.success && itemCountResult.values === 0) {
-        const nonCollectorAttrs = attrNames.filter(attr => !attrs.includes(attr));
-        nonCollectorAttrs.forEach(async (attr) => {
-          await codapInterface.sendRequest({
-            action: "delete",
-            resource: `dataContext[${finalDataContextName}].collection[${collectionNames.items}].attributeList[${attr}]`
-          });
-        });
-      }
-    }
-
     // ensure that if a user deleted a CODAP attr representing a device column, it is reinstated
     const missingAttrs = attrs.filter(attr => !attrNames.includes(attr));
     if (missingAttrs.length > 0) {
@@ -161,6 +147,16 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
         await createNewAttribute(finalDataContextName, collectionNames.items, attr);
       });
     }
+
+    // if this is a collector run and there are no existing items remove all non-collector attributes
+    if (isCollector) {
+      const itemCountResult = await getCaseCount(finalDataContextName, collectionNames.items);
+      if (itemCountResult.success && itemCountResult.values === 0) {
+        const nonCollectorAttrs = attrNames.filter(attr => !attrs.includes(attr));
+        deleteItemAttrs(finalDataContextName, nonCollectorAttrs);
+      }
+    }
+
     await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState);
     return finalDataContextName;
   } else {
@@ -205,6 +201,26 @@ export const deleteAll = (dataContextName: string, attrMap: AttrMap) => {
     action: "delete",
     resource: `dataContext[${dataContextName}].collection[${attrMap.experiment.name}].allCases`
   });
+};
+
+export const deleteAllItems = async (dataContextName: string) => {
+  codapInterface.sendRequest({
+    action: "delete",
+    resource: `dataContext[${dataContextName}].collection[${getCollectionNames().items}].allCases`
+  });
+};
+
+export const getItemAttrs = async (dataContextName: string): Promise<string[]> => {
+  return (await getAttributeList(dataContextName, getCollectionNames().items)).values.map((attr: any) => attr.name);
+};
+
+export const deleteItemAttrs = async (dataContextName: string, attrs: string[]) => {
+  for (const attr of attrs) {
+    await codapInterface.sendRequest({
+      action: "delete",
+      resource: `dataContext[${dataContextName}].collection[${getCollectionNames().items}].attribute[${attr}]`
+    });
+  }
 };
 
 export const addMeasure = (dataContextName: string, measureName: string, measureType: string, formula: string) => {
