@@ -7,6 +7,7 @@ import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
 import { TextBacker, updateTextBackerRefFn } from "./text-backer";
 import { Needle } from "./needle";
 import { ClippingDef, IDevice, ITextBackerPos, IVariableLocation } from "../../../../types";
+import { TextOverWedge } from "./text-over-wedge";
 
 interface IProps {
   device: IDevice;
@@ -125,12 +126,10 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
               lastPercent={lastPercent}
               variableName={variableName}
               index={index}
-              labelFontSize={fontSize}
               varArrayIdx={varArrayIdx}
               selectedWedge={selectedWedge}
               numUniqueVariables={uniqueVariables.length}
               nextVariable={uniqueVariables[index + 1]}
-              isLastVariable={index === uniqueVariables.length - 1}
               isDragging={isDragging}
               handleAddDefs={handleAddDefs}
               handleSetSelectedVariable={handleSetSelectedVariable}
@@ -154,6 +153,30 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
               isDragging={isDragging}
               handleSetSelectedVariable={isLastVariable ? undefined : handleSetSelectedVariable}
               handleStartDrag={isLastVariable ? undefined : handleStartDrag}
+            />
+          );
+        })}
+        {uniqueVariables.map((variableName, index) => {
+          const varArrayIdx = variables.findIndex((v) => v === variableName);
+          const {lastPercent, currPercent} = variableLocations[variableName];
+          return (
+            <TextOverWedge
+              key={`${variableName}-${index}`}
+              deviceId={id}
+              percent={currPercent}
+              lastPercent={lastPercent}
+              variableName={variableName}
+              index={index}
+              labelFontSize={fontSize}
+              varArrayIdx={varArrayIdx}
+              selectedWedge={selectedWedge}
+              numUniqueVariables={uniqueVariables.length}
+              nextVariable={uniqueVariables[index + 1]}
+              isLastVariable={index === uniqueVariables.length - 1}
+              isDragging={isDragging}
+              handleAddDefs={handleAddDefs}
+              handleSetSelectedVariable={handleSetSelectedVariable}
+              handleSetEditingVarName={handleSetEditingVarName}
             />
           );
         })}
