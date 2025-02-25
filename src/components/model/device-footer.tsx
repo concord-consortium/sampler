@@ -159,7 +159,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
               </select>
               :
               <div style={{display: "flex", flexDirection: "column", alignItems: "center", gap: 3}}>
-                <div>No data available for the collector to use.</div>
+                <div>No data available for the collector.</div>
                 <div>Add a table or import a CSV file.</div>
               </div>
             ):
