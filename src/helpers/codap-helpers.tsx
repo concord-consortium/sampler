@@ -8,6 +8,7 @@ import {
   getAllItems,
   getAttribute,
   getAttributeList,
+  getCaseCount,
   getCollectionList,
   getDataContext,
   getListOfDataContexts,
@@ -103,7 +104,7 @@ export const hasSamplesCollection = async (dataContextName: string): Promise<boo
   return !!collections.find(c => c.name === collectionNames.samples);
 };
 
-export const findOrCreateDataContext = async (initialDataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>, repeat: boolean): Promise<string|null> => {
+export const findOrCreateDataContext = async (initialDataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>, repeat: boolean, isCollector: boolean): Promise<string|null> => {
   const collectionNames = getCollectionNames();
 
   // if the plugin is being loaded from a CODAP document, the initialDataContextName will be provided
@@ -136,9 +137,24 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
       await createNewAttribute(finalDataContextName, collectionNames.experiments, experimentAttrName);
     }
 
-    // ensure that if a user deleted a CODAP attr representing a device column, it is reinstated
     attrList = (await getAttributeList(finalDataContextName, collectionNames.items)).values;
-    const attrNames = attrList.map((attr: {id: number, name: string, title: string}) => attr.name);
+    const attrNames: string[] = attrList.map((attr: {id: number, name: string, title: string}) => attr.name);
+
+    // if this is a collector run and there are no existing items remove all non-collector attributes
+    if (isCollector) {
+      const itemCountResult = await getCaseCount(finalDataContextName, collectionNames.items);
+      if (itemCountResult.success && itemCountResult.values === 0) {
+        const nonCollectorAttrs = attrNames.filter(attr => !attrs.includes(attr));
+        nonCollectorAttrs.forEach(async (attr) => {
+          await codapInterface.sendRequest({
+            action: "delete",
+            resource: `dataContext[${finalDataContextName}].collection[${collectionNames.items}].attributeList[${attr}]`
+          });
+        });
+      }
+    }
+
+    // ensure that if a user deleted a CODAP attr representing a device column, it is reinstated
     const missingAttrs = attrs.filter(attr => !attrNames.includes(attr));
     if (missingAttrs.length > 0) {
       missingAttrs.forEach(async (attr) => {

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { MixerFrame } from "./shared/mixer-frame";
 import { Balls } from "./shared/balls";
 import { IDevice, ClippingDef } from "../../../types";
+import { getCollectorCaseIndexVariables } from "../../../utils/collector";
 
 interface IProps {
   device: IDevice;
@@ -11,15 +12,10 @@ interface IProps {
 }
 
 export const Collector = ({device, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IProps) => {
-  const [ballsArray, setBallsArray] = useState<Array<string>>([]);
   const { collectorVariables, id: deviceId, hidden } = device;
 
-  useEffect(() => {
-    if (collectorVariables.length) {
-      const firstKey = Object.keys(collectorVariables[0])[0];
-      const onlyFirstKeyValues = collectorVariables.map((item) => item[firstKey].toString());
-      setBallsArray(onlyFirstKeyValues);
-    }
+  const ballsArray = useMemo(() => {
+    return getCollectorCaseIndexVariables(collectorVariables);
   }, [collectorVariables]);
 
   return (

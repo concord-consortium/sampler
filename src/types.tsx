@@ -125,13 +125,16 @@ export interface IGlobalState {
   enableRunButton: boolean;
   attrMap: AttrMap;
   dataContextName: string;
-  dataContexts: Array<IDataContext>;
-  collectorContext: IDataContext | undefined;
+  collectorContextName: string;
   samplerContext: IDataContext | undefined;
   isRunning: boolean;
   isPaused: boolean;
   speed: Speed;
   untilFormula: string;
+}
+
+export interface ITransientState {
+  dataContexts: Array<IDataContext>;
 }
 
 export type ISampleAnimationResults = {
@@ -282,6 +285,11 @@ export type DeviceMap = Record<Id,IDevice>;
 export interface IGlobalStateContext {
   globalState: IGlobalState;
   setGlobalState: Updater<IGlobalState>;
+}
+
+export interface ITransientStateContext {
+  globalState: ITransientState;
+  setTransientState: Updater<ITransientState>;
 }
 
 export type ResizerListener = () => void;

@@ -7,6 +7,7 @@ import { kInitialDimensions, kPluginName, kVersion } from "../constants";
 import { createId } from "../utils/id";
 import { removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
 import { ensureMinimumDimensions } from "../helpers/codap-helpers";
+import { isCollectorOnlyModel } from "../utils/collector";
 
 const defaultAttrMap: AttrMap = {
   experiment: {codapID: null, name: "experiment"},
@@ -28,10 +29,9 @@ export const getDefaultState = (): IGlobalState => {
     numSamples: "3",
     enableRunButton: true,
     attrMap: defaultAttrMap,
-    dataContexts: [],
     dataContextName: "",
+    collectorContextName: "",
     samplerContext: undefined,
-    collectorContext: undefined,
     isRunning: false,
     isPaused: false,
     speed: 1,
@@ -89,6 +89,10 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
 
         // set the default values for any new attributes
         migrateState(newGlobalState);
+
+        if (isCollectorOnlyModel(newGlobalState.model)) {
+          newGlobalState.enableRunButton = newGlobalState.collectorContextName !== "";
+        }
 
         setGlobalState(draft => {
           return newGlobalState;

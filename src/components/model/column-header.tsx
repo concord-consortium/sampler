@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { getAttribute, updateAttribute } from "@concord-consortium/codap-plugin-api";
 import { getNewColumnName } from "../helpers";
@@ -53,6 +53,10 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
     }
   }, [inputRef, columnName]);
 
+  const isCollector = useMemo(() => {
+    return model.columns[columnIndex].devices[0].viewType === "collector";
+  }, [model, columnIndex]);
+
   const handleNameChange = async () => {
     const newName = getNewColumnName(columnName.trim(), model.columns, column.id);
 
@@ -106,7 +110,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
       <textarea
         rows={1}
         ref={inputRef}
-        disabled={isRunning}
+        disabled={isRunning || isCollector}
         className="attr-name"
         value={columnName}
         onChange={(e) => setColumnName(e.target.value)}

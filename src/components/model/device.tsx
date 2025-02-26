@@ -7,7 +7,7 @@ import { NameLabelInput } from "./name-label-input";
 import { PctLabelInput } from "./percent-label-input";
 import { DeviceFooter } from "./device-footer";
 import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth, kSpinnerX, kSpinnerY } from "./device-views/shared/constants";
-import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
+import { codapInterface, getAllItems, getDataContext, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { createNewVarArray, getNextVariable, getPercentOfVar } from "../helpers";
 import { calculateWedgePercentage } from "./device-views/shared/helpers";
 import { SetVariableSeriesModal } from "./variable-setting-modal";
@@ -26,10 +26,10 @@ interface IProps {
 
 export const Device = (props: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model, selectedDeviceId } = globalState;
+  const { model, selectedDeviceId, collectorContextName } = globalState;
   const { device, columnIndex } = props;
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
-  const [selectedDataContext, setSelectedDataContext] = useState<string>("");
+  //const [selectedDataContext, setSelectedDataContext] = useState<string>("");
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
   const [isEditingVarName, setIsEditingVarName] = useState<boolean>(false);
   const [isEditingVarPct, setIsEditingVarPct] = useState<boolean>(false);
@@ -38,9 +38,52 @@ export const Device = (props: IProps) => {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragOrigin, setDragOrigin] = useState<{x: number, y: number}>({x: 0, y: 0});
   const [showVariableEditor, setShowVariableEditor] = useState<boolean>(false);
+  const [dataContextCountChangedAt, setDataContextCountChangedAt] = useState<number>(0);
   const { viewType, variables } = device;
   const svgRef = useRef<SVGSVGElement>(null);
   const multipleColumns = model.columns.length > 1;
+
+  const changeDataContext = useCallback(async (dataContextName: string) => {
+    try {
+      // ignore picking the placeholder option
+      if (dataContextName.length === 0) {
+        return;
+      }
+
+      // ignore data contexts that might have disappeared
+      const getDataContextResult = await getDataContext(dataContextName);
+      if (!getDataContextResult.success) {
+        return;
+      }
+
+      if (getDataContextResult.values.collections.length === 0) {
+        throw new Error("No collections found in data context");
+      }
+      if (getDataContextResult.values.collections[0].attrs.length === 0) {
+        throw new Error("No attributes found in the first collection of the data context");
+      }
+
+      const items = await getAllItems(dataContextName);
+      const itemValues = items.values.map((item: IItem) => item.values);
+
+      setGlobalState(draft => {
+        draft.enableRunButton = true;
+        draft.collectorContextName = dataContextName;
+        draft.model.columns[0].name = dataContextName;
+        draft.model.columns[0].devices[0].collectorVariables = itemValues;
+      });
+    } catch (err) {
+      alert(err);
+    }
+  }, [setGlobalState]);
+
+  useEffect(() => {
+    codapInterface.on('notify', 'documentChangeNotice', (message) => {
+      if (message.values?.operation === "dataContextCountChanged") {
+        setDataContextCountChangedAt(Date.now());
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const fetchDataContexts = async () => {
@@ -52,6 +95,15 @@ export const Device = (props: IProps) => {
       fetchDataContexts().then((contexts: Array<IDataContext>) => {
         const filteredCtxs = contexts.filter((context) => context.name !== globalState.dataContextName);
         setDataContexts(filteredCtxs);
+
+        let autoSelectedDataContext = filteredCtxs.find((context) => context.name === globalState.collectorContextName);
+        if (!autoSelectedDataContext && filteredCtxs.length === 1) {
+          autoSelectedDataContext = filteredCtxs[0];
+        }
+
+        if (autoSelectedDataContext) {
+          changeDataContext(autoSelectedDataContext.name);
+        }
       });
     }
 
@@ -60,12 +112,12 @@ export const Device = (props: IProps) => {
     } else {
       setViewBox(`0 0 ${kMixerContainerWidth + 10} ${kMixerContainerHeight}`);
     }
-  }, [viewType, globalState.dataContextName]);
+  }, [viewType, globalState.dataContextName, globalState.collectorContextName, dataContextCountChangedAt, changeDataContext]);
 
   useEffect(() => {
-    if (selectedDataContext) {
+    if (collectorContextName) {
       const fetchItems = async () => {
-        const res = await getAllItems(selectedDataContext);
+        const res = await getAllItems(collectorContextName);
         return res.values;
       };
 
@@ -79,7 +131,7 @@ export const Device = (props: IProps) => {
         });
       });
     }
-  }, [selectedDataContext, selectedDeviceId, setGlobalState, columnIndex]);
+  }, [collectorContextName, selectedDeviceId, setGlobalState, columnIndex]);
 
 
   const handleSelectDevice = () => {
@@ -108,9 +160,9 @@ export const Device = (props: IProps) => {
     });
   };
 
-  const handleSelectDataContext = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedDataContext(e.target.value);
-  };
+  const handleSelectDataContext = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    changeDataContext(e.target.value);
+  }, [changeDataContext]);
 
   const handleSpecifyVariables = () => {
     setShowVariableEditor(true);
