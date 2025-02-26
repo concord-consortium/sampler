@@ -3,9 +3,10 @@ import { SpeedSlider } from "./model-speed-slider";
 import { HelpModal } from "./help-modal";
 import InfoIcon from "../../assets/help-icon.svg";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
-import { deleteAll } from "../../helpers/codap-helpers";
+import { deleteAllItems, deleteItemAttrs, findOrCreateDataContext, getItemAttrs } from "../../helpers/codap-helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { modelHasSpinner } from "../../helpers/model-helpers";
+import { getCollectorAttrs, isCollectorOnlyModel } from "../../utils/collector";
 
 interface IProps {
   showHelp: boolean;
@@ -17,7 +18,7 @@ interface IProps {
 export const ModelHeader = (props: IProps) => {
   const { showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap, model, replacement, dataContextName, untilFormula } = globalState;
+  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, model, replacement, dataContextName, untilFormula, attrMap } = globalState;
   const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
   const startToggleDisabled = !isRunning && !enableRunButton;
 
@@ -33,7 +34,29 @@ export const ModelHeader = (props: IProps) => {
   };
 
   const handleClearData = () => {
-    deleteAll(dataContextName, attrMap);
+    const deleteItems = async () => {
+      try {
+        const isCollector = isCollectorOnlyModel(model);
+        const existingAttrs = await getItemAttrs(dataContextName);
+
+        let newAttrs: string[] = [];
+        if (isCollector) {
+          newAttrs = getCollectorAttrs(model);
+        } else {
+          newAttrs = model.columns.map(column => column.name);
+        }
+        const attrsToDelete = existingAttrs.filter(attr => !newAttrs.includes(attr));
+
+        await deleteAllItems(dataContextName);
+        await findOrCreateDataContext(dataContextName, newAttrs, attrMap, setGlobalState, repeat, isCollector);
+        await deleteItemAttrs(dataContextName, attrsToDelete);
+
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    deleteItems();
   };
 
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -82,6 +105,8 @@ export const ModelHeader = (props: IProps) => {
     });
   };
 
+  const clearDataButtonDisabled = isRunning || dataContextName === "";
+
   return (
     <div className="model-header">
       <div className="model-controls">
@@ -89,7 +114,7 @@ export const ModelHeader = (props: IProps) => {
           <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? (isPaused ? "START" : "PAUSE") : "START"}</button>
           <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>STOP</button>
           <SpeedSlider />
-          <button disabled={isRunning} className={`clear-data-button ${isRunning ? "disabled" : ""}`} onClick={handleClearData}>CLEAR DATA</button>
+          <button disabled={clearDataButtonDisabled} className={`clear-data-button ${clearDataButtonDisabled ? "disabled" : ""}`} onClick={handleClearData}>CLEAR DATA</button>
         </div>
       </div>
       <div className="select-repeat-controls">
