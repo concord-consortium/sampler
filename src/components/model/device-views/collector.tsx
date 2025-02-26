@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { MixerFrame } from "./shared/mixer-frame";
 import { Balls } from "./shared/balls";
 import { IDevice, ClippingDef } from "../../../types";
-import { getCollectorCaseIndexVariables } from "../../../utils/collector";
+import { getCollectorFirstNameVariables } from "../../../utils/collector";
 
 interface IProps {
   device: IDevice;
@@ -15,7 +15,7 @@ export const Collector = ({device, handleAddDefs, handleSetSelectedVariable, han
   const { collectorVariables, id: deviceId, hidden } = device;
 
   const ballsArray = useMemo(() => {
-    return getCollectorCaseIndexVariables(collectorVariables);
+    return getCollectorFirstNameVariables(collectorVariables);
   }, [collectorVariables]);
 
   return (

@@ -1,7 +1,11 @@
 import { ViewType, type ICollectorVariables, type IModel } from "../types";
 
-export const getCollectorCaseIndexVariables = (collectorVariables: ICollectorVariables): string[] => {
-  return Array.from({ length: collectorVariables.length }, (_, i) => `${i + 1}`);
+export const getCollectorFirstNameVariables = (collectorVariables: ICollectorVariables): string[] => {
+  if (collectorVariables.length) {
+    const firstKey = Object.keys(collectorVariables[0])[0];
+    return collectorVariables.map((item) => item[firstKey].toString());
+  }
+  return [];
 };
 
 export const isCollectorOnlyModel = (model: IModel): boolean => {
@@ -10,7 +14,7 @@ export const isCollectorOnlyModel = (model: IModel): boolean => {
 
 export const getCollectorAttrs = (model: IModel): string[] => {
   if (isCollectorOnlyModel(model)) {
-    return [model.columns[0].name, ...Object.keys(model.columns[0].devices[0].collectorVariables[0])];
+    return Object.keys(model.columns[0].devices[0].collectorVariables[0]);
   }
   return [];
 };

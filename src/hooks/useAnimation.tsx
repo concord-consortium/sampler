@@ -7,7 +7,7 @@ import { getDeviceById } from "../models/model-model";
 import { formatFormula, parseFormula } from "../utils/utils";
 import { computeExperimentHash, modelHasSpinner } from "../helpers/model-helpers";
 import { getVariables } from "../utils/formula-parser";
-import { getCollectorAttrs, getCollectorCaseIndexVariables, isCollectorOnlyModel } from "../utils/collector";
+import { getCollectorAttrs, getCollectorFirstNameVariables, isCollectorOnlyModel } from "../utils/collector";
 
 // maximum number of items to collect before stopping when the repeat until formula is not satisfied
 const maxRepeatUntilItems = 1000;
@@ -106,7 +106,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
       const randomIndex = Math.floor(Math.random() * availableVariableIndexes.length);
       const selectedIndex = availableVariableIndexes[randomIndex];
       const isCollector = currentDevice.viewType === ViewType.Collector;
-      const variables = isCollector ? getCollectorCaseIndexVariables(currentDevice.collectorVariables) : currentDevice.variables;
+      const variables = isCollector ? getCollectorFirstNameVariables(currentDevice.collectorVariables) : currentDevice.variables;
       const selectedVariable = variables[selectedIndex];
 
       if (!replacement) {
@@ -146,8 +146,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
 
       if (columnName) {
         if (isCollector) {
-          const index = Number(selectedVariable) - 1;
-          const newOutputs = { [columnName]: selectedVariable, ...currentDevice.collectorVariables[index] };
+          const newOutputs = currentDevice.collectorVariables[selectedIndex];
           outputs = {...newOutputs};
           previousOutputs = {...newOutputs};
         } else {
