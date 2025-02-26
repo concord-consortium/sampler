@@ -153,9 +153,9 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
       >
         {variableName}
       </text>
-      { selectedWedge === variableName &&
+      {/* percentage label */}
+      { (isDragging || (selectedWedge === variableName)) &&
         <>
-          {/* percentage label */}
           <path
             d={labelLinePath}
             strokeWidth={2}
@@ -172,25 +172,27 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
           >
             {Math.round(percent * 100)}%
           </text>
-          {/* delete wedge button */}
-          <g style={{cursor: "pointer"}} onClick={(e) => handleDeleteWedge(e, variableName)}>
-            <rect
-              x={delBtnPos.x - (buttonSize / 2)}
-              y={delBtnPos.y - (buttonSize / 2)}
-              width={buttonSize}
-              height={buttonSize}
-              rx={3}
-              stroke={kDarkTeal}
-              strokeWidth={1}
-              fill={kLightBlue}
-            />
-            <path
-              d={delButtonInnerShapePath}
-              stroke={"#000"}
-              strokeWidth={1}
-            />
-          </g>
         </>
+      }
+      {/* delete wedge button */}
+      { !isDragging && selectedWedge === variableName &&
+        <g style={{cursor: "pointer"}} onClick={(e) => handleDeleteWedge(e, variableName)}>
+          <rect
+            x={delBtnPos.x - (buttonSize / 2)}
+            y={delBtnPos.y - (buttonSize / 2)}
+            width={buttonSize}
+            height={buttonSize}
+            rx={3}
+            stroke={kDarkTeal}
+            strokeWidth={1}
+            fill={kLightBlue}
+          />
+          <path
+            d={delButtonInnerShapePath}
+            stroke={"#000"}
+            strokeWidth={1}
+          />
+        </g>
       }
     </>
   );
