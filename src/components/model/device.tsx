@@ -133,6 +133,10 @@ export const Device = (props: IProps) => {
     }
   }, [collectorContextName, selectedDeviceId, setGlobalState, columnIndex]);
 
+  useEffect(() => {
+    // when the viewtype changes deselect the selected variable
+    setSelectedVariableIdx(null);
+  }, [viewType]);
 
   const handleSelectDevice = () => {
     setGlobalState(draft => {
