@@ -62,12 +62,14 @@ export const AboutTab = () => {
       </p>
 
       <h2>Funding</h2>
-      <div style={{display:"flex"}}>
-        <p style={{marginTop: 0}}>
+      <div className="funding">
+        <p>
           The Sampler in CODAP was inspired by the Sampler in <a href="http://www.tinkerplots.com/" target="_blank" rel="noreferrer">TinkerPlots</a>.
           It was developed by the <a href="https://concord.org/" target="_blank" rel="noreferrer">Concord Consortium</a> as part of
           the <a href="https://fi.ncsu.edu/projects/esteem/" target="_blank" rel="noreferrer">ESTEEM project</a> with support by the
-          National Science Foundation under Grant Nos. DUE <span style={{color: "red"}}>1625713</span> and <span style={{color: "red"}}>2141727</span> awarded to North Carolina State University. Any opinions, findings, and conclusions or recommendations in this material are those of the principal investigators and do not necessarily reflect the views of the National Science Foundation.
+          National Science Foundation under Grant Nos. DUE <span className="nsf-grant-id">1625713</span> and <span className="nsf-grant-id">2141727</span>
+          awarded to North Carolina State University. Any opinions, findings, and conclusions or recommendations in this material are those of the
+          principal investigators and do not necessarily reflect the views of the National Science Foundation.
         </p>
         <div>
           <img src={esteemLogo}></img>
