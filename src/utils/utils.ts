@@ -65,8 +65,10 @@ export function parseSpecifier(spec: string, rangeWord: string) {
       }
     } else {
       if (item !== "") {
-        if (item !== " ") {
+        if (item.trim().length > 0) {
           arr.push(item.trim());
+        } else {
+          arr.push("_");
         }
       }
     }
