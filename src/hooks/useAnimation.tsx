@@ -56,12 +56,15 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
     });
 
     steps.push({
-      kind: "pushVariables", onComplete: async () => {
+      kind: "pushVariables", onComplete: async (settings) => {
         if (sample.length > 0) {
           const sampleResults = results.filter((result) => result.sample === sample[0].sampleNumber);
           const createItemsResult = await createItems(dataContextName, sampleResults) as any;
           if (createItemsResult?.caseIDs) {
-            await selectCases(dataContextName, createItemsResult.caseIDs);
+            // skip selecting cases if we are running at the fastest speed
+            if (settings.speed !== Speed.Fastest) {
+              await selectCases(dataContextName, createItemsResult.caseIDs);
+            }
           }
         }
       }
@@ -88,6 +91,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
   });
   const animationsCallbacksRef = useRef<AnimationCallback[]>([]);
   const speedRef = useRef<Speed>(Speed.Slow);
+  const stopAnimationAtRef = useRef<number>(0);
 
   const getExperimentSample = async (variableIndexes: AvailableDeviceVariableIndexes) => {
     let currentDevice = model.columns[0].devices[0];
@@ -283,15 +287,10 @@ export const useAnimationContextValue = (): IAnimationContext => {
       animationsCallbacksRef.current.forEach(callback => callback(step, settings));
 
       if (t >= 1) {
-        step.onComplete?.();
+        step.onComplete?.(settings);
         animationRef.current.elapsed = undefined;
         animationRef.current.lastTimestamp = undefined;
         animationRef.current.stepIndex++;
-
-        // instantly finish all the steps if we start or change to fastest speed
-        if ((currentSpeed === Speed.Fastest) && (animationRef.current.stepIndex < animationRef.current.steps.length)) {
-          animate(timestamp + 1);
-        }
       }
     }
 
@@ -315,12 +314,38 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const stopAnimation = () => {
+    stopAnimationAtRef.current = Date.now();
     cancelAnimationFrame(animationRef.current.frame);
   };
 
   const requestAnimation = () => {
     cancelAnimationFrame(animationRef.current.frame);
-    animationRef.current.frame = requestAnimationFrame(animate);
+
+    // instantly finish all the steps if we start or change to fastest speed
+    if (speedRef.current === Speed.Fastest) {
+      const finish = async () => {
+        const startedFinishAt = Date.now();
+        const settings: IAnimationStepSettings = { t: 1, speed: Speed.Fastest };
+        const endAnimations = () => animationsCallbacksRef.current.forEach(callback => callback({kind: "endExperiment"}, settings));
+
+        // run through all the steps and call onComplete for each one
+        while (animationRef.current.stepIndex < animationRef.current.steps.length) {
+          const step = animationRef.current.steps[animationRef.current.stepIndex];
+          await step.onComplete?.(settings);
+          animationRef.current.stepIndex++;
+
+          if (stopAnimationAtRef.current > startedFinishAt) {
+            // if we were asked to stop while finishing, stop immediately
+            break;
+          }
+        }
+
+        endAnimations();
+      };
+      finish();
+    } else {
+      animationRef.current.frame = requestAnimationFrame(animate);
+    }
   };
 
   const enableNewRun = () => {
