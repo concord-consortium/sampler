@@ -34,13 +34,12 @@ export const SetVariableSeriesModal = ({setShowVariableEditor, handleUpdateVaria
         <p className="set-variables-body">
         {`Enter a list (e.g. 'cat, cat, dog') or a range (e.g. '1-50', '-5 to 5', '1.0 to 5.0', 'A-Z')`}
         </p>
-        <input className="set-variables-input" type="text" placeholder="a to c"
+        <input className="set-variables-input" type="text" autoFocus={true} placeholder="a to c"
           onChange={(e) => handleVariablesChange(e.target.value)} onKeyDown={handleVariablesChangeKeyDown}/>
       </div>
       <div className="modal-footer">
         <button className="modal-button" onClick={handleCloseModal}>Cancel</button>
         <button className="modal-button" onClick={handleSubmitVariableSetting}>OK</button>
-
       </div>
     </div>
   );
