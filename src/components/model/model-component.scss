@@ -61,6 +61,7 @@ $pluginMinWidth: 304px;
         position: absolute;
         left: 8px;
         top: 2px;
+        pointer-events: none;
 
         .tick-mark {
           display: flex;
