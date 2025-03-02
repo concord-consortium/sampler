@@ -114,6 +114,23 @@ export type AnimationCallback = (step: AnimationStep, settings?: IAnimationStepS
 export type UnregisterAnimationCallbackFn = () => void;
 export type RegisterAnimationCallbackFn = (animationCallback: AnimationCallback) => UnregisterAnimationCallbackFn;
 
+export interface ITPSamplerPluginState {
+  experimentNumber: number,
+  mostRecentRunNumber: number,
+  variables: string[],
+  draw: string,
+  repeat: string,
+  speed: number,
+  device: string,
+  deviceName: string,
+  withReplacement: boolean,
+  hidden: boolean,
+  password: string|null,
+  dataSetName: string,
+  previousExperimentDescription: string,
+  previousSampleSize: string
+}
+
 export interface IGlobalState {
   model: IModel;
   selectedDeviceId: Id | undefined;

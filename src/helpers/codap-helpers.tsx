@@ -134,7 +134,36 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
     // ensure that the sample size or repeat formula column exists based on the current experiment type
     let attrList = (await getAttributeList(finalDataContextName, collectionNames.experiments)).values;
     if (!attrList.find((attr: {name: string}) => attr.name === experimentAttrName)) {
-      await createNewAttribute(finalDataContextName, collectionNames.experiments, experimentAttrName);
+      let createNewAttr = true;
+
+      // special case when an old TPSampler doc is loaded - rename "sample_size" to "sample size"
+      if (experimentAttrName === attrMap.sample_size.name) {
+        const oldExperimentAttrName = "sample_size";
+        const oldAttr = attrList.find((attr: {name: string}) => attr.name === oldExperimentAttrName);
+        if (oldAttr) {
+          await updateAttribute(finalDataContextName, collectionNames.experiments, oldExperimentAttrName, oldAttr, {name: experimentAttrName});
+          createNewAttr = false;
+        }
+      }
+
+      if (createNewAttr) {
+        await createNewAttribute(finalDataContextName, collectionNames.experiments, experimentAttrName);
+      }
+    }
+
+    // ensure that the experimentHash column exists (it will not exist in older TPSampler documents)
+    if (!attrList.find((attr: {name: string}) => attr.name === attrMap.experimentHash.name)) {
+      await codapInterface.sendRequest({
+        action: "create",
+        resource: `dataContext[${finalDataContextName}].collection[${collectionNames.experiments}].attribute`,
+        values: [
+          {
+            name: attrMap.experimentHash.name,
+            type: "categorical",
+            hidden: true
+          }
+        ]
+      });
     }
 
     attrList = (await getAttributeList(finalDataContextName, collectionNames.items)).values;

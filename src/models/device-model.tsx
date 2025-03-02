@@ -35,3 +35,13 @@ export const kDefaultVars: IVariables = ["a", "a", "b"];
 export const createDefaultDevice = (viewType: ViewType = ViewType.Mixer): IDevice => {
   return {id: createId(), viewType, variables: kDefaultVars, collectorVariables: [], formulas: {}, hidden: false, lockPassword: ""};
 };
+
+interface ICreateDeviceOptions {
+  viewType: ViewType,
+  variables: IVariables,
+  hidden: boolean,
+  lockPassword: string
+}
+export const createDevice = ({viewType, variables, hidden, lockPassword}: ICreateDeviceOptions): IDevice => {
+  return {id: createId(), viewType, variables, collectorVariables: [], formulas: {}, hidden, lockPassword};
+};
