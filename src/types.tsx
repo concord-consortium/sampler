@@ -40,7 +40,6 @@ export type ModelChangedAnimationStep = {
 export type StartExperimentAnimationStep = {
   kind: "startExperiment",
   numSamples: number
-  numItems: number
 };
 export type EndExperimentAnimationStep = {
   kind: "endExperiment"
@@ -48,6 +47,7 @@ export type EndExperimentAnimationStep = {
 export type StartSampleAnimationStep = {
   kind: "startSample"
   sampleIndex: number;
+  numItems: number
 };
 export type EndSampleAnimationStep = {
   kind: "endSample"
