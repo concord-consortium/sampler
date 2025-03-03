@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect } from "react";
 import { useImmer } from "use-immer";
-import { AttrMap, IGlobalState, IGlobalStateContext } from "../types";
+import { AttrMap, IColumn, IGlobalState, IGlobalStateContext, ITPSamplerPluginState, Speed, ViewType } from "../types";
 import { addDataContextChangeListener, codapInterface, IInitializePlugin, initializePlugin } from "@concord-consortium/codap-plugin-api";
-import { createDefaultDevice } from "../models/device-model";
+import { createDefaultDevice, createDevice } from "../models/device-model";
 import { kInitialDimensions, kPluginName, kVersion } from "../constants";
 import { createId } from "../utils/id";
 import { removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
@@ -37,6 +37,60 @@ export const getDefaultState = (): IGlobalState => {
     speed: 1,
     untilFormula: ""
   };
+};
+
+export const migrateOrCreateInteractiveState = (interactiveState: any, defaultGlobalState: IGlobalState): IGlobalState => {
+  const hasExistingState = Object.keys(interactiveState || {}).length > 0;
+
+  // use the default state if there is no existing state
+  if (!hasExistingState) {
+    const firstColumn: IColumn = defaultGlobalState.model.columns[0];
+    interactiveState = {
+      ...defaultGlobalState,
+      attrMap: {
+        ...defaultGlobalState.attrMap,
+        [firstColumn.id]: {codapID: null, name: firstColumn.name}
+      }
+    };
+  }
+
+  // since there are no versioning of the plugin state use the existence of the device property to determine if the state from v1
+  if (interactiveState.device) {
+    const oldPluginState = interactiveState as ITPSamplerPluginState;
+    const oldSpeed = oldPluginState.speed;
+    const oldDevice = oldPluginState.device;
+    const speed: Speed = oldSpeed < 1 ? Speed.Slow : oldSpeed < 2 ? Speed.Medium : oldSpeed < 3 ? Speed.Fast : Speed.Fastest;
+    const viewType = oldDevice === "collector" ? ViewType.Collector : oldDevice === "spinner" ? ViewType.Spinner : ViewType.Mixer;
+
+    // generate a model from the v1 settings
+    const firstColumn: IColumn = {
+      name: oldPluginState.deviceName ?? "output",
+      id: createId(),
+      devices: [createDevice({
+        viewType,
+        variables: oldPluginState.variables ?? defaultGlobalState.model.columns[0].devices[0].variables,
+        hidden: oldPluginState.hidden ?? false,
+        lockPassword: oldPluginState.password ?? ""
+      })]
+    };
+
+    interactiveState = {...defaultGlobalState,
+      numSamples: String(oldPluginState.repeat ?? defaultGlobalState.numSamples),
+      sampleSize: String(oldPluginState.draw ?? defaultGlobalState.sampleSize),
+      speed,
+      replacement: oldPluginState.withReplacement ?? true,
+      dataContextName: oldPluginState.dataSetName ?? "",
+      model: {
+        columns: [firstColumn]
+      },
+      attrMap: {
+        ...defaultGlobalState.attrMap,
+        [firstColumn.id]: {codapID: null, name: firstColumn.name}
+      }
+    };
+  }
+
+  return interactiveState;
 };
 
 export const migrateState = (state: IGlobalState) => {
@@ -74,40 +128,28 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
       delete (options as any).dimensions;
       const interactiveState = await initializePlugin(options);
 
+      // migrate the existing interactive state or create a new one if it doesn't exist
+      const newGlobalState = migrateOrCreateInteractiveState(interactiveState, getDefaultState());
+
       // ensure that the plugin has the minimum dimensions
       await ensureMinimumDimensions(kInitialDimensions);
 
-      if (Object.keys(interactiveState || {}).length > 0) {
-        // ensure there is a experiment hash on existing documents created before that attribute was added
-        const newGlobalState = interactiveState as IGlobalState;
-        if (!newGlobalState.attrMap.experimentHash) {
-          newGlobalState.attrMap.experimentHash = {...defaultAttrMap.experimentHash};
-        }
-
-        // remove any devices that don't exist from formulas (to fix bug in previous saved documents)
-        removeMissingDevicesFromFormulas(newGlobalState.model);
-
-        // set the default values for any new attributes
-        migrateState(newGlobalState);
-
-        if (isCollectorOnlyModel(newGlobalState.model)) {
-          newGlobalState.enableRunButton = newGlobalState.collectorContextName !== "";
-        }
-
-        setGlobalState(draft => {
-          return newGlobalState;
-        });
-      } else {
-        setGlobalState(draft => {
-          const newColumnId = createId();
-          draft.model = {
-            columns: [
-              {name: "output", id: newColumnId, devices: [createDefaultDevice()]}
-            ]
-          };
-          draft.attrMap[newColumnId] = {codapID: null, name: "output"};
-        });
+      // ensure there is a experiment hash on existing documents created before that attribute was added
+      if (!newGlobalState.attrMap.experimentHash) {
+        newGlobalState.attrMap.experimentHash = {...defaultAttrMap.experimentHash};
       }
+
+      // remove any devices that don't exist from formulas (to fix bug in previous saved documents)
+      removeMissingDevicesFromFormulas(newGlobalState.model);
+
+      // set the default values for any new attributes
+      migrateState(newGlobalState);
+
+      if (isCollectorOnlyModel(newGlobalState.model)) {
+        newGlobalState.enableRunButton = newGlobalState.collectorContextName !== "";
+      }
+
+      setGlobalState(newGlobalState);
     };
 
     init();
