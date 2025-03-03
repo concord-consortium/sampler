@@ -8,6 +8,7 @@ import { formatFormula, parseFormula } from "../utils/utils";
 import { computeExperimentHash, modelHasSpinner } from "../helpers/model-helpers";
 import { getVariables } from "../utils/formula-parser";
 import { getCollectorAttrs, getCollectorFirstNameVariables, isCollectorOnlyModel } from "../utils/collector";
+import { evaluatePattern, isPattern } from "../utils/pattern";
 
 // maximum number of items to collect before stopping when the repeat until formula is not satisfied
 const maxRepeatUntilItems = 1000;
@@ -232,11 +233,17 @@ export const useAnimationContextValue = (): IAnimationContext => {
           itemIndex++;
 
           if (repeat) {
-            try {
-              const evaluationResult = await evaluateResult(untilFormula, outputs);
-              doneSampling = !!evaluationResult;
-            } catch (e) {
-              throw new Error(`Error evaluating "until" formula: ${untilFormula}`);
+            if (isPattern(untilFormula)) {
+              // this will throw a correctly formatted error message if the pattern is invalid
+              doneSampling = evaluatePattern(untilFormula, outputs);
+            } else {
+              // must use try/catch here to customize the error message
+              try {
+                const evaluationResult = await evaluateResult(untilFormula, outputs);
+                doneSampling = !!evaluationResult;
+              } catch (e) {
+                throw new Error(`Evaluating "until" formula: ${untilFormula}`);
+              }
             }
             if (!doneSampling && (itemIndex >= maxRepeatUntilItems)) {
               counts.failedSamples++;
