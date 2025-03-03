@@ -31,10 +31,10 @@ export const SetVariableSeriesModal = ({setShowVariableEditor, handleUpdateVaria
         Set Variable Names
       </div>
       <div className="modal-body">
-        <p className="set-variables-body">
+        <label htmlFor="variable_names" className="set-variables-input-label">
         {`Enter a list (e.g. 'cat, cat, dog') or a range (e.g. '1-50', '-5 to 5', '1.0 to 5.0', 'A-Z')`}
-        </p>
-        <input className="set-variables-input" type="text" autoFocus={true} placeholder="a to c"
+        </label>
+        <input id="variable_names" className="set-variables-input" type="text" autoFocus={true} placeholder="a to c"
           onChange={(e) => handleVariablesChange(e.target.value)} onKeyDown={handleVariablesChangeKeyDown}/>
       </div>
       <div className="modal-footer">
