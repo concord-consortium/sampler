@@ -67,10 +67,13 @@ export const Outputs = () => {
 
   const renderEmptyBrackets = () => {
     let numEmptyBrackets = 0;
+    // this is the number of variable brackets currently displayed
     const numVariableBrackets = variables.length + (animatedVariables.length > 0 ? 1 : 0);
     if (repeat) {
+      // for repeat/until show 1 more if we haven't arrived at all the items yet
       numEmptyBrackets = numVariableBrackets < numItems ? 1 : 0;
     } else {
+      // for select show the remaining brackets to fill out the selected sample size
       numEmptyBrackets = Math.max(numItems, parseInt(sampleSize, 10)) - numVariableBrackets;
     }
     const emptyBrackets = [];
