@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AnimationStep, IAnimationStepSettings } from "../../types";
 import { useAnimationContext } from "../../hooks/useAnimation";
+import { useGlobalStateContext } from "../../hooks/useGlobalState";
 
 import "./outputs.scss";
 
@@ -11,6 +12,7 @@ const pulse = (t: number, max: number) => t <= 0.5 ? t * max : (1 - t) * max;
 
 export const Outputs = () => {
   const { registerAnimationCallback } = useAnimationContext();
+  const { globalState: { repeat, sampleSize } } = useGlobalStateContext();
   const [ sampleIndex, setSampleIndex ] = useState(0);
   const [ numItems, setNumItems ] = useState(1);
   const [ tValue, setTValue ] = useState(1);
@@ -32,11 +34,11 @@ export const Outputs = () => {
       setPushing(false);
       if (kind === "startExperiment") {
         setSampleIndex(0);
-        setNumItems(step.numItems);
       } else if (kind === "startSample") {
         setVariables([]);
         setAnimatedVariables([]);
         setSampleIndex(step.sampleIndex);
+        setNumItems(step.numItems);
       } else if (kind === "endSelectItem") {
         setVariables(prev => [...prev, step.variables]);
         setAnimatedVariables([]);
@@ -56,14 +58,30 @@ export const Outputs = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
-  const showEmptyBracket = useMemo(() => (variables.length + animatedVariables.length) < numItems, [numItems, variables, animatedVariables]);
   const insidePushMargin = useMemo(() => pushing ? tValue * maxInsideMargin : 0, [tValue, pushing]);
   const insidePushOpacity = useMemo(() => pushing ? 1 - tValue : 1, [tValue, pushing]);
   const outsidePushMargin = useMemo(() => pushing ? pulse(tValue, maxOutsideMargin) : 0, [tValue, pushing]);
   const animatedVariablesOpacity = useMemo(() => animatedVariables.length > 0 ? tValue : 1, [tValue, animatedVariables]);
 
   const bracket = <div className="outputs-variable-bracket">[</div>;
+
+  const renderEmptyBrackets = () => {
+    let numEmptyBrackets = 0;
+    // this is the number of variable brackets currently displayed
+    const numVariableBrackets = variables.length + (animatedVariables.length > 0 ? 1 : 0);
+    if (repeat) {
+      // for repeat/until show 1 more if we haven't arrived at all the items yet
+      numEmptyBrackets = numVariableBrackets < numItems ? 1 : 0;
+    } else {
+      // for select show the remaining brackets to fill out the selected sample size
+      numEmptyBrackets = Math.max(numItems, parseInt(sampleSize, 10)) - numVariableBrackets;
+    }
+    const emptyBrackets = [];
+    for (let i = 0; i < numEmptyBrackets; i++) {
+      emptyBrackets.push(<div className="outputs-variable" key={i}>{bracket}</div>);
+    }
+    return emptyBrackets;
+  };
 
   return (
     <div className="outputs">
@@ -79,7 +97,7 @@ export const Outputs = () => {
             {bracket}<div style={{opacity: animatedVariablesOpacity}}>{animatedVariables.join(", ")}</div>
           </div>
         )}
-        {showEmptyBracket && <div className="outputs-variable" key="empty">{bracket}</div>}
+        {renderEmptyBrackets()}
       </div>
     </div>
   );
