@@ -89,7 +89,7 @@ export type LabelAnimationStep = {
 
 
 export type AnimationStep = {
-  onComplete?: (() => Promise<void>) | (() => void),
+  onComplete?: ((settings: IAnimationStepSettings) => Promise<void>) | (() => void),
 } & (
   ModelChangedAnimationStep |
   StartExperimentAnimationStep |
