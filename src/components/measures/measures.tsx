@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { addMeasure, hasSamplesCollection } from "../../helpers/codap-helpers";
+import { getCollectorAttrNames, getCollectorFirstNameVariables, isCollectorOnlyModel } from "../../utils/collector";
 
 import "./measures.scss";
 
@@ -22,7 +23,8 @@ const getFormula = (measure: Measure, left: string, op: string, right: string) =
 };
 
 export const MeasuresTab = () => {
-  const { globalState: { model: { columns }, dataContextName } } = useGlobalStateContext();
+  const { globalState: { model, dataContextName } } = useGlobalStateContext();
+  const { columns } = model;
   const [selectedMeasure, setSelectedMeasure] = useState<Measure>("default");
   const [measureName, setMeasureName] = useState("");
   const [lValue, setLValue] = useState("");
@@ -37,6 +39,8 @@ export const MeasuresTab = () => {
     };
     checkForSamples();
   }, [dataContextName]);
+
+  const isCollector = useMemo(() => isCollectorOnlyModel(model), [model]);
 
   const disableAddButton = useMemo(() => {
     let disable = selectedMeasure === "default" || lValue.length === 0;  // measureName is optional
@@ -55,7 +59,8 @@ export const MeasuresTab = () => {
     const set = new Set<string>();
     columns.forEach((column) => {
       column.devices.forEach((device) => {
-        device.variables.forEach((variable) => {
+        const vars = isCollector ? getCollectorFirstNameVariables(device.collectorVariables) : device.variables;
+        vars.forEach((variable) => {
           set.add(variable);
         });
       });
@@ -63,7 +68,7 @@ export const MeasuresTab = () => {
     const array = Array.from(set);
     array.sort();
     return array;
-  }, [columns]);
+  }, [columns, isCollector]);
 
   const handleSelectMeasureChange = (e: React.ChangeEvent<HTMLSelectElement>) => setSelectedMeasure(e.target.value as Measure);
   const handleChangeMeasureName = (e:  React.ChangeEvent<HTMLInputElement>) => setMeasureName(e.target.value);
@@ -77,10 +82,11 @@ export const MeasuresTab = () => {
   };
 
   const renderAttributes = () => {
+    const attrs = isCollector ? getCollectorAttrNames(model) : columns.map(column => column.name);
     return (
       <>
         <option value="">Select an attribute!</option>
-        {columns.map(column => <option key={column.id} value={column.name}>{column.name}</option>)}
+        {attrs.map(attr => <option key={attr} value={attr}>{attr}</option>)}
       </>
     );
   };

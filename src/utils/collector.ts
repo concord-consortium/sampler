@@ -8,6 +8,13 @@ export const getCollectorFirstNameVariables = (collectorVariables: ICollectorVar
   return [];
 };
 
+export const getCollectorAttrNames = (model: IModel): string[] => {
+  if (isCollectorOnlyModel(model)) {
+    return Object.keys(model.columns[0].devices[0].collectorVariables[0]);
+  }
+  return [];
+};
+
 export const isCollectorOnlyModel = (model: IModel): boolean => {
   return model.columns.length === 1 && model.columns[0].devices.length === 1 && model.columns[0].devices[0].viewType === ViewType.Collector;
 };
