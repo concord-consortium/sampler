@@ -155,7 +155,12 @@ export const Device = (props: IProps) => {
 
         if (noMoreDevicesInThisColumn) {
           // when last device in a column is deleted delete this column and all the devices to the right if they exist
-          draft.model.columns.splice(columnIndex, draft.model.columns.length - columnIndex);
+          const removedColumns = draft.model.columns.splice(columnIndex, draft.model.columns.length - columnIndex);
+
+          // and remove all the attrMap entries for the removed columns
+          removedColumns.forEach(removedColumn => {
+            delete draft.attrMap[removedColumn.id];
+          });
         }
         else {
           draft.model.columns[columnIndex].devices = devices;

@@ -87,7 +87,14 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
         } else {
           draft.attrMap[id] = {name, codapID: null};
           if (draft.samplerContext) {
-            createNewAttribute(draft.samplerContext.name, "items", name);
+            createNewAttribute(draft.samplerContext.name, "items", name)
+              .then((result) => {
+                if (result.success && result.values.attrs?.[0]?.id) {
+                  setGlobalState(draft2 => {
+                    draft2.attrMap[id].codapID = result.values.attrs[0].id;
+                  });
+                }
+              });
           }
         }
       }
