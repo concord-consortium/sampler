@@ -1,8 +1,10 @@
 import { ISampleResults } from "../types";
 
 export const isPattern = (untilFormulaOrPattern: string): boolean => {
-  // a pattern might just be "a" or "a, b" so just look for the equals sign which means it's a formula and not a pattern
-  return !untilFormulaOrPattern.includes("=");
+  const isSingleValue = /^[a-zA-Z0-9_.]+$/.test(untilFormulaOrPattern);
+  const hasComma = untilFormulaOrPattern.includes(",");
+  const hasParentheses = untilFormulaOrPattern.includes("(") || untilFormulaOrPattern.includes(")");
+  return isSingleValue || (hasComma && !hasParentheses);
 };
 
 export const evaluatePattern = (untilPattern: string, outputs: ISampleResults): boolean => {
