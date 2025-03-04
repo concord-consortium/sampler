@@ -369,15 +369,20 @@ export const renameAttributeInFormulas = async (dataContextName: string, oldName
       }
       const { formula } = attributeResult.values;
 
-      if (formula?.includes(oldName)) {
+      // a bug in CODAPv2 causes multiple equals signs to be added to formulas when renaming attributes
+      let finalFormula = formula?.replace(/={1,}/g, "=");
+
+      if (finalFormula?.includes(oldName)) {
         // this returns a binary expression of left: "", op: =, right: parsedFormula
         // so we only need to update the variable name in the right side
-        const parsed = parseFormula(formula, "");
+        const parsed = parseFormula(finalFormula, "");
         if (parsed.type === "BinaryExpression") {
           const renamed = renameVariable(parsed.right, oldName, newName);
-          const newFormula = stringify(renamed, [newName]);
-          await updateAttribute(dataContextName, collection, attr.name, attr, {formula: newFormula});
+          finalFormula = stringify(renamed, [newName]);
         }
+      }
+      if (finalFormula !== formula) {
+        await updateAttribute(dataContextName, collection, attr.name, attr, {formula: finalFormula});
       }
     }
   }
