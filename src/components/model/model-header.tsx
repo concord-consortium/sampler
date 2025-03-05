@@ -7,6 +7,7 @@ import { deleteAllItems, deleteItemAttrs, findOrCreateDataContext, getItemAttrs 
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { modelHasSpinner } from "../../helpers/model-helpers";
 import { getCollectorAttrs, isCollectorOnlyModel } from "../../utils/collector";
+import { getModelAttrs } from "../../utils/model";
 
 interface IProps {
   showHelp: boolean;
@@ -43,7 +44,7 @@ export const ModelHeader = (props: IProps) => {
         if (isCollector) {
           newAttrs = getCollectorAttrs(model);
         } else {
-          newAttrs = model.columns.map(column => column.name);
+          newAttrs = getModelAttrs(model);
         }
         const attrsToDelete = existingAttrs.filter(attr => !newAttrs.includes(attr));
 

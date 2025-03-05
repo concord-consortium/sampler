@@ -9,6 +9,7 @@ import { computeExperimentHash, modelHasSpinner } from "../helpers/model-helpers
 import { getVariables } from "../utils/formula-parser";
 import { getCollectorAttrs, getCollectorFirstNameVariables, isCollectorOnlyModel } from "../utils/collector";
 import { evaluatePattern, isPattern } from "../utils/pattern";
+import { getModelAttrs } from "../utils/model";
 
 // maximum number of items to collect before stopping when the repeat until formula is not satisfied
 const maxRepeatUntilItems = 1000;
@@ -366,7 +367,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
   const handleStartRun = async () => {
     try {
       const isCollector = isCollectorOnlyModel(model);
-      const attrNames = isCollector ? getCollectorAttrs(model) : model.columns.map(column => column.name);
+      const attrNames = isCollector ? getCollectorAttrs(model) : getModelAttrs(model);
       const finalDataContextName = await findOrCreateDataContext(dataContextName, attrNames, attrMap, setGlobalState, repeat, isCollector);
       if (!finalDataContextName) {
         alert("Unable to setup CODAP table");

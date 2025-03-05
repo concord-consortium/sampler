@@ -7,7 +7,7 @@ import { NameLabelInput } from "./name-label-input";
 import { PctLabelInput } from "./percent-label-input";
 import { DeviceFooter } from "./device-footer";
 import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth, kSpinnerX, kSpinnerY } from "./device-views/shared/constants";
-import { codapInterface, getAllItems, getDataContext, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
+import { codapInterface, createNewAttribute, getAllItems, getDataContext, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { createNewVarArray, getNextVariable, getPercentOfVar } from "../helpers";
 import { calculateWedgePercentage } from "./device-views/shared/helpers";
 import { SetVariableSeriesModal } from "./variable-setting-modal";
@@ -16,6 +16,9 @@ import { parseSpecifier } from "../../utils/utils";
 import { IDevice, IDataContext, ClippingDef, ViewType, IItems, IItem, IVariables } from "../../types";
 import { removeDeviceFromFormulas } from "../../helpers/model-helpers";
 import { DeviceVisibility } from "./device-visibility";
+import { getCollectorAttrs } from "../../utils/collector";
+import { deleteItemAttrs, getCollectionNames, getItemAttrs } from "../../helpers/codap-helpers";
+import { getModelAttrs } from "../../utils/model";
 
 import "./device.scss";
 
@@ -26,7 +29,7 @@ interface IProps {
 
 export const Device = (props: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model, selectedDeviceId, collectorContextName } = globalState;
+  const { model, selectedDeviceId, collectorContextName, attrMap, repeat } = globalState;
   const { device, columnIndex } = props;
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
   //const [selectedDataContext, setSelectedDataContext] = useState<string>("");
@@ -42,9 +45,18 @@ export const Device = (props: IProps) => {
   const { viewType, variables } = device;
   const svgRef = useRef<SVGSVGElement>(null);
   const multipleColumns = model.columns.length > 1;
+  const [maybeUpdateItemAttrsSignal, setMaybeUpdateItemAttrsSignal] = useState<number>(0);
+  const lastUpdateItemAttrsSignalAt = useRef<number>(0);
+
+  const triggerMaybeUpdateItemAttrsSignal = () => setMaybeUpdateItemAttrsSignal(Date.now());
 
   const changeDataContext = useCallback(async (dataContextName: string) => {
     try {
+      // ignore if we are not viewing the collector device
+      if (viewType !== ViewType.Collector) {
+        return;
+      }
+
       // ignore picking the placeholder option
       if (dataContextName.length === 0) {
         return;
@@ -69,13 +81,18 @@ export const Device = (props: IProps) => {
       setGlobalState(draft => {
         draft.enableRunButton = true;
         draft.collectorContextName = dataContextName;
-        draft.model.columns[0].name = dataContextName;
         draft.model.columns[0].devices[0].collectorVariables = itemValues;
       });
+
+      // wait until the global state updates to trigger the maybe update item attrs signal
+      setTimeout(() => {
+        triggerMaybeUpdateItemAttrsSignal();
+      }, 0);
+
     } catch (err) {
       alert(err);
     }
-  }, [setGlobalState]);
+  }, [setGlobalState, viewType]);
 
   useEffect(() => {
     codapInterface.on('notify', 'documentChangeNotice', (message) => {
@@ -85,26 +102,102 @@ export const Device = (props: IProps) => {
     });
   }, []);
 
+  // This effect is a little hacky, but it's the best way to ensure that the item attrs are updated
+  // without causing an infinite loop of updates.  It uses a signal (which is just a timestamp)
+  // to trigger the update.  When the signal is set the item attributes are checked and updated if
+  // necessary based on these rules:
+  //
+  // * When the user switches from **Mixer** or **Spinner** to the **Collector**, if there are no data values
+  //   belonging to the *output* attribute, the *output* attribute is deleted, replaced by the set of
+  //   attributes belonging to the source dataset (from which cases will be collected). If there is no source dataset,
+  //   then the *output* attribute is *not* deleted because otherwise there would be no attribute at the items level.
+  // * When the user switches from the **Collector** to the **Mixer** or **Spinner**, if there are no data
+  //   values belonging to the source dataset attributes, these attributes are deleted. The attribute(s)
+  //   associated with the **Mixer** or **Spinner** device(s) are added at the **items** level.
+  // * Note that attributes that have data values are *not* automatically deleted during these transitions.
+  //   It's up to the user to decide to delete them either by pressing **Clear Data** or by manually deleting
+  //   them in the case table.
   useEffect(() => {
+    // ignore the starting value and only update when the signal changes
+    if (maybeUpdateItemAttrsSignal === lastUpdateItemAttrsSignalAt.current) {
+      return;
+    }
+    lastUpdateItemAttrsSignalAt.current = maybeUpdateItemAttrsSignal;
+
+    // if we have more than one device in the model we don't need to automatically update the item attrs
+    // as we could not be switching between collector and non-collector devices
+    if (model.columns.length > 1) {
+      return;
+    }
+
+    const maybeUpdate = async () => {
+      const allItems = await getAllItems(globalState.dataContextName);
+      if (!allItems.success) {
+        return;
+      }
+
+      const isCollector = viewType === ViewType.Collector;
+
+      const existingAttrs = await getItemAttrs(globalState.dataContextName);
+
+      const collectorAttrs = getCollectorAttrs(model);
+      const modelAttrs = getModelAttrs(model);
+      const viewAttrs = isCollector ?  collectorAttrs : modelAttrs;
+      const otherViewAttrs = isCollector ? modelAttrs : collectorAttrs;
+
+      const attrsToAdd = viewAttrs.filter(attr => !existingAttrs.includes(attr));
+      const maybeAttrsToDelete = existingAttrs.filter(attr => otherViewAttrs.includes(attr));
+
+      const attrsToKeep = new Set<string>();
+      allItems.values.forEach((item: IItem) => {
+        maybeAttrsToDelete.forEach((attr: string) => {
+          if (String(item.values[attr] ?? "").length > 0) {
+            // keep the attribute if it has data values
+            attrsToKeep.add(attr);
+          }
+        });
+      });
+      const attrsToDelete = maybeAttrsToDelete.filter(attr => !attrsToKeep.has(attr));
+
+      attrsToAdd.forEach(async (attr) => {
+        await createNewAttribute(globalState.dataContextName, getCollectionNames().items, attr);
+      });
+      await deleteItemAttrs(globalState.dataContextName, attrsToDelete);
+    };
+    maybeUpdate();
+  }, [attrMap, globalState.dataContextName, maybeUpdateItemAttrsSignal, model, repeat, setGlobalState, viewType]);
+
+  const maybeUpdateCollectorDataContext = useCallback(() => {
     const fetchDataContexts = async () => {
       const res = await getListOfDataContexts();
       return res.values;
     };
 
+    fetchDataContexts().then((contexts: Array<IDataContext>) => {
+      const filteredCtxs = contexts.filter((context) => context.name !== globalState.dataContextName);
+      setDataContexts(filteredCtxs);
+
+      let autoSelectedDataContext = filteredCtxs.find((context) => context.name === globalState.collectorContextName);
+      if (!autoSelectedDataContext && filteredCtxs.length === 1) {
+        autoSelectedDataContext = filteredCtxs[0];
+      }
+
+      if (autoSelectedDataContext) {
+        changeDataContext(autoSelectedDataContext.name);
+      }
+    });
+  }, [changeDataContext, globalState.collectorContextName, globalState.dataContextName]);
+
+  useEffect(() => {
+    maybeUpdateCollectorDataContext();
+  }, [maybeUpdateCollectorDataContext]);
+
+  useEffect(() => {
     if (viewType === ViewType.Collector) {
-      fetchDataContexts().then((contexts: Array<IDataContext>) => {
-        const filteredCtxs = contexts.filter((context) => context.name !== globalState.dataContextName);
-        setDataContexts(filteredCtxs);
-
-        let autoSelectedDataContext = filteredCtxs.find((context) => context.name === globalState.collectorContextName);
-        if (!autoSelectedDataContext && filteredCtxs.length === 1) {
-          autoSelectedDataContext = filteredCtxs[0];
-        }
-
-        if (autoSelectedDataContext) {
-          changeDataContext(autoSelectedDataContext.name);
-        }
-      });
+      maybeUpdateCollectorDataContext();
+    } else {
+      // when switching to a non-collector device, maybe update the item attrs
+      triggerMaybeUpdateItemAttrsSignal();
     }
 
     if (viewType === ViewType.Spinner) {
@@ -112,7 +205,7 @@ export const Device = (props: IProps) => {
     } else {
       setViewBox(`0 0 ${kMixerContainerWidth + 10} ${kMixerContainerHeight}`);
     }
-  }, [viewType, globalState.dataContextName, globalState.collectorContextName, dataContextCountChangedAt, changeDataContext]);
+  }, [viewType, globalState.dataContextName, globalState.collectorContextName, dataContextCountChangedAt, changeDataContext, maybeUpdateCollectorDataContext]);
 
   useEffect(() => {
     if (collectorContextName) {
@@ -430,3 +523,4 @@ export const Device = (props: IProps) => {
     </div>
   );
 };
+
