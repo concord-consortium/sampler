@@ -29,11 +29,11 @@ This document provides a detailed, step-by-step checklist for implementing the S
 
 ### 1.1 App Component
 
-- [ ] **Tests**
-  - [ ] Test app initialization
-  - [ ] Test tab navigation
-  - [ ] Test CODAP plugin initialization
-  - [ ] Test global state initialization
+- [x] **Tests**
+  - [x] Test app initialization
+  - [x] Test tab navigation
+  - [x] Test CODAP plugin initialization
+  - [x] Test global state initialization
 
 - [ ] **Implementation**
   - [ ] Create App component structure
@@ -48,11 +48,11 @@ This document provides a detailed, step-by-step checklist for implementing the S
 
 ### 1.2 Model Tab
 
-- [ ] **Tests**
-  - [ ] Test model tab rendering
-  - [ ] Test device management
-  - [ ] Test simulation controls
-  - [ ] Test scrolling functionality
+- [x] **Tests**
+  - [x] Test model tab rendering
+  - [x] Test device management
+  - [x] Test simulation controls
+  - [x] Test scrolling functionality
 
 - [ ] **Implementation**
   - [ ] Create ModelTab component
