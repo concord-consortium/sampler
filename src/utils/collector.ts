@@ -20,8 +20,5 @@ export const isCollectorOnlyModel = (model: IModel): boolean => {
 };
 
 export const getCollectorAttrs = (model: IModel): string[] => {
-  if (isCollectorOnlyModel(model)) {
-    return Object.keys(model.columns[0].devices[0].collectorVariables[0]);
-  }
-  return [];
+  return Object.keys(model.columns?.[0].devices?.[0].collectorVariables[0] ?? []);
 };

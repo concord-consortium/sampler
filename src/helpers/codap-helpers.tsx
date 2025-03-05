@@ -39,7 +39,7 @@ export const evaluateResult = async (formula: string, value: Record<string, stri
   throw new Error("Formula evaluation failed");
 };
 
-const getCollectionNames = () => {
+export const getCollectionNames = () => {
   return {
     experiments: "experiments",
     samples: "samples",
@@ -240,7 +240,8 @@ export const deleteAllItems = async (dataContextName: string) => {
 };
 
 export const getItemAttrs = async (dataContextName: string): Promise<string[]> => {
-  return (await getAttributeList(dataContextName, getCollectionNames().items)).values.map((attr: any) => attr.name);
+  const result = await getAttributeList(dataContextName, getCollectionNames().items);
+  return result.success ? result.values.map((attr: any) => attr.name) : [];
 };
 
 export const deleteItemAttrs = async (dataContextName: string, attrs: string[]) => {

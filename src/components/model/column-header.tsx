@@ -5,6 +5,7 @@ import { getNewColumnName } from "../helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { AnimationStep, IAnimationStepSettings, IColumn } from "../../types";
 import { renameAttributeInFormulas } from "../../helpers/codap-helpers";
+import { isCollectorOnlyModel } from "../../utils/collector";
 
 interface IProps {
   column: IColumn;
@@ -14,7 +15,7 @@ interface IProps {
 export const ColumnHeader = ({column, columnIndex}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { registerAnimationCallback } = useAnimationContext();
-  const { model, isRunning } = globalState;
+  const { model, isRunning, collectorContextName } = globalState;
   const [columnName, setColumnName] = useState(column.name);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [label, setLabel] = useState("");
@@ -112,7 +113,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
         ref={inputRef}
         disabled={isRunning || isCollector}
         className="attr-name"
-        value={columnName}
+        value={isCollectorOnlyModel(model) ? collectorContextName : columnName}
         onChange={(e) => setColumnName(e.target.value)}
         onKeyDown={(e) => handleKeyDown(e)}
         onBlur={handleNameChange}
