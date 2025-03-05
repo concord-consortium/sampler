@@ -86,9 +86,9 @@ This document provides a detailed, step-by-step checklist for implementing the S
 
 ### 1.4 About Tab
 
-- [ ] **Tests**
-  - [ ] Test about tab rendering
-  - [ ] Test version information display
+- [x] **Tests**
+  - [x] Test about tab rendering
+  - [x] Test version information display
 
 - [ ] **Implementation**
   - [ ] Create AboutTab component
