@@ -276,7 +276,7 @@ export const Device = (props: IProps) => {
 
   return (
     <div className={`device-controls-container ${multipleColumns ? "multiple-columns" : ""}`} onClick={handleSelectDevice}>
-      <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id}>
+      <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id} data-testid="device-container">
         <div className="device-status-icon">
           {isSelectedDevice && <VisibleIcon />}
         </div>
@@ -348,7 +348,7 @@ export const Device = (props: IProps) => {
           </div>
         </div>
         { columnIndex !== 0 && isSelectedDevice &&
-            <div className="device-delete-icon" onClick={handleDeleteDevice}>
+            <div className="device-delete-icon" onClick={handleDeleteDevice} data-testid="delete-device-button">
               <DeleteIcon />
             </div>
         }
