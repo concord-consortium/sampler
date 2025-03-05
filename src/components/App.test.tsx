@@ -9,7 +9,28 @@ jest.mock("@concord-consortium/codap-plugin-api", () => ({
   codapInterface: {
     updateInteractiveState: jest.fn()
   },
-  addDataContextChangeListener: jest.fn()
+  addDataContextChangeListener: jest.fn(),
+  getDataContext: jest.fn().mockResolvedValue({
+    success: true,
+    values: {
+      collections: []
+    }
+  })
+}));
+
+// Mock the measures component to avoid issues with CODAP API calls
+jest.mock("../components/measures/measures", () => ({
+  MeasuresTab: () => <div className="measures-tab">Measures Tab Content</div>
+}));
+
+// Mock the model component
+jest.mock("../components/model/model-component", () => ({
+  ModelTab: () => <div className="model-tab">Model Tab Content</div>
+}));
+
+// Mock the about component
+jest.mock("../components/about/about", () => ({
+  AboutTab: () => <div className="about-tab">About Tab Content</div>
 }));
 
 describe("App Component", () => {
@@ -30,7 +51,7 @@ describe("App Component", () => {
     expect(modelTab.closest(".tab")).toHaveClass("selected");
     
     // Verify the ModelTab component is rendered
-    expect(document.querySelector(".model-tab")).toBeInTheDocument();
+    expect(screen.getByText("Model Tab Content")).toBeInTheDocument();
   });
 
   it("changes tab when a tab is clicked", () => {
@@ -47,7 +68,7 @@ describe("App Component", () => {
     expect(screen.getByText("Model").closest(".tab")).not.toHaveClass("selected");
     
     // Verify the MeasuresTab component is rendered
-    expect(document.querySelector(".measures-tab")).toBeInTheDocument();
+    expect(screen.getByText("Measures Tab Content")).toBeInTheDocument();
     
     // Click on About tab
     fireEvent.click(screen.getByText("About"));
@@ -57,7 +78,7 @@ describe("App Component", () => {
     expect(screen.getByText("Measures").closest(".tab")).not.toHaveClass("selected");
     
     // Verify the AboutTab component is rendered
-    expect(document.querySelector(".about-tab")).toBeInTheDocument();
+    expect(screen.getByText("About Tab Content")).toBeInTheDocument();
   });
 
   it("initializes CODAP plugin on mount", async () => {
