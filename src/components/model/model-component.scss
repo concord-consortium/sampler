@@ -9,6 +9,41 @@ $pluginMinWidth: 304px;
   min-width: $pluginMinWidth;
   width: 100%;
 }
+
+.model-container {
+  overflow: auto;
+  height: calc(100vh - 200px); /* Adjust based on header height */
+  width: 100%;
+  position: relative;
+  padding: 20px;
+  
+  /* Scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+    
+    &:hover {
+      background: #555;
+    }
+  }
+  
+  /* Focus styling for keyboard navigation */
+  &:focus {
+    outline: 2px solid #4a90e2;
+    outline-offset: -2px;
+  }
+}
+
 .model-controls {
   display: flex;
   flex-direction: row;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { AnimationContext, useAnimationContextValue } from "../../hooks/useAnimation";
 import { useResizer } from "../../hooks/use-resizer";
@@ -13,6 +13,8 @@ export const ModelTab = () => {
   const { model } = globalState;
   const [showHelp, setShowHelp] = useState(false);
   const [isWide, setIsWide] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState({ left: 0, top: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useResizer(()=>{
     const repeatControlWidth = document.querySelector(".select-repeat-controls")
@@ -28,6 +30,44 @@ export const ModelTab = () => {
     setShowHelp(!showHelp);
   };
 
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const { scrollLeft, scrollTop } = event.currentTarget;
+    setScrollPosition({ left: scrollLeft, top: scrollTop });
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    
+    const scrollAmount = 50;
+    
+    switch (event.key) {
+      case "ArrowLeft":
+        containerRef.current.scrollLeft -= scrollAmount;
+        event.preventDefault();
+        break;
+      case "ArrowRight":
+        containerRef.current.scrollLeft += scrollAmount;
+        event.preventDefault();
+        break;
+      case "ArrowUp":
+        containerRef.current.scrollTop -= scrollAmount;
+        event.preventDefault();
+        break;
+      case "ArrowDown":
+        containerRef.current.scrollTop += scrollAmount;
+        event.preventDefault();
+        break;
+    }
+  };
+
+  // Restore scroll position after updates
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollLeft = scrollPosition.left;
+      containerRef.current.scrollTop = scrollPosition.top;
+    }
+  }, [model.columns.length, scrollPosition]);
+
   const animationContextValue = useAnimationContextValue();
 
   return (
@@ -39,7 +79,14 @@ export const ModelTab = () => {
           isWide={isWide}
           handleOpenHelp={handleOpenHelp}
         />
-        <div className="model-container">
+        <div 
+          className="model-container"
+          ref={containerRef}
+          onScroll={handleScroll}
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+          data-testid="model-container"
+        >
           <div className={`device-outputs-container`}>
             {model.columns.map((column, columnIndex) => {
               return (
