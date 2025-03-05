@@ -343,6 +343,8 @@ export interface IGetNewPcts {
   selectedVar: string;
   variables: IVariables;
   updateNext?: boolean;
+  fixedVariables: IVariables;
+  setFixedVariables: React.Dispatch<React.SetStateAction<IVariables>>;
 }
 
 export type AvailableDeviceVariables = Record<Id, IVariables>;

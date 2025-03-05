@@ -47,6 +47,10 @@ export const Device = (props: IProps) => {
   const multipleColumns = model.columns.length > 1;
   const [maybeUpdateItemAttrsSignal, setMaybeUpdateItemAttrsSignal] = useState<number>(0);
   const lastUpdateItemAttrsSignalAt = useRef<number>(0);
+  const [fixedVariables, setFixedVariables] = useState<IVariables>([]);
+
+  const clearFixedVariables = () => setFixedVariables([]);
+  const deletedFixedVariable = (variable: string) => setFixedVariables(fixedVariables.filter(v => v !== variable));
 
   const triggerMaybeUpdateItemAttrsSignal = () => setMaybeUpdateItemAttrsSignal(Date.now());
 
@@ -308,6 +312,7 @@ export const Device = (props: IProps) => {
       const sequence = parseSpecifier(series, "to");
       if (sequence) {
         // swap contents of sequence into variables without updating variables reference
+        clearFixedVariables();
         handleUpdateVariables(sequence);
       }
       else { alert("parse error in sequence"); }
@@ -325,9 +330,11 @@ export const Device = (props: IProps) => {
     } else {
       if (selectedVariable) {
         newVariables.push(...variables.filter((v) => v !== selectedVariable));
+        deletedFixedVariable(selectedVariable);
       } else {
         const lastVariable = variables[variables.length - 1];
         newVariables.push(...variables.filter((v) => v !== lastVariable));
+        deletedFixedVariable(lastVariable);
       }
     }
     handleUpdateVariables(newVariables);
@@ -340,7 +347,7 @@ export const Device = (props: IProps) => {
 
   const handlePctChange = (variableIdx: number, newPct: string, updateNext?: boolean) => {
     const selectedVar = variables[variableIdx];
-    const newVariables = createNewVarArray(selectedVar, variables, Number(newPct), updateNext);
+    const newVariables = createNewVarArray(selectedVar, variables, fixedVariables, setFixedVariables, Number(newPct), updateNext);
     handleUpdateVariables(newVariables);
   };
 
@@ -404,11 +411,11 @@ export const Device = (props: IProps) => {
       const isWithinBounds = htmlTarget.id === `${device.id}-wedge-${varName}` || htmlTarget.id === `${device.id}-wedge-${nextVarName}`;
       if (isWithinBounds && (newNicePct > 1 && newNicePct < 100)) {
         const selectedVar = variables[selectedVariableIdx];
-        const newVariables = createNewVarArray(selectedVar, variables, Number(newNicePct), true);
+        const newVariables = createNewVarArray(selectedVar, variables, fixedVariables, setFixedVariables, Number(newNicePct), true);
         handleUpdateVariables(newVariables);
       }
     }
-  }, [dragOrigin, isDragging, selectedVariableIdx, variables, device.id, handleUpdateVariables]);
+  }, [isDragging, selectedVariableIdx, dragOrigin.x, dragOrigin.y, variables, device.id, fixedVariables, handleUpdateVariables]);
 
   useEffect(() => {
     if (isDragging) {
