@@ -122,11 +122,22 @@ export const getFirstAndLastIndexOfVar = (variable: string, variables: IVariable
   return {firstIndexOfVar, lastIndexOfVar};
 };
 
-export const getNewPcts = ({newPct, oldPct, selectedVar, variables, updateNext}: IGetNewPcts) => {
+export const getNewPcts = ({newPct, oldPct, selectedVar, variables, fixedVariables, setFixedVariables, updateNext}: IGetNewPcts) => {
   const diffOfPcts = newPct - oldPct;
   const newPctsMap: Record<string, number> = {};
   let newPcts: Array<number> = [];
   const uniqueVariables = [...new Set(variables)];
+
+  // place the selected variable at the beginning of the fixed variables array and ensure
+  // the list is smaller than the unique variables list so we have at least 1 degree of freedom
+  const currentFixedVariables = [...fixedVariables];
+  const index = currentFixedVariables.indexOf(selectedVar);
+  if (index !== -1) {
+    currentFixedVariables.splice(index, 1);
+  }
+  currentFixedVariables.unshift(selectedVar);
+  currentFixedVariables.length = Math.min(currentFixedVariables.length, uniqueVariables.length - 1);
+  setFixedVariables(currentFixedVariables);
 
   if (updateNext) {
     // only update adjacent variable (if user is dragging a wedge boundary)
@@ -145,23 +156,31 @@ export const getNewPcts = ({newPct, oldPct, selectedVar, variables, updateNext}:
     });
   } else {
     // update all variables by distributing difference
-    const unselectedVars = uniqueVariables.filter((v) => v !== selectedVar);
+    const unselectedVars = uniqueVariables.filter((v) => !currentFixedVariables.includes(v));
+    let fixedPct = 0;
+    uniqueVariables.forEach(variable => {
+      newPctsMap[variable] = variable === selectedVar ? newPct : getPercentOfVar(variable, variables);
+      if (currentFixedVariables.includes(variable)) {
+        fixedPct += newPctsMap[variable];
+      }
+    });
     const numUnselected = unselectedVars.length;
-    const fewestNumbers = fewestNumbersToSum(diffOfPcts, numUnselected);
+    fixedPct = Math.max(1, Math.min(fixedPct, 100 - numUnselected));
+    const distributedPct = Math.max(1, Math.floor((100 - fixedPct) / numUnselected));
 
-    // update new percents
-    fewestNumbers.forEach((n, i) => {
-      const pctOfVar = getPercentOfVar(unselectedVars[i], variables);
-      newPcts.push(pctOfVar - n);
-      newPctsMap[unselectedVars[i]] = pctOfVar - n;
+    uniqueVariables.forEach((v) => {
+      if (unselectedVars.includes(v)) {
+        newPctsMap[v] = distributedPct;
+      }
+      newPcts.push(newPctsMap[v]);
     });
   }
   return {newPcts, newPctsMap};
 };
 
-export const createNewVarArray = (selectedVar: string, variables: IVariables, newPct: number, updateNext?: boolean) => {
+export const createNewVarArray = (selectedVar: string, variables: IVariables, fixedVariables: IVariables, setFixedVariables: React.Dispatch<React.SetStateAction<IVariables>>, newPct: number, updateNext?: boolean) => {
   const oldPct = getPercentOfVar(selectedVar, variables);
-  const { newPcts, newPctsMap } = getNewPcts({newPct, oldPct, selectedVar, variables, updateNext});
+  const { newPcts, newPctsMap } = getNewPcts({newPct, oldPct, selectedVar, variables, fixedVariables, setFixedVariables, updateNext});
   let newVariables: IVariables = [];
   let uniqueVariables = [...new Set(variables)];
   if (uniqueVariables.length === 2 && (newPct === 33 || newPcts.includes(33))) {
@@ -177,7 +196,7 @@ export const createNewVarArray = (selectedVar: string, variables: IVariables, ne
     });
   } else {
     // find new common denominator to distribute whole number of mixer balls to each variable
-    const commonDenom = findCommonDenominator([newPct, ...newPcts]);
+    const commonDenom = findCommonDenominator(newPcts);
     // add new amounts of variables to new array following order of variables in original array
     uniqueVariables.forEach(varName => {
       if (varName === selectedVar) {
