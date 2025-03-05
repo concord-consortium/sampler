@@ -67,11 +67,11 @@ This document provides a detailed, step-by-step checklist for implementing the S
 
 ### 1.3 Measures Tab
 
-- [ ] **Tests**
-  - [ ] Test measures tab rendering
-  - [ ] Test measure creation
-  - [ ] Test formula editing
-  - [ ] Test measure calculation
+- [x] **Tests**
+  - [x] Test measures tab rendering
+  - [x] Test measure creation
+  - [x] Test formula editing
+  - [x] Test measure calculation
 
 - [ ] **Implementation**
   - [ ] Create MeasuresTab component
