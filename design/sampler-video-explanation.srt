@@ -1,0 +1,556 @@
+1
+00:00:07,430 --> 00:00:09,720
+the purpose of this video is to
+
+2
+00:00:09,720 --> 00:00:11,760
+illustrate how to use code app sampler
+
+3
+00:00:11,760 --> 00:00:12,560
+to gener
+
+4
+00:00:12,560 --> 00:00:15,080
+from a model in the top menu click on
+
+5
+00:00:15,080 --> 00:00:18,020
+plugins and select sampler here we see a
+
+6
+00:00:18,020 --> 00:00:19,850
+collection of objects in a mixer that we
+
+7
+00:00:19,850 --> 00:00:22,279
+can edit you can imagine this mixer as a
+
+8
+00:00:22,279 --> 00:00:23,960
+hat with pieces of paper in it
+
+9
+00:00:23,960 --> 00:00:26,510
+I can add objects using the plus button
+
+10
+00:00:26,510 --> 00:00:29,000
+if I've added too many I can use the
+
+11
+00:00:29,000 --> 00:00:33,200
+minus button to remove them let's say I
+
+12
+00:00:33,200 --> 00:00:34,700
+want to simulate a situation of a
+
+13
+00:00:34,700 --> 00:00:36,890
+carnival duckpond game that has a
+
+14
+00:00:36,890 --> 00:00:38,270
+collection of rubber ducks in a pond
+
+15
+00:00:38,270 --> 00:00:40,640
+where 20% of the Ducks are marked on
+
+16
+00:00:40,640 --> 00:00:41,900
+their belly for a price
+
+17
+00:00:41,900 --> 00:00:43,910
+if a player picks one of these marked
+
+18
+00:00:43,910 --> 00:00:46,190
+floating ducks they win a price once the
+
+19
+00:00:46,190 --> 00:00:47,900
+duck is picked it is returned to the
+
+20
+00:00:47,900 --> 00:00:49,730
+pond and the booth operator swirls them
+
+21
+00:00:49,730 --> 00:00:52,670
+around in the pond to mix them up the
+
+22
+00:00:52,670 --> 00:00:54,620
+booth owners expect about 50 students to
+
+23
+00:00:54,620 --> 00:00:55,970
+play the game at the carnival
+
+24
+00:00:55,970 --> 00:00:59,150
+each player pays $1 to pick three Ducks
+
+25
+00:00:59,150 --> 00:01:04,729
+one at a time with replacement I can
+
+26
+00:01:04,729 --> 00:01:07,340
+create 10 objects two objects to
+
+27
+00:01:07,340 --> 00:01:09,680
+represent winning ducks which I will
+
+28
+00:01:09,680 --> 00:01:17,479
+label as prize an 8 to represent blank
+
+29
+00:01:17,479 --> 00:01:21,200
+ducks which I will label as no we are
+
+30
+00:01:21,200 --> 00:01:23,810
+using 10 objects with two labeled prize
+
+31
+00:01:23,810 --> 00:01:27,079
+to model the situation of having 20%
+
+32
+00:01:27,079 --> 00:01:30,759
+ducks labeled in the pond
+
+33
+00:01:32,590 --> 00:01:36,050
+if we click on spinner we can see how
+
+34
+00:01:36,050 --> 00:01:37,850
+the same distribution from the mixer is
+
+35
+00:01:37,850 --> 00:01:43,970
+represented in a spinner model these
+
+36
+00:01:43,970 --> 00:01:45,650
+options appear allow me to choose my
+
+37
+00:01:45,650 --> 00:01:47,330
+sample size in addition to how many
+
+38
+00:01:47,330 --> 00:01:50,270
+times I run the simulation the default
+
+39
+00:01:50,270 --> 00:01:52,550
+option in the sampler is that objects
+
+40
+00:01:52,550 --> 00:01:55,040
+are chosen with replacement if you're
+
+41
+00:01:55,040 --> 00:01:57,050
+modeling a scenario that includes
+
+42
+00:01:57,050 --> 00:01:59,150
+without replacement you can change that
+
+43
+00:01:59,150 --> 00:02:02,390
+under this options tab also take note of
+
+44
+00:02:02,390 --> 00:02:04,340
+the hide model option which might be
+
+45
+00:02:04,340 --> 00:02:06,350
+helpful if you are a teacher and don't
+
+46
+00:02:06,350 --> 00:02:07,880
+want your students to see the model you
+
+47
+00:02:07,880 --> 00:02:11,900
+have created I can ask myself the
+
+48
+00:02:11,900 --> 00:02:13,640
+question after randomly choosing three
+
+49
+00:02:13,640 --> 00:02:15,560
+ducks what are the chances of winning a
+
+50
+00:02:15,560 --> 00:02:18,500
+prize for all three I can test this out
+
+51
+00:02:18,500 --> 00:02:20,210
+by simulating to see about how many
+
+52
+00:02:20,210 --> 00:02:23,410
+prizes would be won in this scenario
+
+53
+00:02:23,410 --> 00:02:25,940
+first I'll simulate a round of the game
+
+54
+00:02:25,940 --> 00:02:27,740
+where one player picks three Ducks
+
+55
+00:02:27,740 --> 00:02:29,870
+so change the default five items to
+
+56
+00:02:29,870 --> 00:02:33,560
+three for now I will simulate playing
+
+57
+00:02:33,560 --> 00:02:35,510
+the game six times so I will collect six
+
+58
+00:02:35,510 --> 00:02:39,200
+samples and press start you will see
+
+59
+00:02:39,200 --> 00:02:41,030
+that an object is randomly selected
+
+60
+00:02:41,030 --> 00:02:43,550
+three times and that this process is
+
+61
+00:02:43,550 --> 00:02:47,630
+repeated six times in addition a table
+
+62
+00:02:47,630 --> 00:02:49,220
+automatically starts to populate with
+
+63
+00:02:49,220 --> 00:02:51,620
+the results of my simulation it is in
+
+64
+00:02:51,620 --> 00:02:54,500
+the form of a hierarchical table on the
+
+65
+00:02:54,500 --> 00:02:56,660
+outermost level of the table I see that
+
+66
+00:02:56,660 --> 00:02:58,760
+so far I've only run one experiment in
+
+67
+00:02:58,760 --> 00:03:00,739
+the next level I see that I have taken
+
+68
+00:03:00,739 --> 00:03:03,410
+six samples and in the final level I see
+
+69
+00:03:03,410 --> 00:03:04,850
+the results of the six samples I took
+
+70
+00:03:04,850 --> 00:03:07,430
+three values from the first three values
+
+71
+00:03:07,430 --> 00:03:10,130
+from the second and so on if I click on
+
+72
+00:03:10,130 --> 00:03:12,530
+sample two for example all three results
+
+73
+00:03:12,530 --> 00:03:15,350
+from that sample are highlighted I can
+
+74
+00:03:15,350 --> 00:03:17,180
+now graph the results of my simulation
+
+75
+00:03:17,180 --> 00:03:20,150
+by creating a graph and dragging value
+
+76
+00:03:20,150 --> 00:03:25,610
+to the x-axis I can also separate my
+
+77
+00:03:25,610 --> 00:03:27,670
+results by which sample they belong to
+
+78
+00:03:27,670 --> 00:03:32,600
+by dragging sample to the y-axis now I'm
+
+79
+00:03:32,600 --> 00:03:34,280
+going to run the simulation many more
+
+80
+00:03:34,280 --> 00:03:36,530
+times than to speed up the process I can
+
+81
+00:03:36,530 --> 00:03:38,680
+change the speed setting to fastest I'm
+
+82
+00:03:38,680 --> 00:03:43,630
+going to collect 44 more samples
+
+83
+00:03:45,849 --> 00:03:48,530
+it becomes clear to me that this graph
+
+84
+00:03:48,530 --> 00:03:50,900
+is not so helpful anymore but I can use
+
+85
+00:03:50,900 --> 00:03:52,459
+the table to calculate a measure that
+
+86
+00:03:52,459 --> 00:03:56,420
+may be more helpful to me if I want to
+
+87
+00:03:56,420 --> 00:03:58,189
+calculate how many prizes students got
+
+88
+00:03:58,189 --> 00:04:00,590
+and each simulated round of play I can
+
+89
+00:04:00,590 --> 00:04:02,989
+add an attribute at the sample level by
+
+90
+00:04:02,989 --> 00:04:10,669
+clicking on this plus sign I click on
+
+91
+00:04:10,669 --> 00:04:14,709
+the attribute to edit the formula and
+
+92
+00:04:14,709 --> 00:04:17,329
+count the number of times prize appears
+
+93
+00:04:17,329 --> 00:04:28,699
+in each sample now let's graph this new
+
+94
+00:04:28,699 --> 00:04:37,340
+attribute notice that I can change this
+
+95
+00:04:37,340 --> 00:04:39,949
+kick this attribute to be treated as
+
+96
+00:04:39,949 --> 00:04:45,199
+categorical and change it into a bar
+
+97
+00:04:45,199 --> 00:04:51,110
+graph and I notice that none of the
+
+98
+00:04:51,110 --> 00:04:53,150
+students got three prizes during 50
+
+99
+00:04:53,150 --> 00:04:56,330
+rounds of play that was a brief
+
+100
+00:04:56,330 --> 00:04:57,949
+introduction to one way of using the
+
+101
+00:04:57,949 --> 00:04:59,479
+sampler which is to generate your own
+
+102
+00:04:59,479 --> 00:05:02,180
+data using a model another way is to
+
+103
+00:05:02,180 --> 00:05:04,250
+sample data from an existing data set of
+
+104
+00:05:04,250 --> 00:05:06,680
+population data here I have already
+
+105
+00:05:06,680 --> 00:05:08,659
+opened a very large dataset of movies
+
+106
+00:05:08,659 --> 00:05:12,159
+which contains over 5,000 movies and
+
+107
+00:05:12,159 --> 00:05:15,530
+lots of information on each case or each
+
+108
+00:05:15,530 --> 00:05:19,280
+movie the data set is from data world's
+
+109
+00:05:19,280 --> 00:05:21,289
+and was compiled by scraping information
+
+110
+00:05:21,289 --> 00:05:23,900
+from the online movie database IMDB I'm
+
+111
+00:05:23,900 --> 00:05:25,669
+going to treat this data set as a
+
+112
+00:05:25,669 --> 00:05:26,360
+population
+
+113
+00:05:26,360 --> 00:05:28,460
+even though realistically it is missing
+
+114
+00:05:28,460 --> 00:05:31,130
+movies let's say I want to take a sample
+
+115
+00:05:31,130 --> 00:05:33,320
+of these movies to approximate the
+
+116
+00:05:33,320 --> 00:05:36,440
+average length of movies so I've opened
+
+117
+00:05:36,440 --> 00:05:39,560
+the sampler again and this time I'm
+
+118
+00:05:39,560 --> 00:05:42,919
+using the collector tool my data set is
+
+119
+00:05:42,919 --> 00:05:44,630
+already populated in the collector and
+
+120
+00:05:44,630 --> 00:05:46,940
+each case is represented by an object I
+
+121
+00:05:46,940 --> 00:05:50,690
+can also choose other collections here
+
+122
+00:05:50,690 --> 00:05:51,800
+if they are available
+
+123
+00:05:51,800 --> 00:05:54,830
+I want to sample 45 movies from my
+
+124
+00:05:54,830 --> 00:05:58,279
+population so I've changed the 5 to a 45
+
+125
+00:05:58,279 --> 00:06:03,979
+and I want to do this five times I've
+
+126
+00:06:03,979 --> 00:06:05,689
+clicked start but sometimes when
+
+127
+00:06:05,689 --> 00:06:07,909
+sampling from a large collection it may
+
+128
+00:06:07,909 --> 00:06:09,829
+take a few seconds for cases to be
+
+129
+00:06:09,829 --> 00:06:12,439
+sampled and for the taped table to
+
+130
+00:06:12,439 --> 00:06:20,419
+populate now that my five samples of 45
+
+131
+00:06:20,419 --> 00:06:22,699
+movies each have been taken
+
+132
+00:06:22,699 --> 00:06:32,989
+I can now graph movie duration and in
+
+133
+00:06:32,989 --> 00:06:35,029
+order to see what the distribution looks
+
+134
+00:06:35,029 --> 00:06:38,299
+like for each sample I can separate by
+
+135
+00:06:38,299 --> 00:06:42,739
+sample I can display the mean and I can
+
+136
+00:06:42,739 --> 00:06:45,229
+start to see the variability and the
+
+137
+00:06:45,229 --> 00:06:50,149
+means between samples this is a brief
+
+138
+00:06:50,149 --> 00:06:52,759
+introduction to how to use the sampler
+
+139
+00:06:52,759 --> 00:06:58,059
+to collect samples from a dataset
+

@@ -1,0 +1,278 @@
+the purpose of this video is to
+
+illustrate how to use code app sampler
+
+to gener
+
+from a model in the top menu click on
+
+plugins and select sampler here we see a
+
+collection of objects in a mixer that we
+
+can edit you can imagine this mixer as a
+
+hat with pieces of paper in it
+
+I can add objects using the plus button
+
+if I've added too many I can use the
+
+minus button to remove them let's say I
+
+want to simulate a situation of a
+
+carnival duckpond game that has a
+
+collection of rubber ducks in a pond
+
+where 20% of the Ducks are marked on
+
+their belly for a price
+
+if a player picks one of these marked
+
+floating ducks they win a price once the
+
+duck is picked it is returned to the
+
+pond and the booth operator swirls them
+
+around in the pond to mix them up the
+
+booth owners expect about 50 students to
+
+play the game at the carnival
+
+each player pays $1 to pick three Ducks
+
+one at a time with replacement I can
+
+create 10 objects two objects to
+
+represent winning ducks which I will
+
+label as prize an 8 to represent blank
+
+ducks which I will label as no we are
+
+using 10 objects with two labeled prize
+
+to model the situation of having 20%
+
+ducks labeled in the pond
+
+if we click on spinner we can see how
+
+the same distribution from the mixer is
+
+represented in a spinner model these
+
+options appear allow me to choose my
+
+sample size in addition to how many
+
+times I run the simulation the default
+
+option in the sampler is that objects
+
+are chosen with replacement if you're
+
+modeling a scenario that includes
+
+without replacement you can change that
+
+under this options tab also take note of
+
+the hide model option which might be
+
+helpful if you are a teacher and don't
+
+want your students to see the model you
+
+have created I can ask myself the
+
+question after randomly choosing three
+
+ducks what are the chances of winning a
+
+prize for all three I can test this out
+
+by simulating to see about how many
+
+prizes would be won in this scenario
+
+first I'll simulate a round of the game
+
+where one player picks three Ducks
+
+so change the default five items to
+
+three for now I will simulate playing
+
+the game six times so I will collect six
+
+samples and press start you will see
+
+that an object is randomly selected
+
+three times and that this process is
+
+repeated six times in addition a table
+
+automatically starts to populate with
+
+the results of my simulation it is in
+
+the form of a hierarchical table on the
+
+outermost level of the table I see that
+
+so far I've only run one experiment in
+
+the next level I see that I have taken
+
+six samples and in the final level I see
+
+the results of the six samples I took
+
+three values from the first three values
+
+from the second and so on if I click on
+
+sample two for example all three results
+
+from that sample are highlighted I can
+
+now graph the results of my simulation
+
+by creating a graph and dragging value
+
+to the x-axis I can also separate my
+
+results by which sample they belong to
+
+by dragging sample to the y-axis now I'm
+
+going to run the simulation many more
+
+times than to speed up the process I can
+
+change the speed setting to fastest I'm
+
+going to collect 44 more samples
+
+it becomes clear to me that this graph
+
+is not so helpful anymore but I can use
+
+the table to calculate a measure that
+
+may be more helpful to me if I want to
+
+calculate how many prizes students got
+
+and each simulated round of play I can
+
+add an attribute at the sample level by
+
+clicking on this plus sign I click on
+
+the attribute to edit the formula and
+
+count the number of times prize appears
+
+in each sample now let's graph this new
+
+attribute notice that I can change this
+
+kick this attribute to be treated as
+
+categorical and change it into a bar
+
+graph and I notice that none of the
+
+students got three prizes during 50
+
+rounds of play that was a brief
+
+introduction to one way of using the
+
+sampler which is to generate your own
+
+data using a model another way is to
+
+sample data from an existing data set of
+
+population data here I have already
+
+opened a very large dataset of movies
+
+which contains over 5,000 movies and
+
+lots of information on each case or each
+
+movie the data set is from data world's
+
+and was compiled by scraping information
+
+from the online movie database IMDB I'm
+
+going to treat this data set as a
+
+population
+
+even though realistically it is missing
+
+movies let's say I want to take a sample
+
+of these movies to approximate the
+
+average length of movies so I've opened
+
+the sampler again and this time I'm
+
+using the collector tool my data set is
+
+already populated in the collector and
+
+each case is represented by an object I
+
+can also choose other collections here
+
+if they are available
+
+I want to sample 45 movies from my
+
+population so I've changed the 5 to a 45
+
+and I want to do this five times I've
+
+clicked start but sometimes when
+
+sampling from a large collection it may
+
+take a few seconds for cases to be
+
+sampled and for the taped table to
+
+populate now that my five samples of 45
+
+movies each have been taken
+
+I can now graph movie duration and in
+
+order to see what the distribution looks
+
+like for each sample I can separate by
+
+sample I can display the mean and I can
+
+start to see the variability and the
+
+means between samples this is a brief
+
+introduction to how to use the sampler
+
+to collect samples from a dataset
+

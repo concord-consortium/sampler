@@ -1,0 +1,310 @@
+Id,Title,Labels,Iteration,Iteration Start,Iteration End,Type,Estimate,Priority,Current State,Created at,Accepted at,Deadline,Requested By,Description,URL,Demo ID,Integration,Owned By,Blocker,Blocker Status,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Review Type,Reviewer,Review Status,Review Type,Reviewer,Review Status,Review Type,Reviewer,Review Status,Pull Request
+188397029,**Sampler Plugin** The user can scroll the contents of the Sampler plugin,"376 esteem fy25 t2, sampler-plugin-0.4.0",128,"Jan 29, 2025","Feb 11, 2025",feature,2,p3 - Low,accepted,"Oct 8, 2024","Jan 30, 2025",,William Finzer,"When the contents of of the plugin extends beyond the boundaries of the plugin frame, the user is able to scroll up/down and left/right as needed to make all elements of the contents visible.
+This feature is currently unimplemented.",https://www.pivotaltracker.com/story/show/188397029,,,Doug Martin,,,"QA/demo link: https://codap3.concord.org/?di=https://sampler.concord.org/branch/main/ (Doug Martin - Jan 28, 2025)","**Test (QA)** review set to **pass**
+
+Tested scrolling functionality in the Sampler plugin within the iFrame. The user can freely scroll up/down and left/right using the mouse wheel, keyboard arrows, and trackpad. However, I did not check for iPad behavior.
+
+I'll note that TAB+SHIFT must be used explicitly to navigate, or the user must directly select within the iFrame element.
+
+I observed some inconsistent scrollbar behavior—for example, the horizontal scroll sometimes does not disappear or appears larger than normal (tested in both Chrome and Safari). However, I couldn’t reproduce this issue consistently. It seems to be more related to iFrame selection than the scrolling feature itself.
+
+Are we expected to check anything in CODAP v2 for the ESTEEM 2 plugin? Also, let me know if I should test scrolling in other v3 plugins like MultiData or NOAA.
+
+Setting QA to **Pass** for now as acceptance criteria are met. (Natalya St. Clair - Jan 29, 2025)","**Project Team** review set to **pass**
+
+👍🏻 LGTM (William Finzer - Jan 29, 2025)",,,,,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+188678578,"**[Sampler]** When the user changes the name of an attribute using the plugin, that needs to also propagate the renaming to any formulas.","376 esteem fy25 t2, bug-triage-12-23-2024, sampler-plugin-0.4.0",128,"Jan 29, 2025","Feb 11, 2025",bug,3,p3 - Low,accepted,"Dec 11, 2024","Jan 30, 2025",,William Finzer,"## To observe
+* Starting from [scratch](https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org) press **Start** to collect the default samples.
+* In the *samples* collection add an attribute named ""countA"" with the formula `count(output=""a"")`
+* In the plugin, rename ""output"" to ""choice.""
+
+Observe that the values of **countA** are now syntax errors.
+
+## Expected
+Renaming the output attribute should trigger the substitution of the correct attribute name in the formulas.
+
+**Note**: This bug only occurs when running V2! In V3, formulas are stored with IDs rather than attribute names, so they are not affected by name changes.",https://www.pivotaltracker.com/story/show/188678578,,,Doug Martin,,,"	@williamfinzer1 / @natalyast this is ready to test on the `main` branch.
+
+I've created a test document that already has a formula column defined (the ""test formula"" column in the samples collection)
+
+https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/#shared=https%3A%2F%2Fcfm-shared.concord.org%2FfApXzSwxLIYpN4V1XMfJ%2Ffile.json (Doug Martin - Jan 30, 2025)","**Project Team** review set to **pass** (William Finzer - Jan 30, 2025)","Hi @dougmartin4 - currently undo/redo doesn't work for this story. Is that something we need as part of the Acceptance Criteria, @williamfinzer1? (Natalya St. Clair - Jan 30, 2025)","	@natalyast No, that’s not part of the acceptance criteria. (William Finzer - Jan 30, 2025)","	@williamfinzer1 Thanks for the clarification. I'll go ahead and pass the story. Let me know if we need to log a separate issue for undo/redo. (Natalya St. Clair - Jan 30, 2025)","**Test (QA)** review set to **pass** (Natalya St. Clair - Jan 30, 2025)","	@natalyast Undo/redo with respect to changes in the document made by plugins does not get a story. (William Finzer - Jan 30, 2025)",,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+188333249,**[ESTEEM]** The user can hide and (optionally) lock as model as in v0.44,"376 esteem fy25 t2, sampler-plugin-0.4.0",128,"Jan 29, 2025","Feb 11, 2025",feature,3,p3 - Low,accepted,"Sep 25, 2024","Jan 31, 2025",,William Finzer,"CURRENTLY There is an **Options** tab with a checkbox for hiding the model. When the option is chosen, the user can also, if desired, *lock* the model with a password.
+
+See Zeplin for design of Lock icon on main interface (not a separate tab) 
+**Spec:** https://zpl.io/rooEBDL (see upper right-hand side of spec, ""Device Visibility On/Off and Device Lock/Unlock"")",https://www.pivotaltracker.com/story/show/188333249,,,Doug Martin,,,"4 different icons as shown in design
+Visible  -default state
+Hidden -- contents hidden but not locked
+Lock --contents hidden and locked with password
+Not sure when ""unlock"" would appear????  NEED DECISION
+ (Hollylynne Lee - Jan 23, 2025)","	@williamfinzer1 / @hollylynne This is now available to test on the `main` branch:
+
+https://sampler.concord.org/branch/main/
+
+using CODAP v2: https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/
+using CODAP v3: https://codap3.concord.org/?di=https://sampler.concord.org/branch/main/
+
+here is a document that uses the `main` branch and already includes a mixer and spinner for testing:
+
+https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/#shared=https%3A%2F%2Fcfm-shared.concord.org%2FPIrmYi7APJsunLd7AH2x%2Ffile.json (Doug Martin - Jan 29, 2025)","**Project Team** review set to **pass**
+
+👍🏻 LGTM and works great! (William Finzer - Jan 29, 2025)","**Test (QA)** review set to **pass**
+
+lgtm! Tested the model visibility and lock feature in the Sampler plugin. Verified that the Hide and Lock options work as expected, including password protection and visibility states. All icons (Visible, Hidden, Lock) update correctly. No issues found. Passing the story. (Natalya St. Clair - Jan 30, 2025)","Can we change the text in the window to say  ""Add optional password to lock"" (Hollylynne Lee - Jan 30, 2025)","or ""Lock with optional password"" (Hollylynne Lee - Jan 30, 2025)","	@hollylynne Sure, I've attached screenshots of both choices - let me know which one you want. (Doug Martin - Jan 31, 2025)","I like ""Lock with optional password"" (Hollylynne Lee - Jan 31, 2025)","	@hollylynne We will also need to update the unlock text.  Since this only shows when a password is entered I think it makes sense to remove the ""optional"" part when unlocking.  See attached screenshot and let me know what you think. (Doug Martin - Jan 31, 2025)","completely agree with removing optional when unlocking! (Hollylynne Lee - Jan 31, 2025)","	@hollylynne You can use this link to test the updated text:
+
+https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/
+
+If you are happy with it your can add your project team acceptance by clicking on the empty circle in this stories' header (see attachment) and selecting the green pass option. (Doug Martin - Jan 31, 2025)","**Project Team** review set to **pass**
+
+this seems to work well (Hollylynne Lee - Jan 31, 2025)",Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,Project Team,Hollylynne Lee,pass,
+188397184,**[Sampler]** Measures tab not usable,"376 esteem fy25 t2, bug-triage-10-16-2024, sampler-plugin-0.4.0",128,"Jan 29, 2025","Feb 11, 2025",bug,3,p3 - Low,accepted,"Oct 8, 2024","Feb 1, 2025",,William Finzer,"	The Measures tab for **count** should allow the user to specify an attribute and compare its value to a value the user types in. Instead, as shown in the screen capture, the assumption is made that the value of one attribute will be compared to the value of another attribute. But even that is not set up to work since the output places single quotes around the second attribute name.
+
+[Link to design doc for Measures Tab] (paste link here)
+
+### Acceptance Criteria
+- Functionality in V2 & V3
+- For some measures like Count and Percent, the user should be able to select a value from the model and an attribute.
+
+### Description in ESTEEM's development notes
+Measures for the Measure tab: (Only include measures applicable for Mixer and Spinner, single quant variable or single categorical variable). The computed measures are added to the Sample level in the table.
+- Sum: sum(Age)
+- Mean: mean(Age)
+- Median: median(Age)
+- Count: count(Sex = “male”) -- options should include value from model & attribute name. So user can choose an attribute from a list (e.g. Sex) and a value from a list of possible values generated from the model. For example, the list might consist of [""male"", ""female""] as possible values.
+- Percent:
+100 * count(Sex = “male”)/count() -- options should include value from model & attribute name",https://www.pivotaltracker.com/story/show/188397184,,,Doug Martin,,,"Here we see that the Measures tab is making the assumption that the user will want to count the number of times that the value of one attribute equals the value of another attribute. And then it puts the first attribute name in back tics and the second in single quotes. This won't work. (William Finzer - Oct 8, 2024)","	@williamfinzer1 / @natalyast Here is a CODAP v2 document to test with:
+
+https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/#shared=https%3A%2F%2Fcfm-shared.concord.org%2FRwpUKkBigMTeSwv4jUhV%2Ffile.json
+
+**this is now fixed in v3 - see other comments**
+~~This only works in v2 - CODAP v3 throws an error when you add the formula via the plugin API with this error:~~
+ (Doug Martin - Jan 30, 2025)","	@williamfinzer1 / @natalyast I've found the CODAP v3 issue - the existing code was using the wrong attribute type in the create attribute request (was `numerical`, should have been `numeric`).  I'll restart this story and re-deliver it when it is fixed and working in V3. (Doug Martin - Jan 30, 2025)","	@williamfinzer1 / @natalyast This is now also working in CODAP v3.  Here are the test links for both v2 and v3:
+
+- v2: https://codap.concord.org/app/static/dg/en/cert/index.html?#shared=https%3A%2F%2Fcfm-shared.concord.org%2FRwpUKkBigMTeSwv4jUhV%2Ffile.json
+- v3: https://codap3.concord.org/?di=https://sampler.concord.org/branch/main/#shared=https%3A%2F%2Fcfm-shared.concord.org%2FrGttrHWZnlEzlt4lEA8q%2Ffile.json
+ (Doug Martin - Jan 30, 2025)","**Project Team** review set to **pass**
+
+Works well! (William Finzer - Jan 30, 2025)","**Test (QA)** review set to **pass**
+
+Passing the story, but please note #188843804 as a separate issue. If you select the ""not equal to"" character in the Sampler plugin, the formula won't work in CODAP v3. FYI: @williamfinzer1 (Natalya St. Clair - Jan 30, 2025)",,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+188333073,**[ESTEEM]** Device name input areas should expand to encompass the full device (attribute) name,"376 esteem fy25 t2, bug-triage-09-30-2024, sampler-plugin-0.4.0",128,"Jan 29, 2025","Feb 11, 2025",bug,3,p3 - Low,accepted,"Sep 25, 2024","Feb 4, 2025",,William Finzer,"	To observe:
+--
+* Type a long name into the input area for a device name and press `return`.
+
+Notice:
+* The input area doesn't expand to encompass the name while typing.
+* After pressing `return`, the device name is truncated.
+
+Expected:
+--
+The input area for the device name should expand while typing, becoming taller if the width becomes greater than the device width. After losing focus the device name should be centered on the device and large enough to fully encompass the name.
+The width of the input area is limited by the width of the device but the number of characters in the name is not limited.",https://www.pivotaltracker.com/story/show/188333073,,,Doug Martin,,,"Bill to discuss with Leslie/Kiley if this bug needs to be prioritized (Natalya St. Clair - Sep 30, 2024)","	@natalyast ESTEEM funding has run out, but I'm going to be working on the Sampler to bring it to a releasable state. No worries about prioritization. (William Finzer - Sep 30, 2024)","	@williamfinzer1 to get the device name input autosizing to work I had to make the input full width across the device like the attached image.  Is that ok? (Doug Martin - Jan 30, 2025)","	@dougmartin4 Yes, I think that's fine. (William Finzer - Jan 30, 2025)","	@williamfinzer1 / @natalyast Here is a demo of the resizing device names:
+
+https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/#shared=https%3A%2F%2Fcfm-shared.concord.org%2Fc7wRgBKyrke0iqbKhK3B%2Ffile.json
+
+No need to test in v3 as there is no CODAP specfic changes in this work.
+
+Two notes: 
+
+1. The arrows will slightly update their y location after you leave the textarea input as the entire view is re-drawn to account for the new height of the textarea.  For speed and to eliimate ""jankiness"" as we type we don't redraw everything on each character entered.
+
+2. I also fixed a bug that hadn't been logged yet.  Before the fix the user could delete all the text from the device name and leave the input and the variable name was set to the empty string in CODAP.  Now if that happens the name is reset to the value that it had when the user started editing the name. (Doug Martin - Jan 30, 2025)","**Test (QA)** review set to **pass**
+
+lgtm! Thanks for fixing the bug. (Natalya St. Clair - Jan 31, 2025)","**Project Team** review set to **pass** (William Finzer - Feb 4, 2025)",,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+186770259,**[ESTEEM]** Add same number of devices when 'Add device' is selected,"376 esteem fy25 t2, no-release, sampler-plugin-0.4.0",128,"Jan 29, 2025","Feb 11, 2025",feature,2,p3 - Low,accepted,"Jan 3, 2024","Feb 4, 2025",,William Finzer,"	### Why
+
+### Acceptance Criteria
+
+
+2) When trying to add multiple branches from the branched device, the devices are not connected. E.g., Add a device and a branch from the default device. Click on the Add Device button in any of the newly created devices and click Add Branch twice and notice the last added device is not connected to any of the devices.
+Screencast: https://screenpal.com/watch/c0luXRVHtMe
+
+I met with @michaeltirenin about questions I had for the spec that didn't handle certain cases of device network configurations when adding/removing devices. We decided to (for now) make the add device only add a single device and get feedback from Bill once it was merged about the cases I had questions about. The arrow not connected being connected when there are more devices to the right than the left is one of those cases so I set the code up to add the device but not connect the arrow. So this isn't really a bug but a placeholder for a decision of what to do in this case.
+
+Note that when a device in a branch is deleted, parallel devices do *not* get deleted. The branch for the deleted device ends.
+____
+**Notes**
+- the correct scenario -- of adding 2 devices -- is presented in section #4 (near bottom) of the spect
+- **UI Specs:** https://app.zeplin.io/project/5e4baae7fb685faac9bf4a0a/screen/6565f4e7a043b368cd1249f7",https://www.pivotaltracker.com/story/show/186770259,,,Doug Martin,,,"	@williamfinzer1 / @natalyast Here is a shared doc to quickly test adding same number of devices when 'Add device' is selected:
+
+https://codap.concord.org/app/static/dg/en/cert/index.html?#shared=https%3A%2F%2Fcfm-shared.concord.org%2FsNW7f2QG1XefTdgMWsim%2Ffile.json
+
+Again, no need to test in v3 as there is no CODAP specific behavior.
+
+One note: if you do try to delete one device after adding multiple you will see a red rectangle in the arrow.  This is a bug that should be fixed in this future existing story: https://www.pivotaltracker.com/story/show/188333020 (Doug Martin - Jan 30, 2025)","**Test (QA)** review set to **pass**
+
+lgtm! (Natalya St. Clair - Jan 31, 2025)","**Project Team** review set to **pass** (William Finzer - Feb 4, 2025)",,,,,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+188368815,**[ESTEEM]** The initial size of the Sampler properly encompasses its contents.,"376 esteem fy25 t2, bug-triage-10-16-2024, sampler-plugin-0.4.0",128,"Jan 29, 2025","Feb 11, 2025",bug,2,p3 - Low,accepted,"Oct 2, 2024","Feb 4, 2025",,William Finzer,,https://www.pivotaltracker.com/story/show/188368815,,,Doug Martin,,,"	@williamfinzer1 After meeting with @kswenson yesterday I thought I had a plan that would only need new code in CODAP v3 but once I started working on it this morning I realized that approach (which was a bit of a hack) would also need CODAP v3 work.  I'll lay out the issue in the codap-v3 Slack channel today so maybe instead of a hack we can come up with something more elegant, (Doug Martin - Jan 29, 2025)","	@williamfinzer1 / @natalyast After meeting again with Kirk and Scott I thought of another ""hack"" so we don't have to update both the CODAP v2 and v3 api code.  Instead the plugin now checks its window height in the DOM (instead of asking CODAP) after loading and not ensures that it has the minimum width and height to display the initial UI.  This allows documents that have larger saved plugin window sizes to maintain their size but expands plugins that are either dropped on the page or loaded via the `?di=` parameter to expand to the minimum size.
+
+Here are some test links:
+
+- v2, using `di` parameter: https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/
+- v3, using `di` parameter: https://codap3.concord.org/?di=https://sampler.concord.org/branch/main/
+- v2, using saved doc with enlarged plugin window: https://codap.concord.org/app/static/dg/en/cert/index.html?#shared=https%3A%2F%2Fcfm-shared.concord.org%2FfThx1BtruDADWBeJZJBJ%2Ffile.json
+- v3, using saved doc with enlarged plugin window: https://codap3.concord.org/?di=https://sampler.concord.org/branch/main/#shared=https%3A%2F%2Fcfm-shared.concord.org%2Fp9SrvuoeocOqpdxpGDkn%2Ffile.json
+
+One consequence of this though is that saved docs with plugin windows that are smaller than the minimum size will have their plugin windows expanded automatically which may cause them to overlap other windows.  For example:
+
+- v2: https://codap.concord.org/app/static/dg/en/cert/index.html?#shared=https%3A%2F%2Fcfm-shared.concord.org%2FH9oB5Xs8pD6yI2ighFw1%2Ffile.json
+- v3: https://codap3.concord.org/#shared=https%3A%2F%2Fcfm-shared.concord.org%2Fe9l80HP8HLmvBQJoBKUP%2Ffile.json
+
+Without updates to CODAP v2 and v3 so they ""remember"" their initial loaded size (eg, if is was the default or a size loaded from the document) this is the best way to handle this issue. (Doug Martin - Jan 31, 2025)","	@dougmartin4 @natalyast I'm not worried about the ""consequence."" Users can learn to work with this. (William Finzer - Jan 31, 2025)","**Test (QA)** review set to **pass**
+
+lgtm! I logged a separate issue here: #188848097 (Natalya St. Clair - Jan 31, 2025)","**Project Team** review set to **pass** (William Finzer - Feb 4, 2025)",,,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+185864784,**[ESTEEM]** Sampler misbehavior with two Samplers in one CODAP document,"376 esteem fy25 t2, bug-triage-4-23-24, bug-triage-9-04-24, no-release, sampler-plugin-0.4.0",128,"Jan 29, 2025","Feb 11, 2025",bug,3,p3 - Low,accepted,"Aug 18, 2023","Feb 4, 2025",,William Finzer,"	This bug was discovered recently by a user and posted on the help forum.
+To replicate:
+==
+1. In a new CODAP document, make a Sampler.
+2. Press its **Start** button to get some simulation data. Notice the **items** collection has just one attribute, `value`.
+3. Make a second Sampler in the same document.
+4. Press the second Sampler's **Start** button to get some simulation data. Notice that now in *both* case tables the **items** collection has just three additional attributes: `experiment`, `description` and `sample size`.
+
+Desired behavior:
+==
+* Adding the second Sampler should have *no effect* on anything related to the first Sampler. Likewise, the first Sample should have no effect on the second one.
+* The observed additional attributes should *not* appear.
+
+Additional notes:
+==
+* If you change the name of the `value` attribute in the second case table, the second Sampler will only output cases with blank values.",https://www.pivotaltracker.com/story/show/185864784,,,Doug Martin,,,"Note: this is a fat three.
+Not sure if it's happening only when there's two samplers, might be happening when there's just one. (lblagg - Oct 30, 2023)","	@williamfinzer1 This bug seems highly related to the July 2024 bug issues reported by Samet Okumus. here are a few of his documents. The docs were created in earlier version of the Sampler, and the v.044 released sampler is not behaving correctly for his premade docs. 
+************
+ few months ago, I wrote a book chapter in the Turkish language and used the Sampler tool in CODAP in my activities. Everything was fine but all of a sudden, the Sampler tool no longer works for my activities. It is a published book chapter, so I would be very appreciative if you could fix the problem without changing the weblinks of the below activities. Also, I provided the activities with QR codes in case you need them. Thank you! Regards.
+
+https://codap.concord.org/app/static/dg/tr/cert/#shared=https%3A%2F%2Fcfm-shared.concord.org%2Fl7g4hUYQSiMCGeh354Ye%2Ffile.json
+
+https://codap.concord.org/app/static/dg/tr/cert/#shared=https%3A%2F%2Fcfm-shared.concord.org%2FANUpVeUIuBTq9QfZtTP6%2Ffile.json
+
+https://codap.concord.org/app/static/dg/tr/cert/#shared=https%3A%2F%2Fcfm-shared.concord.org%2F04MGjKO4fqvRQRY4RwWY%2Ffile.json
+
+https://codap.concord.org/app/static/dg/tr/cert/#shared=https%3A%2F%2Fcfm-shared.concord.org%2FjZpjMO8HxwAMP9Rhvgut%2Ffile.json
+
+https://codap.concord.org/app/static/dg/tr/cert/#shared=https%3A%2F%2Fcfm-shared.concord.org%2F0POzfF4C3kKF6kQsr6H8%2Ffile.json
+
+https://codap.concord.org/app/static/dg/tr/cert/#shared=https%3A%2F%2Fcfm-shared.concord.org%2Fb7cyWf0e5QbghSUgZoCp%2Ffile.json
+
+https://codap.concord.org/app/static/dg/tr/cert/#shared=https%3A%2F%2Fcfm-shared.concord.org%2FOTWXjycJWRDiGvfgVBa7%2Ffile.json
+ (Hollylynne Lee - Aug 15, 2024)","	@hollylynne @evangelinei Evangeline and I are in touch with Samet and have a plan to make things right for him and his book. (William Finzer - Aug 15, 2024)","FYI--I moved this story up above the Sampler release line as I think many people build documents with two samplers (Hollylynne Lee - Aug 16, 2024)","NOTE: I can't reproduce this bug using the new sampler - this seems to be an issue with the initial version of the sampler.  
+
+btw, I'm just reviewing all the PT stories testing all the bugs and not working on this right now. (Doug Martin - Sep 12, 2024)","FYI: Documents with 2 Samplers work. The problem with the Turkish documents was with changing device names and collection names. https://www.pivotaltracker.com/story/show/188045959 (Evangeline Ireland - Sep 12, 2024)","	@williamfinzer1 / @natalyast Here are two shared docs with the merged `main` branch that allows for multiple samplers.
+
+NOTES: 
+
+1. Before this work the plugin did not store the data context name so older documents with samplers that have already run will create a second data context when they run because it thinks the current data context was created by another plugin.
+2. I've updated the version number to be `0.4.0-pre` so that it is easy to see that we are running the new code in `main`.
+
+LINKS:
+
+- CODAP v2: https://codap.concord.org/app/static/dg/en/cert/index.html#shared=https%3A%2F%2Fcfm-shared.concord.org%2FiaORUwBqli9NC3P6NDxO%2Ffile.json
+- CODAP v3: https://codap3.concord.org/#shared=https%3A%2F%2Fcfm-shared.concord.org%2FI5ObIvocNnL7jadlZDCZ%2Ffile.json
+ (Doug Martin - Feb 3, 2025)","**Test (QA)** review set to **pass**
+
+Looks good to me! I tested the documents Doug linked, but let me know if you need me to dig deeper. (Natalya St. Clair - Feb 3, 2025)","**Project Team** review set to **pass** (William Finzer - Feb 4, 2025)",,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+185142683,**[ESTEEM]** User can change **Select** <n> items to **Repeat** selecting items until <condition>,"376 esteem fy25 t2, refactoring, sampler-plugin-0.4.0",129,"Feb 12, 2025","Feb 25, 2025",feature,5,p3 - Low,accepted,"May 9, 2023","Feb 25, 2025",,William Finzer,"The word **Select** is clickable such that the user can change it to **Repeat**. The full prompt then becomes:
+> Repeat selecting items until
+> ___
+
+The user can type a formula expression using CODAP formula syntax. There is no restriction on the formula the user creates. The plugin will use the plugin API to have the expression evaluated for each item and a `true` result will cause the selecting items process to end for the current sample.
+
+**Note**: The current API does not allow a plugin to cause a formula editor to come up in CODAP. This will be an enhancement to the API requiring work on the CODAP side. If feasible, the plugin will report formula errors to the user.",https://www.pivotaltracker.com/story/show/185142683,,,Doug Martin,#186374094,resolved,"	@williamfinzer1 @hollylynne Are you expecting to support:
+
+1.) All of the functions that are available in the pop-up in Tinkerplots 2? 
+2.) All the functions listed in the measures dropdown list? (mean, median, etc.)
+3.) No functions, just relations like =, >, <, etc.? (lblagg - Oct 31, 2023)","	@lblagg @hollylynne The description has been modified to clarify that the user will enter any formula they desire in a formula editor. (William Finzer - Nov 2, 2023)","This is now demoable/testable on `main` in CODAP 2.  I'm still getting an error in CODAP 3 with the api call to evaluate the ""until formula"".  I'll add a bug in the CODAP v3 PT board.
+
+https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/ (Doug Martin - Feb 10, 2025)","After more checking/logging I determined the error in CODAP v3 is that the api endpoint (formulaEngine/evalExpression) has not been implemented yet.  I'm not sure if I should create a story for that in the CODAP 3 board or if the api endpoints are tracked in another way.  Should I create a story to implement that api endpoint in the CODAP v3 board @williamfinzer1 ? (Doug Martin - Feb 10, 2025)","	@dougmartin4 Right, I just looked and the story for this doesn't yet exist. I'll write the story now and give it a high priority. (William Finzer - Feb 10, 2025)","	@dougmartin4 
+> This is now demoable/testable on main in CODAP 2. I'm still getting an error in CODAP 3 with the api call to evaluate the ""until formula"". I'll add a bug in the CODAP v3 PT board.
+> https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/
+
+Is this story ready for testing? Right now I tried to follow the dialogue in the Sampler with the demo link and I see the same error messages described in v3 as we see in the demo link: https://somup.com/cTnX0rK5lC (Natalya St. Clair - Feb 11, 2025)","	@natalyast Yes it is ready for testing.  It won't work in V3 until the api endpoint is implemented in V3.  They will be using v2 for the initial classroom usage. (Doug Martin - Feb 12, 2025)","**Test (QA)** review set to **pass**
+
+This looks great to me, @dougmartin4! Thanks for the clarification.
+
+I do have some feedback—the helper text that appears when clicking the “?” icon was a bit confusing. The default formula uses “a” and “b” balls, but the examples provided are more complex (e.g., using “Sex” and “Height”). To make this feature more beginner-friendly, it might help to simplify the helper text and include an example that aligns with the default Sampler plugin. Ultimately, though, I suppose that decision is up to Bill and Hollylynne. (Natalya St. Clair - Feb 12, 2025)","	@natalyast Thanks - the help test is currently just some existing placeholder text.  It will be updated with real text later. (Doug Martin - Feb 12, 2025)","**Project Team** review set to **pass** (William Finzer - Feb 25, 2025)",,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,https://github.com/concord-consortium/sampler/pull/78
+188870835,"**[ESTEEM]** Skip animation in ""Fastest"" speed","376 esteem fy25 t2, sampler-plugin-0.4.0",129,"Feb 12, 2025","Feb 25, 2025",feature,3,p3 - Low,accepted,"Feb 7, 2025","Feb 25, 2025",,William Finzer,"When the speed slider is set to ""Fastest"" (either at the beginning of the animation or during it) the animation should instantly complete.",https://www.pivotaltracker.com/story/show/188870835,,,Doug Martin,,,"	This is now demoable/testable on main in CODAP 2 and 3
+
+- https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/
+- https://codap3.concord.org/?di=https://sampler.concord.org/branch/main/ (Doug Martin - Feb 10, 2025)","**Test (QA)** review set to **pass**
+
+lgtm! (Natalya St. Clair - Feb 11, 2025)","**Project Team** review set to **pass** (William Finzer - Feb 25, 2025)",,,,,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,https://github.com/concord-consortium/sampler/pull/79
+188848421,**[ESTEEM]** The Sampler has a Collector that enables the user to sample from a dataset,"376 esteem fy25 t2, sampler icebox, sampler-plugin-0.4.0",130,"Feb 26, 2025","Mar 11, 2025",feature,5,p3 - Low,accepted,"Jan 31, 2025","Feb 28, 2025",,William Finzer,"* When there is only one device, the user can choose **Collector**.
+* If there is only one dataset (different from the current sampler dataset), the name of that dataset appears in the popup menu below the device indicating that the dataset is ""chosen"" as the source of samples.  If there are no datasets available a message (text TBD) is shown in place of the select menu.
+* When a dataset is chosen, the device immediately populates with a ball for each case in the dataset, and labels it with the values in the first attribute column in the dataset.
+* The **output** attribute (or any other device-derived attributes) are removed from the **Sampler Data** dataset **if there are no cases with those values currently in the dataset**.
+* Above the mixer box  ""output"" is changed to the name of the chosen dataset. This name is no longer editable.
+* If a user switches from the Collector to a Spinner or Mixer, the Output field returns to its default state with label as ""output"" and is editable.
+* Pressing Start treats the device as a mixer and creates samples of cases from the dataset.",https://www.pivotaltracker.com/story/show/188848421,,,Doug Martin,,,"This is now testable using https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/ (Doug Martin - Feb 26, 2025)","	@dougmartin4  The collector itself seems to be behaving well with sending attributes names to the table.  However, We dont have the MEASURES tab set up to be able to quickly find measures of any of the attributes.  
+I am thinking maybe when the Sampler is in COllector mode, the Measures tab say something like:  @williamfinzer1 what do you think of the following
+
+We are sorry, but at this time you can not use this feature to add common measures for each sample. You can however, create a new attribute in the Sampler Data Table at the Sample level to compute a measure for a sample. 
+For help see
+Add a New Attribute to a Table (link to https://codap.concord.org/how-to/add-a-new-attribute-to-a-table/)
+Enter a Formula for an Attribute  (link to https://codap.concord.org/how-to/enter-a-formula-for-an-attribute/) (Hollylynne Lee - Feb 27, 2025)","	@dougmartin4 @williamfinzer1 - just to clarify, is this story ready for QA? Thanks! (Natalya St. Clair - Feb 27, 2025)","	@natalyast Yes this is ready to QA.  I've attached a simple csv to test with. (Doug Martin - Feb 28, 2025)","**Test (QA)** review set to **pass**
+
+Very nice! I did some stress testing with the Mammals and Four Seals (huge) dataset. The Collector is working well for me and handled the tests nicely, including hierarchy in the original dataset and large datasets. Marking QA as **Pass**. (Natalya St. Clair - Feb 28, 2025)","**Project Team** review set to **pass** (William Finzer - Feb 28, 2025)",,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+186843797,**[ESTEEM]** Issues with changing the percentage of the wedge by dragging the edge of the wedge,"376 esteem fy25 t2, bug-triage-09-11-24, bug-triage-09-23-24, bug-triage-4-2-24, sampler icebox, sampler-plugin-0.4.0",130,"Feb 26, 2025","Mar 11, 2025",bug,3,p3 - Low,accepted,"Jan 15, 2024","Feb 28, 2025",,William Finzer,"## Issue 1: When dragging the edge of the wedge, the percentage is displayed only on one wedge not on the other wedge
+
+**Steps to replicate:**
+1. Launch https://sampler.concord.org/branch/main/
+2. Navigate to the spinner tab
+3. Change the percentage of the wedge by dragging the edge of the wedge
+4. Notice the percentage display on the wedges
+
+**Expected Behaviour:**
+ The percentage should be displayed on both wedges along that edge when dragging
+
+**Actual Behaviour:** 
+The percentage is displayed only on one wedge not on the other wedge",https://www.pivotaltracker.com/story/show/186843797,,,Doug Martin,,,"This is now testable using https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/ (Doug Martin - Feb 26, 2025)","**Test (QA)** review set to **pass**
+
+lgtm! (Natalya St. Clair - Feb 27, 2025)","**Project Team** review set to **pass** (William Finzer - Feb 28, 2025)",,,,,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+188940786,"**[ESTEEM]** Click on ""…"" button brings focus to input area immediately","376 esteem fy25 t2, sampler-plugin-0.4.0",130,"Feb 26, 2025","Mar 11, 2025",feature,1,p3 - Low,accepted,"Feb 28, 2025","Mar 4, 2025",,William Finzer,"Clicking on the ""…"" button is a frequent user action. Currently the user then has to click on the input area of the dialog box before being able to type.
+* On clicking ""…"" the focus should immediately move to the dialog box input area.",https://www.pivotaltracker.com/story/show/188940786,,,Doug Martin,,,"This is testable at https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/
+
+To test:
+
+1. Load the url above
+2. Click on the ""..."" button at the bottom of the mixer device (Doug Martin - Mar 3, 2025)","**Project Team** review set to **pass** (William Finzer - Mar 3, 2025)","**Test (QA)** review set to **pass**
+
+lgtm! (Natalya St. Clair - Mar 3, 2025)",,,,,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+188940811,**[ESTEEM]** The speed slider should respond to mouse clicks consistently,"376 esteem fy25 t2, sampler-plugin-0.4.0",130,"Feb 26, 2025","Mar 11, 2025",bug,1,p3 - Low,accepted,"Feb 28, 2025","Mar 4, 2025",,William Finzer,"Current behavior of mouse interaction with speed slider:
+* The ""thumb"" can be clicked and dragged to any of the four speed settings.
+* Only the slowest and fastest setting are directly clickable.
+* The clickable affordance is only about 3–4 pixels.
+
+Desired behavior:
+* The user can click anywhere along the speed slider with a vertical affordance about double what it is now. And a single click in this area moves the thumb to the nearest of the four settings.
+* Click and drag on the thumb continues to behave as it does now.",https://www.pivotaltracker.com/story/show/188940811,,,Doug Martin,,,"This is testable at https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/ (Doug Martin - Mar 3, 2025)","**Project Team** review set to **pass** (William Finzer - Mar 3, 2025)","**Test (QA)** review set to **pass**
+
+lgtm! (Natalya St. Clair - Mar 3, 2025)",,,,,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+188940805,"**[ESTEEM]** When in Select mode, the number of ""slots"" to the right of the device stays in synch with the number of items the user has chosen to select","376 esteem fy25 t2, sampler-plugin-0.4.0",130,"Feb 26, 2025","Mar 11, 2025",feature,2,p3 - Low,accepted,"Feb 28, 2025","Mar 4, 2025",,William Finzer,"* The desired behavior in **Select** mode is the same as we see in the previous version of the Sampler. That is, the number of slots to the right of the rightmost device should stay in synch with the user-specified number of items to select. So in the default configuration there are 5 slots. If the user types 2 in place of 5, the number of slots changes immediately on the input area losing focus.
+* In **Repeat** mode, the behavior is that there is one slot and a new slot is added as needed.
+
+This change will improve the user's ability to understand the meaning of ""Select <n> items"" versus ""Collect <m> samples.""",https://www.pivotaltracker.com/story/show/188940805,,,Doug Martin,,,"This is testable at https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/ (Doug Martin - Mar 3, 2025)","**Project Team** review set to **pass**
+
+It's good that the response to increase/decrease arrows is immediate. It's a little disconcerting that it also responds immediately to each keystroke rather than waiting for loss of focus, but I think it's fine. (William Finzer - Mar 3, 2025)","**Test (QA)** review set to **pass**
+
+lgtm! (Natalya St. Clair - Mar 3, 2025)",,,,,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+188939113,**[ESTEEM]** Output stops with large samples,"376 esteem fy25 t2, sampler icebox, sampler-plugin-0.4.0",130,"Feb 26, 2025","Mar 11, 2025",bug,2,p3 - Low,accepted,"Feb 28, 2025","Mar 4, 2025",,Hollylynne Lee,"The issue of the sampler stopping in the middle of a simulation is still happening even if I don't have any measures being computed.  
+
+As you can see in [this document](https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/#shared=https%3A%2F%2Fcfm-shared.concord.org%2FzgjP97fLnXZemZMU36OD%2Ffile.json) with 2 devices, I am trying to select 30 samples with 50 items each, and it keeps stopping on me.",https://www.pivotaltracker.com/story/show/188939113,,,Doug Martin,,,"This is testable at https://codap.concord.org/app/static/dg/en/cert/index.html?di=https://sampler.concord.org/branch/main/
+
+**Do not use the example document in the description** - it has a bug in the saved state due to the bug that was fixed that shows the sampler is running when it loads. (Doug Martin - Mar 3, 2025)","**Project Team** review set to **pass** (William Finzer - Mar 3, 2025)","**Test (QA)** review set to **pass**
+
+lgtm! (Natalya St. Clair - Mar 3, 2025)",,,,,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,
+188940834,**[ESTEEM]** The new sampler is backward compatible with documents saved with the previous sampler,"376 esteem fy25 t2, sampler-plugin-0.4.0",130,"Feb 26, 2025","Mar 11, 2025",feature,3,p3 - Low,accepted,"Feb 28, 2025","Mar 4, 2025",,William Finzer,"Currently the new sampler does not attempt to work with the state saved with a previous sampler.
+
+## To observe:
+* The enclosed V2 document was created with the `v0.44 (#0066)` Sampler; i.e. current release. The document was edited to point to the new sampler at https://sampler.concord.org/branch/main/
+* When the document is opened, the Sampler appears, but it is in the default configuration, apparently having ignored the plugin state in the document.
+
+## Desired:
+* The most desirable behavior is that documents with the old Sampler plugin open with the new Sampler and the state contained in the old Sampler is properly translated (as much as possible) to the new Sampler.",https://www.pivotaltracker.com/story/show/188940834,,,Doug Martin,,," (William Finzer - Feb 28, 2025)","This is ready to test.
+
+To test:
+
+1. Download the ""Sampler Test.codap"" file attached to this story (it points to the `main` branch aleady)
+2. Use the hamburger menu on the top left in CODAP and choose Open / Local File and click on the drop area to select the downloaded file.
+3. The file should load
+
+**NOTE**: because there isn't enough information saved in the old TPSampler format when you press run with no changes you'll see a duplicate experiment created.  @williamfinzer1 is aware of this. (Doug Martin - Mar 3, 2025)","**Project Team** review set to **pass** (William Finzer - Mar 3, 2025)","**Test (QA)** review set to **pass**
+
+lgtm! Note I only tested in the CODAP v2 environment. (Natalya St. Clair - Mar 3, 2025)",,,,,,,,,Project Team,William Finzer,pass,Test (QA),Natalya St. Clair,pass,,,,

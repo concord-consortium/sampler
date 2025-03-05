@@ -1,0 +1,73 @@
+144c56d - Doug Martin, 9 hours ago : Merge pull request #96 from concord-consortium/SAMPLER-44-add-pattern-test
+d20e9e6 - Doug Martin, 11 hours ago : Updated isPattern() to allow for single alphanumeric values or strings with commas and no parenthesis
+2b1992a - Doug Martin, 11 hours ago : Merge pull request #97 from concord-consortium/SAMPLER-46-collector-measures
+76a8030 - Doug Martin, 11 hours ago : Merge pull request #98 from concord-consortium/SAMPLER-45-fix-formula-variable-rename
+704675a - Doug Martin, 14 hours ago : fix: Rename formula CODAPv2 bug [SAMPLER-45]
+797ad3a - Doug Martin, 30 hours ago : feat: Show collector attributes in measures dropdown [SAMPLER-46]
+e68d54a - Doug Martin, 31 hours ago : feat: Add until pattern support [SAMPLER-44]
+fff0a09 - Doug Martin, 2 days ago : Merge pull request #95 from concord-consortium/SAMPLER-43-migrate-v1-state-on-load
+bb562ff - Doug Martin, 2 days ago : Merge pull request #93 from concord-consortium/SAMPLER-41-update-animated-brackets
+b455dc7 - Doug Martin, 2 days ago : Add comment about how number of empty brackets are arrived at
+e39b1bf - Doug Martin, 2 days ago : Merge pull request #94 from concord-consortium/SAMPLER-42-fix-stack-overflow-on-large-samples
+c98fa89 - Doug Martin, 2 days ago : Merge pull request #92 from concord-consortium/SAMPLER-40-make-speed-slider-clickable
+c308435 - Doug Martin, 2 days ago : Merge pull request #91 from concord-consortium/SAMPLER-39-autofocus-set-variable-names-input
+4e5ae89 - Doug Martin, 2 days ago : Changed modal text to label based on PR input
+6efc1aa - Doug Martin, 2 days ago : feat: Allow plugin to load TPSampler plugin state [SAMPLER-43]
+2c80cc8 - Doug Martin, 3 days ago : fix: Stack overflow when animating many items in "Fastest" mode [SAMPLER-42]
+7ab1440 - Doug Martin, 3 days ago : fix: Update number of output brackets [SAMPLER-41]
+76d7362 - Doug Martin, 3 days ago : fix: The speed slider should respond to mouse clicks consistently [SAMPLER-40]
+03edf81 - Doug Martin, 3 days ago : fix: Autofocus input when "Set Variable Names" dialog is shown [SAMPLER-39]
+85d5c19 - Doug Martin, 4 days ago : Merge pull request #90 from concord-consortium/SAMPLER-38-float-about-tab-image
+2f1fdd4 - Doug Martin, 4 days ago : fix: Change funding image to use float [SAMPLER-38]
+9a81247 - Doug Martin, 4 days ago : Merge pull request #89 from concord-consortium/SAMPLER-38-update-help-text
+8a3dbaa - Doug Martin, 4 days ago : Fixed non-space between NSF grant id and text in about page.
+7f3163e - Doug Martin, 4 days ago : Updated about styling and logo comment based on PR comments
+e889568 - Doug Martin, 4 days ago : Merge pull request #88 from concord-consortium/SAMPLER-37-use-underscores-for-blank-values
+3254863 - Doug Martin, 4 days ago : Merge pull request #87 from concord-consortium/SAMPLER-36-clear-selected-variable-on-view-change
+6d726bf - Doug Martin, 4 days ago : Merge pull request #86 from concord-consortium/SAMPLER-29-update-spinner-labels
+3b9f94a - Doug Martin, 5 days ago : feat: Update about text [SAMPLER-38]
+9de6e55 - Doug Martin, 5 days ago : fix: Use underscores for blank variables [SAMPLER-37]
+f939dc1 - Doug Martin, 5 days ago : fix: Clear selected variable on view change [SAMPLER-36]
+c2744b3 - Doug Martin, 6 days ago : Merge pull request #85 from concord-consortium/SAMPLER-25-remove-collector-index
+d1972ed - Doug Martin, 7 days ago : fix: Update spinner labels [SAMPLER-29]
+93850a8 - Doug Martin, 6 days ago : Merge pull request #84 from concord-consortium/SAMPLER-25-update-no-collector-message
+7f62d11 - Doug Martin, 6 days ago : Merge pull request #83 from concord-consortium/SAMPLER-28-show-all-percentages-when-dragging-spinner
+a0da506 - Doug Martin, 6 days ago : Merge pull request #82 from concord-consortium/SAMPLER-31-add-clear-data
+594f1a5 - Doug Martin, 6 days ago : Merge pull request #81 from concord-consortium/SAMPLER-33-fix-add-device-to-use-current-type
+74f3751 - Doug Martin, 6 days ago : Merge pull request #80 from concord-consortium/SAMPLER-25-add-collector-behavior
+0311c5a - Doug Martin, 6 days ago : fix: Removed collection index from collector mixer and output [SAMPLER-25]
+8141f45 - Doug Martin, 7 days ago : fix: Update message when there is no collector available [SAMPLER-25]
+67df965 - Doug Martin, 7 days ago : fix: Show all wedge percentages when dragging spinner [SAMPLER-28]
+81b9d7e - Doug Martin, 7 days ago : fix: Clear Data button should update attributes [SAMPLER-31]
+8aefde3 - Doug Martin, 8 days ago : fix: Use current device type when Add Device clicked [SAMPLER-33]
+a7e8459 - Doug Martin, 3 weeks ago : feat: Add collector behavior [SAMPLER-25]
+c1fab9e - Doug Martin, 3 weeks ago : Merge pull request #79 from concord-consortium/SAMPLER-26-make-fastest-instant
+abd2a67 - Doug Martin, 3 weeks ago : Merge pull request #78 from concord-consortium/SAMPLER-9-add-select-to-repeat-until-condition
+7435184 - Doug Martin, 3 weeks ago : feat: Change fastest speed to instantly complete [SAMPLER-26]
+213bd00 - Doug Martin, 4 weeks ago : feat: Add repeat/until functionality [SAMPLER-9]
+f01a188 - Doug Martin, 4 weeks ago : Merge pull request #77 from concord-consortium/set-version-to-0.4.0-pre
+42ddc93 - Doug Martin, 4 weeks ago : Merge pull request #76 from concord-consortium/rename-contants-file
+1a79461 - Doug Martin, 4 weeks ago : Merge pull request #75 from concord-consortium/SAMPLER-10-allow-multiple-samplers
+ba2dac9 - Doug Martin, 4 weeks ago : build: Set version of 0.4.0-pre to avoid confusing during testing
+c10877d - Doug Martin, 4 weeks ago : fix: Rename contants.ts to constants.ts
+d2873cd - Doug Martin, 4 weeks ago : fix: Allow multiple samplers [SAMPLER-10]
+01184a3 - Doug Martin, 5 weeks ago : Merge pull request #74 from concord-consortium/SAMPLER-20-update-lock-text
+b527c97 - Doug Martin, 5 weeks ago : fix: Update lock device text [SAMPLER-20]
+693167c - Doug Martin, 5 weeks ago : Merge pull request #73 from concord-consortium/fix-missing-formula
+92f23fd - Doug Martin, 5 weeks ago : fix: Missing formula after deleting device
+ba236c6 - Doug Martin, 5 weeks ago : Merge pull request #72 from concord-consortium/SAMPLER-19-ensure-initial-size
+cb4537c - Doug Martin, 5 weeks ago : fix: Ensure minimum plugin window size [SAMPLER-19]
+277ce72 - Doug Martin, 5 weeks ago : Merge pull request #71 from concord-consortium/SAMPLER-8-add-same-number-of-devices
+9698f07 - Doug Martin, 5 weeks ago : Merge pull request #70 from concord-consortium/SAMPLER-6-device-name-input-areas-should-expand
+3da59b4 - Doug Martin, 5 weeks ago : fix: Add same number of devices when 'Add device' is selected [SAMPLER-8]
+03bbc47 - Doug Martin, 5 weeks ago : fix: Allow device name input to resize [SAMPLER-6]
+29daf8b - Doug Martin, 5 weeks ago : Merge pull request #69 from concord-consortium/SAMPLER-17-change-numerical-to-numeric
+05420f5 - Doug Martin, 5 weeks ago : fix: Change numerical to numeric [SAMPLER-17]
+2c345df - Doug Martin, 5 weeks ago : Merge pull request #68 from concord-consortium/SAMPLER-17-measures-tab-not-usable
+c99c402 - Doug Martin, 5 weeks ago : Merge pull request #67 from concord-consortium/SAMPLER-24-attribute-renames-propagate-to-formulas
+26db8f8 - Doug Martin, 5 weeks ago : fix: Change measures tab to use device variables [SAMPLER-17]
+bd011fb - Doug Martin, 5 weeks ago : Merge pull request #66 from concord-consortium/SAMPLER-20-add-lock-model-ui
+a9a1af0 - Doug Martin, 5 weeks ago : fix: Rename variables in functions when column is renamed [SAMPLER-24]
+cb227d9 - Doug Martin, 5 weeks ago : feat: The user can hide and (optionally) lock as model [SAMPLER-20]
+10185db - Doug Martin, 5 weeks ago : Merge pull request #65 from concord-consortium/SAMPLER-18-The-user-can-scroll-the-contents-of-the-Sampler-plugin
+46d80bf - Doug Martin, 5 weeks ago : fix: The user can scroll the contents of the Sampler plugin [SAMPLER-18]
