@@ -4,7 +4,7 @@ import "./about.scss";
 
 export const AboutTab = () => {
   return (
-    <div className="about-tab">
+    <div className="about-tab" data-testid="about-tab">
       <p>The CODAP Sampler plugin can randomly choose items placed in a mixer, choose items based on sector sizes of a spinner, or choose cases from a collection of data.</p>
       <p><b>Select &lt;n&gt; items</b> determines the sample size,</p>
       <p><b>Collect &lt;n&gt; samples</b> controls how many samples to repeat in a given experiment.</p>
