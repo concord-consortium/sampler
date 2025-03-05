@@ -104,11 +104,11 @@ This document provides a detailed, step-by-step checklist for implementing the S
 
 ### 2.1 Device Base
 
-- [ ] **Tests**
-  - [ ] Test device base rendering
-  - [ ] Test device name editing
-  - [ ] Test device connection handling
-  - [ ] Test device deletion
+- [x] **Tests**
+  - [x] Test device base rendering
+  - [x] Test device name editing
+  - [x] Test device connection handling
+  - [x] Test device deletion
 
 - [ ] **Implementation**
   - [ ] Create Device base component
