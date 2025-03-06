@@ -11,6 +11,14 @@ jest.mock('../../utils/password-utils', () => ({
     storedHash === `hashed_${password}`)
 }));
 
+jest.mock('../../utils/secure-storage', () => ({
+  storePasswordHash: jest.fn().mockImplementation(() => Promise.resolve()),
+  clearPasswordHash: jest.fn().mockImplementation(() => Promise.resolve()),
+  retrievePasswordHash: jest.fn().mockImplementation(() => Promise.resolve(null))
+}));
+
+import { storePasswordHash, clearPasswordHash } from '../../utils/secure-storage';
+
 describe('PasswordModal', () => {
   const mockSetGlobalState = jest.fn();
   
@@ -81,6 +89,8 @@ describe('PasswordModal', () => {
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /unlock/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    // No reset password button in the simplified version
+    expect(screen.queryByRole('button', { name: /reset password/i })).not.toBeInTheDocument();
   });
 
   it('validates passwords match when setting a password', async () => {
@@ -103,9 +113,10 @@ describe('PasswordModal', () => {
     
     expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument();
     expect(mockSetGlobalState).not.toHaveBeenCalled();
+    expect(storePasswordHash).not.toHaveBeenCalled();
   });
 
-  it('sets the password when passwords match', async () => {
+  it('sets the password and stores it securely when passwords match', async () => {
     render(
       <GlobalStateContext.Provider value={createMockGlobalState()}>
         <PasswordModal />
@@ -124,10 +135,11 @@ describe('PasswordModal', () => {
     });
     
     expect(hashPassword).toHaveBeenCalledWith('password123');
+    expect(storePasswordHash).toHaveBeenCalledWith('hashed_password123');
     expect(mockSetGlobalState).toHaveBeenCalled();
   });
 
-  it('validates the entered password when unlocking', async () => {
+  it('validates the entered password and clears it when unlocking', async () => {
     render(
       <GlobalStateContext.Provider value={createMockGlobalState({
         passwordModalMode: 'enter' as const,
@@ -148,6 +160,7 @@ describe('PasswordModal', () => {
     
     expect(screen.getByText(/incorrect password/i)).toBeInTheDocument();
     expect(mockSetGlobalState).not.toHaveBeenCalled();
+    expect(clearPasswordHash).not.toHaveBeenCalled();
     
     // Enter correct password
     await act(async () => {
@@ -155,6 +168,7 @@ describe('PasswordModal', () => {
       fireEvent.click(unlockButton);
     });
     
+    expect(clearPasswordHash).toHaveBeenCalled();
     expect(mockSetGlobalState).toHaveBeenCalled();
   });
 
@@ -169,5 +183,56 @@ describe('PasswordModal', () => {
     fireEvent.click(cancelButton);
     
     expect(mockSetGlobalState).toHaveBeenCalled();
+  });
+
+  it('handles errors when storing the password fails', async () => {
+    // Mock storePasswordHash to reject
+    (storePasswordHash as jest.Mock).mockRejectedValueOnce(new Error('Storage failed'));
+    
+    render(
+      <GlobalStateContext.Provider value={createMockGlobalState()}>
+        <PasswordModal />
+      </GlobalStateContext.Provider>
+    );
+    
+    const passwordInput = screen.getByLabelText(/^password$/i);
+    const confirmInput = screen.getByLabelText(/confirm password/i);
+    const submitButton = screen.getByRole('button', { name: /set password/i });
+    
+    // Enter matching passwords
+    await act(async () => {
+      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      fireEvent.change(confirmInput, { target: { value: 'password123' } });
+      fireEvent.click(submitButton);
+    });
+    
+    expect(screen.getByText(/failed to store password/i)).toBeInTheDocument();
+    expect(mockSetGlobalState).not.toHaveBeenCalled();
+  });
+
+  it('handles errors when clearing the password fails during unlock', async () => {
+    // Mock clearPasswordHash to reject
+    (clearPasswordHash as jest.Mock).mockRejectedValueOnce(new Error('Clear failed'));
+    
+    render(
+      <GlobalStateContext.Provider value={createMockGlobalState({
+        passwordModalMode: 'enter' as const,
+        modelPassword: 'hashed_password123'
+      })}>
+        <PasswordModal />
+      </GlobalStateContext.Provider>
+    );
+    
+    const passwordInput = screen.getByLabelText(/^password$/i);
+    const unlockButton = screen.getByRole('button', { name: /unlock/i });
+    
+    // Enter correct password
+    await act(async () => {
+      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      fireEvent.click(unlockButton);
+    });
+    
+    expect(screen.getByText(/failed to unlock model/i)).toBeInTheDocument();
+    expect(mockSetGlobalState).not.toHaveBeenCalled();
   });
 }); 
