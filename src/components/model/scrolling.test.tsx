@@ -7,6 +7,22 @@ import { View, ICollectorItem, ViewType, IGlobalStateContext, IColumn, IDevice, 
 import { createDefaultDevice } from "../../models/device-model";
 import { createId } from "../../utils/id";
 
+// Mock the animation context
+const mockAnimationContext = {
+  isRunning: false,
+  isPaused: false,
+  speed: Speed.Medium,
+  startAnimation: jest.fn(),
+  stopAnimation: jest.fn(),
+  pauseAnimation: jest.fn(),
+  resumeAnimation: jest.fn(),
+  handleStartRun: jest.fn(),
+  handleTogglePauseRun: jest.fn(),
+  handleStopRun: jest.fn(),
+  registerAnimationCallback: jest.fn(),
+  unregisterAnimationCallback: jest.fn()
+};
+
 // Mock the CODAP plugin API
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
   initializePlugin: jest.fn().mockResolvedValue({}),
@@ -136,7 +152,7 @@ describe("ModelTab Scrolling Functionality", () => {
         repeat: false,
         replacement: false,
         sampleSize: "10",
-        numSamples: "0",
+        numSamples: "10",
         enableRunButton: true,
         attrMap: mockAttrMap,
         dataContexts: [],
@@ -145,7 +161,11 @@ describe("ModelTab Scrolling Functionality", () => {
         isRunning: false,
         isPaused: false,
         speed: Speed.Medium,
-        isModelHidden: false
+        isModelHidden: false,
+        modelLocked: false,
+        modelPassword: '',
+        showPasswordModal: false,
+        passwordModalMode: 'set' as const
       },
       setGlobalState: jest.fn()
     };
@@ -299,45 +319,51 @@ describe("ModelTab Scrolling Functionality", () => {
               columns: [
                 {
                   name: "Column 1",
-                  id: "column-1",
+                  id: "column1",
                   devices: [
                     {
-                      id: "device-1",
-                      viewType: "spinner" as View,
-                      variables: ["A", "B", "C"],
+                      id: "device1",
+                      viewType: ViewType.Mixer,
+                      variables: ["a", "a", "b"],
                       collectorVariables: [],
-                      formulas: {},
-                    },
-                  ],
-                },
-              ],
+                      formulas: {}
+                    }
+                  ]
+                }
+              ]
             },
-            selectedDeviceId: "device-1",
+            selectedDeviceId: undefined,
             selectedTab: "Model",
             repeat: false,
-            replacement: true,
-            sampleSize: "1",
-            numSamples: "1",
+            replacement: false,
+            sampleSize: "10",
+            numSamples: "10",
             enableRunButton: true,
             attrMap: {
-              experiment: { name: "Experiment", codapID: null },
-              sample: { name: "Sample", codapID: null },
-              description: { name: "Description", codapID: null },
-              sample_size: { name: "Sample Size", codapID: null },
-              experimentHash: { name: "Experiment Hash", codapID: null },
+              experiment: { name: 'experiment', codapID: null },
+              sample: { name: 'sample', codapID: null },
+              description: { name: 'description', codapID: null },
+              sample_size: { name: 'sample_size', codapID: null },
+              experimentHash: { name: 'experimentHash', codapID: null }
             },
             dataContexts: [],
             collectorContext: undefined,
             samplerContext: undefined,
             isRunning: false,
             isPaused: false,
-            speed: 1,
+            speed: Speed.Medium,
             isModelHidden: false,
+            modelLocked: false,
+            modelPassword: '',
+            showPasswordModal: false,
+            passwordModalMode: 'set' as const
           },
           setGlobalState: jest.fn(),
         }}
       >
-        <ModelTab />
+        <AnimationContext.Provider value={mockAnimationContext}>
+          <ModelTab />
+        </AnimationContext.Provider>
       </GlobalStateContext.Provider>
     );
 

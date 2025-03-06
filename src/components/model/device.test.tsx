@@ -4,7 +4,7 @@ import { Device } from "./device";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
 import { createDefaultDevice } from "../../models/device-model";
 import { createId } from "../../utils/id";
-import { ViewType, AttrMap } from "../../types";
+import { ViewType, AttrMap, Speed } from "../../types";
 import * as codapPluginAPI from "@concord-consortium/codap-plugin-api";
 
 // Mock the CODAP plugin API
@@ -50,19 +50,21 @@ describe("Device Component", () => {
   mockDevice.variables = ["a", "b", "c"];
   
   const mockColumn = {
-    name: "Test Column",
-    id: createId(),
+    name: "Column 1",
+    id: "column-1",
     devices: [mockDevice]
   };
   
   const mockAttrMap: AttrMap = {
-    experiment: {codapID: null, name: "experiment"},
-    description: {codapID: null, name: "description"},
-    sample_size: {codapID: null, name: "sample size"},
-    experimentHash: {codapID: null, name: "experimentHash"},
-    sample: {codapID: null, name: "sample"},
+    experiment: { name: 'experiment', codapID: null },
+    sample: { name: 'sample', codapID: null },
+    description: { name: 'description', codapID: null },
+    sample_size: { name: 'sample_size', codapID: null },
+    experimentHash: { name: 'experimentHash', codapID: null }
   };
   
+  const mockSetGlobalState = jest.fn();
+
   const mockGlobalState = {
     globalState: {
       model: {
@@ -71,20 +73,24 @@ describe("Device Component", () => {
       selectedDeviceId: mockDevice.id,
       selectedTab: "Model" as "Model" | "Measures" | "About",
       repeat: false,
-      replacement: true,
-      sampleSize: "5",
-      numSamples: "3",
+      replacement: false,
+      sampleSize: "10",
+      numSamples: "10",
       enableRunButton: true,
       attrMap: mockAttrMap,
       dataContexts: [],
-      samplerContext: undefined,
       collectorContext: undefined,
+      samplerContext: undefined,
       isRunning: false,
       isPaused: false,
-      speed: 1,
+      speed: Speed.Medium,
       isModelHidden: false,
+      modelLocked: false,
+      modelPassword: '',
+      showPasswordModal: false,
+      passwordModalMode: 'set' as const
     },
-    setGlobalState: jest.fn()
+    setGlobalState: mockSetGlobalState
   };
 
   beforeEach(() => {

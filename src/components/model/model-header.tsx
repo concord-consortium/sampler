@@ -7,6 +7,7 @@ import { deleteAll } from "../../helpers/codap-helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { modelHasSpinner } from "../../helpers/model-helpers";
 import { VisibilityToggle } from "./visibility-toggle";
+import { LockModelButton } from "./lock-model-button";
 
 interface IProps {
   showHelp: boolean;
@@ -18,7 +19,7 @@ interface IProps {
 export const ModelHeader = (props: IProps) => {
   const { showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap, model, replacement, isModelHidden } = globalState;
+  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap, model, replacement, isModelHidden, modelLocked } = globalState;
   const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
   const startToggleDisabled = !isRunning && !enableRunButton;
 
@@ -81,30 +82,62 @@ export const ModelHeader = (props: IProps) => {
     <div className="model-header">
       <div className="model-title-container">
         <h2>Model</h2>
-        <VisibilityToggle 
-          isHidden={isModelHidden} 
-          onToggle={handleToggleModelVisibility} 
-          ariaLabel="Toggle model visibility"
-        />
+        <div className="model-controls-buttons">
+          <VisibilityToggle 
+            isHidden={isModelHidden} 
+            onToggle={handleToggleModelVisibility} 
+            ariaLabel="Toggle model visibility"
+          />
+          <LockModelButton />
+        </div>
       </div>
       <div className="model-controls">
-        <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? (isPaused ? "START" : "PAUSE") : "START"}</button>
-        <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>STOP</button>
+        <button 
+          disabled={startToggleDisabled || modelLocked} 
+          className={`start-button ${startToggleDisabled || modelLocked ? "disabled" : ""}`} 
+          onClick={handleToggleRun}
+        >
+          {isRunning ? (isPaused ? "START" : "PAUSE") : "START"}
+        </button>
+        <button 
+          disabled={!isRunning || modelLocked} 
+          className={`stop-button ${!isRunning || modelLocked ? "disabled" : ""}`} 
+          onClick={handleStopRun}
+        >
+          STOP
+        </button>
         <SpeedSlider />
-        <button disabled={isRunning} className={`clear-data-button ${isRunning ? "disabled" : ""}`} onClick={handleClearData}>CLEAR DATA</button>
+        <button 
+          disabled={isRunning || modelLocked} 
+          className={`clear-data-button ${isRunning || modelLocked ? "disabled" : ""}`} 
+          onClick={handleClearData}
+        >
+          CLEAR DATA
+        </button>
       </div>
       <div className="select-repeat-controls">
         <div className="select-repeat-selection">
           <div className="select-repeat-dropdown">
-            <select disabled={isRunning} onChange={handleSelectRepeat}>
+            <select disabled={isRunning || modelLocked} onChange={handleSelectRepeat}>
               <option className={`select-repeat-option`} value="select">Select</option>
               <option className={`select-repeat-option`} value="repeat">Repeat</option>
             </select>
           </div>
-          <input disabled={isRunning} type="number" min={1} id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>
+          <input 
+            disabled={isRunning || modelLocked} 
+            type="number" 
+            min={1} 
+            id="sample_size" 
+            value={sampleSize} 
+            onChange={handleSampleSizeChange}
+          />
           <span>{`${repeat ? "selecting" : ""} items`}</span>
           <div className="select-replacement-dropdown">
-            <select disabled={isRunning || !allowReplacement} value={replacement ? "with" : "without"} onChange={handleSelectReplacement}>
+            <select 
+              disabled={isRunning || !allowReplacement || modelLocked} 
+              value={replacement ? "with" : "without"} 
+              onChange={handleSelectReplacement}
+            >
               <option value="with">with replacement</option>
               <option value="without">without replacement</option>
             </select>
@@ -114,7 +147,7 @@ export const ModelHeader = (props: IProps) => {
           <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
             <span>until</span>
             {/* note: when this feature is implemented the model-helpers#computeExperimentHash method needs to be updated to include the until value */}
-            <input type="text"></input>
+            <input type="text" disabled={modelLocked} />
             <InfoIcon onClick={handleOpenHelp}/>
             {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
           </div>
@@ -122,7 +155,14 @@ export const ModelHeader = (props: IProps) => {
       </div>
       <div className="collect-controls">
         <span>Collect</span>
-        <input disabled={isRunning} type="number" min={1} id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
+        <input 
+          disabled={isRunning || modelLocked} 
+          type="number" 
+          min={1} 
+          id="num_samples" 
+          value={numSamples} 
+          onChange={handleNumSamplesChange}
+        />
         <span>samples</span>
       </div>
     </div>

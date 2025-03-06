@@ -17,6 +17,12 @@ $pluginMinWidth: 304px;
     h2 {
       margin: 0;
     }
+    
+    .model-controls-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
   }
 }
 
@@ -480,12 +486,25 @@ $pluginMinWidth: 304px;
   }
 }
 
-.hidden-model-message {
+.hidden-model-message,
+.locked-model-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 200px);
+  width: 100%;
   padding: 20px;
   text-align: center;
+  font-size: 16px;
   color: #666;
-  font-style: italic;
-  background-color: #f5f5f5;
+  background-color: #f8f8f8;
+  border: 1px dashed #ccc;
   border-radius: 4px;
-  margin: 20px;
+  margin-top: 10px;
+}
+
+.locked-model-message {
+  background-color: #fff4e5;
+  border-color: #ffd591;
+  color: #d46b08;
 }

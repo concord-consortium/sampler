@@ -10,7 +10,7 @@ import "./model-component.scss";
 
 export const ModelTab = () => {
   const { globalState } = useGlobalStateContext();
-  const { model, isModelHidden } = globalState;
+  const { model, isModelHidden, modelLocked } = globalState;
   const [showHelp, setShowHelp] = useState(false);
   const [isWide, setIsWide] = useState(false);
   const [scrollPosition, setScrollPosition] = useState({ left: 0, top: 0 });
@@ -83,6 +83,10 @@ export const ModelTab = () => {
         {isModelHidden ? (
           <div className="hidden-model-message">
             Model is currently hidden. Toggle visibility to view and edit the model.
+          </div>
+        ) : modelLocked ? (
+          <div className="locked-model-message">
+            Model is currently locked. Unlock the model to make changes.
           </div>
         ) : (
           <div 

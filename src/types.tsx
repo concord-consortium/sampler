@@ -130,6 +130,10 @@ export interface IGlobalState {
   isPaused: boolean;
   speed: Speed;
   isModelHidden: boolean;
+  modelLocked: boolean;
+  modelPassword: string;
+  showPasswordModal: boolean;
+  passwordModalMode: 'set' | 'enter' | 'change';
 }
 
 export type ISampleAnimationResults = {

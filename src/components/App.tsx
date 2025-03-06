@@ -3,6 +3,7 @@ import { GlobalStateContext, useGlobalStateContextValue } from "../hooks/useGlob
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
+import { PasswordModal } from "./model/password-modal";
 
 import "./App.scss";
 
@@ -12,7 +13,7 @@ type NavTab = typeof navTabs[number];
 export const App = () => {
   const globalStateContextValue = useGlobalStateContextValue();
   const { globalState, setGlobalState } = globalStateContextValue;
-  const { model, selectedTab } = globalState;
+  const { model, selectedTab, showPasswordModal } = globalState;
   const numColumns = model.columns.length;
   const lastColumn = model.columns[numColumns - 1];
   const numDevicesInLastColumn = lastColumn?.devices?.length;
@@ -53,8 +54,8 @@ export const App = () => {
           <AboutTab />
         }
       </div>
+      {showPasswordModal && <PasswordModal />}
     </div>
     </GlobalStateContext.Provider>
-
   );
 };

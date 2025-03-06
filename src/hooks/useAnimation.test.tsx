@@ -72,28 +72,15 @@ describe('useAnimation', () => {
               formulas: {}
             }
           ]
-        },
-        {
-          id: 'column-2',
-          name: 'Column 2',
-          devices: [
-            {
-              id: 'device-2',
-              viewType: ViewType.Spinner,
-              variables: ['c', 'd'],
-              collectorVariables: [],
-              formulas: {}
-            }
-          ]
         }
       ]
     },
     selectedDeviceId: 'device-1',
     selectedTab: 'Model',
     repeat: false,
-    replacement: true,
+    replacement: false,
     sampleSize: '10',
-    numSamples: '5',
+    numSamples: '10',
     enableRunButton: true,
     attrMap: {
       experiment: { name: 'experiment', codapID: null },
@@ -102,13 +89,17 @@ describe('useAnimation', () => {
       sample_size: { name: 'sample_size', codapID: null },
       experimentHash: { name: 'experimentHash', codapID: null }
     },
-    isRunning: false,
-    isPaused: false,
-    speed: Speed.Medium,
     dataContexts: [],
     collectorContext: undefined,
     samplerContext: undefined,
+    isRunning: false,
+    isPaused: false,
+    speed: Speed.Medium,
     isModelHidden: false,
+    modelLocked: false,
+    modelPassword: '',
+    showPasswordModal: false,
+    passwordModalMode: 'set'
   };
 
   // Mock setGlobalState function

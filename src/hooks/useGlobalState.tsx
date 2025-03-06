@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect } from "react";
 import { useImmer } from "use-immer";
-import { AttrMap, IGlobalState, IGlobalStateContext } from "../types";
+import { AttrMap, IGlobalState, IGlobalStateContext, Speed } from "../types";
 import { addDataContextChangeListener, codapInterface, IInitializePlugin, initializePlugin } from "@concord-consortium/codap-plugin-api";
 import { createDefaultDevice } from "../models/device-model";
 import { kDataContextName, kInitialDimensions, kPluginName, kVersion } from "../contants";
@@ -13,26 +13,40 @@ const defaultAttrMap: AttrMap = {
   sample_size: {codapID: null, name: "sample size"},
   experimentHash: {codapID: null, name: "experimentHash"},
   sample: {codapID: null, name: "sample"},
+  item: { codapID: null, name: 'item' }
 };
 
 export const getDefaultState = (): IGlobalState => {
   return {
-    model: {columns: [{name: "output", id: createId(), devices: [createDefaultDevice()]}]},
-    selectedTab: "Model",
+    model: {
+      columns: []
+    },
     selectedDeviceId: undefined,
+    selectedTab: 'Model',
     repeat: false,
     replacement: true,
-    sampleSize: "5",
-    numSamples: "3",
+    sampleSize: '1',
+    numSamples: '5',
     enableRunButton: true,
-    attrMap: defaultAttrMap,
+    attrMap: {
+      experiment: { name: 'experiment', codapID: null },
+      description: { name: 'description', codapID: null },
+      sample_size: { name: 'sample_size', codapID: null },
+      experimentHash: { name: 'experimentHash', codapID: null },
+      sample: { name: 'sample', codapID: null },
+      item: { name: 'item', codapID: null }
+    },
     dataContexts: [],
-    samplerContext: undefined,
     collectorContext: undefined,
+    samplerContext: undefined,
     isRunning: false,
     isPaused: false,
-    speed: 1,
-    isModelHidden: false
+    speed: Speed.Medium,
+    isModelHidden: false,
+    modelLocked: false,
+    modelPassword: '',
+    showPasswordModal: false,
+    passwordModalMode: 'set'
   };
 };
 

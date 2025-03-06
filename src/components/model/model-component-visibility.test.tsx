@@ -57,20 +57,26 @@ describe("ModelTab with Hide Functionality", () => {
 
   it("shows model content when not hidden", () => {
     mockGlobalState.isModelHidden = false;
-    renderModelTab();
+    const { container } = renderModelTab();
     
+    // Check for model container
     const modelContainer = screen.getByTestId("model-container");
     expect(modelContainer).toBeInTheDocument();
     expect(modelContainer).toBeVisible();
+    
+    // Check for device outputs container
+    const deviceOutputsContainer = container.querySelector(".device-outputs-container");
+    expect(deviceOutputsContainer).toBeInTheDocument();
+    expect(deviceOutputsContainer).toBeVisible();
   });
 
   it("hides model content when isModelHidden is true", () => {
     mockGlobalState.isModelHidden = true;
     const { container } = renderModelTab();
     
-    // Model container should not exist in the DOM
-    const modelContainer = screen.queryByTestId("model-container");
-    expect(modelContainer).not.toBeInTheDocument();
+    // Model columns should not exist in the DOM
+    const modelColumns = container.querySelector(".model-columns");
+    expect(modelColumns).not.toBeInTheDocument();
     
     // Should show a message indicating the model is hidden
     const hiddenMessage = screen.getByText(/model is currently hidden/i);

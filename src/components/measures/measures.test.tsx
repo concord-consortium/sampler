@@ -4,6 +4,7 @@ import { MeasuresTab } from "./measures";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
 import { AttrMap } from "../../types";
 import * as codapHelpers from "../../helpers/codap-helpers";
+import { Speed } from "../../types";
 
 // Mock the CODAP plugin API
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
@@ -35,41 +36,53 @@ jest.mock("../../helpers/codap-helpers", () => ({
 
 describe("MeasuresTab Component", () => {
   const mockAttrMap: AttrMap = {
-    experiment: {codapID: null, name: "experiment"},
-    description: {codapID: null, name: "description"},
-    sample_size: {codapID: null, name: "sample size"},
-    experimentHash: {codapID: null, name: "experimentHash"},
-    sample: {codapID: null, name: "sample"},
+    experiment: { name: "experiment", codapID: null },
+    description: { name: "description", codapID: null },
+    sample_size: { name: "sample_size", codapID: null },
+    experimentHash: { name: "experimentHash", codapID: null },
+    sample: { name: "sample", codapID: null }
   };
-  
+
+  const mockSetGlobalState = jest.fn();
+
   const mockGlobalState = {
     globalState: {
       model: {
         columns: [
           {
-            name: "Column1",
-            id: "column1",
+            name: "Column 1",
+            id: "column-1",
             devices: []
           }
         ]
       },
       selectedDeviceId: undefined,
-      selectedTab: "Measures" as "Model" | "Measures" | "About",
+      selectedTab: "Measures" as "Measures" | "Model" | "About",
       repeat: false,
-      replacement: true,
-      sampleSize: "5",
-      numSamples: "3",
+      replacement: false,
+      sampleSize: "10",
+      numSamples: "10",
       enableRunButton: true,
-      attrMap: mockAttrMap,
+      attrMap: {
+        experiment: { name: 'experiment', codapID: null },
+        sample: { name: 'sample', codapID: null },
+        description: { name: 'description', codapID: null },
+        sample_size: { name: 'sample_size', codapID: null },
+        experimentHash: { name: 'experimentHash', codapID: null }
+      },
       dataContexts: [],
-      samplerContext: { id: 1, guid: 1, name: "Sampler", title: "Sampler" },
       collectorContext: undefined,
+      samplerContext: undefined,
       isRunning: false,
       isPaused: false,
-      speed: 1,
+      speed: Speed.Medium,
       isModelHidden: false,
+      modelLocked: false,
+      modelPassword: '',
+      showPasswordModal: false,
+      passwordModalMode: 'set' as const
     },
-    setGlobalState: jest.fn()
+    setGlobalState: mockSetGlobalState
   };
 
   beforeEach(() => {
@@ -183,7 +196,7 @@ describe("MeasuresTab Component", () => {
     // Get the Add Measure button
     const addMeasureButton = screen.getByText("Add Measure");
     
-    // Initially the button should be disabled
+    // Initially, the button should be disabled
     expect(addMeasureButton).toBeDisabled();
     expect(addMeasureButton).toHaveClass("disabled");
     
@@ -204,7 +217,7 @@ describe("MeasuresTab Component", () => {
     
     // Select an attribute
     await act(async () => {
-      fireEvent.change(lValueSelect, { target: { value: "Column1" } });
+      fireEvent.change(lValueSelect, { target: { value: "Column 1" } });
     });
     
     // Now the button should be enabled
@@ -214,16 +227,19 @@ describe("MeasuresTab Component", () => {
 
   it("adds a measure when Add Measure button is clicked", async () => {
     // Mock hasSamplesCollection to return true
-    (codapHelpers.hasSamplesCollection as jest.Mock).mockResolvedValueOnce(true);
+    (codapHelpers.hasSamplesCollection as jest.Mock).mockResolvedValue(true);
     
-    await act(async () => {
-      render(
-        <GlobalStateContext.Provider value={mockGlobalState}>
-          <MeasuresTab />
-        </GlobalStateContext.Provider>
-      );
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <MeasuresTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Wait for the component to finish loading
+    await waitFor(() => {
+      expect(screen.getByText("Add common measures using formulas for each sample using the form below.")).toBeInTheDocument();
     });
-
+    
     // Get the select element for the formula
     const selectElement = screen.getByLabelText("Select formula:") as HTMLSelectElement;
     
@@ -235,35 +251,30 @@ describe("MeasuresTab Component", () => {
     // Select an attribute for lValue
     const lValueSelect = screen.getAllByText("Select an attribute!")[0].closest("select") as HTMLSelectElement;
     await act(async () => {
-      fireEvent.change(lValueSelect, { target: { value: "Column1" } });
+      fireEvent.change(lValueSelect, { target: { value: "Column 1" } });
     });
     
-    // Get the name input
-    const nameInput = screen.getByLabelText("Name the measure:") as HTMLInputElement;
-    
-    // Enter a custom name
+    // Set a measure name
+    const measureNameInput = screen.getByLabelText("Name the measure:") as HTMLInputElement;
     await act(async () => {
-      fireEvent.change(nameInput, { target: { value: "Sum of Column1" } });
+      fireEvent.change(measureNameInput, { target: { value: "Sum of Column 1" } });
     });
-    
-    // Get the Add Measure button
-    const addMeasureButton = screen.getByText("Add Measure");
     
     // Click the Add Measure button
+    const addMeasureButton = screen.getByText("Add Measure");
     await act(async () => {
       fireEvent.click(addMeasureButton);
     });
     
     // Check that addMeasure was called with the correct arguments
-    expect(codapHelpers.addMeasure).toHaveBeenCalledWith("Sum of Column1", "sum", "sum(`Column1`)");
+    expect(codapHelpers.addMeasure).toHaveBeenCalledWith("Sum of Column 1", "sum", "sum(`Column 1`)");
   });
 
   it("checks for samples collection before adding a measure", async () => {
-    // Mock hasSamplesCollection to return true initially for rendering
+    // First call to hasSamplesCollection in useEffect returns true
     (codapHelpers.hasSamplesCollection as jest.Mock).mockResolvedValueOnce(true);
     
-    // Mock hasSamplesCollection to return false when checking before adding measure
-    // This is important: the component calls hasSamplesCollection in useEffect and then again in handleAddMeasure
+    // Second call to hasSamplesCollection in handleAddMeasure returns false
     (codapHelpers.hasSamplesCollection as jest.Mock).mockResolvedValueOnce(false);
     
     // Mock addMeasure to check if samples exist before adding
@@ -278,14 +289,17 @@ describe("MeasuresTab Component", () => {
       return Promise.resolve();
     });
     
-    await act(async () => {
-      render(
-        <GlobalStateContext.Provider value={mockGlobalState}>
-          <MeasuresTab />
-        </GlobalStateContext.Provider>
-      );
-    });
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <MeasuresTab />
+      </GlobalStateContext.Provider>
+    );
 
+    // Wait for the component to finish loading
+    await waitFor(() => {
+      expect(screen.getByText("Add common measures using formulas for each sample using the form below.")).toBeInTheDocument();
+    });
+    
     // Get the select element for the formula
     const selectElement = screen.getByLabelText("Select formula:") as HTMLSelectElement;
     
@@ -297,7 +311,7 @@ describe("MeasuresTab Component", () => {
     // Select an attribute for lValue
     const lValueSelect = screen.getAllByText("Select an attribute!")[0].closest("select") as HTMLSelectElement;
     await act(async () => {
-      fireEvent.change(lValueSelect, { target: { value: "Column1" } });
+      fireEvent.change(lValueSelect, { target: { value: "Column 1" } });
     });
     
     // Get the Add Measure button
