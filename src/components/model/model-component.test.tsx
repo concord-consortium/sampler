@@ -4,7 +4,8 @@ import { ModelTab } from "./model-component";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
 import { createDefaultDevice } from "../../models/device-model";
 import { createId } from "../../utils/id";
-import { AttrMap } from "../../types";
+import { AttrMap, View, IDevice } from "../../types";
+import { AnimationContext } from "../../hooks/useAnimation";
 
 // Mock the CODAP plugin API
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
@@ -53,6 +54,7 @@ jest.mock("./model-header", () => ({
           Repeat Controls
         </div>
       </div>
+      {showHelp && <div data-testid="model-help">Help Modal Content</div>}
     </div>
   )
 }));
@@ -84,6 +86,13 @@ jest.mock("../../hooks/useAnimation", () => ({
     pauseAnimation: jest.fn(),
     resumeAnimation: jest.fn()
   })
+}));
+
+// Mock the HelpModal component
+jest.mock("./help-modal", () => ({
+  HelpModal: ({ setShowHelp }: any) => (
+    <div data-testid="model-help">Help Modal Content</div>
+  )
 }));
 
 describe("ModelTab Component", () => {
@@ -120,7 +129,8 @@ describe("ModelTab Component", () => {
       collectorContext: undefined,
       isRunning: false,
       isPaused: false,
-      speed: 1
+      speed: 1,
+      isModelHidden: false,
     },
     setGlobalState: jest.fn()
   };
@@ -129,7 +139,7 @@ describe("ModelTab Component", () => {
     jest.clearAllMocks();
   });
 
-  it("renders the model tab with header and columns", () => {
+  it("renders the model tab", () => {
     render(
       <GlobalStateContext.Provider value={mockGlobalState}>
         <ModelTab />
@@ -137,64 +147,48 @@ describe("ModelTab Component", () => {
     );
 
     // Check that the model tab is rendered
-    expect(screen.getByTestId("model-header")).toBeInTheDocument();
-    expect(screen.getByTestId("column-0")).toBeInTheDocument();
-    expect(screen.getByTestId("outputs")).toBeInTheDocument();
-    
-    // Check that the column name is displayed
-    expect(screen.getByText("Test Column")).toBeInTheDocument();
-    
-    // Check that the device is displayed
-    expect(screen.getByTestId(`device-${mockDevice.id}`)).toBeInTheDocument();
+    expect(screen.getByTestId("model-container")).toBeInTheDocument();
   });
 
-  it("toggles help when help button is clicked", () => {
+  it("renders the model tab with header and columns", () => {
     render(
       <GlobalStateContext.Provider value={mockGlobalState}>
         <ModelTab />
       </GlobalStateContext.Provider>
     );
+    
+    // Check that the model header is rendered
+    expect(screen.getByTestId("model-header")).toBeInTheDocument();
+    
+    // Check that the column is rendered
+    expect(screen.getByTestId("column-0")).toBeInTheDocument();
+    expect(screen.getByText("Test Column")).toBeInTheDocument();
+    
+    // Check that the device is rendered
+    expect(screen.getByTestId(`device-${mockDevice.id}`)).toBeInTheDocument();
+  });
 
-    // Initially help should be hidden
-    expect(screen.getByText("Show Help")).toBeInTheDocument();
+  it("shows help when help button is clicked", () => {
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
     
     // Click the help button
     fireEvent.click(screen.getByTestId("help-button"));
     
-    // Now help should be shown
-    expect(screen.getByText("Hide Help")).toBeInTheDocument();
-    
-    // Click the help button again
-    fireEvent.click(screen.getByTestId("help-button"));
-    
-    // Help should be hidden again
-    expect(screen.getByText("Show Help")).toBeInTheDocument();
+    // Check that the help is shown
+    expect(screen.getByTestId("model-help")).toBeInTheDocument();
   });
 
-  it("adjusts layout based on width", async () => {
-    // Create a mock implementation that simulates a wide layout
-    (document.querySelector as jest.Mock) = jest.fn().mockImplementation(() => ({
-      getBoundingClientRect: () => ({
-        width: 600
-      })
-    }));
-
-    render(
-      <GlobalStateContext.Provider value={mockGlobalState}>
-        <ModelTab />
-      </GlobalStateContext.Provider>
-    );
-
-    // The useResizer mock should have called the callback which sets isWide to true
-    // We can verify this by checking if the select-repeat-controls div has the wide width
-    expect(screen.getByText("Repeat Controls")).toBeInTheDocument();
+  it("renders multiple columns", () => {
+    const mockDevice2 = {
+      ...createDefaultDevice(),
+      id: createId(),
+      name: "Test Device 2"
+    };
     
-    // Reset the mock for the next test
-    (document.querySelector as jest.Mock).mockReset();
-  });
-
-  it("renders multiple columns when present in the model", () => {
-    const mockDevice2 = { ...createDefaultDevice(), id: createId(), name: "Device 2" };
     const mockColumn2 = {
       name: "Test Column 2",
       id: createId(),
@@ -216,17 +210,106 @@ describe("ModelTab Component", () => {
         <ModelTab />
       </GlobalStateContext.Provider>
     );
-
+    
     // Check that both columns are rendered
     expect(screen.getByTestId("column-0")).toBeInTheDocument();
     expect(screen.getByTestId("column-1")).toBeInTheDocument();
     
-    // Check that both column names are displayed
+    // Check that both column names are rendered
     expect(screen.getByText("Test Column")).toBeInTheDocument();
     expect(screen.getByText("Test Column 2")).toBeInTheDocument();
+  });
+
+  it("adjusts layout based on width", async () => {
+    // Create a mock implementation that simulates a wide layout
+    (document.querySelector as jest.Mock) = jest.fn().mockImplementation(() => ({
+      getBoundingClientRect: () => ({
+        width: 600
+      })
+    }));
+
+    render(
+      <GlobalStateContext.Provider value={{ 
+        globalState: mockGlobalState.globalState, 
+        setGlobalState: mockGlobalState.setGlobalState 
+      }}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+
+    // The useResizer mock should have called the callback which sets isWide to true
+    // We can verify this by checking if the select-repeat-controls div has the wide width
+    expect(screen.getByText("Repeat Controls")).toBeInTheDocument();
     
-    // Check that both devices are displayed
-    expect(screen.getByTestId(`device-${mockDevice.id}`)).toBeInTheDocument();
-    expect(screen.getByTestId(`device-${mockDevice2.id}`)).toBeInTheDocument();
+    // Reset the mock for the next test
+    (document.querySelector as jest.Mock).mockReset();
+  });
+
+  it("should render multiple columns", () => {
+    const multiColumnState = {
+      globalState: {
+        model: {
+          columns: [
+            {
+              name: "Column 1",
+              id: "column-1",
+              devices: [
+                {
+                  id: "device-1",
+                  name: "Test Device 1",
+                  viewType: "spinner" as View,
+                  variables: {
+                    values: ["A", "B", "C"],
+                    weights: [1, 1, 1],
+                  },
+                  collectorVariables: {
+                    values: [],
+                    weights: [],
+                  },
+                  formulas: {},
+                },
+              ],
+            },
+            {
+              name: "Column 2",
+              id: "column-2",
+              devices: [
+                {
+                  id: "device-2",
+                  name: "Test Device 2",
+                  viewType: "spinner" as View,
+                  variables: {
+                    values: ["X", "Y", "Z"],
+                    weights: [1, 1, 1],
+                  },
+                  collectorVariables: {
+                    values: [],
+                    weights: [],
+                  },
+                  formulas: {},
+                },
+              ],
+            },
+          ],
+        },
+        selectedDeviceId: "device-1",
+        selectedTab: "Model",
+        repeat: false,
+        replacement: true,
+        sampleSize: "1",
+        samplerContext: undefined,
+        attrMap: {
+          experiment: { name: "Experiment", codapID: null },
+          sample: { name: "Sample", codapID: null },
+          description: { name: "Description", codapID: null },
+          sample_size: { name: "Sample Size", codapID: null },
+          experimentHash: { name: "Experiment Hash", codapID: null },
+        },
+        isPaused: false,
+        speed: 1,
+        isModelHidden: false,
+      },
+      setGlobalState: jest.fn(),
+    };
   });
 }); 

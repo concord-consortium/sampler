@@ -81,7 +81,8 @@ describe("Device Component", () => {
       collectorContext: undefined,
       isRunning: false,
       isPaused: false,
-      speed: 1
+      speed: 1,
+      isModelHidden: false,
     },
     setGlobalState: jest.fn()
   };
@@ -98,66 +99,88 @@ describe("Device Component", () => {
     );
 
     // Check that the device container is rendered
-    const deviceElement = screen.getByTestId("device-container");
-    expect(deviceElement).toBeInTheDocument();
+    const deviceContainer = screen.getByTestId("device-container");
+    expect(deviceContainer).toBeInTheDocument();
+    expect(deviceContainer).toHaveClass("device-container");
     
-    // Check that the device frame has the correct class for the view type
+    // Check that the device frame has the correct view type class
     const deviceFrame = document.querySelector(".device-frame");
     expect(deviceFrame).toHaveClass("mixer");
-    
-    // We can't check for the device-name-input as it's not always visible
-    // It only appears when isEditingVarName is true
   });
 
-  it("allows editing the device name when clicked", () => {
-    // Mock implementation to simulate editing a variable name
-    const mockSetGlobalState = jest.fn().mockImplementation((callback) => {
-      const draft = { ...mockGlobalState.globalState };
-      callback(draft);
-    });
-    
-    const customGlobalState = {
-      ...mockGlobalState,
-      setGlobalState: mockSetGlobalState
-    };
-    
+  it("selects the device when clicked", () => {
     render(
-      <GlobalStateContext.Provider value={customGlobalState}>
-        <Device device={mockDevice} columnIndex={0} />
-      </GlobalStateContext.Provider>
-    );
-
-    // Find a variable label that would trigger editing
-    // Since we can't directly test the name input (it's conditionally rendered),
-    // we'll verify that setGlobalState is called when a device is selected
-    const deviceElement = screen.getByTestId("device-container");
-    fireEvent.click(deviceElement);
-    
-    expect(mockSetGlobalState).toHaveBeenCalled();
-  });
-
-  it("handles device selection when clicked", () => {
-    // Create a new global state with a different selected device
-    const unselectedState = {
-      ...mockGlobalState,
-      globalState: {
-        ...mockGlobalState.globalState,
-        selectedDeviceId: "different-device-id"
-      }
-    };
-    
-    render(
-      <GlobalStateContext.Provider value={unselectedState}>
+      <GlobalStateContext.Provider value={mockGlobalState}>
         <Device device={mockDevice} columnIndex={0} />
       </GlobalStateContext.Provider>
     );
 
     // Click on the device
-    const deviceElement = screen.getByTestId("device-container");
-    fireEvent.click(deviceElement);
-    
+    fireEvent.click(screen.getByTestId("device-container"));
+
     // Check that setGlobalState was called to update the selected device
-    expect(unselectedState.setGlobalState).toHaveBeenCalled();
+    expect(mockGlobalState.setGlobalState).toHaveBeenCalled();
+  });
+
+  it("allows selecting the device when clicked", async () => {
+    const setGlobalStateMock = jest.fn();
+    const mockGlobalStateWithMock = {
+      ...mockGlobalState,
+      setGlobalState: setGlobalStateMock
+    };
+
+    render(
+      <GlobalStateContext.Provider value={mockGlobalStateWithMock}>
+        <Device device={mockDevice} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Click on the device container
+    const deviceContainer = screen.getByTestId("device-container");
+    fireEvent.click(deviceContainer);
+
+    // Check that setGlobalState was called to select the device
+    expect(setGlobalStateMock).toHaveBeenCalled();
+  });
+
+  it("renders the device with the correct view type when selected", () => {
+    const selectedMockGlobalState = {
+      globalState: {
+        ...mockGlobalState.globalState,
+        selectedDeviceId: mockDevice.id
+      },
+      setGlobalState: mockGlobalState.setGlobalState
+    };
+
+    render(
+      <GlobalStateContext.Provider value={selectedMockGlobalState}>
+        <Device device={mockDevice} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Check that the device container has the selected class
+    const deviceContainer = screen.getByTestId("device-container");
+    expect(deviceContainer).toHaveClass("selected");
+  });
+
+  it("renders the device with the correct view type when not selected", () => {
+    const unselectedMockGlobalState = {
+      globalState: {
+        ...mockGlobalState.globalState,
+        selectedDeviceId: "different-id"
+      },
+      setGlobalState: mockGlobalState.setGlobalState
+    };
+
+    render(
+      <GlobalStateContext.Provider value={unselectedMockGlobalState}>
+        <Device device={mockDevice} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Check that the device container does not have the selected class
+    const deviceContainer = screen.getByTestId("device-container");
+    expect(deviceContainer).not.toHaveClass("selected");
   });
 
   it("shows delete button and handles device deletion when not in first column", () => {
@@ -184,7 +207,10 @@ describe("Device Component", () => {
     };
     
     render(
-      <GlobalStateContext.Provider value={customGlobalState}>
+      <GlobalStateContext.Provider value={{ 
+        globalState: customGlobalState.globalState, 
+        setGlobalState: customGlobalState.setGlobalState 
+      }}>
         <Device device={mockDevice} columnIndex={1} />
       </GlobalStateContext.Provider>
     );

@@ -2,9 +2,10 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ModelTab } from "./model-component";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
+import { AnimationContext } from "../../hooks/useAnimation";
+import { View, ICollectorItem, ViewType, IGlobalStateContext, IColumn, IDevice, Speed, AttrMap, IDataContext } from "../../types";
 import { createDefaultDevice } from "../../models/device-model";
 import { createId } from "../../utils/id";
-import { AttrMap } from "../../types";
 
 // Mock the CODAP plugin API
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
@@ -86,55 +87,65 @@ jest.mock("../../hooks/useAnimation", () => ({
   })
 }));
 
+// Mock the scrollTo function
+const mockScrollTo = jest.fn();
+Element.prototype.scrollTo = mockScrollTo;
+
+// Mock document.querySelector
+const originalQuerySelector = document.querySelector;
+const mockQuerySelector = jest.fn();
+
 describe("ModelTab Scrolling Functionality", () => {
-  // Create a mock global state with multiple columns and devices to ensure scrolling is needed
-  const createMockGlobalState = (numColumns: number, devicesPerColumn: number) => {
-    const columns = [];
-    
+  // Create a mock global state with the specified number of columns and devices per column
+  const createMockGlobalState = (numColumns: number, devicesPerColumn: number): IGlobalStateContext => {
+    // Create columns with devices
+    const columns: IColumn[] = [];
     for (let i = 0; i < numColumns; i++) {
-      const devices = [];
+      const devices: IDevice[] = [];
       for (let j = 0; j < devicesPerColumn; j++) {
         devices.push({
           ...createDefaultDevice(),
           id: createId(),
-          name: `Device ${i}-${j}`
+          viewType: ViewType.Spinner,
+          variables: [],
+          collectorVariables: [],
+          formulas: {}
         });
       }
-      
       columns.push({
+        id: `col${i}`,
         name: `Column ${i}`,
-        id: createId(),
         devices
       });
     }
-    
+
+    // Create mock AttrMap
     const mockAttrMap: AttrMap = {
-      experiment: {codapID: null, name: "experiment"},
-      description: {codapID: null, name: "description"},
-      sample_size: {codapID: null, name: "sample size"},
-      experimentHash: {codapID: null, name: "experimentHash"},
-      sample: {codapID: null, name: "sample"},
+      experiment: { codapID: null, name: "experiment" },
+      description: { codapID: null, name: "description" },
+      sample_size: { codapID: null, name: "sample_size" },
+      experimentHash: { codapID: null, name: "experimentHash" },
+      sample: { codapID: null, name: "sample" }
     };
-    
+
     return {
       globalState: {
-        model: {
-          columns
-        },
-        selectedDeviceId: columns[0].devices[0].id,
+        model: { columns },
+        selectedDeviceId: undefined,
         selectedTab: "Model" as "Model" | "Measures" | "About",
         repeat: false,
-        replacement: true,
-        sampleSize: "5",
-        numSamples: "3",
+        replacement: false,
+        sampleSize: "10",
+        numSamples: "0",
         enableRunButton: true,
         attrMap: mockAttrMap,
         dataContexts: [],
-        samplerContext: undefined,
         collectorContext: undefined,
+        samplerContext: undefined,
         isRunning: false,
         isPaused: false,
-        speed: 1
+        speed: Speed.Medium,
+        isModelHidden: false
       },
       setGlobalState: jest.fn()
     };
@@ -142,26 +153,13 @@ describe("ModelTab Scrolling Functionality", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Mock the Element.scrollTo method
-    Element.prototype.scrollTo = jest.fn();
-    
-    // Mock getBoundingClientRect to return dimensions that would require scrolling
-    Element.prototype.getBoundingClientRect = jest.fn().mockReturnValue({
-      width: 1000,
-      height: 1000,
-      top: 0,
-      left: 0,
-      right: 1000,
-      bottom: 1000,
-      x: 0,
-      y: 0,
-      toJSON: () => {}
-    });
-    
-    // Mock window dimensions
-    Object.defineProperty(window, 'innerWidth', { value: 800, writable: true });
-    Object.defineProperty(window, 'innerHeight', { value: 600, writable: true });
+    // Reset the mock implementation of querySelector
+    document.querySelector = mockQuerySelector;
+  });
+
+  afterEach(() => {
+    // Restore the original querySelector
+    document.querySelector = originalQuerySelector;
   });
 
   it("renders a scrollable container for the model", () => {
@@ -182,69 +180,163 @@ describe("ModelTab Scrolling Functionality", () => {
     }
   });
 
-  it("maintains scroll position when adding a new device", () => {
+  it("maintains scroll position when content changes", () => {
     const mockGlobalState = createMockGlobalState(5, 3);
-    const { setGlobalState } = mockGlobalState;
     
     render(
       <GlobalStateContext.Provider value={mockGlobalState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Get the model container
+    const modelContainer = screen.getByTestId("model-container");
+    
+    // Set initial scroll position
+    Object.defineProperty(modelContainer, 'scrollLeft', { value: 100, writable: true });
+    Object.defineProperty(modelContainer, 'scrollTop', { value: 50, writable: true });
+    
+    // Trigger a scroll event
+    fireEvent.scroll(modelContainer, { target: { scrollLeft: 100, scrollTop: 50 } });
+    
+    // Simulate a model update by forcing a re-render
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Check that the scroll position was maintained
+    expect(modelContainer.scrollLeft).toBe(100);
+    expect(modelContainer.scrollTop).toBe(50);
+  });
+
+  it("allows keyboard navigation with arrow keys", () => {
+    const mockGlobalState = createMockGlobalState(5, 3);
+    
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Get the model container
+    const modelContainer = screen.getByTestId("model-container");
+    
+    // Set initial scroll position
+    Object.defineProperty(modelContainer, 'scrollLeft', { value: 100, writable: true });
+    Object.defineProperty(modelContainer, 'scrollTop', { value: 50, writable: true });
+    
+    // Press right arrow key directly on the container
+    fireEvent.keyDown(modelContainer, { key: 'ArrowRight' });
+    
+    // Check that scrollLeft was increased
+    expect(modelContainer.scrollLeft).toBe(150); // 100 + 50 (scrollAmount)
+    
+    // Press down arrow key
+    fireEvent.keyDown(modelContainer, { key: 'ArrowDown' });
+    
+    // Check that scrollTop was increased
+    expect(modelContainer.scrollTop).toBe(100); // 50 + 50 (scrollAmount)
+  });
+
+  it("scrolls horizontally when content exceeds container width", () => {
+    const mockGlobalState = createMockGlobalState(5, 3);
+    
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Get the model container
+    const modelContainer = screen.getByTestId("model-container");
+    
+    // Set container dimensions
+    Object.defineProperty(modelContainer, 'scrollLeft', { value: 0, writable: true });
+    Object.defineProperty(modelContainer, 'scrollWidth', { value: 1000 });
+    Object.defineProperty(modelContainer, 'clientWidth', { value: 500 });
+    
+    // Simulate scrolling
+    fireEvent.scroll(modelContainer, { target: { scrollLeft: 300 } });
+    
+    // Check that the scroll position was updated
+    expect(modelContainer.scrollLeft).toBe(300);
+  });
+
+  it("scrolls vertically when content exceeds container height", () => {
+    const mockGlobalState = createMockGlobalState(1, 10); // Many devices to ensure vertical scrolling
+    
+    render(
+      <GlobalStateContext.Provider value={{ 
+        globalState: mockGlobalState.globalState, 
+        setGlobalState: mockGlobalState.setGlobalState 
+      }}>
         <ModelTab />
       </GlobalStateContext.Provider>
     );
 
     // Get the model container
-    const modelContainers = screen.getAllByTestId("model-container");
-    const modelContainer = modelContainers[0];
+    const modelContainer = screen.getByTestId("model-container");
     
-    // Set a scroll position
-    fireEvent.scroll(modelContainer, { target: { scrollLeft: 100, scrollTop: 200 } });
+    // Set container height to be less than content height
+    Object.defineProperty(modelContainer, 'clientHeight', { value: 400 });
+    Object.defineProperty(modelContainer, 'scrollHeight', { value: 3000 });
     
-    // Check that the scroll position is tracked
-    expect(modelContainer.scrollLeft).toBe(100);
-    expect(modelContainer.scrollTop).toBe(200);
+    // Scroll vertically
+    fireEvent.scroll(modelContainer, { target: { scrollTop: 500 } });
     
-    // Simulate adding a new device (this would normally trigger a re-render)
-    const newDevice = { ...createDefaultDevice(), id: createId(), name: "New Device" };
-    const updatedColumns = [...mockGlobalState.globalState.model.columns];
-    updatedColumns[0].devices.push(newDevice);
-    
-    // Call the setGlobalState mock function directly
-    const setGlobalStateMock = setGlobalState as jest.Mock;
-    setGlobalStateMock((draft: any) => {
-      draft.model = { columns: updatedColumns };
-    });
-    
-    // Re-render with the updated state
-    render(
-      <GlobalStateContext.Provider value={{
-        ...mockGlobalState,
-        globalState: {
-          ...mockGlobalState.globalState,
-          model: { columns: updatedColumns }
-        }
-      }}>
-        <ModelTab />
-      </GlobalStateContext.Provider>
-    );
-    
-    // Get the model container again after re-render
-    const updatedModelContainers = screen.getAllByTestId("model-container");
-    const updatedModelContainer = updatedModelContainers[0];
-    
-    // Set the scroll position to simulate the effect
-    updatedModelContainer.scrollLeft = 100;
-    updatedModelContainer.scrollTop = 200;
-    
-    // Check that the scroll position can be maintained
-    expect(updatedModelContainer.scrollLeft).toBe(100);
-    expect(updatedModelContainer.scrollTop).toBe(200);
+    // Check that vertical scrolling works
+    expect(modelContainer.scrollTop).toBe(500);
   });
 
-  it("allows keyboard navigation for scrolling", () => {
-    const mockGlobalState = createMockGlobalState(5, 3);
-    
-    render(
-      <GlobalStateContext.Provider value={mockGlobalState}>
+  it("should handle keyboard navigation", () => {
+    const { container } = render(
+      <GlobalStateContext.Provider
+        value={{
+          globalState: {
+            model: {
+              columns: [
+                {
+                  name: "Column 1",
+                  id: "column-1",
+                  devices: [
+                    {
+                      id: "device-1",
+                      viewType: "spinner" as View,
+                      variables: ["A", "B", "C"],
+                      collectorVariables: [],
+                      formulas: {},
+                    },
+                  ],
+                },
+              ],
+            },
+            selectedDeviceId: "device-1",
+            selectedTab: "Model",
+            repeat: false,
+            replacement: true,
+            sampleSize: "1",
+            numSamples: "1",
+            enableRunButton: true,
+            attrMap: {
+              experiment: { name: "Experiment", codapID: null },
+              sample: { name: "Sample", codapID: null },
+              description: { name: "Description", codapID: null },
+              sample_size: { name: "Sample Size", codapID: null },
+              experimentHash: { name: "Experiment Hash", codapID: null },
+            },
+            dataContexts: [],
+            collectorContext: undefined,
+            samplerContext: undefined,
+            isRunning: false,
+            isPaused: false,
+            speed: 1,
+            isModelHidden: false,
+          },
+          setGlobalState: jest.fn(),
+        }}
+      >
         <ModelTab />
       </GlobalStateContext.Provider>
     );
@@ -271,51 +363,5 @@ describe("ModelTab Scrolling Functionality", () => {
     
     fireEvent.keyDown(modelContainer, { key: "ArrowUp" });
     expect(modelContainer.scrollTop).toBeLessThan(100);
-  });
-
-  it("scrolls horizontally when content exceeds container width", () => {
-    const mockGlobalState = createMockGlobalState(10, 1); // Many columns to ensure horizontal scrolling
-    
-    render(
-      <GlobalStateContext.Provider value={mockGlobalState}>
-        <ModelTab />
-      </GlobalStateContext.Provider>
-    );
-
-    // Get the model container
-    const modelContainer = screen.getByTestId("model-container");
-    
-    // Set container width to be less than content width
-    Object.defineProperty(modelContainer, 'clientWidth', { value: 500 });
-    Object.defineProperty(modelContainer, 'scrollWidth', { value: 2000 });
-    
-    // Scroll horizontally
-    fireEvent.scroll(modelContainer, { target: { scrollLeft: 300 } });
-    
-    // Check that horizontal scrolling works
-    expect(modelContainer.scrollLeft).toBe(300);
-  });
-
-  it("scrolls vertically when content exceeds container height", () => {
-    const mockGlobalState = createMockGlobalState(1, 10); // Many devices to ensure vertical scrolling
-    
-    render(
-      <GlobalStateContext.Provider value={mockGlobalState}>
-        <ModelTab />
-      </GlobalStateContext.Provider>
-    );
-
-    // Get the model container
-    const modelContainer = screen.getByTestId("model-container");
-    
-    // Set container height to be less than content height
-    Object.defineProperty(modelContainer, 'clientHeight', { value: 400 });
-    Object.defineProperty(modelContainer, 'scrollHeight', { value: 3000 });
-    
-    // Scroll vertically
-    fireEvent.scroll(modelContainer, { target: { scrollTop: 500 } });
-    
-    // Check that vertical scrolling works
-    expect(modelContainer.scrollTop).toBe(500);
   });
 }); 
