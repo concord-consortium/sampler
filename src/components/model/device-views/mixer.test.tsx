@@ -4,8 +4,7 @@ import { Mixer } from "./mixer";
 import { createDefaultDevice } from "../../../models/device-model";
 import { ViewType, Speed, AttrMap } from "../../../types";
 import { AnimationContext } from "../../../hooks/useAnimation";
-import { GlobalStateContext } from "../../../hooks/useGlobalState";
-import { getDefaultState } from "../../../hooks/useGlobalState";
+import { GlobalStateContext , getDefaultState } from "../../../hooks/useGlobalState";
 
 // Mock the SVG functions that aren't available in jsdom
 // @ts-ignore - Adding missing SVG methods for testing

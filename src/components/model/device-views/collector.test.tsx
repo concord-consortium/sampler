@@ -31,7 +31,7 @@ jest.mock("./collector", () => {
             id,
             element: <clipPath id={id} key={id}>
               <circle cx={100 + index} cy={100 + index} r={14} />
-            </clipPath>
+                     </clipPath>
           });
         });
       }, [device, handleAddDefs]);

@@ -274,6 +274,24 @@ export const Device = (props: IProps) => {
 
   const isSelectedDevice = device.id === selectedDeviceId;
 
+  const getExistingVariableNames = (): string[] => {
+    const allVariables: string[] = [];
+    
+    model.columns.forEach(column => {
+      column.devices.forEach(dev => {
+        if (dev.id !== device.id) {
+          dev.variables.forEach(varName => {
+            if (!allVariables.includes(varName)) {
+              allVariables.push(varName);
+            }
+          });
+        }
+      });
+    });
+    
+    return allVariables;
+  };
+
   return (
     <div className={`device-controls-container ${multipleColumns ? "multiple-columns" : ""}`} onClick={handleSelectDevice}>
       <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id} data-testid="device-container">
@@ -326,12 +344,13 @@ export const Device = (props: IProps) => {
             {
               isEditingVarName && selectedVariableIdx !== null &&
                 <NameLabelInput
-                  viewType={viewType}
-                  deviceId={device.id}
                   variableIdx={selectedVariableIdx}
+                  viewType={viewType}
                   variableName={variables[selectedVariableIdx]}
+                  deviceId={device.id}
                   handleEditVariable={handleEditVariable}
                   onBlur={() => setIsEditingVarName(false)}
+                  existingNames={getExistingVariableNames()}
                 />
             }
             {
