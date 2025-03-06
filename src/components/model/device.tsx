@@ -520,6 +520,7 @@ export const Device = (props: IProps) => {
             handleDeleteVariable={handleDeleteVariable}
             handleSelectDataContext={handleSelectDataContext}
             handleSpecifyVariables={handleSpecifyVariables}
+            clearFixedVariables={clearFixedVariables}
           />
       }
       {showVariableEditor &&

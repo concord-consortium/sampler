@@ -125,8 +125,7 @@ export const getFirstAndLastIndexOfVar = (variable: string, variables: IVariable
 export const getNewPcts = ({newPct, oldPct, selectedVar, variables, fixedVariables, setFixedVariables, updateNext}: IGetNewPcts) => {
   const diffOfPcts = newPct - oldPct;
   const newPctsMap: Record<string, number> = {};
-  let newPcts: Array<number> = [];
-  const uniqueVariables = [...new Set(variables)];
+  let uniqueVariables = [...new Set(variables)];
 
   // place the selected variable at the beginning of the fixed variables array and ensure
   // the list is smaller than the unique variables list so we have at least 1 degree of freedom
@@ -135,8 +134,23 @@ export const getNewPcts = ({newPct, oldPct, selectedVar, variables, fixedVariabl
   if (index !== -1) {
     currentFixedVariables.splice(index, 1);
   }
-  currentFixedVariables.unshift(selectedVar);
-  currentFixedVariables.length = Math.min(currentFixedVariables.length, uniqueVariables.length - 1);
+  // 0 means delete variable
+  if (newPct <= 0) {
+    newPct = 0;
+    uniqueVariables = uniqueVariables.filter(v => v !== selectedVar);
+  } else {
+    currentFixedVariables.unshift(selectedVar);
+  }
+  // 100 means delete other variables
+  if (newPct >= 100) {
+    newPct = 100;
+    currentFixedVariables.length = 0;
+    uniqueVariables = [selectedVar];
+  } else {
+    currentFixedVariables.length = Math.min(currentFixedVariables.length, uniqueVariables.length - 1);
+  }
+  let unfixedVariables = uniqueVariables.filter(v => !currentFixedVariables.includes(v));
+
   setFixedVariables(currentFixedVariables);
 
   if (updateNext) {
@@ -146,7 +160,7 @@ export const getNewPcts = ({newPct, oldPct, selectedVar, variables, fixedVariabl
     const adjacentVar = variables.find((v, i) => i === lastIndexOfVar + 1);
 
     // update new percents
-     newPcts = unselectedVars.map((v, i) => {
+    const newPcts = unselectedVars.map((v, i) => {
       let pctOfVar = getPercentOfVar(unselectedVars[i], variables);
       if (v === adjacentVar && pctOfVar - diffOfPcts > 0) {
         pctOfVar = pctOfVar - diffOfPcts;
@@ -154,9 +168,10 @@ export const getNewPcts = ({newPct, oldPct, selectedVar, variables, fixedVariabl
       newPctsMap[unselectedVars[i]] = pctOfVar;
       return pctOfVar;
     });
+
+    return {newPcts, newPctsMap, uniqueVariables};
   } else {
-    // update all variables by distributing difference
-    const unselectedVars = uniqueVariables.filter((v) => !currentFixedVariables.includes(v));
+    // get the percentages for all variables and the total fixed percentage
     let fixedPct = 0;
     uniqueVariables.forEach(variable => {
       newPctsMap[variable] = variable === selectedVar ? newPct : getPercentOfVar(variable, variables);
@@ -164,25 +179,45 @@ export const getNewPcts = ({newPct, oldPct, selectedVar, variables, fixedVariabl
         fixedPct += newPctsMap[variable];
       }
     });
-    const numUnselected = unselectedVars.length;
-    fixedPct = Math.max(1, Math.min(fixedPct, 100 - numUnselected));
-    const distributedPct = Math.max(1, Math.floor((100 - fixedPct) / numUnselected));
 
-    uniqueVariables.forEach((v) => {
-      if (unselectedVars.includes(v)) {
-        newPctsMap[v] = distributedPct;
-      }
-      newPcts.push(newPctsMap[v]);
-    });
+    // remove all the unfixed variables if we have no more room to distribute the remaining percentage
+    // with at least 1 percent for each unfixed variable
+    let numUnfixed = unfixedVariables.length;
+    if (fixedPct >= 100 - numUnfixed) {
+      uniqueVariables = uniqueVariables.filter(v => !unfixedVariables.includes(v));
+      unfixedVariables.forEach(variable => {
+        delete newPctsMap[variable];
+      });
+      unfixedVariables = [];
+      numUnfixed = 0;
+
+      // redistribute the remaining percentage to the non-current fixed variables
+      const remainingPct = 100 - newPct;
+      const otherVariables = uniqueVariables.filter(v => v !== selectedVar);
+      const otherTotal = otherVariables.reduce((sum, v) => sum + newPctsMap[v], 0);
+      otherVariables.forEach(v => {
+        newPctsMap[v] = Math.max(1, Math.floor(remainingPct * (newPctsMap[v] / otherTotal)));
+      });
+    }
+
+    if (numUnfixed > 0) {
+      // update all variables by distributing difference
+      const distributedPct = Math.max(1, Math.floor((100 - fixedPct) / numUnfixed));
+
+      uniqueVariables.forEach((v) => {
+        if (unfixedVariables.includes(v)) {
+          newPctsMap[v] = distributedPct;
+        }
+      });
+    }
   }
-  return {newPcts, newPctsMap};
+  return {newPcts: Object.values(newPctsMap), newPctsMap, uniqueVariables};
 };
 
 export const createNewVarArray = (selectedVar: string, variables: IVariables, fixedVariables: IVariables, setFixedVariables: React.Dispatch<React.SetStateAction<IVariables>>, newPct: number, updateNext?: boolean) => {
   const oldPct = getPercentOfVar(selectedVar, variables);
-  const { newPcts, newPctsMap } = getNewPcts({newPct, oldPct, selectedVar, variables, fixedVariables, setFixedVariables, updateNext});
+  const { newPcts, newPctsMap, uniqueVariables } = getNewPcts({newPct, oldPct, selectedVar, variables, fixedVariables, setFixedVariables, updateNext});
   let newVariables: IVariables = [];
-  let uniqueVariables = [...new Set(variables)];
   if (uniqueVariables.length === 2 && (newPct === 33 || newPcts.includes(33))) {
     const otherVar = uniqueVariables.filter(v => v !== selectedVar)[0];
     const varWith33 = newPct === 33 ? selectedVar : otherVar;
