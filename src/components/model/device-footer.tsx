@@ -17,9 +17,10 @@ interface IProps {
   handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
   handleSelectDataContext: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleSpecifyVariables: () => void;
+  clearFixedVariables: () => void
 }
 
-export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, dataContexts}: IProps) => {
+export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, clearFixedVariables, dataContexts}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { model, selectedDeviceId, isRunning, collectorContextName } = globalState;
   const { viewType, hidden } = device;
@@ -31,6 +32,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
 
   const handleAddVariable = () => {
     const { variables } = device;
+    clearFixedVariables();
     if (viewType === ViewType.Spinner) {
       handleUpdateVariables(getProportionalVars(variables));
     } else {

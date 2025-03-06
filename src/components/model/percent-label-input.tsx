@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 interface IProps {
   percent: string;
@@ -26,20 +26,32 @@ export const PctLabelInput = ({percent, variableIdx, variableName, deviceId,
     }
   }, [variableIdx, deviceId, variableName]);
 
+  const acceptInputIfValid = useCallback((showAlert: boolean) => {
+    const value = parseFloat(text);
+    if (isNaN(value) || value < 0 || value > 100) {
+      if (showAlert) {
+        alert("Percentages must be between 0 and 100.");
+      }
+      return;
+    }
+    handlePctChange(variableIdx, text);
+    onBlur();
+  }, [handlePctChange, onBlur, text, variableIdx]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      handlePctChange(variableIdx, text);
-      onBlur();
+      e.preventDefault();
+      acceptInputIfValid(true);
     } else if (e.key === "Tab") {
       e.preventDefault();
-      handlePctChange(variableIdx, text);
-      onBlur();
+      acceptInputIfValid(true);
+    } else if (e.key === "-" || e.key === ".") {
+      e.preventDefault();
     }
   };
 
   const handleBlur = () => {
-    handlePctChange(variableIdx, text);
-    onBlur();
+    acceptInputIfValid(false);
   };
 
   return (
