@@ -8,6 +8,16 @@ $pluginMinWidth: 304px;
 .model-header {
   min-width: $pluginMinWidth;
   width: 100%;
+  
+  .model-title-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    h2 {
+      margin: 0;
+    }
+  }
 }
 
 .model-container {
@@ -468,4 +478,14 @@ $pluginMinWidth: 304px;
       justify-content: center;
     }
   }
+}
+
+.hidden-model-message {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  margin: 20px;
 }

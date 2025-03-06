@@ -2,7 +2,7 @@ import React from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useAnimationContextValue, createExperimentAnimationSteps } from './useAnimation';
 import { GlobalStateContext } from './useGlobalState';
-import { AnimationStep, IExperimentAnimationResults, IExperimentResults, IModel, Speed, ViewType } from '../types';
+import { AnimationStep, IExperimentAnimationResults, IExperimentResults, IModel, Speed, ViewType, IGlobalState } from '../types';
 
 // Mock the CODAP plugin API
 jest.mock('@concord-consortium/codap-plugin-api', () => ({
@@ -48,69 +48,71 @@ jest.mock('../utils/formula-parser', () => ({
 // Mock requestAnimationFrame and cancelAnimationFrame
 const originalWindow = window;
 window.requestAnimationFrame = jest.fn((callback) => {
-  return setTimeout(callback, 0);
+  return setTimeout(callback, 0) as unknown as number;
 });
 
 window.cancelAnimationFrame = jest.fn((id) => {
-  clearTimeout(id);
+  clearTimeout(id as unknown as NodeJS.Timeout);
 });
 
 describe('useAnimation', () => {
   // Mock global state
-  const mockGlobalState = {
+  const mockGlobalState: IGlobalState = {
     model: {
       columns: [
         {
+          id: 'column-1',
           name: 'Column 1',
           devices: [
             {
               id: 'device-1',
               viewType: ViewType.Mixer,
-              variables: ['Item 1', 'Item 2', 'Item 3'],
-              formulas: {
-                'device-2': '*',
-              },
-            },
-          ],
+              variables: ['a', 'b'],
+              collectorVariables: [],
+              formulas: {}
+            }
+          ]
         },
         {
+          id: 'column-2',
           name: 'Column 2',
           devices: [
             {
               id: 'device-2',
               viewType: ViewType.Spinner,
-              variables: ['Option A', 'Option B', 'Option C'],
-              formulas: {},
-            },
-          ],
-        },
-      ],
-    } as IModel,
-    speed: Speed.Medium,
-    attrMap: {
-      experiment: { name: 'Experiment', codapID: null },
-      sample: { name: 'Sample', codapID: null },
-      description: { name: 'Description', codapID: null },
-      sample_size: { name: 'Sample Size', codapID: null },
-      experimentHash: { name: 'Experiment Hash', codapID: null },
+              variables: ['c', 'd'],
+              collectorVariables: [],
+              formulas: {}
+            }
+          ]
+        }
+      ]
     },
-    numSamples: '2',
-    sampleSize: '3',
+    selectedDeviceId: 'device-1',
+    selectedTab: 'Model',
+    repeat: false,
     replacement: true,
+    sampleSize: '10',
+    numSamples: '5',
+    enableRunButton: true,
+    attrMap: {
+      experiment: { name: 'experiment', codapID: null },
+      sample: { name: 'sample', codapID: null },
+      description: { name: 'description', codapID: null },
+      sample_size: { name: 'sample_size', codapID: null },
+      experimentHash: { name: 'experimentHash', codapID: null }
+    },
     isRunning: false,
     isPaused: false,
-    enableRunButton: true,
-    // Add missing properties required by IGlobalState
-    selectedDeviceId: undefined,
-    selectedTab: 'Model' as const,
-    repeat: false,
+    speed: Speed.Medium,
     dataContexts: [],
     collectorContext: undefined,
     samplerContext: undefined,
+    isModelHidden: false,
   };
 
+  // Mock setGlobalState function
   const mockSetGlobalState = jest.fn((callback) => {
-    // Mock implementation to simulate the behavior of useImmer's setState
     const draftState = { ...mockGlobalState };
     callback(draftState);
     return draftState;
@@ -239,7 +241,7 @@ describe('useAnimation', () => {
       const mockResults = { results: [], animationResults: [] };
       jest.spyOn(window, 'setTimeout').mockImplementation((cb: TimerHandler) => {
         if (typeof cb === 'function') cb();
-        return 1;
+        return 1 as unknown as NodeJS.Timeout;
       });
       
       await act(async () => {

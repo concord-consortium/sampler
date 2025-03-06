@@ -6,6 +6,7 @@ import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { deleteAll } from "../../helpers/codap-helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { modelHasSpinner } from "../../helpers/model-helpers";
+import { VisibilityToggle } from "./visibility-toggle";
 
 interface IProps {
   showHelp: boolean;
@@ -17,7 +18,7 @@ interface IProps {
 export const ModelHeader = (props: IProps) => {
   const { showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap, model, replacement } = globalState;
+  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, attrMap, model, replacement, isModelHidden } = globalState;
   const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
   const startToggleDisabled = !isRunning && !enableRunButton;
 
@@ -34,6 +35,12 @@ export const ModelHeader = (props: IProps) => {
 
   const handleClearData = () => {
     deleteAll(attrMap);
+  };
+
+  const handleToggleModelVisibility = () => {
+    setGlobalState(draft => {
+      draft.isModelHidden = !draft.isModelHidden;
+    });
   };
 
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -72,6 +79,14 @@ export const ModelHeader = (props: IProps) => {
 
   return (
     <div className="model-header">
+      <div className="model-title-container">
+        <h2>Model</h2>
+        <VisibilityToggle 
+          isHidden={isModelHidden} 
+          onToggle={handleToggleModelVisibility} 
+          ariaLabel="Toggle model visibility"
+        />
+      </div>
       <div className="model-controls">
         <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? (isPaused ? "START" : "PAUSE") : "START"}</button>
         <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>STOP</button>

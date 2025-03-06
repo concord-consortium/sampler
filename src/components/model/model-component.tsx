@@ -10,7 +10,7 @@ import "./model-component.scss";
 
 export const ModelTab = () => {
   const { globalState } = useGlobalStateContext();
-  const { model } = globalState;
+  const { model, isModelHidden } = globalState;
   const [showHelp, setShowHelp] = useState(false);
   const [isWide, setIsWide] = useState(false);
   const [scrollPosition, setScrollPosition] = useState({ left: 0, top: 0 });
@@ -79,27 +79,34 @@ export const ModelTab = () => {
           isWide={isWide}
           handleOpenHelp={handleOpenHelp}
         />
-        <div 
-          className="model-container"
-          ref={containerRef}
-          onScroll={handleScroll}
-          tabIndex={0}
-          onKeyDown={handleKeyDown}
-          data-testid="model-container"
-        >
-          <div className={`device-outputs-container`}>
-            {model.columns.map((column, columnIndex) => {
-              return (
-                <Column
-                  key={`column-${columnIndex}`}
-                  column={column}
-                  columnIndex={columnIndex}
-                />
-              );
-            })}
-            <Outputs />
+        
+        {isModelHidden ? (
+          <div className="hidden-model-message">
+            Model is currently hidden. Toggle visibility to view and edit the model.
           </div>
-        </div>
+        ) : (
+          <div 
+            className="model-container"
+            ref={containerRef}
+            onScroll={handleScroll}
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
+            data-testid="model-container"
+          >
+            <div className={`device-outputs-container`}>
+              {model.columns.map((column, columnIndex) => {
+                return (
+                  <Column
+                    key={`column-${columnIndex}`}
+                    column={column}
+                    columnIndex={columnIndex}
+                  />
+                );
+              })}
+              <Outputs />
+            </div>
+          </div>
+        )}
       </div>
     </AnimationContext.Provider>
   );

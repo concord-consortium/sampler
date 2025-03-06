@@ -129,6 +129,7 @@ export interface IGlobalState {
   isRunning: boolean;
   isPaused: boolean;
   speed: Speed;
+  isModelHidden: boolean;
 }
 
 export type ISampleAnimationResults = {

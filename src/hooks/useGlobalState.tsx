@@ -31,7 +31,8 @@ export const getDefaultState = (): IGlobalState => {
     collectorContext: undefined,
     isRunning: false,
     isPaused: false,
-    speed: 1
+    speed: 1,
+    isModelHidden: false
   };
 };
 

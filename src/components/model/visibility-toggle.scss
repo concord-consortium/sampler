@@ -1,0 +1,52 @@
+.visibility-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  color: #333;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+    
+    .tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+  
+  &:focus {
+    outline: 2px solid #4a90e2;
+  }
+  
+  &.hidden {
+    color: #888;
+  }
+  
+  .icon {
+    font-size: 18px;
+  }
+  
+  .tooltip {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    pointer-events: none;
+    margin-top: 4px;
+    z-index: 10;
+  }
+} 
