@@ -98,11 +98,36 @@ $pluginMinWidth: 304px;
 
       .tick-mark {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        transition: transform 0.1s ease;
+
+        &:hover {
+          transform: scale(1.1);
+        }
+
+        &.active .tick-line {
+          background-color: #0077cc;
+          height: 12px;
+        }
+
         .tick-line {
-          width: 1px;
-          height: 9px;
+          width: 2px;
+          height: 10px;
           background-color: #777;
+          transition: background-color 0.2s ease, height 0.2s ease;
+        }
+
+        .tick-label {
+          font-size: 10px;
+          margin-top: 4px;
+          color: #777;
+          display: none;
+        }
+
+        &:hover .tick-label {
+          display: block;
         }
       }
     }
@@ -149,8 +174,10 @@ $pluginMinWidth: 304px;
       background-color: #f0f0f0;
       position: relative;
       z-index: 2;
+      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
       &:hover {
         cursor: pointer;
+        border-color: #0077cc;
       }
     }
 
@@ -164,17 +191,28 @@ $pluginMinWidth: 304px;
       background-color: #f0f0f0;
       position: relative;
       z-index: 2;
+      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
       &:hover {
         cursor: pointer;
+        border-color: #0077cc;
       }
     }
 
-
-    input[type='range']:focus{
+    input[type='range']:focus {
       outline: none;
+      
+      &::-webkit-slider-thumb {
+        box-shadow: 0 0 0 2px rgba(0, 119, 204, 0.3);
+        border-color: #0077cc;
+      }
+      
+      &::-moz-range-thumb {
+        box-shadow: 0 0 0 2px rgba(0, 119, 204, 0.3);
+        border-color: #0077cc;
+      }
     }
 
-    circle:hover{
+    circle:hover {
       cursor: pointer;
     }
     text:hover{
