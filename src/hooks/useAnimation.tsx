@@ -292,6 +292,21 @@ export const useAnimationContextValue = (): IAnimationContext => {
     });
   };
 
+  // Add a new function to execute animation steps without animation
+  const executeStepsWithoutAnimation = (steps: AnimationStep[]) => {
+    // Process all steps synchronously
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      
+      // Call animation callbacks with t=1 (fully complete)
+      const settings: IAnimationStepSettings = { t: 1, speed: Speed.Fastest };
+      animationsCallbacksRef.current.forEach(callback => callback(step, settings));
+      
+      // Call the onComplete handler for the step
+      step.onComplete?.();
+    }
+  };
+
   const handleStartRun = async () => {
     try {
       const attrNames = model.columns.map(column => column.name);
@@ -321,8 +336,17 @@ export const useAnimationContextValue = (): IAnimationContext => {
         draft.isPaused = false;
         draft.isRunning = true;
       });
+      
       const newAnimationSteps = createExperimentAnimationSteps(model, animationResults, results, replacement, onEndRun);
-      startAnimation(newAnimationSteps);
+      
+      // Check if speed is set to Fastest
+      if (speedRef.current === Speed.Fastest) {
+        // Skip animation and process steps synchronously
+        executeStepsWithoutAnimation(newAnimationSteps);
+      } else {
+        // Use normal animation
+        startAnimation(newAnimationSteps);
+      }
     } catch (e) {
       stopAnimation();
       enableNewRun();

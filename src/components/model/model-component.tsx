@@ -5,16 +5,21 @@ import { useResizer } from "../../hooks/use-resizer";
 import { Column } from "./column";
 import { ModelHeader } from "./model-header";
 import { Outputs } from "./outputs";
+import { LoadingIndicator } from "./loading-indicator";
+import { Speed } from "../../types";
 
 import "./model-component.scss";
 
 export const ModelTab = () => {
   const { globalState } = useGlobalStateContext();
-  const { model, isModelHidden, modelLocked } = globalState;
+  const { model, isModelHidden, modelLocked, isRunning, speed } = globalState;
   const [showHelp, setShowHelp] = useState(false);
   const [isWide, setIsWide] = useState(false);
   const [scrollPosition, setScrollPosition] = useState({ left: 0, top: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Determine if we should show the loading indicator
+  const showLoadingIndicator = isRunning && speed === Speed.Fastest;
 
   useResizer(()=>{
     const repeatControlWidth = document.querySelector(".select-repeat-controls")
@@ -97,7 +102,7 @@ export const ModelTab = () => {
             onKeyDown={handleKeyDown}
             data-testid="model-container"
           >
-            <div className={`device-outputs-container`}>
+            <div className="device-outputs-container">
               {model.columns.map((column, columnIndex) => {
                 return (
                   <Column
@@ -108,6 +113,7 @@ export const ModelTab = () => {
                 );
               })}
               <Outputs />
+              <LoadingIndicator isVisible={showLoadingIndicator} message="Processing samples..." />
             </div>
           </div>
         )}
