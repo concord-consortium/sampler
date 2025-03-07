@@ -125,7 +125,9 @@ describe("ModelTab Scrolling Functionality", () => {
           viewType: ViewType.Spinner,
           variables: [],
           collectorVariables: [],
-          formulas: {}
+          formulas: {},
+          hidden: false,
+          lockPassword: ""
         });
       }
       columns.push({
@@ -327,7 +329,9 @@ describe("ModelTab Scrolling Functionality", () => {
                       viewType: ViewType.Mixer,
                       variables: ["a", "a", "b"],
                       collectorVariables: [],
-                      formulas: {}
+                      formulas: {},
+                      hidden: false,
+                      lockPassword: ""
                     }
                   ]
                 }

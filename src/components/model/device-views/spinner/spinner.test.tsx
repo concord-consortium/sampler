@@ -40,7 +40,9 @@ describe("Spinner Component", () => {
     viewType: ViewType.Spinner,
     variables: ["Option 1", "Option 2", "Option 3"],
     collectorVariables: [],
-    formulas: {}
+    formulas: {},
+    hidden: false,
+    lockPassword: ""
   };
 
   const mockHandleAddDefs = jest.fn();

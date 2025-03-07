@@ -114,7 +114,9 @@ describe("Collector Component", () => {
       { "Item 2": "Value 2" },
       { "Item 3": "Value 3" }
     ],
-    formulas: {}
+    formulas: {},
+    hidden: false,
+    lockPassword: ""
   };
 
   const mockHandleAddDefs = jest.fn();

@@ -126,7 +126,9 @@ describe("ModelTab Component", () => {
                 viewType: ViewType.Mixer,
                 variables: ["a", "b"],
                 collectorVariables: [],
-                formulas: {}
+                formulas: {},
+                hidden: false,
+                lockPassword: ""
               }
             ]
           }
@@ -175,7 +177,9 @@ describe("ModelTab Component", () => {
                 viewType: ViewType.Mixer,
                 variables: ["a", "b"],
                 collectorVariables: [],
-                formulas: {}
+                formulas: {},
+                hidden: false,
+                lockPassword: ""
               }
             ]
           },
