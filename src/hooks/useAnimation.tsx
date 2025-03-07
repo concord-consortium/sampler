@@ -8,6 +8,7 @@ import { getDeviceById } from "../models/model-model";
 import { formatFormula, parseFormula } from "../utils/utils";
 import { computeExperimentHash, modelHasSpinner } from "../helpers/model-helpers";
 import { getVariables } from "../utils/formula-parser";
+import { evaluateCondition, parseCondition } from "../utils/condition-parser";
 
 const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
   "animateDevice": 1200,
@@ -71,7 +72,7 @@ export const createExperimentAnimationSteps = (model: IModel, animationResults: 
 
 export const useAnimationContextValue = (): IAnimationContext => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { speed, attrMap, model, numSamples, sampleSize } = globalState;
+  const { speed, attrMap, model, numSamples, sampleSize, repeat, repeatUntilCondition } = globalState;
   // do not allow without replacement when there is a spinner
   const hasSpinner = modelHasSpinner(model);
   const replacement = globalState.replacement || hasSpinner;
@@ -83,6 +84,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
   });
   const animationsCallbacksRef = useRef<AnimationCallback[]>([]);
   const speedRef = useRef<Speed>(Speed.Slow);
+  const sampleDataRef = useRef<Array<Record<string, any>>>([]);
 
   const getExperimentSample = async (variableIndexes: AvailableDeviceVariableIndexes) => {
     let currentDevice = model.columns[0].devices[0];
@@ -158,8 +160,17 @@ export const useAnimationContextValue = (): IAnimationContext => {
     const firstDevice = model.columns[0].devices[0];
     const endSampleNumber = startingSampleNumber + Number(numSamples);
     const numItems = firstDevice.variables.length;
+    
+    // Parse the repeat until condition if it exists
+    const parsedCondition = repeat && repeatUntilCondition ? parseCondition(repeatUntilCondition) : null;
+    
+    // Reset sample data for this experiment
+    sampleDataRef.current = [];
+    
+    // Flag to track if the condition has been met
+    let conditionMet = false;
 
-    for (let sampleIndex = startingSampleNumber; sampleIndex < endSampleNumber; sampleIndex++) {
+    for (let sampleIndex = startingSampleNumber; sampleIndex < endSampleNumber && !conditionMet; sampleIndex++) {
       const sampleResultsForAnimation = [];
       const variableIndexes = model.columns.reduce<AvailableDeviceVariableIndexes>((acc, column) => {
         return column.devices.reduce<typeof acc>((acc2, device) => {
@@ -186,11 +197,26 @@ export const useAnimationContextValue = (): IAnimationContext => {
             sample[key] = outputs[key];
           });
           results.push(sample);
+          
+          // Add sample data for condition evaluation
+          sampleDataRef.current.push({...sample});
+          
+          // Check if the condition is met
+          if (parsedCondition && evaluateCondition(parsedCondition, sampleDataRef.current)) {
+            conditionMet = true;
+            break;
+          }
         } else {
           break;
         }
       }
+      
       animationResults.push(sampleResultsForAnimation);
+      
+      // If condition is met, stop collecting samples
+      if (conditionMet) {
+        break;
+      }
     }
 
     return { results, animationResults };

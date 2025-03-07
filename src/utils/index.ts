@@ -13,4 +13,7 @@ export {
   hasStoredPasswordHash 
 } from './secure-storage';
 
+// Export condition parser
+export { parseCondition, evaluateCondition, ConditionType, IParsedCondition } from './condition-parser';
+
 // Add other utility exports as needed 

@@ -87,8 +87,9 @@ const decrypt = (encryptedText: string): string => {
  * Store the password hash in local storage with encryption
  * 
  * @param hash - The password hash to store
+ * @returns A Promise that resolves when the hash is stored
  */
-export const storePasswordHash = (hash: string): void => {
+export const storePasswordHash = async (hash: string): Promise<void> => {
   try {
     const encryptedHash = encrypt(hash);
     localStorage.setItem(PASSWORD_HASH_KEY, encryptedHash);
@@ -101,9 +102,9 @@ export const storePasswordHash = (hash: string): void => {
 /**
  * Retrieve the password hash from local storage and decrypt it
  * 
- * @returns The decrypted password hash or null if not found
+ * @returns A Promise that resolves with the decrypted password hash or null if not found
  */
-export const retrievePasswordHash = (): string | null => {
+export const retrievePasswordHash = async (): Promise<string | null> => {
   try {
     const encryptedHash = localStorage.getItem(PASSWORD_HASH_KEY);
     if (!encryptedHash) return null;
@@ -116,8 +117,10 @@ export const retrievePasswordHash = (): string | null => {
 
 /**
  * Clear the password hash from local storage
+ * 
+ * @returns A Promise that resolves when the hash is cleared
  */
-export const clearPasswordHash = (): void => {
+export const clearPasswordHash = async (): Promise<void> => {
   try {
     localStorage.removeItem(PASSWORD_HASH_KEY);
   } catch (error) {
@@ -129,9 +132,9 @@ export const clearPasswordHash = (): void => {
 /**
  * Check if a password hash is stored in local storage
  * 
- * @returns True if a password hash is stored, false otherwise
+ * @returns A Promise that resolves with true if a password hash is stored, false otherwise
  */
-export const hasStoredPasswordHash = (): boolean => {
+export const hasStoredPasswordHash = async (): Promise<boolean> => {
   try {
     const hash = localStorage.getItem(PASSWORD_HASH_KEY);
     return hash !== null;

@@ -46,7 +46,8 @@ export const getDefaultState = (): IGlobalState => {
     modelLocked: false,
     modelPassword: '',
     showPasswordModal: false,
-    passwordModalMode: 'set'
+    passwordModalMode: 'set',
+    repeatUntilCondition: ''
   };
 };
 

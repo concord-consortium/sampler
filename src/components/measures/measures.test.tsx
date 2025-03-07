@@ -80,7 +80,8 @@ describe("MeasuresTab Component", () => {
       modelLocked: false,
       modelPassword: '',
       showPasswordModal: false,
-      passwordModalMode: 'set' as const
+      passwordModalMode: 'set' as const,
+      repeatUntilCondition: ''
     },
     setGlobalState: mockSetGlobalState
   };

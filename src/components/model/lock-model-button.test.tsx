@@ -35,6 +35,7 @@ describe('LockModelButton', () => {
       modelPassword: '',
       showPasswordModal: false,
       passwordModalMode: 'set' as const,
+      repeatUntilCondition: '',
       ...overrides
     },
     setGlobalState: mockSetGlobalState

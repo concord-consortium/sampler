@@ -134,6 +134,7 @@ export interface IGlobalState {
   modelPassword: string;
   showPasswordModal: boolean;
   passwordModalMode: 'set' | 'enter' | 'change';
+  repeatUntilCondition: string;
 }
 
 export type ISampleAnimationResults = {

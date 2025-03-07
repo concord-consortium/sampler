@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGlobalStateContext } from '../../hooks/useGlobalState';
 import { hashPassword, validatePassword } from '../../utils/password-utils';
+import { storePasswordHash, clearPasswordHash } from '../../utils/secure-storage';
 import './password-modal.scss';
 
 /**
@@ -40,30 +41,42 @@ export const PasswordModal: React.FC = () => {
     
     const hashedPassword = await hashPassword(password);
     
-    setGlobalState(draft => {
-      draft.modelPassword = hashedPassword;
-      draft.modelLocked = true;
-      draft.showPasswordModal = false;
-    });
-    
-    // Reset form state
-    setPassword('');
-    setConfirmPassword('');
-    setError('');
+    try {
+      await storePasswordHash(hashedPassword);
+      
+      setGlobalState(draft => {
+        draft.modelPassword = hashedPassword;
+        draft.modelLocked = true;
+        draft.showPasswordModal = false;
+      });
+      
+      // Reset form state
+      setPassword('');
+      setConfirmPassword('');
+      setError('');
+    } catch (err) {
+      setError('Failed to store password. Please try again.');
+    }
   };
   
   const handleUnlock = async () => {
     const isValid = await validatePassword(password, modelPassword);
     
     if (isValid) {
-      setGlobalState(draft => {
-        draft.modelLocked = false;
-        draft.showPasswordModal = false;
-      });
-      
-      // Reset form state
-      setPassword('');
-      setError('');
+      try {
+        await clearPasswordHash();
+        
+        setGlobalState(draft => {
+          draft.modelLocked = false;
+          draft.showPasswordModal = false;
+        });
+        
+        // Reset form state
+        setPassword('');
+        setError('');
+      } catch (err) {
+        setError('Failed to unlock model. Please try again.');
+      }
     } else {
       setError('Incorrect password');
     }

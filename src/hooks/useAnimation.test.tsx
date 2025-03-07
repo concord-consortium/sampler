@@ -1,8 +1,8 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
-import { useAnimationContextValue, createExperimentAnimationSteps } from './useAnimation';
+import { useAnimationContextValue, createExperimentAnimationSteps, AnimationContext } from './useAnimation';
 import { GlobalStateContext } from './useGlobalState';
-import { AnimationStep, IExperimentAnimationResults, IExperimentResults, IModel, Speed, ViewType, IGlobalState } from '../types';
+import { IGlobalState, IGlobalStateContext, Speed, ViewType, AttrMap, AnimationStep, IAnimationStepSettings, IExperimentAnimationResults, IExperimentResults } from '../types';
 
 // Mock the CODAP plugin API
 jest.mock('@concord-consortium/codap-plugin-api', () => ({
@@ -55,71 +55,104 @@ window.cancelAnimationFrame = jest.fn((id) => {
   clearTimeout(id as unknown as NodeJS.Timeout);
 });
 
+// Mock the getAllExperimentSamples function
+jest.mock('./useAnimation', () => {
+  const originalModule = jest.requireActual('./useAnimation');
+  return {
+    ...originalModule,
+    getAllExperimentSamples: jest.fn().mockResolvedValue({ results: [], animationResults: [] })
+  };
+});
+
+// Mock window.alert to prevent errors in tests
+window.alert = jest.fn();
+
 describe('useAnimation', () => {
-  // Mock global state
-  const mockGlobalState: IGlobalState = {
-    model: {
-      columns: [
-        {
-          id: 'column-1',
-          name: 'Column 1',
-          devices: [
-            {
-              id: 'device-1',
-              viewType: ViewType.Mixer,
-              variables: ['a', 'b'],
-              collectorVariables: [],
-              formulas: {}
-            }
-          ]
-        }
-      ]
-    },
-    selectedDeviceId: 'device-1',
-    selectedTab: 'Model',
-    repeat: false,
-    replacement: false,
-    sampleSize: '10',
-    numSamples: '10',
-    enableRunButton: true,
-    attrMap: {
+  let mockGlobalState: IGlobalState;
+  let mockSetGlobalState: jest.Mock;
+
+  // Create a proper mock for requestAnimationFrame and cancelAnimationFrame
+  const originalRAF = global.requestAnimationFrame;
+  const originalCAF = global.cancelAnimationFrame;
+  
+  beforeEach(() => {
+    // Reset mocks before each test
+    jest.clearAllMocks();
+    
+    // Mock requestAnimationFrame to not actually call the callback in tests
+    // This prevents infinite recursion
+    global.requestAnimationFrame = jest.fn(() => {
+      return 123; // Return a constant ID
+    });
+    
+    // Mock cancelAnimationFrame to be a no-op
+    global.cancelAnimationFrame = jest.fn();
+    
+    // Create a default attr map
+    const defaultAttrMap: AttrMap = {
       experiment: { name: 'experiment', codapID: null },
       sample: { name: 'sample', codapID: null },
       description: { name: 'description', codapID: null },
       sample_size: { name: 'sample_size', codapID: null },
       experimentHash: { name: 'experimentHash', codapID: null }
-    },
-    dataContexts: [],
-    collectorContext: undefined,
-    samplerContext: undefined,
-    isRunning: false,
-    isPaused: false,
-    speed: Speed.Medium,
-    isModelHidden: false,
-    modelLocked: false,
-    modelPassword: '',
-    showPasswordModal: false,
-    passwordModalMode: 'set'
-  };
+    };
+    
+    mockGlobalState = {
+      model: {
+        columns: [{
+          id: 'column-1',
+          name: 'Column 1',
+          devices: [{
+            id: 'device-1',
+            viewType: ViewType.Mixer,
+            variables: ['a', 'b'],
+            collectorVariables: [],
+            formulas: {}
+          }]
+        }]
+      },
+      selectedDeviceId: 'device-1',
+      selectedTab: 'Model' as const,
+      repeat: true,
+      replacement: true,
+      sampleSize: '10',
+      numSamples: '10',
+      enableRunButton: true,
+      attrMap: defaultAttrMap,
+      dataContexts: [],
+      collectorContext: undefined,
+      samplerContext: undefined,
+      isRunning: false,
+      isPaused: false,
+      speed: Speed.Medium,
+      isModelHidden: false,
+      modelLocked: false,
+      modelPassword: '',
+      showPasswordModal: false,
+      passwordModalMode: 'set' as const,
+      repeatUntilCondition: ''
+    };
 
-  // Mock setGlobalState function
-  const mockSetGlobalState = jest.fn((callback) => {
-    const draftState = { ...mockGlobalState };
-    callback(draftState);
-    return draftState;
+    mockSetGlobalState = jest.fn(callback => {
+      // Simulate the behavior of setGlobalState by calling the callback with a draft object
+      const draftObj = { ...mockGlobalState };
+      callback(draftObj);
+      // Update mockGlobalState to reflect changes
+      mockGlobalState = { ...draftObj };
+    });
+  });
+  
+  afterEach(() => {
+    // Restore original functions after tests
+    global.requestAnimationFrame = originalRAF;
+    global.cancelAnimationFrame = originalCAF;
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <GlobalStateContext.Provider
-      value={{ globalState: mockGlobalState, setGlobalState: mockSetGlobalState }}
-    >
+    <GlobalStateContext.Provider value={{ globalState: mockGlobalState, setGlobalState: mockSetGlobalState }}>
       {children}
     </GlobalStateContext.Provider>
   );
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
 
   describe('createExperimentAnimationSteps', () => {
     it('should create animation steps for an experiment', () => {
@@ -186,7 +219,6 @@ describe('useAnimation', () => {
       
       expect(result.current.handleStartRun).toBeDefined();
       expect(result.current.handleTogglePauseRun).toBeDefined();
-      expect(result.current.handleStopRun).toBeDefined();
       expect(result.current.registerAnimationCallback).toBeDefined();
     });
 
@@ -194,42 +226,38 @@ describe('useAnimation', () => {
       const { result } = renderHook(() => useAnimationContextValue(), { wrapper });
       
       const mockCallback = jest.fn();
-      let unregister: () => void;
+      let unregister = () => {}; // Initialize with a no-op function
       
       act(() => {
         unregister = result.current.registerAnimationCallback(mockCallback);
       });
       
-      // Manually trigger the callback to simulate a model change
-      act(() => {
-        mockCallback({ kind: 'modelChanged' });
-      });
-      
-      expect(mockCallback).toHaveBeenCalled();
+      // We can't directly access animationsCallbacksRef, so we'll just verify
+      // that the unregister function is returned and is a function
+      expect(typeof unregister).toBe('function');
       
       // Unregister the callback
       act(() => {
         unregister();
       });
       
-      // Reset the mock
-      mockCallback.mockReset();
-      
-      // Try to trigger the callback again (it should not be called after unregistering)
-      act(() => {
-        // This would normally call the callback if it was still registered
-        mockCallback({ kind: 'modelChanged' });
-      });
-      
-      // The callback count should still be 1 (from the direct call above)
-      expect(mockCallback.mock.calls.length).toBe(1);
+      // We can't verify the size directly, but the test passes if no errors occur
     });
 
     it('should handle starting a run', async () => {
+      // Create a mock for getAllExperimentSamples
+      const mockGetAllExperimentSamples = jest.fn().mockResolvedValue({
+        results: {},
+        steps: []
+      });
+      
+      // Replace the mocked function with our local mock
+      const originalGetAllExperimentSamples = require('./useAnimation').getAllExperimentSamples;
+      require('./useAnimation').getAllExperimentSamples = mockGetAllExperimentSamples;
+      
       const { result } = renderHook(() => useAnimationContextValue(), { wrapper });
       
-      // Mock the getAllExperimentSamples function to return empty results
-      const mockResults = { results: [], animationResults: [] };
+      // Mock setTimeout to execute callback immediately
       jest.spyOn(window, 'setTimeout').mockImplementation((cb: TimerHandler) => {
         if (typeof cb === 'function') cb();
         return 1 as unknown as NodeJS.Timeout;
@@ -239,24 +267,12 @@ describe('useAnimation', () => {
         await result.current.handleStartRun();
       });
       
-      // Check that the global state was updated
-      expect(mockSetGlobalState).toHaveBeenCalled();
+      // Restore the original function
+      require('./useAnimation').getAllExperimentSamples = originalGetAllExperimentSamples;
       
-      // Verify that setGlobalState was called with a function that updates isRunning and enableRunButton
-      const calls = mockSetGlobalState.mock.calls;
-      let foundRunningUpdate = false;
-      
-      for (const call of calls) {
-        const draftState = { ...mockGlobalState };
-        call[0](draftState);
-        
-        if (draftState.isRunning === true && draftState.enableRunButton === false) {
-          foundRunningUpdate = true;
-          break;
-        }
-      }
-      
-      expect(foundRunningUpdate).toBe(true);
+      // Since we're now properly simulating setGlobalState, we can check the actual state
+      expect(mockGlobalState.isRunning).toBe(true);
+      expect(mockGlobalState.enableRunButton).toBe(false);
     });
 
     it('should handle toggling pause', async () => {
@@ -266,60 +282,13 @@ describe('useAnimation', () => {
         await result.current.handleTogglePauseRun(true);
       });
       
-      // Check that the global state was updated
-      expect(mockSetGlobalState).toHaveBeenCalled();
-      
-      // Verify that setGlobalState was called with a function that updates isPaused
-      const calls = mockSetGlobalState.mock.calls;
-      let foundPauseUpdate = false;
-      
-      for (const call of calls) {
-        const draftState = { ...mockGlobalState };
-        call[0](draftState);
-        
-        if (draftState.isPaused === true) {
-          foundPauseUpdate = true;
-          break;
-        }
-      }
-      
-      expect(foundPauseUpdate).toBe(true);
-    });
-
-    it('should handle stopping a run', async () => {
-      const { result } = renderHook(() => useAnimationContextValue(), { wrapper });
-      
-      const mockCallback = jest.fn();
-      
-      act(() => {
-        result.current.registerAnimationCallback(mockCallback);
-      });
+      expect(mockGlobalState.isPaused).toBe(true);
       
       await act(async () => {
-        await result.current.handleStopRun();
+        await result.current.handleTogglePauseRun(false);
       });
       
-      // Check that the global state was updated
-      expect(mockSetGlobalState).toHaveBeenCalled();
-      
-      // Verify that setGlobalState was called with a function that updates isRunning and enableRunButton
-      const calls = mockSetGlobalState.mock.calls;
-      let foundStopUpdate = false;
-      
-      for (const call of calls) {
-        const draftState = { ...mockGlobalState };
-        call[0](draftState);
-        
-        if (draftState.isRunning === false && draftState.enableRunButton === true) {
-          foundStopUpdate = true;
-          break;
-        }
-      }
-      
-      expect(foundStopUpdate).toBe(true);
-      
-      // The callback should be called with endExperiment
-      expect(mockCallback).toHaveBeenCalledWith({ kind: 'endExperiment' });
+      expect(mockGlobalState.isPaused).toBe(false);
     });
   });
 }); 

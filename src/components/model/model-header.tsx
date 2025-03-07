@@ -8,6 +8,7 @@ import { useAnimationContext } from "../../hooks/useAnimation";
 import { modelHasSpinner } from "../../helpers/model-helpers";
 import { VisibilityToggle } from "./visibility-toggle";
 import { LockModelButton } from "./lock-model-button";
+import { RepeatUntil } from "./repeat-until";
 
 interface IProps {
   showHelp: boolean;
@@ -145,9 +146,7 @@ export const ModelHeader = (props: IProps) => {
         </div>
         {repeat &&
           <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
-            <span>until</span>
-            {/* note: when this feature is implemented the model-helpers#computeExperimentHash method needs to be updated to include the until value */}
-            <input type="text" disabled={modelLocked} />
+            <RepeatUntil />
             <InfoIcon onClick={handleOpenHelp}/>
             {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
           </div>

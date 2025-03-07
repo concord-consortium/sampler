@@ -341,21 +341,55 @@ This document provides a detailed, step-by-step checklist for implementing the S
 ### 6.1 "Repeat Until" Condition
 
 - [ ] **Tests**
-  - [ ] Test condition parsing
+  - [ ] Test condition parser
+    - [ ] Test parsing formula conditions
+    - [ ] Test parsing pattern conditions
+    - [ ] Test handling empty conditions
   - [ ] Test condition evaluation
-  - [ ] Test sampling termination
-  - [ ] Test error handling
+    - [ ] Test CODAP API integration for formula evaluation
+    - [ ] Test handling of API errors and edge cases
+    - [ ] Test pattern matching evaluation
+    - [ ] Test condition evaluation with sample data
+  - [ ] Test UI components
+    - [ ] Test toggling between Select and Repeat modes
+    - [ ] Test condition input field validation
+    - [ ] Test help button and guidance modal
+    - [ ] Test disabled state when model is locked
+  - [ ] Test animation integration
+    - [ ] Test async condition checking during simulation
+    - [ ] Test stopping behavior when conditions are met
+    - [ ] Test continuation to next sample
 
 - [ ] **Implementation**
-  - [ ] Add condition input
-  - [ ] Implement parsing
-  - [ ] Add evaluation logic
-  - [ ] Implement termination
+  - [ ] Add `repeatUntilCondition` property to global state
+  - [ ] Create dedicated RepeatUntil component
+    - [ ] Implement mode toggle UI
+    - [ ] Add condition input field with validation
+    - [ ] Create help button with formula guidance
+  - [ ] Create condition parser utility
+    - [ ] Implement parsing for formula conditions
+    - [ ] Implement parsing for pattern conditions
+  - [ ] Implement CODAP API integration for formula evaluation
+    - [ ] Use formulaEngine/evalExpression endpoint
+    - [ ] Handle API responses and errors
+    - [ ] Implement fallback for API unavailability
+  - [ ] Implement pattern matching evaluation
+  - [ ] Update animation controller
+    - [ ] Add async condition checking logic
+    - [ ] Implement stopping behavior when condition is met
+    - [ ] Ensure proper continuation to next sample
+  - [ ] Add error handling
+    - [ ] Display validation errors
+    - [ ] Handle API errors gracefully
+    - [ ] Manage edge cases
 
 - [ ] **Error Resolution**
-  - [ ] Verify all tests pass
-  - [ ] Fix any linting or type errors
-  - [ ] Ensure proper condition handling
+  - [ ] Fix test failures related to the new `repeatUntilCondition` property
+  - [ ] Update mock global states in tests to include the new property
+  - [ ] Mock CODAP API responses in tests
+  - [ ] Fix animation context mock in tests to handle async operations
+  - [ ] Ensure all tests pass with the new implementation
+  - [ ] Verify backward compatibility with existing documents
 
 ### 6.2 Skip Animation in "Fastest" Speed
 

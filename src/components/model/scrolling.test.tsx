@@ -165,7 +165,8 @@ describe("ModelTab Scrolling Functionality", () => {
         modelLocked: false,
         modelPassword: '',
         showPasswordModal: false,
-        passwordModalMode: 'set' as const
+        passwordModalMode: 'set' as const,
+        repeatUntilCondition: ''
       },
       setGlobalState: jest.fn()
     };
@@ -356,7 +357,8 @@ describe("ModelTab Scrolling Functionality", () => {
             modelLocked: false,
             modelPassword: '',
             showPasswordModal: false,
-            passwordModalMode: 'set' as const
+            passwordModalMode: 'set' as const,
+            repeatUntilCondition: ''
           },
           setGlobalState: jest.fn(),
         }}

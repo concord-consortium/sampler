@@ -156,7 +156,8 @@ describe("ModelTab Component", () => {
       modelLocked: false,
       modelPassword: '',
       showPasswordModal: false,
-      passwordModalMode: 'set' as const
+      passwordModalMode: 'set' as const,
+      repeatUntilCondition: ''
     },
     setGlobalState: mockSetGlobalState
   };
@@ -217,7 +218,8 @@ describe("ModelTab Component", () => {
       modelLocked: false,
       modelPassword: '',
       showPasswordModal: false,
-      passwordModalMode: 'set' as const
+      passwordModalMode: 'set' as const,
+      repeatUntilCondition: ''
     },
     setGlobalState: mockSetGlobalState
   };

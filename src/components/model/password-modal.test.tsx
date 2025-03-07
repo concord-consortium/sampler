@@ -52,6 +52,7 @@ describe('PasswordModal', () => {
       modelPassword: '',
       showPasswordModal: true,
       passwordModalMode: 'set' as const,
+      repeatUntilCondition: '',
       ...overrides
     },
     setGlobalState: mockSetGlobalState
