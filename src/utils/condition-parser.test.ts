@@ -1,4 +1,10 @@
 import { parseCondition, evaluateCondition, ConditionType } from '.';
+import codapInterface from '../lib/codap-interface';
+
+// Mock the CODAP interface
+jest.mock('../lib/codap-interface', () => ({
+  sendRequest: jest.fn()
+}));
 
 describe('Condition Parser', () => {
   describe('parseCondition', () => {
@@ -10,10 +16,10 @@ describe('Condition Parser', () => {
     });
 
     it('should parse a pattern condition', () => {
-      const condition = 'apple,banana,orange';
+      const condition = 'heads,tails,heads';
       const result = parseCondition(condition);
       expect(result.type).toBe(ConditionType.PATTERN);
-      expect(result.value).toBe('apple,banana,orange');
+      expect(result.value).toBe('heads,tails,heads');
     });
 
     it('should handle empty conditions', () => {
@@ -23,15 +29,8 @@ describe('Condition Parser', () => {
       expect(result.value).toBe('');
     });
 
-    it('should trim whitespace in patterns', () => {
-      const condition = '  apple, banana, orange  ';
-      const result = parseCondition(condition);
-      expect(result.type).toBe(ConditionType.PATTERN);
-      expect(result.value).toBe('apple, banana, orange');
-    });
-
-    it('should trim whitespace in formulas', () => {
-      const condition = '  =x > 5  ';
+    it('should handle whitespace in conditions', () => {
+      const condition = '  =  x > 5  ';
       const result = parseCondition(condition);
       expect(result.type).toBe(ConditionType.FORMULA);
       expect(result.value).toBe('x > 5');
@@ -39,46 +38,69 @@ describe('Condition Parser', () => {
   });
 
   describe('evaluateCondition', () => {
-    it('should evaluate a formula condition as true', () => {
-      const condition = parseCondition('=true');
-      const result = evaluateCondition(condition, []);
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return false for null or empty conditions', async () => {
+      const result1 = await evaluateCondition(null, []);
+      expect(result1).toBe(false);
+
+      const result2 = await evaluateCondition({ type: ConditionType.NONE, value: '' }, []);
+      expect(result2).toBe(false);
+    });
+
+    it('should evaluate formula conditions using CODAP API', async () => {
+      // Mock successful API response
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValueOnce({
+        success: true,
+        values: true
+      });
+
+      const condition = { type: ConditionType.FORMULA, value: 'count(output="a") > 3' };
+      const sampleData = [{ output: 'a' }, { output: 'b' }, { output: 'a' }, { output: 'a' }, { output: 'a' }];
+      
+      const result = await evaluateCondition(condition, sampleData);
+      
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith({
+        action: 'get',
+        resource: 'formulaEngine/evalExpression',
+        values: {
+          expression: condition.value,
+          context: { sampleData }
+        }
+      });
+      
       expect(result).toBe(true);
     });
 
-    it('should evaluate a formula condition as false', () => {
-      const condition = parseCondition('=false');
-      const result = evaluateCondition(condition, []);
+    it('should handle API errors gracefully', async () => {
+      // Mock API error
+      (codapInterface.sendRequest as jest.Mock).mockRejectedValueOnce(new Error('API error'));
+      
+      const condition = { type: ConditionType.FORMULA, value: 'invalid formula' };
+      const sampleData = [{ output: 'a' }];
+      
+      const result = await evaluateCondition(condition, sampleData);
+      
       expect(result).toBe(false);
     });
 
-    it('should evaluate a pattern condition with matching pattern', () => {
-      const condition = parseCondition('apple');
-      const sampleData = [
-        { fruit: 'apple', count: 5 },
-        { fruit: 'banana', count: 3 }
-      ];
-      const result = evaluateCondition(condition, sampleData);
+    it('should evaluate pattern conditions correctly', async () => {
+      const condition = { type: ConditionType.PATTERN, value: 'a,b,a' };
+      const sampleData = [{ output: 'c' }, { output: 'a' }, { output: 'b' }, { output: 'a' }];
+      
+      const result = await evaluateCondition(condition, sampleData);
+      
       expect(result).toBe(true);
     });
 
-    it('should evaluate a pattern condition with non-matching pattern', () => {
-      const condition = parseCondition('grape');
-      const sampleData = [
-        { fruit: 'apple', count: 5 },
-        { fruit: 'banana', count: 3 }
-      ];
-      const result = evaluateCondition(condition, sampleData);
-      expect(result).toBe(false);
-    });
-
-    it('should handle null condition', () => {
-      const result = evaluateCondition(null, []);
-      expect(result).toBe(false);
-    });
-
-    it('should handle empty condition', () => {
-      const condition = parseCondition('');
-      const result = evaluateCondition(condition, []);
+    it('should return false when pattern is not found', async () => {
+      const condition = { type: ConditionType.PATTERN, value: 'a,b,c' };
+      const sampleData = [{ output: 'a' }, { output: 'b' }, { output: 'a' }];
+      
+      const result = await evaluateCondition(condition, sampleData);
+      
       expect(result).toBe(false);
     });
   });

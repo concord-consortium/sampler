@@ -3,6 +3,8 @@
  * Handles parsing and evaluating conditions for determining when to stop repeating
  */
 
+import codapInterface from '../lib/codap-interface';
+
 /**
  * Enum for condition types
  */
@@ -52,42 +54,84 @@ export const parseCondition = (condition: string): IParsedCondition => {
 };
 
 /**
+ * Evaluates a pattern condition against sample data
+ * @param pattern - The pattern to match
+ * @param sampleData - Array of sample data objects to evaluate against
+ * @returns Boolean indicating if the pattern is found
+ */
+const evaluatePatternCondition = (pattern: string, sampleData: Array<Record<string, any>>): boolean => {
+  const patternValues = pattern.toLowerCase().split(',').map(p => p.trim());
+  
+  // Extract values from sample data
+  const sampleValues = sampleData.map(item => 
+    item.output ? item.output.toString().toLowerCase() : ''
+  );
+  
+  // Check if the pattern exists in the sequence
+  for (let i = 0; i <= sampleValues.length - patternValues.length; i++) {
+    let match = true;
+    for (let j = 0; j < patternValues.length; j++) {
+      if (sampleValues[i + j] !== patternValues[j]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) return true;
+  }
+  
+  return false;
+};
+
+/**
+ * Evaluates a formula condition using the CODAP API
+ * @param formula - The formula to evaluate
+ * @param sampleData - Array of sample data objects to evaluate against
+ * @returns Promise resolving to a boolean indicating if the condition is met
+ */
+const evaluateFormulaCondition = async (
+  formula: string, 
+  sampleData: Array<Record<string, any>>
+): Promise<boolean> => {
+  try {
+    // Use the CODAP API to evaluate the formula
+    const result = await codapInterface.sendRequest({
+      action: 'get',
+      resource: 'formulaEngine/evalExpression',
+      values: {
+        expression: formula,
+        context: { sampleData }
+      }
+    });
+    
+    // Check if the result is a boolean or can be coerced to a boolean
+    return Boolean(result.success && result.values);
+  } catch (error) {
+    console.error('Error evaluating formula condition:', error);
+    return false;
+  }
+};
+
+/**
  * Evaluates a condition against sample data
  * @param condition - The parsed condition to evaluate
  * @param sampleData - Array of sample data objects to evaluate against
- * @returns Boolean indicating if the condition is met
+ * @returns Promise resolving to a boolean indicating if the condition is met
  */
-export const evaluateCondition = (
+export const evaluateCondition = async (
   condition: IParsedCondition | null,
   sampleData: Array<Record<string, any>>
-): boolean => {
+): Promise<boolean> => {
   // Handle null or empty conditions
   if (!condition || condition.type === ConditionType.NONE) {
     return false;
   }
 
   if (condition.type === ConditionType.FORMULA) {
-    try {
-      // Simple evaluation for basic formulas
-      // In a real implementation, this would need to be more sophisticated
-      // to handle variables and context from sampleData
-      return eval(condition.value) === true;
-    } catch (error) {
-      console.error('Error evaluating formula condition:', error);
-      return false;
-    }
+    return await evaluateFormulaCondition(condition.value, sampleData);
   }
 
   if (condition.type === ConditionType.PATTERN) {
-    // Check if any sample data contains the pattern
-    const patternString = condition.value.toLowerCase();
-    const patterns = patternString.split(',').map(p => p.trim());
-    
-    // Convert sample data to string for pattern matching
-    const sampleString = JSON.stringify(sampleData).toLowerCase();
-    
-    // Check if any pattern is found in the sample data
-    return patterns.some(pattern => sampleString.includes(pattern));
+    return evaluatePatternCondition(condition.value, sampleData);
   }
 
   return false;

@@ -202,7 +202,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
           sampleDataRef.current.push({...sample});
           
           // Check if the condition is met
-          if (parsedCondition && evaluateCondition(parsedCondition, sampleDataRef.current)) {
+          if (parsedCondition && await evaluateCondition(parsedCondition, sampleDataRef.current)) {
             conditionMet = true;
             break;
           }
