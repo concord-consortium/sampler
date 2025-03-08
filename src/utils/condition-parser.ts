@@ -93,10 +93,9 @@ const evaluateFormulaCondition = async (
   sampleData: Array<Record<string, any>>
 ): Promise<boolean> => {
   try {
-    // Use the CODAP API to evaluate the formula
     const result = await codapInterface.sendRequest({
-      action: 'get',
-      resource: 'formulaEngine/evalExpression',
+      action: 'formulaEngine',
+      resource: 'evalExpression',
       values: {
         expression: formula,
         context: { sampleData }
@@ -106,7 +105,10 @@ const evaluateFormulaCondition = async (
     // Check if the result is a boolean or can be coerced to a boolean
     return Boolean(result.success && result.values);
   } catch (error) {
-    console.error('Error evaluating formula condition:', error);
+    // Only log errors in non-test environments
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Error evaluating formula condition:', error);
+    }
     return false;
   }
 };

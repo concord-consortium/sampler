@@ -67,6 +67,21 @@ jest.mock('./useAnimation', () => {
 // Mock window.alert to prevent errors in tests
 window.alert = jest.fn();
 
+// Suppress React 18 createRoot warnings
+const originalConsoleError = console.error;
+beforeAll(() => {
+  console.error = (...args: any[]) => {
+    if (args[0].includes('ReactDOM.render is no longer supported in React 18')) {
+      return;
+    }
+    originalConsoleError(...args);
+  };
+});
+
+afterAll(() => {
+  console.error = originalConsoleError;
+});
+
 describe('useAnimation', () => {
   let mockGlobalState: IGlobalState;
   let mockSetGlobalState: jest.Mock;

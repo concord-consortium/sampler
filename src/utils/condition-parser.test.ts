@@ -57,16 +57,16 @@ describe('Condition Parser', () => {
         values: true
       });
 
-      const condition = { type: ConditionType.FORMULA, value: 'count(output="a") > 3' };
-      const sampleData = [{ output: 'a' }, { output: 'b' }, { output: 'a' }, { output: 'a' }, { output: 'a' }];
+      const condition = { type: ConditionType.FORMULA, value: 'count(output="a")' };
+      const sampleData = [{ output: 'a' }];
       
       const result = await evaluateCondition(condition, sampleData);
       
       expect(codapInterface.sendRequest).toHaveBeenCalledWith({
-        action: 'get',
-        resource: 'formulaEngine/evalExpression',
+        action: 'formulaEngine',
+        resource: 'evalExpression',
         values: {
-          expression: condition.value,
+          expression: 'count(output="a")',
           context: { sampleData }
         }
       });

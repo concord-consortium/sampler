@@ -89,6 +89,14 @@ describe("ColumnHeader Component", () => {
   it("renders an editable input for regular columns", () => {
     render(<ColumnHeader column={mockColumn} columnIndex={0} />);
     
+    // First, find the div with the column name
+    const columnNameDiv = screen.getByText("Test Column");
+    expect(columnNameDiv).toBeInTheDocument();
+    
+    // Click on the div to make it editable
+    fireEvent.click(columnNameDiv);
+    
+    // Now look for the input
     const input = screen.getByDisplayValue("Test Column");
     expect(input).toBeInTheDocument();
     expect(input.tagName).toBe("INPUT");
@@ -97,6 +105,13 @@ describe("ColumnHeader Component", () => {
   it("allows editing the column name for regular columns", () => {
     render(<ColumnHeader column={mockColumn} columnIndex={0} />);
     
+    // First, find the div with the column name
+    const columnNameDiv = screen.getByText("Test Column");
+    
+    // Click on the div to make it editable
+    fireEvent.click(columnNameDiv);
+    
+    // Now look for the input
     const input = screen.getByDisplayValue("Test Column");
     fireEvent.change(input, { target: { value: "New Column Name" } });
     fireEvent.blur(input);
@@ -132,6 +147,13 @@ describe("ColumnHeader Component", () => {
   it("renders an editable input for collector columns when no dataset is selected", () => {
     render(<ColumnHeader column={mockCollectorColumn} columnIndex={1} />);
     
+    // First, find the div with the column name
+    const columnNameDiv = screen.getByText("Collector Column");
+    
+    // Click on the div to make it editable
+    fireEvent.click(columnNameDiv);
+    
+    // Now look for the input
     const input = screen.getByDisplayValue("Collector Column");
     expect(input).toBeInTheDocument();
     expect(input.tagName).toBe("INPUT");

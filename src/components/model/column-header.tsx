@@ -38,7 +38,9 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
   useEffect(() => {
     const unregister = registerAnimationCallback(animate);
     return () => {
-      unregister();
+      if (typeof unregister === 'function') {
+        unregister();
+      }
     };
   }, [registerAnimationCallback]);
   
