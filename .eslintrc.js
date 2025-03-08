@@ -143,6 +143,18 @@ module.exports = {
         "@typescript-eslint/no-var-requires": "off",
         "quotes": ["error", "single", { allowTemplateLiterals: true, avoidEscape: true }],
       }
+    },
+    { // Chart.js components
+      files: ["src/components/measures/charts/**"],
+      rules: {
+        "import/no-extraneous-dependencies": "off"
+      }
+    },
+    { // DataVisualization component
+      files: ["src/components/measures/DataVisualization.tsx"],
+      rules: {
+        "import/no-extraneous-dependencies": "off"
+      }
     }
   ]
 };
