@@ -161,22 +161,22 @@ This document provides a detailed, step-by-step checklist for implementing the S
 
 ### 2.4 Collector Device
 
-- [ ] **Tests**
-  - [ ] Test collector rendering
-  - [ ] Test dataset connection
-  - [ ] Test attribute selection
-  - [ ] Test sampling visualization
+- [x] **Tests**
+  - [x] Test collector rendering
+  - [x] Test dataset connection
+  - [x] Test attribute selection
+  - [x] Test sampling visualization
 
-- [ ] **Implementation**
-  - [ ] Create Collector component
-  - [ ] Implement dataset connection
-  - [ ] Add attribute selection
-  - [ ] Implement sampling visualization
+- [x] **Implementation**
+  - [x] Create Collector component
+  - [x] Implement dataset connection
+  - [x] Add attribute selection
+  - [x] Implement sampling visualization
 
-- [ ] **Error Resolution**
-  - [ ] Verify all tests pass
-  - [ ] Fix any linting or type errors
-  - [ ] Ensure proper component rendering
+- [x] **Error Resolution**
+  - [x] Verify all tests pass
+  - [x] Fix any linting or type errors
+  - [x] Ensure proper component rendering
 
 ## Phase 3: Animation System
 
@@ -411,22 +411,21 @@ This document provides a detailed, step-by-step checklist for implementing the S
 
 ### 6.3 Collector Device Enhancements
 
-- [ ] **Tests**
-  - [ ] Test dataset connection
-  - [ ] Test attribute handling
-  - [ ] Test data type conversion
-  - [ ] Test sampling from datasets
+- [x] **Tests**
+  - [x] Test dataset connection
+  - [x] Test attribute handling
+  - [x] Test data type conversion
+  - [x] Test sampling from datasets
 
-- [ ] **Implementation**
-  - [ ] Enhance dataset connection
-  - [ ] Improve attribute handling
-  - [ ] Add type conversion
-  - [ ] Optimize sampling
+- [x] **Implementation**
+  - [x] Improve dataset connection UI
+  - [x] Enhance attribute handling
+  - [x] Optimize sampling process
+  - [x] Fix bugs in collector output display
 
-- [ ] **Error Resolution**
-  - [ ] Verify all tests pass
-  - [ ] Fix any linting or type errors
-  - [ ] Ensure proper dataset handling
+- [x] **Error Resolution**
+  - [x] Verify all tests pass
+  - [x] Fix any linting or type errors
 
 ### 6.4 Measures Tab Improvements
 

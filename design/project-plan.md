@@ -56,8 +56,8 @@
 
 | Task | Description | Duration | Dependencies |
 |------|-------------|----------|--------------|
-| 4.1 | Enhance Collector device for better dataset handling | 5 days | 3.7 |
-| 4.2 | Write tests for enhanced Collector device | 3 days | 4.1 |
+| 4.1 | ✅ Enhance Collector device for better dataset handling | 5 days | 3.7 |
+| 4.2 | ✅ Write tests for enhanced Collector device | 3 days | 4.1 |
 | 4.3 | Improve CODAP data context integration | 4 days | 4.1 |
 | 4.4 | Write tests for CODAP integration | 3 days | 4.3 |
 | 4.5 | Enhance formula variable renaming | 4 days | 4.3 |
@@ -94,10 +94,10 @@
 
 | Milestone | Description | Target Date |
 |-----------|-------------|-------------|
-| M1 | Project setup and planning complete | End of Week 1 |
-| M2 | UI/UX enhancements complete | End of Week 3 |
-| M3 | Model visibility and security features complete | End of Week 5 |
-| M4 | Simulation and sampling enhancements complete | End of Week 8 |
+| M1 | ✅ Project setup and planning complete | End of Week 1 |
+| M2 | ✅ UI/UX enhancements complete | End of Week 3 |
+| M3 | ✅ Model visibility and security features complete | End of Week 5 |
+| M4 | ✅ Simulation and sampling enhancements complete | End of Week 8 |
 | M5 | Multi-device and compatibility features complete | End of Week 10 |
 | M6 | Project complete and ready for deployment | End of Week 12 |
 
@@ -155,10 +155,11 @@
    - Enhanced speed slider
    - Auto-focus for dialogs
 
-3. **Collector Device**
-   - Dataset connection
-   - Attribute selection
-   - Sampling visualization
+3. **Collector Device** ✅
+   - Dataset connection - Improved UI for dataset selection
+   - Attribute selection - Enhanced support for dataset attributes
+   - Sampling visualization - Fixed display of dataset items in output table
+   - Bug fixes - Resolved issues with collector output display
 
 ### 6.3 Lower Priority Features (Nice to Have)
 1. **Security Features**
