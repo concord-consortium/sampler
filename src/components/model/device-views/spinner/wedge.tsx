@@ -17,6 +17,7 @@ interface IProps {
   nextVariable: string;
   isDragging: boolean;
   isLastVariable: boolean;
+  isBoundaryBeingDragged: boolean;
   deviceId: string;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
@@ -46,7 +47,7 @@ const getEllipseCoords = (percent: number) => {
 };
 
 export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize, numUniqueVariables,
-  varArrayIdx, selectedWedge, isLastVariable, isDragging, deviceId, handleSetSelectedVariable, handleDeleteWedge,
+  varArrayIdx, selectedWedge, isLastVariable, isDragging, isBoundaryBeingDragged, deviceId, handleSetSelectedVariable, handleDeleteWedge,
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs}: IProps) => {
   const { globalState: { isRunning } } = useGlobalStateContext();
   const [wedgePath, setWedgePath] = useState("");
@@ -153,7 +154,7 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
       >
         {variableName}
       </text>
-      { selectedWedge === variableName &&
+      { (selectedWedge === variableName || isBoundaryBeingDragged) &&
         <>
           {/* percentage label */}
           <path
@@ -172,24 +173,26 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
           >
             {Math.round(percent * 100)}%
           </text>
-          {/* delete wedge button */}
-          <g style={{cursor: "pointer"}} onClick={(e) => handleDeleteWedge(e, variableName)}>
-            <rect
-              x={delBtnPos.x - (buttonSize / 2)}
-              y={delBtnPos.y - (buttonSize / 2)}
-              width={buttonSize}
-              height={buttonSize}
-              rx={3}
-              stroke={kDarkTeal}
-              strokeWidth={1}
-              fill={kLightBlue}
-            />
-            <path
-              d={delButtonInnerShapePath}
-              stroke={"#000"}
-              strokeWidth={1}
-            />
-          </g>
+          {/* Only show delete button when selected, not just when boundary is dragged */}
+          { selectedWedge === variableName &&
+            <g style={{cursor: "pointer"}} onClick={(e) => handleDeleteWedge(e, variableName)}>
+              <rect
+                x={delBtnPos.x - (buttonSize / 2)}
+                y={delBtnPos.y - (buttonSize / 2)}
+                width={buttonSize}
+                height={buttonSize}
+                rx={3}
+                stroke={kDarkTeal}
+                strokeWidth={1}
+                fill={kLightBlue}
+              />
+              <path
+                d={delButtonInnerShapePath}
+                stroke={"#000"}
+                strokeWidth={1}
+              />
+            </g>
+          }
         </>
       }
     </>

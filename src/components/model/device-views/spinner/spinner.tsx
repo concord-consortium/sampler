@@ -24,6 +24,10 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
   handleSetEditingPct, handleSetEditingVarName, handleAddDefs, handleStartDrag}: IProps) => {
   const { globalState: { isRunning } } = useGlobalStateContext();
   const [selectedWedge, setSelectedWedge] = useState<string|null>(null);
+  const [draggingBoundary, setDraggingBoundary] = useState<{
+    beforeWedge: string | null;
+    afterWedge: string | null;
+  }>({ beforeWedge: null, afterWedge: null });
   const { variables, id } = device;
   const [textBackerPos, setTextBackerPos] = useState<ITextBackerPos|undefined>(undefined);
 
@@ -34,6 +38,13 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
       setSelectedWedge(null);
     }
   }, [variables, selectedVariableIdx]);
+
+  // Reset dragging boundary state when dragging ends
+  useEffect(() => {
+    if (!isDragging) {
+      setDraggingBoundary({ beforeWedge: null, afterWedge: null });
+    }
+  }, [isDragging]);
 
   const uniqueVariables = useMemo(() => [...new Set(variables)], [variables]);
   const fontSize = useMemo(() => uniqueVariables.length >= 20 ? 6 : (uniqueVariables.length >= 10 ? 10 : 16), [uniqueVariables]);
@@ -57,6 +68,20 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
     if (isRunning) return;
     handleSetEditingVarName(0);
     handleSetSelectedVariable(0);
+  };
+
+  const handleBoundaryDrag = (originPt: {x: number; y: number;}, beforeWedgeIdx: number) => {
+    // Get the wedge before and after the boundary
+    const beforeWedge = uniqueVariables[beforeWedgeIdx];
+    const afterWedge = uniqueVariables[(beforeWedgeIdx + 1) % uniqueVariables.length];
+    
+    setDraggingBoundary({
+      beforeWedge,
+      afterWedge
+    });
+    
+    // Call the original handleStartDrag function
+    handleStartDrag(originPt);
   };
 
   return (
@@ -107,6 +132,10 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
               nextVariable={uniqueVariables[index + 1]}
               isLastVariable={index === uniqueVariables.length - 1}
               isDragging={isDragging}
+              isBoundaryBeingDragged={
+                draggingBoundary.beforeWedge === variableName || 
+                draggingBoundary.afterWedge === variableName
+              }
               handleAddDefs={handleAddDefs}
               handleSetSelectedVariable={handleSetSelectedVariable}
               handleSetEditingVarName={handleSetEditingVarName}
@@ -128,7 +157,7 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
               varArrayIdx={varArrayIdx}
               isDragging={isDragging}
               handleSetSelectedVariable={isLastVariable ? undefined : handleSetSelectedVariable}
-              handleStartDrag={isLastVariable ? undefined : handleStartDrag}
+              handleStartDrag={isLastVariable ? undefined : (originPt) => handleBoundaryDrag(originPt, index)}
             />
           );
         })}
