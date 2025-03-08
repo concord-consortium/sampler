@@ -33,3 +33,4 @@ ChartJS.defaults.color = '#666';
 
 // Export the Chart instance for potential future use
 export default ChartJS; 
+

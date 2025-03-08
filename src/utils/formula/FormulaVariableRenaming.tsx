@@ -35,8 +35,8 @@ export const clearFormulaTracker = (): void => {
   // This is a bit of a hack, but it works for now
   Object.getOwnPropertyNames(formulaTracker).forEach(prop => {
     if (prop !== 'constructor') {
-      // @ts-ignore
-      formulaTracker[prop] = new Map();
+      // Using type assertion with unknown first
+      (formulaTracker as unknown as Record<string, Map<string, string>>)[prop] = new Map();
     }
   });
 };
@@ -149,11 +149,15 @@ const updateVariableNameInDevice = (
   
   if (!device) return;
   
+  // Declare variables outside the switch statement
+  let variableIndex: number;
+  let spinnerVariableIndex: number;
+  
   // Update the variable name based on the device type
   switch (device.viewType) {
     case ViewType.Mixer:
       // For Mixer devices, update the variable name in the variables array
-      const variableIndex = device.variables.indexOf(oldName);
+      variableIndex = device.variables.indexOf(oldName);
       if (variableIndex >= 0) {
         device.variables[variableIndex] = newName;
       }
@@ -161,7 +165,7 @@ const updateVariableNameInDevice = (
     
     case ViewType.Spinner:
       // For Spinner devices, update the variable name in the variables array
-      const spinnerVariableIndex = device.variables.indexOf(oldName);
+      spinnerVariableIndex = device.variables.indexOf(oldName);
       if (spinnerVariableIndex >= 0) {
         device.variables[spinnerVariableIndex] = newName;
       }

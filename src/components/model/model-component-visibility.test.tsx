@@ -1,10 +1,9 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ModelTab } from "./model-component";
-import { GlobalStateContext } from "../../hooks/useGlobalState";
+import { GlobalStateContext , getDefaultState } from "../../hooks/useGlobalState";
 import { AnimationContext } from "../../hooks/useAnimation";
 import { IGlobalState, IGlobalStateContext } from "../../types";
-import { getDefaultState } from "../../hooks/useGlobalState";
 
 // Mock the animation context
 const mockAnimationContext = {

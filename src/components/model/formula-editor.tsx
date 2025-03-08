@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { validateFormula } from "../../utils/utils";
 import { IDevice } from "../../types";
+import { trackFormula } from "../../utils/formula/FormulaVariableRenaming";
 
 interface IProps {
   source: IDevice;
@@ -47,6 +48,10 @@ export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWi
         const sourceIdx = draft.model.columns[columnIndex].devices.findIndex(d => d.id === source.id);
         draft.model.columns[columnIndex].devices[sourceIdx].formulas[target.id] = trimmedLabel;
       });
+      
+      // Track the formula for variable renaming
+      trackFormula(source.id, target.id, trimmedLabel);
+      
       handleToggleEditing();
     } else {
       if (inputRef.current) {

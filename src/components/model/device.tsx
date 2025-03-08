@@ -15,6 +15,9 @@ import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { parseSpecifier } from "../../utils/utils";
 import { IDevice, IDataContext, ClippingDef, ViewType, IVariables } from "../../types";
 import { removeDeviceFromFormulas } from "../../helpers/model-helpers";
+import { handleVariableRename, initializeFormulaTracker } from "../../utils/formula/FormulaVariableRenaming";
+import { renameAttribute } from "../../helpers/codap-helpers";
+import { kDataContextName } from "../../contants";
 
 import "./device.scss";
 
@@ -156,15 +159,33 @@ export const Device = (props: IProps) => {
   };
 
   const handleEditVariable = (oldVariableIdx: number, newVariableName: string) => {
+    const oldVariableName = variables[oldVariableIdx];
+    
+    // Only proceed if the name has actually changed
+    if (oldVariableName === newVariableName) return;
+    
+    // Create new variables array with the updated name
     const newVariables: IVariables = [];
     if (viewType === ViewType.Mixer || viewType === ViewType.Collector) {
       newVariables.push(...variables);
       newVariables[oldVariableIdx] = newVariableName;
     } else {
-      const oldVariableName = variables[oldVariableIdx];
       newVariables.push(...variables.map((v) => v === oldVariableName ? newVariableName : v));
     }
+    
+    // Initialize formula tracker if it hasn't been initialized yet
+    initializeFormulaTracker(globalState);
+    
+    // Update variable name in formulas
+    handleVariableRename(device.id, oldVariableName, newVariableName, setGlobalState);
+    
+    // Update variables array
     handleUpdateVariables(newVariables);
+    
+    // Update the attribute name in CODAP
+    // This will create a new attribute with the new name, copy the data, and delete the old attribute
+    renameAttribute(kDataContextName, "items", oldVariableName, newVariableName)
+      .catch(error => console.error("Error renaming attribute in CODAP:", error));
   };
 
   const handleStartDrag = (originPt: {x: number, y: number}) => {

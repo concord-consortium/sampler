@@ -38,7 +38,6 @@ export class FormulaParser {
     
     // Match potential variable names (alphanumeric + underscore, not starting with a digit)
     // Also handle CODAP's backtick-quoted attribute names
-    const potentialVars: string[] = [];
     
     // Extract regular variable names
     const regularVars = formulaWithoutStrings.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];

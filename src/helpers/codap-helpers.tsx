@@ -7,9 +7,8 @@ import {
   createParentCollection,
   getAllItems,
   getAttributeList,
-  getDataContext,
-  getAttribute,
-  updateAttribute} from "@concord-consortium/codap-plugin-api";
+  getDataContext
+} from "@concord-consortium/codap-plugin-api";
 import { AttrMap, IAttribute, IGlobalState } from "../types";
 import { Updater } from "use-immer";
 
@@ -278,17 +277,20 @@ export const renameAttribute = async (
   oldName: string,
   newName: string
 ): Promise<void> => {
+  console.log("=== RENAME ATTRIBUTE PROCESS STARTED ===");
   console.log("renameAttribute called with:", { dataContextName, collectionName, oldName, newName });
 
   try {
     // Step 1: Get all cases with their values
+    console.log("\n=== STEP 1: GET ALL CASES ===");
     console.log("Getting all cases with values");
     const getAllCasesMsg = {
       "action": "get",
       "resource": `dataContext[${dataContextName}].collection[${collectionName}].allCases`
     };
+    console.log("Sending request:", JSON.stringify(getAllCasesMsg));
     const allCasesResult = await codapInterface.sendRequest(getAllCasesMsg) as IResult;
-    console.log("allCasesResult:", allCasesResult);
+    console.log("allCasesResult success:", allCasesResult.success);
 
     if (!allCasesResult.success) {
       console.error("Failed to get all cases:", allCasesResult);
@@ -342,8 +344,181 @@ export const renameAttribute = async (
       console.error("Could not find any cases in the response");
       return;
     }
+
+    // Step 2: Get all data contexts to check for formulas in all tables
+    console.log("\n=== STEP 2: GET ALL DATA CONTEXTS ===");
+    console.log("Getting all data contexts");
+    const getDataContextsMsg = {
+      "action": "get",
+      "resource": "dataContextList"
+    };
+    console.log("Sending request:", JSON.stringify(getDataContextsMsg));
+    const dataContextsResult = await codapInterface.sendRequest(getDataContextsMsg) as IResult;
+    console.log("dataContextsResult success:", dataContextsResult.success);
+    if (dataContextsResult.success) {
+      console.log("dataContextsResult values:", JSON.stringify(dataContextsResult.values));
+    }
+
+    // Step 3: Find all formulas in all data contexts, collections, and attributes that reference the old attribute name
+    console.log("\n=== STEP 3: FIND ALL FORMULAS THAT REFERENCE THE OLD ATTRIBUTE NAME ===");
+    let formulasToUpdate: Array<{dataContext: string, collection: string, attribute: string, formula: string, updatedFormula: string}> = [];
     
-    // Step 2: Create the new attribute
+    if (dataContextsResult.success && Array.isArray(dataContextsResult.values)) {
+      const dataContexts = dataContextsResult.values;
+      console.log(`Found ${dataContexts.length} data contexts`);
+      
+      for (const context of dataContexts) {
+        console.log(`\nChecking data context: ${context.name}`);
+        
+        // Get all collections in this data context
+        const getCollectionsMsg = {
+          "action": "get",
+          "resource": `dataContext[${context.name}].collectionList`
+        };
+        console.log("Sending request:", JSON.stringify(getCollectionsMsg));
+        const collectionsResult = await codapInterface.sendRequest(getCollectionsMsg) as IResult;
+        console.log(`Collections in data context ${context.name} success:`, collectionsResult.success);
+        if (collectionsResult.success) {
+          console.log(`Collections in data context ${context.name} values:`, JSON.stringify(collectionsResult.values));
+        }
+        
+        if (collectionsResult.success && Array.isArray(collectionsResult.values)) {
+          const collections = collectionsResult.values;
+          console.log(`Found ${collections.length} collections in data context ${context.name}`);
+          
+          for (const collection of collections) {
+            console.log(`\nChecking collection: ${collection.name} in data context ${context.name}`);
+            
+            // Get all attributes in this collection
+            const getAttributesMsg = {
+              "action": "get",
+              "resource": `dataContext[${context.name}].collection[${collection.name}].attributeList`
+            };
+            console.log("Sending request:", JSON.stringify(getAttributesMsg));
+            const attributesResult = await codapInterface.sendRequest(getAttributesMsg) as IResult;
+            console.log(`Attributes in collection ${collection.name} in data context ${context.name} success:`, attributesResult.success);
+            if (attributesResult.success) {
+              console.log(`Attributes in collection ${collection.name} in data context ${context.name} values:`, JSON.stringify(attributesResult.values));
+            }
+            
+            if (attributesResult.success && Array.isArray(attributesResult.values)) {
+              const attributes = attributesResult.values;
+              console.log(`Found ${attributes.length} attributes in collection ${collection.name} in data context ${context.name}`);
+              
+              // Find attributes with formulas that reference the old attribute name
+              for (const attr of attributes) {
+                console.log(`\nChecking attribute: ${attr.name} in collection ${collection.name} in data context ${context.name}`);
+                console.log(`Attribute details:`, JSON.stringify(attr));
+                
+                // Get the full attribute details including formula
+                const getAttributeMsg = {
+                  "action": "get",
+                  "resource": `dataContext[${context.name}].collection[${collection.name}].attribute[${attr.name}]`
+                };
+                console.log("Sending request for full attribute details:", JSON.stringify(getAttributeMsg));
+                const attributeResult = await codapInterface.sendRequest(getAttributeMsg) as IResult;
+                console.log(`Full attribute details success:`, attributeResult.success);
+                if (attributeResult.success) {
+                  console.log(`Full attribute details:`, JSON.stringify(attributeResult.values));
+                  
+                  // Check if the attribute has a formula
+                  const formula = attributeResult.values?.formula;
+                  if (formula) {
+                    console.log(`Found formula in attribute ${attr.name}: ${formula}`);
+                    
+                    // Check if the formula references the old attribute name
+                    // We need to be thorough in checking for references
+                    const formulaLower = formula.toLowerCase();
+                    const oldNameLower = oldName.toLowerCase();
+                    
+                    // Different ways the old name might be referenced in a formula
+                    const backtickQuoted = formula.includes(`\`${oldName}\``);
+                    const wordBoundary = !!formula.match(new RegExp(`\\b${oldName}\\b`));
+                    const doubleQuoted = formula.includes(`"${oldName}"`);
+                    const singleQuoted = formula.includes(`'${oldName}'`);
+                    const backtickQuotedLower = formulaLower.includes(`\`${oldNameLower}\``);
+                    const wordBoundaryLower = !!formulaLower.match(new RegExp(`\\b${oldNameLower}\\b`));
+                    const doubleQuotedLower = formulaLower.includes(`"${oldNameLower}"`);
+                    const singleQuotedLower = formulaLower.includes(`'${oldNameLower}'`);
+                    
+                    console.log("Formula reference checks:");
+                    console.log(`- Backtick quoted: ${backtickQuoted}`);
+                    console.log(`- Word boundary: ${wordBoundary}`);
+                    console.log(`- Double quoted: ${doubleQuoted}`);
+                    console.log(`- Single quoted: ${singleQuoted}`);
+                    console.log(`- Backtick quoted (case insensitive): ${backtickQuotedLower}`);
+                    console.log(`- Word boundary (case insensitive): ${wordBoundaryLower}`);
+                    console.log(`- Double quoted (case insensitive): ${doubleQuotedLower}`);
+                    console.log(`- Single quoted (case insensitive): ${singleQuotedLower}`);
+                    
+                    const referencesOldName = 
+                      backtickQuoted || wordBoundary || doubleQuoted || singleQuoted ||
+                      backtickQuotedLower || wordBoundaryLower || doubleQuotedLower || singleQuotedLower;
+                    
+                    console.log(`Formula references old name '${oldName}': ${referencesOldName}`);
+                    
+                    if (referencesOldName) {
+                      console.log(`Formula in attribute ${attr.name} in collection ${collection.name} in data context ${context.name} references ${oldName}`);
+                      
+                      // Replace references to the old attribute name with the new name
+                      let updatedFormula = formula;
+                      
+                      // Replace backtick-quoted references
+                      const backtickRegex = new RegExp(`\`${oldName}\``, 'gi');
+                      const backtickReplacement = `\`${newName}\``;
+                      updatedFormula = updatedFormula.replace(backtickRegex, backtickReplacement);
+                      console.log(`After backtick replacement: ${updatedFormula}`);
+                      
+                      // Replace unquoted references (need to be careful with word boundaries)
+                      const wordBoundaryRegex = new RegExp(`\\b${oldName}\\b`, 'gi');
+                      updatedFormula = updatedFormula.replace(wordBoundaryRegex, newName);
+                      console.log(`After word boundary replacement: ${updatedFormula}`);
+                      
+                      // Replace double-quoted references
+                      const doubleQuoteRegex = new RegExp(`"${oldName}"`, 'gi');
+                      const doubleQuoteReplacement = `"${newName}"`;
+                      updatedFormula = updatedFormula.replace(doubleQuoteRegex, doubleQuoteReplacement);
+                      console.log(`After double quote replacement: ${updatedFormula}`);
+                      
+                      // Replace single-quoted references
+                      const singleQuoteRegex = new RegExp(`'${oldName}'`, 'gi');
+                      const singleQuoteReplacement = `'${newName}'`;
+                      updatedFormula = updatedFormula.replace(singleQuoteRegex, singleQuoteReplacement);
+                      console.log(`After single quote replacement: ${updatedFormula}`);
+                      
+                      console.log(`Final updated formula: ${updatedFormula}`);
+                      
+                      formulasToUpdate.push({
+                        dataContext: context.name,
+                        collection: collection.name,
+                        attribute: attr.name,
+                        formula,
+                        updatedFormula
+                      });
+                    }
+                  } else {
+                    console.log(`Attribute ${attr.name} does not have a formula`);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    console.log(`\nFound ${formulasToUpdate.length} formulas to update:`);
+    formulasToUpdate.forEach((formula, index) => {
+      console.log(`Formula ${index + 1}:`);
+      console.log(`- Data Context: ${formula.dataContext}`);
+      console.log(`- Collection: ${formula.collection}`);
+      console.log(`- Attribute: ${formula.attribute}`);
+      console.log(`- Old Formula: ${formula.formula}`);
+      console.log(`- New Formula: ${formula.updatedFormula}`);
+    });
+
+    // Step 4: Create the new attribute
+    console.log("\n=== STEP 4: CREATE NEW ATTRIBUTE ===");
     console.log(`Creating new attribute: ${newName}`);
     const createAttributeMsg = {
       "action": "create",
@@ -353,15 +528,18 @@ export const renameAttribute = async (
         "title": newName
       }
     };
+    console.log("Sending request:", JSON.stringify(createAttributeMsg));
     const createAttributeResult = await codapInterface.sendRequest(createAttributeMsg) as IResult;
-    console.log("createAttributeResult:", createAttributeResult);
-
-    if (!createAttributeResult.success) {
+    console.log("createAttributeResult success:", createAttributeResult.success);
+    if (createAttributeResult.success) {
+      console.log("createAttributeResult values:", JSON.stringify(createAttributeResult.values));
+    } else {
       console.error("Failed to create new attribute:", createAttributeResult);
       return;
     }
 
-    // Step 3: Prepare updates for each case
+    // Step 5: Prepare updates for each case
+    console.log("\n=== STEP 5: PREPARE UPDATES FOR EACH CASE ===");
     console.log("Preparing updates for each case");
     
     const updates: any[] = [];
@@ -400,6 +578,8 @@ export const renameAttribute = async (
       }
     }
     
+    console.log(`Prepared ${updates.length} case updates`);
+    
     if (updates.length > 0) {
       console.log(`Updating ${updates.length} cases with values from ${oldName} to ${newName}`);
       console.log("Sample updates:", JSON.stringify(updates.slice(0, 2)));
@@ -410,29 +590,88 @@ export const renameAttribute = async (
         "resource": `dataContext[${dataContextName}].collection[${collectionName}].case`,
         "values": updates
       };
+      console.log("Sending request:", JSON.stringify(updateMsg).substring(0, 200) + "...");
       const updateResult = await codapInterface.sendRequest(updateMsg) as IResult;
-      console.log("updateResult:", updateResult);
-      
-      if (!updateResult.success) {
+      console.log("updateResult success:", updateResult.success);
+      if (updateResult.success) {
+        console.log("updateResult values:", JSON.stringify(updateResult.values));
+      } else {
         console.error("Failed to update cases:", updateResult);
       }
     } else {
       console.log("No cases found with values to update");
     }
 
-    // Step 4: Delete the old attribute
+    // Step 6: Delete the old attribute
+    console.log("\n=== STEP 6: DELETE OLD ATTRIBUTE ===");
     console.log(`Deleting old attribute: ${oldName}`);
     const deleteAttributeMsg = {
       "action": "delete",
       "resource": `dataContext[${dataContextName}].collection[${collectionName}].attribute[${oldName}]`
     };
+    console.log("Sending request:", JSON.stringify(deleteAttributeMsg));
     const deleteAttributeResult = await codapInterface.sendRequest(deleteAttributeMsg) as IResult;
-    console.log("deleteAttributeResult:", deleteAttributeResult);
-
-    if (!deleteAttributeResult.success) {
+    console.log("deleteAttributeResult success:", deleteAttributeResult.success);
+    if (deleteAttributeResult.success) {
+      console.log("deleteAttributeResult values:", JSON.stringify(deleteAttributeResult.values));
+    } else {
       console.error("Failed to delete old attribute:", deleteAttributeResult);
     }
     
+    // Step 7: Update all formulas that reference the old attribute name
+    console.log("\n=== STEP 7: UPDATE FORMULAS ===");
+    console.log(`Updating ${formulasToUpdate.length} formulas that reference ${oldName}`);
+    
+    for (const formula of formulasToUpdate) {
+      console.log(`\nUpdating formula in attribute ${formula.attribute} in collection ${formula.collection} in data context ${formula.dataContext}`);
+      console.log(`Old formula: ${formula.formula}`);
+      console.log(`New formula: ${formula.updatedFormula}`);
+      
+      const updateFormulaMsg = {
+        "action": "update",
+        "resource": `dataContext[${formula.dataContext}].collection[${formula.collection}].attribute[${formula.attribute}]`,
+        "values": {
+          "formula": formula.updatedFormula
+        }
+      };
+      
+      console.log("Sending request:", JSON.stringify(updateFormulaMsg));
+      const updateFormulaResult = await codapInterface.sendRequest(updateFormulaMsg) as IResult;
+      console.log(`Update formula result for attribute ${formula.attribute} success:`, updateFormulaResult.success);
+      if (updateFormulaResult.success) {
+        console.log(`Update formula result for attribute ${formula.attribute} values:`, JSON.stringify(updateFormulaResult.values));
+      } else {
+        console.error(`Failed to update formula for attribute ${formula.attribute}:`, updateFormulaResult);
+      }
+    }
+    
+    // Step 8: Check for calculator components that might contain formulas
+    console.log("\n=== STEP 8: CHECK FOR CALCULATOR COMPONENTS ===");
+    console.log("Checking for calculator components");
+    const getComponentListMsg = {
+      "action": "get",
+      "resource": "componentList"
+    };
+    console.log("Sending request:", JSON.stringify(getComponentListMsg));
+    const componentListResult = await codapInterface.sendRequest(getComponentListMsg) as IResult;
+    console.log("componentListResult success:", componentListResult.success);
+    if (componentListResult.success) {
+      console.log("componentListResult values:", JSON.stringify(componentListResult.values));
+    }
+    
+    if (componentListResult.success && Array.isArray(componentListResult.values)) {
+      const calculatorComponents = componentListResult.values.filter((component: any) => component.type === "calculator");
+      console.log(`Found ${calculatorComponents.length} calculator components`);
+      
+      // Unfortunately, there's no direct API to update calculator formulas
+      // We can only notify the user if there are calculator components
+      if (calculatorComponents.length > 0) {
+        console.log("WARNING: There are calculator components that might contain formulas referencing the old attribute name.");
+        console.log("These will need to be updated manually.");
+      }
+    }
+    
+    console.log("\n=== RENAME ATTRIBUTE PROCESS COMPLETED ===");
   } catch (error) {
     console.error("Error in renameAttribute:", error);
   }

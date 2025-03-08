@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { IAnimationStepSettings, IColumn, ViewType } from "../../types";
-import { renameAttribute } from "../../helpers/codap-helpers";
-import { kDataContextName } from "../../contants";
+import { renameAttribute, kDataContextName } from "../../helpers/codap-helpers";
 import { getDataContext } from "@concord-consortium/codap-plugin-api";
 
 // Temporarily commented out to fix build issues
@@ -28,11 +27,11 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
   }, [column.name]);
   
   const animate = (step: any, settings?: IAnimationStepSettings) => {
-    if (step.kind === "highlightColumn") {
+    if ((settings as any)?.animateColumnHeader) {
       setIsAnimating(true);
       setTimeout(() => {
         setIsAnimating(false);
-      }, 1000); // Use a fixed value instead of settings?.time
+      }, 500);
     }
   };
   
@@ -43,52 +42,46 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
     };
   }, [registerAnimationCallback]);
   
-  const handleNameChange = async () => {
-    console.log("handleNameChange called with columnName:", columnName, "current column.name:", column.name);
+  const handleNameChange = (newColumnName: string) => {
+    console.log("handleNameChange called with columnName:", newColumnName, "current column.name:", column.name);
     
-    if (columnName === column.name) {
-      console.log("No change in name, exiting");
-      setIsEditing(false);
+    if (newColumnName === column.name) {
       return;
     }
     
-    const oldName = column.name;
-    console.log("Updating column name from", oldName, "to", columnName);
+    console.log("Updating column name from", column.name, "to", newColumnName);
     
     // Update the column name in the global state
     setGlobalState(draft => {
-      const columnToUpdate = draft.model.columns[columnIndex];
-      if (columnToUpdate) {
-        columnToUpdate.name = columnName;
-        console.log("Updated column name in global state");
-      } else {
-        console.log("Column not found in global state");
+      const colIndex = draft.model.columns.findIndex(c => c.id === column.id);
+      if (colIndex !== -1) {
+        draft.model.columns[colIndex].name = newColumnName;
       }
     });
+    console.log("Updated column name in global state");
     
-    // Check if the data context exists directly
+    // If we have a CODAP data context, rename the attribute
     console.log("Checking if data context exists");
-    const dataContextResult = await getDataContext(kDataContextName);
-    console.log("dataContextResult:", dataContextResult);
-    
-    if (dataContextResult.success) {
-      try {
-        console.log("Data context exists, attempting to rename attribute from", oldName, "to", columnName);
-        await renameAttribute(kDataContextName, "items", oldName, columnName);
-        console.log(`Successfully renamed attribute from ${oldName} to ${columnName}`);
-      } catch (error) {
-        console.error("Error renaming attribute:", error);
+    getDataContext(kDataContextName).then((dataContextResult: any) => {
+      console.log("dataContextResult:", dataContextResult);
+      
+      if (dataContextResult.success) {
+        console.log("Data context exists, attempting to rename attribute from", column.name, "to", newColumnName);
+        renameAttribute(kDataContextName, "items", column.name, newColumnName)
+          .then(() => {
+            console.log("Successfully renamed attribute from", column.name, "to", newColumnName);
+            console.log("Formulas that reference the renamed variable will be updated automatically by CODAP");
+          })
+          .catch(error => {
+            console.error("Error renaming attribute:", error);
+          });
       }
-    } else {
-      console.log("Data context does not exist, skipping attribute rename");
-    }
-    
-    setIsEditing(false);
+    });
   };
   
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      handleNameChange();
+      handleNameChange(columnName);
     } else if (e.key === "Escape") {
       setColumnName(column.name);
       setIsEditing(false);
@@ -103,24 +96,16 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
           type="text"
           value={columnName}
           onChange={(e) => setColumnName(e.target.value)}
-          onBlur={handleNameChange}
+          onBlur={(e) => handleNameChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          autoFocus
+          disabled={isRunning}
         />
       ) : (
-        <div 
-          className="attr-name"
-          onClick={() => {
-            if (!isRunning) {
-              setIsEditing(true);
-              setTimeout(() => {
-                inputRef.current?.focus();
-                inputRef.current?.select();
-              }, 0);
-            }
-          }}
+        <div
+          className="column-name"
+          onClick={() => !isRunning && setIsEditing(true)}
         >
-          {columnName}
+          {column.name}
         </div>
       )}
       {column.devices.some(d => d.viewType === ViewType.Collector) && collectorContext && (

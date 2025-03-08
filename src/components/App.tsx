@@ -4,6 +4,7 @@ import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
 import { PasswordModal } from "./model/password-modal";
+import { initializeFormulaTracker } from "../utils/formula/FormulaVariableRenaming";
 
 import "./App.scss";
 
@@ -24,6 +25,11 @@ export const App = () => {
       draft.selectedDeviceId = lastDeviceId;
     });
   }, [lastDeviceId, setGlobalState]);
+
+  // Initialize formula tracker when the app starts
+  useEffect(() => {
+    initializeFormulaTracker(globalState);
+  }, [globalState]);
 
   const handleTabSelect = (tab: NavTab) => {
     setGlobalState(draft => {
