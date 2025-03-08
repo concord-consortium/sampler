@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { IAnimationStepSettings, IColumn, ViewType } from "../../types";
+import { renameAttribute } from "../../helpers/codap-helpers";
+import { kDataContextName } from "../../contants";
+import { getDataContext } from "@concord-consortium/codap-plugin-api";
 
 // Temporarily commented out to fix build issues
 // import "./device-column-header.scss";
@@ -41,28 +44,43 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
   }, [registerAnimationCallback]);
   
   const handleNameChange = async () => {
+    console.log("handleNameChange called with columnName:", columnName, "current column.name:", column.name);
+    
     if (columnName === column.name) {
+      console.log("No change in name, exiting");
       setIsEditing(false);
       return;
     }
+    
+    const oldName = column.name;
+    console.log("Updating column name from", oldName, "to", columnName);
     
     // Update the column name in the global state
     setGlobalState(draft => {
       const columnToUpdate = draft.model.columns[columnIndex];
       if (columnToUpdate) {
         columnToUpdate.name = columnName;
+        console.log("Updated column name in global state");
+      } else {
+        console.log("Column not found in global state");
       }
     });
     
-    // Update the attribute name in CODAP if there's a collector context
-    if (collectorContext) {
+    // Check if the data context exists directly
+    console.log("Checking if data context exists");
+    const dataContextResult = await getDataContext(kDataContextName);
+    console.log("dataContextResult:", dataContextResult);
+    
+    if (dataContextResult.success) {
       try {
-        // Simplified attribute handling to avoid type errors
-        console.log(`Updating attribute name from ${column.name} to ${columnName}`);
-        // The actual implementation would need to match the API's expected parameters
+        console.log("Data context exists, attempting to rename attribute from", oldName, "to", columnName);
+        await renameAttribute(kDataContextName, "items", oldName, columnName);
+        console.log(`Successfully renamed attribute from ${oldName} to ${columnName}`);
       } catch (error) {
-        console.error("Error updating attribute name:", error);
+        console.error("Error renaming attribute:", error);
       }
+    } else {
+      console.log("Data context does not exist, skipping attribute rename");
     }
     
     setIsEditing(false);

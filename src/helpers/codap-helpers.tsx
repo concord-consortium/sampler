@@ -7,7 +7,9 @@ import {
   createParentCollection,
   getAllItems,
   getAttributeList,
-  getDataContext} from "@concord-consortium/codap-plugin-api";
+  getDataContext,
+  getAttribute,
+  updateAttribute} from "@concord-consortium/codap-plugin-api";
 import { AttrMap, IAttribute, IGlobalState } from "../types";
 import { Updater } from "use-immer";
 
@@ -258,4 +260,180 @@ export const getNewExperimentInfo = async (experimentHash: string) => {
   }
 
   return {experimentNum, startingSampleNumber};
+};
+
+/**
+ * Renames an attribute in a CODAP data context by creating a new attribute with the new name,
+ * copying the data, and then deleting the old attribute.
+ * 
+ * @param dataContextName - The name of the data context
+ * @param collectionName - The name of the collection
+ * @param oldName - The current name of the attribute
+ * @param newName - The new name for the attribute
+ * @returns A promise that resolves when the operation is complete
+ */
+export const renameAttribute = async (
+  dataContextName: string,
+  collectionName: string,
+  oldName: string,
+  newName: string
+): Promise<void> => {
+  console.log("renameAttribute called with:", { dataContextName, collectionName, oldName, newName });
+
+  try {
+    // Step 1: Get all cases with their values
+    console.log("Getting all cases with values");
+    const getAllCasesMsg = {
+      "action": "get",
+      "resource": `dataContext[${dataContextName}].collection[${collectionName}].allCases`
+    };
+    const allCasesResult = await codapInterface.sendRequest(getAllCasesMsg) as IResult;
+    console.log("allCasesResult:", allCasesResult);
+
+    if (!allCasesResult.success) {
+      console.error("Failed to get all cases:", allCasesResult);
+      return;
+    }
+
+    // Log the structure of the response to understand it better
+    console.log("allCasesResult.values type:", typeof allCasesResult.values);
+    
+    // Extract the cases from the response
+    let cases: any[] = [];
+    if (allCasesResult.values && allCasesResult.values.cases && Array.isArray(allCasesResult.values.cases)) {
+      cases = allCasesResult.values.cases;
+      console.log(`Found ${cases.length} cases in allCasesResult.values.cases`);
+    }
+    
+    // If we couldn't find cases in the expected location, try to log more details
+    if (cases.length === 0) {
+      console.log("allCasesResult.values:", JSON.stringify(allCasesResult.values).substring(0, 200) + "...");
+      
+      // Try to find cases in other possible locations
+      if (Array.isArray(allCasesResult.values)) {
+        cases = allCasesResult.values;
+        console.log(`Found ${cases.length} cases in allCasesResult.values array`);
+      } else if (allCasesResult.values && typeof allCasesResult.values === 'object') {
+        // Log all keys to help debug
+        console.log("Keys in allCasesResult.values:", Object.keys(allCasesResult.values));
+        
+        // Check if there's a 'case' property
+        if (allCasesResult.values.case) {
+          console.log("Found 'case' property in allCasesResult.values");
+          if (Array.isArray(allCasesResult.values.case)) {
+            cases = allCasesResult.values.case;
+            console.log(`Found ${cases.length} cases in allCasesResult.values.case`);
+          }
+        }
+      }
+    }
+    
+    // If we still couldn't find cases, try one more approach
+    if (cases.length === 0 && allCasesResult.values && typeof allCasesResult.values === 'object') {
+      // The structure might be { cases: [{ case: { ... } }, ...] }
+      if (allCasesResult.values.cases && Array.isArray(allCasesResult.values.cases)) {
+        // Extract the 'case' property from each item
+        cases = allCasesResult.values.cases.map((item: any) => item.case).filter(Boolean);
+        console.log(`Extracted ${cases.length} cases from allCasesResult.values.cases[].case`);
+      }
+    }
+    
+    if (cases.length === 0) {
+      console.error("Could not find any cases in the response");
+      return;
+    }
+    
+    // Step 2: Create the new attribute
+    console.log(`Creating new attribute: ${newName}`);
+    const createAttributeMsg = {
+      "action": "create",
+      "resource": `dataContext[${dataContextName}].collection[${collectionName}].attribute`,
+      "values": {
+        "name": newName,
+        "title": newName
+      }
+    };
+    const createAttributeResult = await codapInterface.sendRequest(createAttributeMsg) as IResult;
+    console.log("createAttributeResult:", createAttributeResult);
+
+    if (!createAttributeResult.success) {
+      console.error("Failed to create new attribute:", createAttributeResult);
+      return;
+    }
+
+    // Step 3: Prepare updates for each case
+    console.log("Preparing updates for each case");
+    
+    const updates: any[] = [];
+    
+    // Process each case to extract the value from the old attribute
+    for (const caseItem of cases) {
+      console.log("Processing case:", JSON.stringify(caseItem).substring(0, 100) + "...");
+      
+      let caseId: string | number | null = null;
+      let oldValue: any = null;
+      
+      // Try to extract the case ID and value based on different possible structures
+      if (caseItem && caseItem.id) {
+        caseId = caseItem.id;
+        if (caseItem.values && caseItem.values[oldName] !== undefined) {
+          oldValue = caseItem.values[oldName];
+        }
+      } else if (caseItem && caseItem.case) {
+        // The structure might be { case: { id: ..., values: { ... } } }
+        if (caseItem.case.id) {
+          caseId = caseItem.case.id;
+          if (caseItem.case.values && caseItem.case.values[oldName] !== undefined) {
+            oldValue = caseItem.case.values[oldName];
+          }
+        }
+      }
+      
+      if (caseId !== null && oldValue !== null) {
+        console.log(`Case ${caseId}: ${oldName}=${oldValue}`);
+        updates.push({
+          id: caseId,
+          values: {
+            [newName]: oldValue
+          }
+        });
+      }
+    }
+    
+    if (updates.length > 0) {
+      console.log(`Updating ${updates.length} cases with values from ${oldName} to ${newName}`);
+      console.log("Sample updates:", JSON.stringify(updates.slice(0, 2)));
+      
+      // Update the cases with the new attribute values
+      const updateMsg = {
+        "action": "update",
+        "resource": `dataContext[${dataContextName}].collection[${collectionName}].case`,
+        "values": updates
+      };
+      const updateResult = await codapInterface.sendRequest(updateMsg) as IResult;
+      console.log("updateResult:", updateResult);
+      
+      if (!updateResult.success) {
+        console.error("Failed to update cases:", updateResult);
+      }
+    } else {
+      console.log("No cases found with values to update");
+    }
+
+    // Step 4: Delete the old attribute
+    console.log(`Deleting old attribute: ${oldName}`);
+    const deleteAttributeMsg = {
+      "action": "delete",
+      "resource": `dataContext[${dataContextName}].collection[${collectionName}].attribute[${oldName}]`
+    };
+    const deleteAttributeResult = await codapInterface.sendRequest(deleteAttributeMsg) as IResult;
+    console.log("deleteAttributeResult:", deleteAttributeResult);
+
+    if (!deleteAttributeResult.success) {
+      console.error("Failed to delete old attribute:", deleteAttributeResult);
+    }
+    
+  } catch (error) {
+    console.error("Error in renameAttribute:", error);
+  }
 };
