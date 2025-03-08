@@ -340,56 +340,56 @@ This document provides a detailed, step-by-step checklist for implementing the S
 
 ### 6.1 "Repeat Until" Condition
 
-- [ ] **Tests**
-  - [ ] Test condition parser
-    - [ ] Test parsing formula conditions
-    - [ ] Test parsing pattern conditions
-    - [ ] Test handling empty conditions
-  - [ ] Test condition evaluation
-    - [ ] Test CODAP API integration for formula evaluation
-    - [ ] Test handling of API errors and edge cases
-    - [ ] Test pattern matching evaluation
-    - [ ] Test condition evaluation with sample data
-  - [ ] Test UI components
-    - [ ] Test toggling between Select and Repeat modes
-    - [ ] Test condition input field validation
-    - [ ] Test help button and guidance modal
-    - [ ] Test disabled state when model is locked
-  - [ ] Test animation integration
-    - [ ] Test async condition checking during simulation
-    - [ ] Test stopping behavior when conditions are met
-    - [ ] Test continuation to next sample
+- [x] **Tests**
+  - [x] Test condition parser
+    - [x] Test parsing formula conditions
+    - [x] Test parsing pattern conditions
+    - [x] Test handling empty conditions
+  - [x] Test condition evaluation
+    - [x] Test CODAP API integration for formula evaluation
+    - [x] Test handling of API errors and edge cases
+    - [x] Test pattern matching evaluation
+    - [x] Test condition evaluation with sample data
+  - [x] Test UI components
+    - [x] Test toggling between Select and Repeat modes
+    - [x] Test condition input field validation
+    - [x] Test help button and guidance modal
+    - [x] Test disabled state when model is locked
+  - [x] Test animation integration
+    - [x] Test async condition checking during simulation
+    - [x] Test stopping behavior when conditions are met
+    - [x] Test continuation to next sample
 
-- [ ] **Implementation**
-  - [ ] Add `repeatUntilCondition` property to global state
-  - [ ] Create dedicated RepeatUntil component
-    - [ ] Implement mode toggle UI
-    - [ ] Add condition input field with validation
-    - [ ] Create help button with formula guidance
-  - [ ] Create condition parser utility
-    - [ ] Implement parsing for formula conditions
-    - [ ] Implement parsing for pattern conditions
-  - [ ] Implement CODAP API integration for formula evaluation
-    - [ ] Use formulaEngine/evalExpression endpoint
-    - [ ] Handle API responses and errors
-    - [ ] Implement fallback for API unavailability
-  - [ ] Implement pattern matching evaluation
-  - [ ] Update animation controller
-    - [ ] Add async condition checking logic
-    - [ ] Implement stopping behavior when condition is met
-    - [ ] Ensure proper continuation to next sample
-  - [ ] Add error handling
-    - [ ] Display validation errors
-    - [ ] Handle API errors gracefully
-    - [ ] Manage edge cases
+- [x] **Implementation**
+  - [x] Add `repeatUntilCondition` property to global state
+  - [x] Create dedicated RepeatUntil component
+    - [x] Implement mode toggle UI
+    - [x] Add condition input field with validation
+    - [x] Create help button with formula guidance
+  - [x] Create condition parser utility
+    - [x] Implement parsing for formula conditions
+    - [x] Implement parsing for pattern conditions
+  - [x] Implement CODAP API integration for formula evaluation
+    - [x] Use formulaEngine/evalExpression endpoint
+    - [x] Handle API responses and errors
+    - [x] Implement fallback for API unavailability
+  - [x] Implement pattern matching evaluation
+  - [x] Update animation controller
+    - [x] Add async condition checking logic
+    - [x] Implement stopping behavior when condition is met
+    - [x] Ensure proper continuation to next sample
+  - [x] Add error handling
+    - [x] Display validation errors
+    - [x] Handle API errors gracefully
+    - [x] Manage edge cases
 
-- [ ] **Error Resolution**
-  - [ ] Fix test failures related to the new `repeatUntilCondition` property
-  - [ ] Update mock global states in tests to include the new property
-  - [ ] Mock CODAP API responses in tests
-  - [ ] Fix animation context mock in tests to handle async operations
-  - [ ] Ensure all tests pass with the new implementation
-  - [ ] Verify backward compatibility with existing documents
+- [x] **Error Resolution**
+  - [x] Fix test failures related to the new `repeatUntilCondition` property
+  - [x] Update mock global states in tests to include the new property
+  - [x] Mock CODAP API responses in tests
+  - [x] Fix animation context mock in tests to handle async operations
+  - [x] Ensure all tests pass with the new implementation
+  - [x] Verify backward compatibility with existing documents
 
 ### 6.2 Skip Animation in "Fastest" Speed
 
@@ -469,22 +469,22 @@ This document provides a detailed, step-by-step checklist for implementing the S
 
 ### 7.2 Data Context Management
 
-- [ ] **Tests**
-  - [ ] Test context creation
-  - [ ] Test naming conventions
-  - [ ] Test attribute mapping
-  - [ ] Test context updates
+- [x] **Tests**
+  - [x] Test context creation
+  - [x] Test naming conventions
+  - [x] Test attribute mapping
+  - [x] Test context updates
 
-- [ ] **Implementation**
-  - [ ] Enhance context creation
-  - [ ] Implement naming conventions
-  - [ ] Improve attribute mapping
-  - [ ] Add context update handling
+- [x] **Implementation**
+  - [x] Enhance context creation
+  - [x] Implement naming conventions
+  - [x] Improve attribute mapping
+  - [x] Add context update handling
 
-- [ ] **Error Resolution**
-  - [ ] Verify all tests pass
-  - [ ] Fix any linting or type errors
-  - [ ] Ensure proper context management
+- [x] **Error Resolution**
+  - [x] Verify all tests pass
+  - [x] Fix any linting or type errors
+  - [x] Ensure proper context management
 
 ### 7.3 Formula Variable Renaming
 

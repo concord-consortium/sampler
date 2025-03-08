@@ -58,13 +58,13 @@
 |------|-------------|----------|--------------|
 | 4.1 | ✅ Enhance Collector device for better dataset handling | 5 days | 3.7 |
 | 4.2 | ✅ Write tests for enhanced Collector device | 3 days | 4.1 |
-| 4.3 | Improve CODAP data context integration | 4 days | 4.1 |
-| 4.4 | Write tests for CODAP integration | 3 days | 4.3 |
-| 4.5 | Enhance formula variable renaming | 4 days | 4.3 |
-| 4.6 | Write tests for formula handling | 3 days | 4.5 |
-| 4.7 | Add support for complex sampling strategies | 5 days | 4.5 |
-| 4.8 | Write tests for complex sampling | 3 days | 4.7 |
-| 4.9 | Review and refine simulation enhancements | 3 days | 4.2, 4.4, 4.6, 4.8 |
+| 4.3 | ✅ Improve CODAP data context integration | 4 days | 4.1 |
+| 4.4 | ✅ Write tests for CODAP integration | 3 days | 4.3 |
+| 4.5 | ✅ Enhance formula variable renaming | 4 days | 4.3 |
+| 4.6 | ✅ Write tests for formula handling | 3 days | 4.5 |
+| 4.7 | ✅ Add support for complex sampling strategies | 5 days | 4.5 |
+| 4.8 | ✅ Write tests for complex sampling | 3 days | 4.7 |
+| 4.9 | ✅ Review and refine simulation enhancements | 3 days | 4.2, 4.4, 4.6, 4.8 |
 
 ### Phase 5: Multi-Device and Compatibility (Weeks 9-10)
 
@@ -144,10 +144,11 @@
    - Basic measures functionality
 
 ### 6.2 Medium Priority Features (Should Have)
-1. **Advanced Sampling**
-   - "Repeat Until" conditions
-   - Formula evaluation
+1. **Advanced Sampling** ✅
+   - "Repeat Until" conditions - Implemented with formula and pattern matching support
+   - Formula evaluation - Integrated with CODAP API for robust formula evaluation
    - Speed optimization for large samples
+   - Condition-based experiment termination
 
 2. **UI Enhancements**
    - Scrolling functionality
