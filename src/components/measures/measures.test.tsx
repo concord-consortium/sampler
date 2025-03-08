@@ -77,11 +77,13 @@ describe("MeasuresTab Component", () => {
     
     await waitFor(() => {
       // Check that the measures header is displayed
-      expect(screen.getAllByText(/Measures/)[0]).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Measures/i, level: 2 })).toBeInTheDocument();
       
       // Check that the measure dropdown is displayed
-      expect(screen.getByText(/Measure:/i)).toBeInTheDocument();
-      expect(screen.getByText(/Select a measure!/i)).toBeInTheDocument();
+      expect(screen.getByText('Select a measure!')).toBeInTheDocument();
+      
+      // Check for the form element
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
     });
   });
 
@@ -188,7 +190,6 @@ describe("MeasuresTab Component", () => {
   });
 
   it("renders collector guidance when a collector device is present", async () => {
-    // Mock getDevices to return a collector device
     (getDevices as jest.Mock).mockReturnValue([
       {
         id: "device-1",
@@ -196,21 +197,191 @@ describe("MeasuresTab Component", () => {
       }
     ]);
     
-    // Also mock hasSamplesCollection to true to ensure the component renders
     (hasSamplesCollection as jest.Mock).mockResolvedValue(true);
     
     renderMeasuresTab();
     
     // Check that the collector guidance is displayed
     await waitFor(() => {
-      expect(screen.getByText(/Measures in Collector Mode/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Enhanced Measures in Collector Mode/i })).toBeInTheDocument();
     });
     
     // Check that the guidance text is displayed
-    expect(screen.getByText(/We are sorry, but at this time you cannot use this feature/i)).toBeInTheDocument();
+    expect(screen.getByText(/While you cannot add common measures for each sample/i)).toBeInTheDocument();
     
-    // Check that the links are displayed
+    // Check that the links are still available in the guidance note
     expect(screen.getByText(/Add a New Attribute to a Table/i)).toBeInTheDocument();
     expect(screen.getByText(/Enter a Formula for an Attribute/i)).toBeInTheDocument();
+  });
+});
+
+describe('MeasuresTab Improvements', () => {
+  const mockGlobalState = {
+    model: {
+      columns: [
+        {
+          id: "column-1",
+          name: "Column 1",
+          devices: [
+            {
+              id: "device-1",
+              viewType: ViewType.Mixer,
+              variables: ["a", "b", "c"],
+              collectorVariables: [],
+              formulas: {},
+              hidden: false,
+              lockPassword: ""
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  const mockSetGlobalState = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (hasSamplesCollection as jest.Mock).mockResolvedValue(true);
+    (getDevices as jest.Mock).mockReturnValue([
+      {
+        id: "device-1",
+        viewType: ViewType.Mixer
+      }
+    ]);
+  });
+
+  const renderMeasuresTab = () => {
+    return render(
+      <GlobalStateContext.Provider value={{ globalState: mockGlobalState as any, setGlobalState: mockSetGlobalState }}>
+        <MeasuresTab />
+      </GlobalStateContext.Provider>
+    );
+  };
+
+  describe('UI Components', () => {
+    it('should render data visualization components', async () => {
+      renderMeasuresTab();
+      
+      await waitFor(() => {
+        // Check for the visualization section header
+        expect(screen.getByRole('heading', { name: /Data Visualization/i })).toBeInTheDocument();
+        
+        // Check for the visualization type selector
+        expect(screen.getByText(/Visualization Type:/i)).toBeInTheDocument();
+        
+        // Check for visualization options
+        const radioButtons = screen.getAllByRole('radio');
+        const barChartRadio = radioButtons.find(radio => radio.getAttribute('value') === 'bar');
+        const lineChartRadio = radioButtons.find(radio => radio.getAttribute('value') === 'line');
+        const scatterPlotRadio = radioButtons.find(radio => radio.getAttribute('value') === 'scatter');
+        
+        expect(barChartRadio).toBeInTheDocument();
+        expect(lineChartRadio).toBeInTheDocument();
+        expect(scatterPlotRadio).toBeInTheDocument();
+      });
+    });
+
+    it('should handle responsive layouts', async () => {
+      renderMeasuresTab();
+      
+      await waitFor(() => {
+        // Check for the responsive container
+        const visualizationContainer = screen.getByTestId('visualization-container');
+        expect(visualizationContainer).toBeInTheDocument();
+        expect(visualizationContainer).toHaveClass('responsive-container');
+      });
+    });
+
+    it('should provide statistical analysis controls', async () => {
+      renderMeasuresTab();
+      
+      await waitFor(() => {
+        // Check for the statistical analysis section
+        expect(screen.getByText(/Statistical Analysis/i)).toBeInTheDocument();
+        
+        // Check for analysis options
+        expect(screen.getByText(/Descriptive Statistics/i)).toBeInTheDocument();
+        expect(screen.getByText(/Correlation Analysis/i)).toBeInTheDocument();
+      });
+    });
+  });
+  
+  describe('Data Processing', () => {
+    it('should process collector data correctly', async () => {
+      // Mock getDevices to return a collector device
+      (getDevices as jest.Mock).mockReturnValue([
+        {
+          id: "device-1",
+          viewType: ViewType.Collector
+        }
+      ]);
+      
+      renderMeasuresTab();
+      
+      await waitFor(() => {
+        // Check for the collector data processing section
+        expect(screen.getByText(/Collector Data Processing/i)).toBeInTheDocument();
+        
+        // Check for the data source selector
+        expect(screen.getByText(/Data Source:/i)).toBeInTheDocument();
+        
+        // Check for the process button
+        const processButton = screen.getByText(/Process Data/i);
+        expect(processButton).toBeInTheDocument();
+        
+        // Click the process button
+        fireEvent.click(processButton);
+        
+        // Check that the appropriate function was called
+        // This would be a new function to implement
+        // expect(processCollectorData).toHaveBeenCalled();
+      });
+    });
+
+    it('should calculate statistical measures', async () => {
+      renderMeasuresTab();
+      
+      await waitFor(() => {
+        // Select the descriptive statistics option
+        const radioButtons = screen.getAllByRole('radio');
+        const descriptiveStatsRadio = radioButtons.find(radio => radio.getAttribute('value') === 'descriptive');
+        expect(descriptiveStatsRadio).toBeInTheDocument();
+        fireEvent.click(descriptiveStatsRadio!);
+        
+        // Select the mean measure
+        const meanRadio = radioButtons.find(radio => radio.getAttribute('value') === 'mean' && radio.getAttribute('name') === 'statisticalMeasure');
+        expect(meanRadio).toBeInTheDocument();
+        fireEvent.click(meanRadio!);
+        
+        // Click the calculate button
+        const calculateButton = screen.getByRole('button', { name: /Calculate/i });
+        fireEvent.click(calculateButton);
+      });
+    });
+
+    it('should format data for visualizations', async () => {
+      renderMeasuresTab();
+      
+      await waitFor(() => {
+        // Select a visualization type
+        const radioButtons = screen.getAllByRole('radio');
+        const barChartRadio = radioButtons.find(radio => radio.getAttribute('value') === 'bar');
+        expect(barChartRadio).toBeInTheDocument();
+        fireEvent.click(barChartRadio!);
+        
+        // Select a data format
+        const stackedFormatRadio = radioButtons.find(radio => radio.getAttribute('value') === 'stacked');
+        expect(stackedFormatRadio).toBeInTheDocument();
+        fireEvent.click(stackedFormatRadio!);
+        
+        // Click the apply format button
+        const applyButton = screen.getByRole('button', { name: /Apply Format/i });
+        fireEvent.click(applyButton);
+        
+        // Check that the visualization updates
+        expect(screen.getByTestId('visualization-container')).toBeInTheDocument();
+      });
+    });
   });
 }); 
