@@ -17,6 +17,9 @@ module.exports = {
       typescript: {
         alwaysTryTypes: true,
         project: "."
+      },
+      node: {
+        extensions: [".js", ".jsx", ".ts", ".tsx", ".scss"]
       }
     },
     react: {

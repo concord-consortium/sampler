@@ -123,7 +123,7 @@ module.exports = (env, argv) => {
       ]
     },
     resolve: {
-      extensions: [ '.ts', '.tsx', '.js' ],
+      extensions: [ '.ts', '.tsx', '.js', '.scss' ],
     },
     stats: {
       // suppress "export not found" warnings about re-exported types

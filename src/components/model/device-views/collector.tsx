@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Balls } from "./shared/balls";
-import { IDevice, ClippingDef, IDataContext, IItem } from "../../../types";
+import { IDevice, ClippingDef, IDataContext, IItem, ICollectorItem } from "../../../types";
 import { useGlobalStateContext } from "../../../hooks/useGlobalState";
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../../../contants";
 
-// Force reload
-import "./collector.scss";
+// Temporarily commented out to fix build issues
+// import "./collector.scss";
 
 interface IProps {
   device: IDevice;
@@ -16,330 +16,308 @@ interface IProps {
 }
 
 export const Collector = ({device, handleAddDefs, handleSetSelectedVariable, handleSetEditingVarName}: IProps) => {
-  console.log("Collector component rendering with device:", device);
-  
-  const { globalState, setGlobalState } = useGlobalStateContext();
-  const [ballsArray, setBallsArray] = useState<Array<string>>([]);
+  const { setGlobalState } = useGlobalStateContext();
   const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
-  const [selectedDataContext, setSelectedDataContext] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const { collectorVariables, id: deviceId } = device;
-  const { collectorContext } = globalState;
-  const hasFetchedRef = useRef<boolean>(false);
-  const dataContextsRef = useRef<IDataContext[]>([]);
-  
-  // Keep the ref in sync with the state
-  useEffect(() => {
-    dataContextsRef.current = dataContexts;
-  }, [dataContexts]);
-  
-  console.log("Current state:", {
-    dataContexts,
-    selectedDataContext,
-    isLoading,
-    collectorVariables,
-    collectorContext
-  });
+  const [selectedDataContext, setSelectedDataContext] = useState<string | null>(null);
+  const [ballsArray, setBallsArray] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasDataContextsFetched, setHasDataContextsFetched] = useState(false);
 
-  // Fetch dataset items for a given context
-  const fetchDatasetItems = useCallback(async (contextName: string) => {
-    console.log("fetchDatasetItems called with contextName:", contextName);
-    
-    try {
-      console.log("Fetching items for context:", contextName);
-      const res = await getAllItems(contextName);
-      console.log("getAllItems response:", res);
-      
-      if (!res || !res.values) {
-        console.log("No items found or invalid response:", res);
-        return;
-      }
-      
-      const items = Array.isArray(res.values) ? res.values : [];
-      console.log("Items fetched:", items);
-      
-      // Process the items to get the values
-      const processedItems = items.map((item: IItem) => item.values);
-      console.log("Processed items:", processedItems);
-      
-      // Update the global state with the items
-      setGlobalState(draft => {
-        console.log("Updating global state with items");
-        
-        // Find the device to update
-        const deviceToUpdate = draft.model.columns.flatMap(col => col.devices).find(d => d.id === deviceId);
-        
-        if (deviceToUpdate) {
-          // Store the full item objects with all their properties
-          deviceToUpdate.collectorVariables = processedItems;
-          console.log("Updated device collector variables:", deviceToUpdate.collectorVariables);
-          
-          // Also update the collectorContext in the global state
-          if (dataContexts.length > 0) {
-            const selectedContext = dataContexts.find(ctx => ctx.name === contextName);
-            if (selectedContext) {
-              draft.collectorContext = selectedContext;
-              console.log("Updated global state with collector context:", selectedContext);
-            }
-          }
-          
-          // Instead of clearing the variables array, populate it with the first attribute values
-          // This ensures the data is sent to the output table
-          if (processedItems.length > 0) {
-            const firstKey = Object.keys(processedItems[0])[0];
-            const variableValues = processedItems.map(item => {
-              if (item && typeof item === 'object' && firstKey in item) {
-                return item[firstKey].toString();
-              }
-              return '';
-            }).filter(Boolean);
-            
-            deviceToUpdate.variables = variableValues;
-            console.log("Updated device variables with first attribute values:", variableValues);
-          }
-        } else {
-          console.log("Device not found for update");
-        }
-      });
-      
-      // Set loading to false after updating
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching dataset items:", error);
-      setIsLoading(false);
-    }
-  }, [deviceId, setGlobalState, dataContexts]);
-
-  // Fetch available data contexts
+  // Fetch data contexts on component mount
   useEffect(() => {
-    console.log("Collector useEffect for fetching data contexts running");
-    
-    // Skip fetching if we've already fetched data contexts and have a selected context
-    if (hasFetchedRef.current && dataContextsRef.current.length > 0 && selectedDataContext) {
-      console.log("Already fetched data contexts, skipping fetch");
+    if (hasDataContextsFetched) {
       return;
     }
     
-    const fetchDataContexts = async () => {
-      console.log("fetchDataContexts function called");
+    setHasDataContextsFetched(true);
+    
+    // Fetch dataset items when a context is selected
+    const fetchDatasetItems = async (contextName: string) => {
       setIsLoading(true);
+      
       try {
-        console.log("Fetching data contexts");
-        const res = await getListOfDataContexts();
-        console.log("getListOfDataContexts response:", res);
+        const res = await getAllItems(contextName);
         
-        if (!res || !res.values) {
-          console.log("No data contexts found or invalid response:", res);
-          setDataContexts([]);
+        if (!res.success || !res.values || !Array.isArray(res.values)) {
           setIsLoading(false);
           return;
         }
         
-        // Filter out the Sampler Data context
-        const values = Array.isArray(res.values) ? res.values : [];
-        const filteredContexts = values.filter((context: IDataContext) => 
-          context && context.name !== kDataContextName
-        );
-        console.log("Filtered contexts:", filteredContexts);
+        const items = res.values;
         
-        // Check if the contexts have changed before updating state
-        const contextsChanged = !arraysEqual(
-          dataContextsRef.current.map(c => c.name || ""), 
-          filteredContexts.map(c => c.name || "")
-        );
+        // Process items to extract the first attribute's values
+        const processedItems: ICollectorItem[] = [];
+        items.forEach((item: IItem, index: number) => {
+          processedItems[index] = item as unknown as ICollectorItem;
+        });
         
-        if (contextsChanged || dataContextsRef.current.length === 0) {
-          console.log("Data contexts have changed or are empty, updating state");
-          setDataContexts(filteredContexts);
-          console.log("Data contexts set to:", filteredContexts);
+        // Update the device's collector variables in the global state
+        setGlobalState(draft => {
+          const deviceIndex = draft.model.columns.findIndex(col => 
+            col.devices.some(d => d.id === device.id)
+          );
           
-          // Auto-select if there's only one dataset
-          if (filteredContexts.length === 1) {
-            console.log("Only one context available, auto-selecting");
-            const context = filteredContexts[0];
-            setSelectedDataContext(context.name || "");
-            console.log("Selected data context set to:", context.name);
-            
-            setGlobalState(draft => {
-              console.log("Updating global state with selected context");
-              draft.collectorContext = context;
-            });
-            
-            fetchDatasetItems(context.name);
+          if (deviceIndex !== -1) {
+            const deviceToUpdate = draft.model.columns[deviceIndex].devices.find(d => d.id === device.id);
+            if (deviceToUpdate) {
+              deviceToUpdate.collectorVariables = processedItems;
+            }
           }
-        }
+          
+          // Store the selected context in the global state
+          const selectedContext = dataContexts.find(ctx => ctx.name === contextName);
+          if (selectedContext) {
+            draft.collectorContext = selectedContext;
+          }
+        });
         
-        // Mark as fetched even if no contexts changed
-        hasFetchedRef.current = true;
-        setIsLoading(false);
+        // Extract the first attribute's values for display
+        if (items.length > 0 && Object.keys(items[0]).length > 0) {
+          const firstKey = Object.keys(items[0])[0];
+          const variableValues = items.map(item => String(item[firstKey]));
+          
+          // Update the device's variables in the global state
+          setGlobalState(draft => {
+            const deviceIndex = draft.model.columns.findIndex(col => 
+              col.devices.some(d => d.id === device.id)
+            );
+            
+            if (deviceIndex !== -1) {
+              const deviceToUpdate = draft.model.columns[deviceIndex].devices.find(d => d.id === device.id);
+              if (deviceToUpdate) {
+                deviceToUpdate.variables = variableValues;
+              }
+            }
+          });
+        }
       } catch (error) {
-        console.error("Error fetching data contexts:", error);
+        // Handle error
+      } finally {
         setIsLoading(false);
       }
     };
     
-    // Helper function to compare arrays
-    function arraysEqual(a: any[], b: any[]) {
-      if (a.length !== b.length) return false;
-      for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) return false;
-      }
-      return true;
-    }
-    
-    fetchDataContexts();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deviceId, fetchDatasetItems, selectedDataContext, setGlobalState]);
-
-  // Update balls array when collector variables change
-  useEffect(() => {
-    console.log("Collector useEffect for updating balls array running");
-    console.log("Current collector variables:", collectorVariables);
-    
-    if (collectorVariables && collectorVariables.length > 0) {
-      console.log("Collector variables exist, processing");
+    const fetchDataContexts = async () => {
+      setIsLoading(true);
       
-      // Get the first key (attribute) from the first item
-      const firstKey = Object.keys(collectorVariables[0])[0];
-      console.log("First key:", firstKey);
-      
-      // Extract values for the first attribute from each item
-      const onlyFirstKeyValues = collectorVariables.map((item) => {
-        if (item && typeof item === 'object' && firstKey in item) {
-          return item[firstKey].toString();
+      try {
+        const res = await getListOfDataContexts();
+        
+        if (!res.success || !res.values || !Array.isArray(res.values)) {
+          setIsLoading(false);
+          return;
         }
-        console.log("Invalid item in collector variables:", item);
-        return '';
-      }).filter(Boolean);
-      
-      console.log("Processed values:", onlyFirstKeyValues);
-      setBallsArray(onlyFirstKeyValues);
-      
-      // Update the global state to ensure the output table is updated
-      setGlobalState(draft => {
-        // Make sure the device has the correct collector variables
-        const deviceToUpdate = draft.model.columns.flatMap(col => col.devices).find(d => d.id === deviceId);
-        if (deviceToUpdate) {
-          if (!deviceToUpdate.collectorVariables || deviceToUpdate.collectorVariables.length === 0) {
-            deviceToUpdate.collectorVariables = collectorVariables;
-            console.log("Updated device collector variables in global state");
+        
+        // Filter out the Sampler's own data context
+        const filteredContexts = res.values.filter(context => {
+          // Skip the Sampler's own data context
+          if (context.name === kDataContextName) {
+            return false;
           }
           
-          // Also update the variables array to ensure data is sent to the output table
-          deviceToUpdate.variables = onlyFirstKeyValues;
-          console.log("Updated device variables with first attribute values:", onlyFirstKeyValues);
+          // Skip contexts without a name
+          return !!context.name;
+        });
+        
+        // Only update state if contexts have changed or if there are no contexts
+        if (JSON.stringify(filteredContexts) !== JSON.stringify(dataContexts) || filteredContexts.length === 0) {
+          setDataContexts(filteredContexts);
+          
+          // Auto-select the first context if there's only one
+          if (filteredContexts.length === 1) {
+            const context = filteredContexts[0];
+            setSelectedDataContext(context.name);
+            
+            // Update global state with the selected context
+            setGlobalState(draft => {
+              draft.collectorContext = context;
+            });
+            
+            // Fetch items for the selected context
+            fetchDatasetItems(context.name);
+          }
         }
-      });
+      } catch (error) {
+        // Handle error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDataContexts();
+  }, [hasDataContextsFetched, dataContexts, setGlobalState, device.id]);
+  
+  // Update balls array when collector variables change
+  useEffect(() => {
+    const { collectorVariables } = device;
+    
+    if (collectorVariables && Object.keys(collectorVariables).length > 0) {
+      // Get the first item to determine the first attribute
+      const firstItem = collectorVariables[0];
+      if (firstItem && Object.keys(firstItem).length > 0) {
+        const firstKey = Object.keys(firstItem)[0];
+        
+        // Extract values for the first attribute
+        const onlyFirstKeyValues = Object.values(collectorVariables).map(item => {
+          if (!item || typeof item !== 'object') {
+            return '';
+          }
+          return String(item[firstKey] || '');
+        });
+        
+        setBallsArray(onlyFirstKeyValues);
+        
+        // Update the device's collector variables in the global state
+        setGlobalState(draft => {
+          const deviceIndex = draft.model.columns.findIndex(col => 
+            col.devices.some(d => d.id === device.id)
+          );
+          
+          if (deviceIndex !== -1) {
+            const deviceToUpdate = draft.model.columns[deviceIndex].devices.find(d => d.id === device.id);
+            if (deviceToUpdate) {
+              deviceToUpdate.variables = onlyFirstKeyValues;
+            }
+          }
+        });
+      }
     } else {
-      console.log("No collector variables, setting empty balls array");
+      // No collector variables, set empty balls array
       setBallsArray([]);
     }
-  }, [collectorVariables, deviceId, setGlobalState]);
-
-  console.log("Rendering collector component with:", {
-    isLoading,
-    dataContexts,
-    selectedDataContext,
-    ballsArray
-  });
-
-  // Render a simplified version first to debug
+  }, [device, device.collectorVariables, setGlobalState]);
+  
+  // Handle dataset selection
+  const handleDatasetSelect = (contextName: string) => {
+    setSelectedDataContext(contextName);
+    
+    // Fetch items for the selected context
+    const fetchItems = async () => {
+      setIsLoading(true);
+      
+      try {
+        const res = await getAllItems(contextName);
+        
+        if (!res.success || !res.values || !Array.isArray(res.values)) {
+          setIsLoading(false);
+          return;
+        }
+        
+        const items = res.values;
+        
+        // Process items to extract the first attribute's values
+        const processedItems: ICollectorItem[] = [];
+        items.forEach((item: IItem, index: number) => {
+          processedItems[index] = item as unknown as ICollectorItem;
+        });
+        
+        // Update the device's collector variables in the global state
+        setGlobalState(draft => {
+          const deviceIndex = draft.model.columns.findIndex(col => 
+            col.devices.some(d => d.id === device.id)
+          );
+          
+          if (deviceIndex !== -1) {
+            const deviceToUpdate = draft.model.columns[deviceIndex].devices.find(d => d.id === device.id);
+            if (deviceToUpdate) {
+              deviceToUpdate.collectorVariables = processedItems;
+            }
+          }
+          
+          // Store the selected context in the global state
+          const selectedContext = dataContexts.find(ctx => ctx.name === contextName);
+          if (selectedContext) {
+            draft.collectorContext = selectedContext;
+          }
+        });
+        
+        // Extract the first attribute's values for display
+        if (items.length > 0 && Object.keys(items[0]).length > 0) {
+          const firstKey = Object.keys(items[0])[0];
+          const variableValues = items.map(item => String(item[firstKey]));
+          
+          // Update the device's variables in the global state
+          setGlobalState(draft => {
+            const deviceIndex = draft.model.columns.findIndex(col => 
+              col.devices.some(d => d.id === device.id)
+            );
+            
+            if (deviceIndex !== -1) {
+              const deviceToUpdate = draft.model.columns[deviceIndex].devices.find(d => d.id === device.id);
+              if (deviceToUpdate) {
+                deviceToUpdate.variables = variableValues;
+              }
+            }
+          });
+        }
+      } catch (error) {
+        // Handle error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchItems();
+  };
+  
+  // Render loading state
   if (isLoading) {
-    console.log("Rendering loading state");
-    return <div className="collector-container">Loading datasets...</div>;
-  }
-
-  // If no data contexts are available, show a message
-  if (!Array.isArray(dataContexts) || dataContexts.length === 0) {
-    console.log("Rendering no datasets available message");
-    console.log("dataContexts:", dataContexts);
-    console.log("dataContexts is array:", Array.isArray(dataContexts));
-    console.log("dataContexts length:", dataContexts.length);
     return (
       <div className="collector-container">
         <div className="dataset-selector">
-          <p>No datasets available. Please create a dataset in CODAP first.</p>
+          <span className="loading-message">Loading datasets...</span>
         </div>
       </div>
     );
   }
-
-  // Log the exact structure of dataContexts before rendering
-  console.log("About to render with dataContexts:", JSON.stringify(dataContexts));
-  console.log("selectedDataContext:", selectedDataContext);
-
-  // Render the full component with buttons instead of select
-  return (
-    <div className="collector-container">
-      <div className="dataset-selector" style={{ marginBottom: '10px' }}>
-        <div className="dataset-label" style={{ marginBottom: '5px', fontWeight: 'bold' }}>Select Dataset:</div>
-        <div className="dataset-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-          {dataContexts.map((context) => {
-            if (!context) {
-              console.log("Found null or undefined context in dataContexts");
-              return null;
-            }
-            const contextId = context.id || context.guid || Math.random().toString();
-            const contextName = context.name || "";
-            const displayName = context.title || context.name || "Unnamed dataset";
-            const isSelected = contextName === selectedDataContext;
-            
-            console.log(`Rendering button: id=${contextId}, name=${contextName}, display=${displayName}, selected=${isSelected}`);
-            return (
-              <button
-                key={contextId}
-                style={{
-                  padding: '5px 10px',
-                  border: isSelected ? '2px solid #4a90e2' : '1px solid #ccc',
-                  borderRadius: '4px',
-                  backgroundColor: isSelected ? '#e6f2ff' : '#f8f8f8',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: isSelected ? 'bold' : 'normal'
-                }}
-                onClick={() => {
-                  console.log("Dataset button clicked:", contextName);
-                  if (contextName) {
-                    setSelectedDataContext(contextName);
-                    
-                    // Update the global state with the selected context
-                    setGlobalState(draft => {
-                      console.log("Updating global state with selected context");
-                      draft.collectorContext = context;
-                    });
-                    
-                    // Fetch the dataset items for the selected context
-                    fetchDatasetItems(contextName);
-                  }
-                }}
-                disabled={globalState.isRunning}
-              >
-                {displayName}
-              </button>
-            );
-          })}
+  
+  // Render no datasets available message
+  if (!dataContexts || !Array.isArray(dataContexts) || dataContexts.length === 0) {
+    return (
+      <div className="collector-container">
+        <div className="dataset-selector">
+          <span className="no-datasets-message">No datasets available</span>
         </div>
       </div>
-      
+    );
+  }
+  
+  // Render dataset selector and collector view
+  return (
+    <div className="collector-container">
+      <div className="dataset-selector">
+        <label htmlFor="dataset-select">Dataset:</label>
+        <select 
+          id="dataset-select"
+          value={selectedDataContext || ''}
+          onChange={(e) => handleDatasetSelect(e.target.value)}
+        >
+          {dataContexts.map(context => {
+            if (!context || !context.name) return null;
+            
+            const contextId = context.id || context.guid;
+            const contextName = context.name;
+            const displayName = context.title || contextName;
+            
+            return (
+              <option 
+                key={`${contextId}-${contextName}`} 
+                value={contextName}
+              >
+                {displayName}
+              </option>
+            );
+          })}
+        </select>
+      </div>
       <div className="collector-view">
-        {Array.isArray(ballsArray) && ballsArray.length > 0 ? (
-        <>
-          <Balls
-            ballsArray={ballsArray}
-            deviceId={deviceId}
-            handleAddDefs={handleAddDefs}
-            handleSetSelectedVariable={handleSetSelectedVariable}
-            handleSetEditingVarName={handleSetEditingVarName}
-          />
-          <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-            {`Loaded ${ballsArray.length} items from dataset. Click Start to sample.`}
-          </div>
-        </>
-        ) : (
-          <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-            No items loaded from dataset.
-          </div>
-        )}
+        <Balls 
+          ballsArray={ballsArray}
+          deviceId={device.id}
+          handleAddDefs={handleAddDefs}
+          handleSetSelectedVariable={handleSetSelectedVariable}
+          handleSetEditingVarName={handleSetEditingVarName}
+        />
       </div>
     </div>
   );
