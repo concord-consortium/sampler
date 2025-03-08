@@ -4,6 +4,7 @@ import { getCoordinatesForPercent, getTextShift, getVariableColor } from "../sha
 import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
 import { TextBacker, updateTextBackerRefFn } from "./text-backer";
 import { ClippingDef, ITextBackerPos } from "../../../../types";
+import { calculatePulseEffect, calculateWedgeOpacity, calculateHighlightIntensity } from "./animation-helpers";
 
 interface IProps {
   percent: number;
@@ -19,6 +20,10 @@ interface IProps {
   isLastVariable: boolean;
   isBoundaryBeingDragged: boolean;
   deviceId: string;
+  // Animation props
+  isAnimating?: boolean;
+  isAnimationTarget?: boolean;
+  animationProgress?: number;
   handleAddDefs: (def: ClippingDef) => void;
   handleSetSelectedVariable: (variableIdx: number) => void;
   handleDeleteWedge: (e: React.MouseEvent, variableName: string) => void;
@@ -28,6 +33,7 @@ interface IProps {
 
 const kDarkTeal = "#008cba";
 const kLightBlue = "#dbf6ff";
+const kHighlightColor = "#fff";
 
 const getCoordinatesForVariableLabel = (percent: number, numUnique: number) => {
   const perc = percent + 0.75; // rotate 3/4 to start at top
@@ -46,9 +52,29 @@ const getEllipseCoords = (percent: number) => {
   return [x, y];
 };
 
-export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize, numUniqueVariables,
-  varArrayIdx, selectedWedge, isLastVariable, isDragging, isBoundaryBeingDragged, deviceId, handleSetSelectedVariable, handleDeleteWedge,
-  handleSetEditingPct, handleSetEditingVarName, handleAddDefs}: IProps) => {
+export const Wedge = ({
+  percent, 
+  lastPercent, 
+  index, 
+  variableName, 
+  labelFontSize, 
+  numUniqueVariables,
+  varArrayIdx, 
+  selectedWedge, 
+  isLastVariable, 
+  isDragging, 
+  isBoundaryBeingDragged, 
+  deviceId, 
+  // Animation props
+  isAnimating = false,
+  isAnimationTarget = false,
+  animationProgress = 0,
+  handleSetSelectedVariable, 
+  handleDeleteWedge,
+  handleSetEditingPct, 
+  handleSetEditingVarName, 
+  handleAddDefs
+}: IProps) => {
   const { globalState: { isRunning } } = useGlobalStateContext();
   const [wedgePath, setWedgePath] = useState("");
   const [wedgeColor, setWedgeColor] = useState(selectedWedge === variableName ? kDarkTeal : "");
@@ -112,6 +138,24 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
     handleSetSelectedVariable(varArrayIdx);
   };
 
+  // Calculate animation effects
+  const opacity = isAnimating ? calculateWedgeOpacity(isAnimationTarget, animationProgress) : 1;
+  const pulseScale = isAnimating && selectedWedge === variableName ? calculatePulseEffect(animationProgress) : 1;
+  const highlightIntensity = isAnimating && isAnimationTarget ? calculateHighlightIntensity(animationProgress) : 0;
+  
+  // Apply animation styles
+  const animationStyles: React.CSSProperties = {};
+  if (isAnimating) {
+    if (isAnimationTarget) {
+      // Target wedge gets a highlight effect
+      animationStyles.filter = `drop-shadow(0 0 ${highlightIntensity * 5}px ${kHighlightColor})`;
+    } else if (selectedWedge === variableName) {
+      // Selected but not target wedge gets a pulse effect
+      animationStyles.transform = `scale(${pulseScale})`;
+      animationStyles.transformOrigin = `${kSpinnerX}px ${kSpinnerY}px`;
+    }
+  }
+
   const buttonSize = 15;
   const offset = 3;
   const delButtonInnerShapePath = [
@@ -128,9 +172,19 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
         d={wedgePath}
         id={`${deviceId}-wedge-${variableName}`}
         fill={wedgeColor}
-        className="wedge"
+        className={`wedge ${isAnimating && isAnimationTarget ? 'wedge-target' : ''} ${isAnimating && selectedWedge === variableName ? 'wedge-pulse' : ''}`}
         onClick={handleWedgeClick}
-        style={{ cursor: isRunning ? "default" : isDragging? "grabbing" : "pointer" }}
+        style={{ 
+          cursor: isRunning ? "default" : isDragging? "grabbing" : "pointer",
+          opacity,
+          ...animationStyles
+        }}
+        stroke={isAnimating && isAnimationTarget ? kHighlightColor : "none"}
+        strokeWidth={isAnimating && isAnimationTarget ? 2 : 0}
+        data-animating={isAnimating ? "true" : undefined}
+        data-target={isAnimationTarget ? "true" : undefined}
+        data-pulse={isAnimating && selectedWedge === variableName ? "true" : undefined}
+        data-fade={isAnimating && !isAnimationTarget ? "true" : undefined}
       >
         <title>{Math.round(percent * 100)}%</title>
       </path>
@@ -149,7 +203,10 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
         fontSize={labelFontSize}
         fontWeight={selectedWedge === variableName ? "bold" : "normal"}
         clipPath={`url(#${deviceId}-wedge-clip-${variableName}`}
-        style={{ pointerEvents: "none"}}
+        style={{ 
+          pointerEvents: "none",
+          opacity: isAnimating && !isAnimationTarget ? opacity : 1
+        }}
         ref={updateTextBackerRefFn(setTextBackerPos)}
       >
         {variableName}
@@ -161,6 +218,9 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
             d={labelLinePath}
             strokeWidth={2}
             stroke={"#000"}
+            style={{ 
+              opacity: isAnimating && !isAnimationTarget ? opacity : 1
+            }}
           />
           <text
             id={`${deviceId}-wedge-pct-${variableName}`}
@@ -168,14 +228,23 @@ export const Wedge = ({percent, lastPercent, index, variableName, labelFontSize,
             y={pctPos.y + 4}
             fontSize={12}
             textAnchor="middle"
-            style={{cursor: "pointer"}}
+            style={{
+              cursor: "pointer",
+              opacity: isAnimating && !isAnimationTarget ? opacity : 1
+            }}
             onClick={handleSetEditingPct}
           >
             {Math.round(percent * 100)}%
           </text>
           {/* Only show delete button when selected, not just when boundary is dragged */}
-          { selectedWedge === variableName &&
-            <g style={{cursor: "pointer"}} onClick={(e) => handleDeleteWedge(e, variableName)}>
+          { selectedWedge === variableName && !isRunning &&
+            <g 
+              style={{
+                cursor: "pointer",
+                opacity: isAnimating ? opacity : 1
+              }} 
+              onClick={(e) => handleDeleteWedge(e, variableName)}
+            >
               <rect
                 x={delBtnPos.x - (buttonSize / 2)}
                 y={delBtnPos.y - (buttonSize / 2)}

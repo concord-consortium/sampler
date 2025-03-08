@@ -7,6 +7,7 @@ import { useGlobalStateContext } from "../../../../hooks/useGlobalState";
 import { TextBacker, updateTextBackerRefFn } from "./text-backer";
 import { Needle } from "./needle";
 import { ClippingDef, IDevice, ITextBackerPos, IVariableLocation } from "../../../../types";
+import { useSpinnerAnimation } from "../../../../hooks/useSpinnerAnimation";
 
 interface IProps {
   device: IDevice;
@@ -30,6 +31,31 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
   }>({ beforeWedge: null, afterWedge: null });
   const { variables, id } = device;
   const [textBackerPos, setTextBackerPos] = useState<ITextBackerPos|undefined>(undefined);
+  
+  // Define uniqueVariables first so it can be used in the animation hook
+  const uniqueVariables = useMemo(() => [...new Set(variables)], [variables]);
+  const fontSize = useMemo(() => uniqueVariables.length >= 20 ? 6 : (uniqueVariables.length >= 10 ? 10 : 16), [uniqueVariables]);
+  
+  // calculate the location of all the variables
+  const variableLocations = useMemo(() => uniqueVariables.reduce<Record<string,IVariableLocation>>((acc, variableName, index) => {
+    const counts = variables.reduce((acc2, val) => {
+      acc2[val] = (acc2[val] || 0) + 1;
+      return acc2;
+    }, {} as Record<string, number>);
+    let lastPercent = 0;
+    for (let i = 0; i < index; i++) {
+      lastPercent += (counts[uniqueVariables[i]] / variables.length);
+    }
+    const currPercent = (counts[variableName] / variables.length);
+    acc[variableName] = {lastPercent, currPercent};
+    return acc;
+  }, {}), [variables, uniqueVariables]);
+  
+  // Use our custom hook for spinner animation
+  const spinnerAnimation = useSpinnerAnimation({
+    deviceId: id,
+    variableLocations
+  });
 
   useEffect(() => {
     if (selectedVariableIdx !== null) {
@@ -45,24 +71,6 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
       setDraggingBoundary({ beforeWedge: null, afterWedge: null });
     }
   }, [isDragging]);
-
-  const uniqueVariables = useMemo(() => [...new Set(variables)], [variables]);
-  const fontSize = useMemo(() => uniqueVariables.length >= 20 ? 6 : (uniqueVariables.length >= 10 ? 10 : 16), [uniqueVariables]);
-
-  // calculate the location of all the variables
-  const variableLocations = useMemo(() => uniqueVariables.reduce<Record<string,IVariableLocation>>((acc, variableName, index) => {
-    const counts = variables.reduce((acc2, val) => {
-      acc2[val] = (acc2[val] || 0) + 1;
-      return acc2;
-    }, {} as Record<string, number>);
-    let lastPercent = 0;
-    for (let i = 0; i < index; i++) {
-      lastPercent += (counts[uniqueVariables[i]] / variables.length);
-    }
-    const currPercent = (counts[variableName] / variables.length);
-    acc[variableName] = {lastPercent, currPercent};
-    return acc;
-  }, {}), [variables, uniqueVariables]);
 
   const handleLabelClick = () => {
     if (isRunning) return;
@@ -136,6 +144,10 @@ export const Spinner = ({device, selectedVariableIdx, isDragging, handleSetSelec
                 draggingBoundary.beforeWedge === variableName || 
                 draggingBoundary.afterWedge === variableName
               }
+              // Animation props
+              isAnimating={spinnerAnimation.isAnimating}
+              isAnimationTarget={spinnerAnimation.isAnimationTarget(variableName)}
+              animationProgress={spinnerAnimation.animationProgress}
               handleAddDefs={handleAddDefs}
               handleSetSelectedVariable={handleSetSelectedVariable}
               handleSetEditingVarName={handleSetEditingVarName}
