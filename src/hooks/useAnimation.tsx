@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef } from "react";
-import { AnimationCallback, AnimationStep, IAnimationContext, IAnimationRuntime, IAnimationStepSettings, IExperimentResults, IExperimentAnimationResults, IModel, ISampleResults, Speed, ISampleVariableIndexes, AvailableDeviceVariableIndexes } from "../types";
+import { AnimationCallback, AnimationStep, IAnimationContext, IAnimationRuntime, IAnimationStepSettings, IExperimentResults, IExperimentAnimationResults, IModel, ISampleResults, Speed, ISampleVariableIndexes, AvailableDeviceVariableIndexes, ViewType } from "../types";
 import { createItems, selectCases } from "@concord-consortium/codap-plugin-api";
 import { kDataContextName } from "../contants";
 import { useGlobalStateContext } from "./useGlobalState";
@@ -95,6 +95,11 @@ export const useAnimationContextValue = (): IAnimationContext => {
     const resultsVariableIndex: ISampleVariableIndexes = {};
 
     while (currentDevice) {
+      // Check if this is a collector device with collector variables
+      const isCollector = currentDevice.viewType === ViewType.Collector && 
+                          currentDevice.collectorVariables && 
+                          currentDevice.collectorVariables.length > 0;
+      
       const availableVariableIndexes = variableIndexes[currentDevice.id];
       if (availableVariableIndexes.length === 0) {
         break;
@@ -102,14 +107,48 @@ export const useAnimationContextValue = (): IAnimationContext => {
 
       const randomIndex = Math.floor(Math.random() * availableVariableIndexes.length);
       const selectedIndex = availableVariableIndexes[randomIndex];
-      const selectedVariable = currentDevice.variables[selectedIndex];
+      
+      // Get the column name for this device
+      const columnName = model.columns.find(column => column.devices.find(device => device.id === currentDevice.id))?.name || "";
+      
+      // Handle collector device differently
+      let selectedVariable;
+      if (isCollector) {
+        // For collector, get the full item from collectorVariables
+        const collectorItem = currentDevice.collectorVariables[selectedIndex];
+        
+        // Use the first attribute as the main variable for animation
+        const firstKey = Object.keys(collectorItem)[0];
+        selectedVariable = collectorItem[firstKey].toString();
+        
+        // Add all attributes from the collector item to the outputs
+        for (const [key, value] of Object.entries(collectorItem)) {
+          outputs[key] = value;
+          previousOutputs[key] = value;
+        }
+        
+        // Also set the column name output for the collector
+        if (columnName) {
+          outputs[columnName] = selectedVariable;
+          previousOutputs[columnName] = selectedVariable;
+        }
+        
+        console.log("Collector sample:", { 
+          deviceId: currentDevice.id, 
+          columnName, 
+          selectedVariable, 
+          outputs 
+        });
+      } else {
+        // Regular device handling
+        selectedVariable = currentDevice.variables[selectedIndex];
+      }
 
       if (!replacement) {
         availableVariableIndexes.splice(randomIndex, 1);
       }
 
       let nextDeviceId: string | null = null;
-      const columnName = model.columns.find(column => column.devices.find(device => device.id === currentDevice.id))?.name || "";
 
       for (const [deviceId, formula] of Object.entries(currentDevice.formulas)) {
         if (formula === "*") {
@@ -135,12 +174,15 @@ export const useAnimationContextValue = (): IAnimationContext => {
         }
       }
 
-      if (columnName) {
+      if (columnName && !isCollector) {
+        // For regular devices, just add the selected variable
         outputs[columnName] = selectedVariable;
         previousOutputs[columnName] = selectedVariable;
-        outputsForAnimation[currentDevice.id] = selectedVariable;
-        resultsVariableIndex[currentDevice.id] = selectedIndex;
       }
+      
+      // Always update animation outputs
+      outputsForAnimation[currentDevice.id] = selectedVariable;
+      resultsVariableIndex[currentDevice.id] = selectedIndex;
 
       if (nextDeviceId) {
         const nextDevice = getDeviceById(model, nextDeviceId);
@@ -159,7 +201,23 @@ export const useAnimationContextValue = (): IAnimationContext => {
     const animationResults: IExperimentAnimationResults = [];
     const firstDevice = model.columns[0].devices[0];
     const endSampleNumber = startingSampleNumber + Number(numSamples);
-    const numItems = firstDevice.variables.length;
+    
+    // Check if this is a collector device
+    const isCollector = firstDevice.viewType === ViewType.Collector && 
+                        firstDevice.collectorVariables && 
+                        firstDevice.collectorVariables.length > 0;
+    
+    // Use the appropriate array for determining numItems
+    const numItems = isCollector ? firstDevice.collectorVariables.length : firstDevice.variables.length;
+    
+    console.log("getAllExperimentSamples running with:", {
+      experimentNum,
+      startingSampleNumber,
+      endSampleNumber,
+      numItems,
+      isCollector,
+      deviceType: firstDevice.viewType
+    });
     
     // Parse the repeat until condition if it exists
     const parsedCondition = repeat && repeatUntilCondition ? parseCondition(repeatUntilCondition) : null;
@@ -174,7 +232,12 @@ export const useAnimationContextValue = (): IAnimationContext => {
       const sampleResultsForAnimation = [];
       const variableIndexes = model.columns.reduce<AvailableDeviceVariableIndexes>((acc, column) => {
         return column.devices.reduce<typeof acc>((acc2, device) => {
-          acc2[device.id] = device.variables.map((_, index) => index);
+          // For collector devices, use collectorVariables length if available
+          if (device.viewType === ViewType.Collector && device.collectorVariables && device.collectorVariables.length > 0) {
+            acc2[device.id] = device.collectorVariables.map((_, index) => index);
+          } else {
+            acc2[device.id] = device.variables.map((_, index) => index);
+          }
           return acc2;
         }, acc);
       }, {});
@@ -218,6 +281,11 @@ export const useAnimationContextValue = (): IAnimationContext => {
         break;
       }
     }
+
+    console.log("getAllExperimentSamples completed with:", {
+      resultsLength: results.length,
+      animationResultsLength: animationResults.length
+    });
 
     return { results, animationResults };
   };

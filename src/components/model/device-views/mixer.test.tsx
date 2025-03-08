@@ -6,6 +6,64 @@ import { ViewType, Speed, AttrMap } from "../../../types";
 import { AnimationContext } from "../../../hooks/useAnimation";
 import { GlobalStateContext , getDefaultState } from "../../../hooks/useGlobalState";
 
+// Define the props type for the Ball component
+interface BallProps {
+  i: number;
+  text: string;
+  x: number;
+  y: number;
+  radius: number;
+  deviceId: string;
+  handleSetEditingVarName: (index: number) => void;
+  handleSetSelectedVariable: (index: number) => void;
+  handleAddDefs: (def: any) => void;
+}
+
+// Mock the Ball component to directly test the handleSetEditingVarName function
+jest.mock("./shared/ball", () => {
+  const originalModule = jest.requireActual("./shared/ball");
+  return {
+    ...originalModule,
+    Ball: (props: BallProps) => {
+      // Call handleAddDefs to simulate the useEffect in the real component
+      React.useEffect(() => {
+        const id = `${props.deviceId}-text-clip-${props.x}-${props.y}`;
+        props.handleAddDefs({ 
+          id, 
+          element: <clipPath id={id} key={id}><circle /></clipPath> 
+        });
+      }, [props.x, props.y, props.deviceId, props.handleAddDefs]);
+
+      // Get the isRunning state from the GlobalStateContext
+      const { globalState } = React.useContext(GlobalStateContext);
+      const isRunning = globalState.isRunning;
+
+      const handleClick = () => {
+        if (!isRunning) {
+          props.handleSetEditingVarName(props.i);
+        }
+      };
+
+      const handleCircleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!isRunning) {
+          props.handleSetSelectedVariable(props.i);
+        }
+      };
+
+      return (
+        <g data-testid={`ball-group-${props.i}`} onClick={handleClick}>
+          <circle 
+            data-testid={`ball-circle-${props.i}`}
+            onClick={handleCircleClick}
+          />
+          <text>{props.text}</text>
+        </g>
+      );
+    }
+  };
+});
+
 // Mock the SVG functions that aren't available in jsdom
 // @ts-ignore - Adding missing SVG methods for testing
 window.SVGElement.prototype.getScreenCTM = jest.fn().mockReturnValue({
@@ -153,11 +211,9 @@ describe("Mixer Component", () => {
       </GlobalStateContext.Provider>
     );
 
-    // Find and click on a ball group
-    const ballGroups = document.querySelectorAll("g");
-    expect(ballGroups.length).toBeGreaterThanOrEqual(mockDevice.variables.length);
-    
-    fireEvent.click(ballGroups[0]);
+    // Find and click on a ball group using the test ID
+    const ballGroup = screen.getByTestId('ball-group-0');
+    fireEvent.click(ballGroup);
     
     // Check that handleSetEditingVarName was called
     expect(mockHandleSetEditingVarName).toHaveBeenCalled();

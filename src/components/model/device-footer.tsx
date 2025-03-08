@@ -13,22 +13,22 @@ import "./device-footer.scss";
 interface IProps {
   device: IDevice;
   columnIndex: number;
-  dataContexts: IDataContext[];
+  dataContexts?: IDataContext[];
   handleUpdateVariables: (variables: IVariables) => void;
   handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
-  handleSelectDataContext: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleSpecifyVariables: () => void;
 }
 
-export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, dataContexts}: IProps) => {
+export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSpecifyVariables, dataContexts = []}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model, selectedDeviceId, isRunning } = globalState;
+  const { model, isRunning, collectorContext } = globalState;
   const { viewType } = device;
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
   const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
   const showCollectorButton = getNumDevices(model) === 1;
   const showMergeButton = siblingDevices.length > 0;
+  const selectedDataContext = collectorContext?.name || "";
 
   const handleAddVariable = () => {
     const { variables } = device;
@@ -101,10 +101,32 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
   };
 
   const handleUpdateViewType = (view: ViewType) => {
+    console.log("handleUpdateViewType called with view:", view);
+    console.log("Current device:", device);
+    
     setGlobalState(draft => {
-      const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+      console.log("Updating global state with new view type");
+      const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === device.id);
+      console.log("Device to update:", deviceToUpdate);
+      
       if (deviceToUpdate) {
         deviceToUpdate.viewType = view;
+        console.log("Updated device view type to:", view);
+        
+        // If switching to Collector and there's only one device, check for available datasets
+        if (view === ViewType.Collector && getNumDevices(draft.model) === 1) {
+          console.log("Switching to Collector mode with single device");
+          // The actual dataset selection is handled in the Collector component
+        }
+        
+        // If switching from Collector to another type, reset collector-specific state
+        if (deviceToUpdate.viewType !== ViewType.Collector && view !== ViewType.Collector) {
+          console.log("Switching from Collector to another type, resetting state");
+          deviceToUpdate.collectorVariables = [];
+          draft.collectorContext = undefined;
+        }
+      } else {
+        console.log("Device not found for update");
       }
     });
   };
@@ -119,35 +141,67 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
         </div>
       }
       <div className="device-buttons">
-        {
-          Object.values(ViewType).map((deviceType) => {
-            const renderButton = deviceType !== ViewType.Collector || showCollectorButton;
-            if (renderButton) {
-              return (
-                <button
-                  className={viewType === deviceType ? "selected" : ""}
-                  disabled={isRunning}
-                  onClick={() => handleUpdateViewType(deviceType)}
-                  key={deviceType}>
-                    {deviceType}
-                </button>
-              );
-            }
-          })
-        }
+        <div className="device-type-buttons">
+          <button
+            className={`device-type-button ${viewType === ViewType.Mixer ? "selected" : ""}`}
+            onClick={() => handleUpdateViewType(ViewType.Mixer)}
+            disabled={isRunning}
+          >
+            Mixer
+          </button>
+          <button
+            className={`device-type-button ${viewType === ViewType.Spinner ? "selected" : ""}`}
+            onClick={() => handleUpdateViewType(ViewType.Spinner)}
+            disabled={isRunning}
+          >
+            Spinner
+          </button>
+          {showCollectorButton && (
+            <button
+              className={`device-type-button ${viewType === ViewType.Collector ? "selected" : ""}`}
+              onClick={() => handleUpdateViewType(ViewType.Collector)}
+              disabled={isRunning}
+            >
+              Collector
+            </button>
+          )}
+        </div>
       </div>
       <div className="device-buttons">
         {
           viewType === ViewType.Collector ?
-            <select disabled={isRunning} onChange={handleSelectDataContext}>
-              <option value="">Select a data context</option>
-              {
-                dataContexts.map((context) => {
-                  return <option value={context.name} key={context.id}>{context.name}</option>;
-                })
-              }
-            </select>
-            :
+            <div className="data-context-selector" style={{ marginBottom: '5px' }}>
+              <div style={{ marginBottom: '5px', fontSize: '12px' }}>Available Datasets:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {Array.isArray(dataContexts) && dataContexts.length > 0 ? 
+                  dataContexts.map(context => {
+                    const contextId = context.id || context.guid || Math.random().toString();
+                    const contextName = context.name || "";
+                    const displayName = context.title || context.name || "Unnamed dataset";
+                    const isSelected = selectedDataContext === contextName;
+                    
+                    return (
+                      <button
+                        key={contextId}
+                        style={{
+                          padding: '3px 8px',
+                          border: isSelected ? '2px solid #4a90e2' : '1px solid #ccc',
+                          borderRadius: '4px',
+                          backgroundColor: isSelected ? '#e6f2ff' : '#f8f8f8',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: isSelected ? 'bold' : 'normal'
+                        }}
+                        disabled={true}
+                      >
+                        {displayName}
+                      </button>
+                    );
+                  })
+                : <div>No datasets available</div>}
+              </div>
+            </div>
+          :
             <>
               <button disabled={isRunning} onClick={handleAddDevice}>{addButtonLabel}</button>
               {showMergeButton && <button disabled={isRunning} onClick={handleMergeDevices}>Merge</button>}

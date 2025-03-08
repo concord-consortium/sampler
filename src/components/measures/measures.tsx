@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { addMeasure, hasSamplesCollection } from "../../helpers/codap-helpers";
+import { getDevices } from "../../models/model-model";
+import { ViewType } from "../../types";
 
 import "./measures.scss";
 
@@ -22,13 +24,18 @@ const getFormula = (measure: Measure, left: string, op: string, right: string) =
 };
 
 export const MeasuresTab = () => {
-  const { globalState: { model: { columns } } } = useGlobalStateContext();
+  const { globalState } = useGlobalStateContext();
+  const { model: { columns } } = globalState;
   const [selectedMeasure, setSelectedMeasure] = useState<Measure>("default");
   const [measureName, setMeasureName] = useState("");
   const [lValue, setLValue] = useState("");
   const [opValue, setOpValue] = useState("=");
   const [rValue, setRValue] = useState("");
   const [hasSamples, setHasSamples] = useState(false);
+  
+  // Check if we're in collector mode
+  const devices = getDevices(globalState.model);
+  const hasCollectorDevice = devices.some(device => device.viewType === ViewType.Collector);
 
   useEffect(() => {
     const checkForSamples = async () => {
@@ -145,6 +152,32 @@ export const MeasuresTab = () => {
     return null;
   };
 
+  // Render collector mode guidance message
+  const renderCollectorGuidance = () => {
+    return (
+      <div className="collector-guidance">
+        <h3>Measures in Collector Mode</h3>
+        <p>
+          We are sorry, but at this time you cannot use this feature to add common measures for each sample when using the Collector device. 
+          You can however, create a new attribute in the Sampler Data Table at the Sample level to compute a measure for a sample.
+        </p>
+        <p>For help see:</p>
+        <ul>
+          <li>
+            <a href="https://codap.concord.org/how-to/add-a-new-attribute-to-a-table/" target="_blank" rel="noopener noreferrer">
+              Add a New Attribute to a Table
+            </a>
+          </li>
+          <li>
+            <a href="https://codap.concord.org/how-to/enter-a-formula-for-an-attribute/" target="_blank" rel="noopener noreferrer">
+              Enter a Formula for an Attribute
+            </a>
+          </li>
+        </ul>
+      </div>
+    );
+  };
+
   if (!hasSamples) {
     return (
       <div className="measures-tab">
@@ -157,46 +190,64 @@ export const MeasuresTab = () => {
 
   return (
     <div className="measures-tab">
-      <div id="measures-instructions">
-        Add common measures using formulas for each sample using the form below.
-      </div>
-      <div id="select-measure-container">
-        <label htmlFor="select-measure" id="select-measure-label">
-          Select formula:
-        </label>
-        <div className="select-measure-dropdown">
-          <select id="select-measure" onChange={handleSelectMeasureChange} value={selectedMeasure}>
-            <option value="default">Select a formula</option>
-            <option value="conditional_count">Count</option>
-            <option value="sum">Sum</option>
-            <option value="mean">Mean</option>
-            <option value="median">Median</option>
-            <option value="conditional_percentage">Conditional percentage</option>
-          </select>
-        </div>
-      </div>
-      {selectedMeasure !== "default" && (
-        <div id="define-measure-container">
-          <label id="define-measure-label">
-            Customize formula:
-          </label>
-          <div id="measure-formulas">
-            <div className="formula">
-              {renderFormulaInput()}
+      {hasCollectorDevice ? (
+        renderCollectorGuidance()
+      ) : (
+        <>
+          <div className="measures-header">
+            <h2>Measures</h2>
+            <div className="measures-description">
+              <p>
+                Measures are calculations that are performed on each sample. For example, you can count the number of times a particular value appears in a sample.
+              </p>
             </div>
           </div>
-        </div>
+          <div className="measures-form">
+            <div className="form-row">
+              <div className="form-label">Measure:</div>
+              <div className="form-input">
+                <select onChange={handleSelectMeasureChange} value={selectedMeasure}>
+                  <option value="default">Select a measure!</option>
+                  <option value="sum">Sum</option>
+                  <option value="mean">Mean</option>
+                  <option value="median">Median</option>
+                  <option value="conditional_count">Count if</option>
+                  <option value="conditional_percentage">Percentage if</option>
+                </select>
+              </div>
+            </div>
+            {selectedMeasure !== "default" && (
+              <>
+                <div className="form-row">
+                  <div className="form-label">Name:</div>
+                  <div className="form-input">
+                    <input type="text" onChange={handleChangeMeasureName} value={measureName} placeholder="Optional name" />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-label">Formula:</div>
+                  <div className="form-input formula-container">
+                    {renderFormulaInput()}
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-label"></div>
+                  <div className="form-input">
+                    <button
+                      className="add-measure-button"
+                      disabled={disableAddButton || !hasSamples}
+                      onClick={handleAddMeasure}
+                    >
+                      Add Measure
+                    </button>
+                    {!hasSamples && <div className="no-samples-warning">You need to run the simulation first!</div>}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </>
       )}
-      <div id="measure-name-container">
-        <label htmlFor="measure-name" id="measure-name-label">Name the measure: </label>
-        <input type="text" id="measure-name" placeholder="Enter measure name here (optional)" value={measureName} onChange={handleChangeMeasureName} />
-      </div>
-
-      <div id="measures-bottom">
-        <button id="add-measure" onClick={handleAddMeasure} disabled={disableAddButton} className={disableAddButton ? "disabled" : ""}>
-          Add Measure
-        </button>
-      </div>
     </div>
   );
 };

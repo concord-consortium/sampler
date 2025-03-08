@@ -4,7 +4,9 @@ import { getAttribute, updateAttribute } from "@concord-consortium/codap-plugin-
 import { kDataContextName } from "../../contants";
 import { getNewColumnName } from "../helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
-import { AnimationStep, IAnimationStepSettings, IColumn } from "../../types";
+import { AnimationStep, IAnimationStepSettings, IColumn, ViewType } from "../../types";
+
+import "./device-column-header.scss";
 
 interface IProps {
   column: IColumn;
@@ -14,11 +16,18 @@ interface IProps {
 export const ColumnHeader = ({column, columnIndex}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { registerAnimationCallback } = useAnimationContext();
-  const { model, isRunning } = globalState;
+  const { model, isRunning, collectorContext } = globalState;
   const [columnName, setColumnName] = useState(column.name);
   const inputRef = useRef<HTMLInputElement>(null);
   const [label, setLabel] = useState("");
   const [opacity, setOpacity] = useState(0);
+  
+  // Check if this column contains a collector device
+  const hasCollectorDevice = column.devices.some(device => device.viewType === ViewType.Collector);
+  
+  // Use dataset name for collector device
+  const isEditable = !hasCollectorDevice || !collectorContext;
+  const displayName = hasCollectorDevice && collectorContext ? collectorContext.title : columnName;
 
   const animate = (step: AnimationStep, settings?: IAnimationStepSettings) => {
     const { kind } = step;
@@ -43,6 +52,9 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
   }, [column.name]);
 
   const handleNameChange = async () => {
+    // Don't allow name changes for collector devices
+    if (!isEditable) return;
+    
     const newName = getNewColumnName(columnName.trim(), model.columns, column.id);
     if (globalState.samplerContext) {
       const oldAttrName = globalState.attrMap[column.id].name;
@@ -69,6 +81,9 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
   }, [columnName]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Don't process key events for collector devices
+    if (!isEditable) return;
+    
     switch(e.code) {
       case "Escape":
         inputRef.current?.blur();
@@ -83,16 +98,21 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
 
   return (
     <div className="device-column-header">
-      <input
-        ref={inputRef}
-        disabled={isRunning}
-        className="attr-name"
-        value={columnName}
-        onChange={(e) => setColumnName(e.target.value)}
-        onKeyDown={(e) => handleKeyDown(e)}
-        onBlur={handleNameChange}
-      >
-      </input>
+      {isEditable ? (
+        <input
+          ref={inputRef}
+          disabled={isRunning}
+          className="attr-name"
+          value={columnName}
+          onChange={(e) => setColumnName(e.target.value)}
+          onKeyDown={(e) => handleKeyDown(e)}
+          onBlur={handleNameChange}
+        />
+      ) : (
+        <div className="attr-name dataset-name">
+          {displayName}
+        </div>
+      )}
       <div className="device-column-header-label" style={{opacity}}>
         {label}
       </div>

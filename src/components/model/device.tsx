@@ -7,15 +7,13 @@ import { NameLabelInput } from "./name-label-input";
 import { PctLabelInput } from "./percent-label-input";
 import { DeviceFooter } from "./device-footer";
 import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth, kSpinnerX, kSpinnerY } from "./device-views/shared/constants";
-import { kDataContextName } from "../../contants";
-import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { createNewVarArray, getNextVariable, getPercentOfVar } from "../helpers";
 import { calculateWedgePercentage } from "./device-views/shared/helpers";
 import { SetVariableSeriesModal } from "./variable-setting-modal";
 import DeleteIcon from "../../assets/delete-icon.svg";
 import VisibleIcon from "../../assets/visibility-on-icon.svg";
 import { parseSpecifier } from "../../utils/utils";
-import { IDevice, IDataContext, ClippingDef, ViewType, IItems, IItem, IVariables } from "../../types";
+import { IDevice, IDataContext, ClippingDef, ViewType, IVariables } from "../../types";
 import { removeDeviceFromFormulas } from "../../helpers/model-helpers";
 
 import "./device.scss";
@@ -29,8 +27,7 @@ export const Device = (props: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { model, selectedDeviceId } = globalState;
   const { device, columnIndex } = props;
-  const [dataContexts, setDataContexts] = useState<IDataContext[]>([]);
-  const [selectedDataContext, setSelectedDataContext] = useState<string>("");
+  const [dataContexts] = useState<IDataContext[]>([]);
   const [selectedVariableIdx, setSelectedVariableIdx] = useState<number|null>(null);
   const [isEditingVarName, setIsEditingVarName] = useState<boolean>(false);
   const [isEditingVarPct, setIsEditingVarPct] = useState<boolean>(false);
@@ -44,44 +41,15 @@ export const Device = (props: IProps) => {
   const multipleColumns = model.columns.length > 1;
 
   useEffect(() => {
-    const fetchDataContexts = async () => {
-      const res = await getListOfDataContexts();
-      return res.values;
-    };
-
-    if (viewType === ViewType.Collector) {
-      fetchDataContexts().then((contexts: Array<IDataContext>) => {
-        const filteredCtxs = contexts.filter((context) => context.name !== kDataContextName);
-        setDataContexts(filteredCtxs);
-      });
-    }
-
+    console.log("Device useEffect for viewBox setting running");
+    
+    // Set the viewBox based on the viewType
     if (viewType === ViewType.Spinner) {
       setViewBox(`0 0 ${kSpinnerContainerWidth + 10} ${kSpinnerContainerHeight}`);
     } else {
       setViewBox(`0 0 ${kMixerContainerWidth + 10} ${kMixerContainerHeight}`);
     }
   }, [viewType]);
-
-  useEffect(() => {
-    if (selectedDataContext) {
-      const fetchItems = async () => {
-        const res = await getAllItems(selectedDataContext);
-        return res.values;
-      };
-
-      fetchItems().then((items: IItems) => {
-        const itemValues = items.map((item: IItem) => item.values);
-        setGlobalState(draft => {
-          const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
-          if (deviceToUpdate) {
-            deviceToUpdate.collectorVariables = itemValues;
-          }
-        });
-      });
-    }
-  }, [selectedDataContext, selectedDeviceId, setGlobalState, columnIndex]);
-
 
   const handleSelectDevice = () => {
     setGlobalState(draft => {
@@ -107,10 +75,6 @@ export const Device = (props: IProps) => {
         }
       }
     });
-  };
-
-  const handleSelectDataContext = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedDataContext(e.target.value);
   };
 
   const handleSpecifyVariables = () => {
@@ -379,7 +343,6 @@ export const Device = (props: IProps) => {
             dataContexts={dataContexts}
             handleUpdateVariables={handleUpdateVariables}
             handleDeleteVariable={handleDeleteVariable}
-            handleSelectDataContext={handleSelectDataContext}
             handleSpecifyVariables={handleSpecifyVariables}
           />
       }

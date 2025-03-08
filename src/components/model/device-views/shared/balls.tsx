@@ -199,7 +199,7 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
   const fontSize = radiusRef.current * fontScaling;
 
   return (
-    <>
+    <g data-testid="balls-container">
       { ballPositions.map((position, i) => {
         const {x, y, transform} = position;
 
@@ -227,6 +227,6 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
           />
         );
       })}
-    </>
+    </g>
   );
 };
