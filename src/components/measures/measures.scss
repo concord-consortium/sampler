@@ -2,6 +2,9 @@
   padding: 20px;
   text-align: left;
   font-size: 1rem;
+  flex: 1;
+  max-height: 500px; /* Force scrolling with a fixed height */
+  overflow-y: auto;
 
   .measures-header {
     margin-bottom: 20px;
@@ -351,11 +354,12 @@
 
     .responsive-container {
       width: 100%;
-      height: 300px;
+      height: 350px;
       margin-top: 20px;
       border: 1px solid #ddd;
       border-radius: 4px;
-      overflow: hidden;
+      padding: 10px;
+      background-color: #fff;
     }
 
     .visualization-placeholder {
@@ -430,4 +434,13 @@
       }
     }
   }
+}
+
+// Chart container styles
+.chart-container {
+  width: 100%;
+  height: 300px;
+  margin: 10px 0;
+  border-radius: 4px;
+  overflow: hidden;
 }

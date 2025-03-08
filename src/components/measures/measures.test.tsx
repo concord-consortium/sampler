@@ -17,6 +17,13 @@ jest.mock("../../models/model-model", () => ({
   getDevices: jest.fn()
 }));
 
+// Mock Chart.js to avoid canvas rendering issues in tests
+jest.mock('react-chartjs-2', () => ({
+  Bar: (props: any) => <div data-testid="bar-chart" data-props={JSON.stringify(props)} />,
+  Line: (props: any) => <div data-testid="line-chart" data-props={JSON.stringify(props)} />,
+  Scatter: (props: any) => <div data-testid="scatter-chart" data-props={JSON.stringify(props)} />
+}));
+
 describe("MeasuresTab Component", () => {
   const mockGlobalState = {
     model: {

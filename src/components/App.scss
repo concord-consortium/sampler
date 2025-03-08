@@ -73,11 +73,16 @@
       border-bottom: none;
       z-index: 2;
     }
-    .tab-content {
-      position: absolute;
-      top: 17px;
-      left: 0;
-      width: 100%;
-    }
+  }
+  
+  .tab-content {
+    position: absolute;
+    top: 17px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 17px);
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
   }
 }
