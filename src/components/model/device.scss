@@ -12,11 +12,11 @@
   border-radius: 5px;
   border: solid 1px transparent;
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.35);
-  background-color: #fff;
+  background-color: #f8f8f8;
   position: relative;
 
   &.selected {
-    border: solid 1px #008cba;
+    border: solid 1px #0056b3;
   }
   .set-input {
     margin-top: 50%;
