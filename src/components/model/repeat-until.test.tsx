@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { RepeatUntil } from '.';
+import { RepeatUntil, ConditionHelpModal } from './repeat-until';
 import { GlobalStateContext } from '../../hooks/useGlobalState';
 import { AttrMap, Speed } from '../../types';
 
@@ -143,5 +143,141 @@ describe('RepeatUntil Component', () => {
     
     // Modal should be closed
     expect(screen.queryByText('Condition Syntax Help')).not.toBeInTheDocument();
+  });
+  
+  // New tests for improved coverage
+  
+  it('should handle formula condition input correctly', () => {
+    const mockGlobalState = createMockGlobalState({ repeat: true });
+    
+    render(
+      <GlobalStateContext.Provider value={{ globalState: mockGlobalState, setGlobalState: mockSetGlobalState }}>
+        <RepeatUntil />
+      </GlobalStateContext.Provider>
+    );
+    
+    const input = screen.getByLabelText('Repeat Until:');
+    
+    // Test formula condition
+    fireEvent.change(input, { target: { value: '=sum(Score) >= 100' } });
+    
+    expect(mockSetGlobalState).toHaveBeenCalled();
+    const draftFn = mockSetGlobalState.mock.calls[0][0];
+    const mockDraft = { repeatUntilCondition: '' };
+    draftFn(mockDraft);
+    expect(mockDraft.repeatUntilCondition).toBe('=sum(Score) >= 100');
+  });
+  
+  it('should handle pattern condition input correctly', () => {
+    const mockGlobalState = createMockGlobalState({ repeat: true });
+    
+    render(
+      <GlobalStateContext.Provider value={{ globalState: mockGlobalState, setGlobalState: mockSetGlobalState }}>
+        <RepeatUntil />
+      </GlobalStateContext.Provider>
+    );
+    
+    const input = screen.getByLabelText('Repeat Until:');
+    
+    // Test pattern condition
+    fireEvent.change(input, { target: { value: 'heads,heads,heads' } });
+    
+    expect(mockSetGlobalState).toHaveBeenCalled();
+    const draftFn = mockSetGlobalState.mock.calls[0][0];
+    const mockDraft = { repeatUntilCondition: '' };
+    draftFn(mockDraft);
+    expect(mockDraft.repeatUntilCondition).toBe('heads,heads,heads');
+  });
+  
+  it('should handle empty condition input correctly', () => {
+    const mockGlobalState = createMockGlobalState({ repeat: true, repeatUntilCondition: 'existing condition' });
+    
+    render(
+      <GlobalStateContext.Provider value={{ globalState: mockGlobalState, setGlobalState: mockSetGlobalState }}>
+        <RepeatUntil />
+      </GlobalStateContext.Provider>
+    );
+    
+    const input = screen.getByLabelText('Repeat Until:');
+    
+    // Test clearing the condition
+    fireEvent.change(input, { target: { value: '' } });
+    
+    expect(mockSetGlobalState).toHaveBeenCalled();
+    const draftFn = mockSetGlobalState.mock.calls[0][0];
+    const mockDraft = { repeatUntilCondition: 'existing condition' };
+    draftFn(mockDraft);
+    expect(mockDraft.repeatUntilCondition).toBe('');
+  });
+  
+  it('should display existing condition from global state', () => {
+    const existingCondition = '=count(output="success") > 5';
+    const mockGlobalState = createMockGlobalState({ 
+      repeat: true, 
+      repeatUntilCondition: existingCondition 
+    });
+    
+    render(
+      <GlobalStateContext.Provider value={{ globalState: mockGlobalState, setGlobalState: mockSetGlobalState }}>
+        <RepeatUntil />
+      </GlobalStateContext.Provider>
+    );
+    
+    const input = screen.getByLabelText('Repeat Until:');
+    expect(input).toHaveValue(existingCondition);
+  });
+});
+
+describe('ConditionHelpModal Component', () => {
+  it('should render with correct content', () => {
+    const mockOnClose = jest.fn();
+    const { container } = render(<ConditionHelpModal onClose={mockOnClose} />);
+    
+    // Check for headings
+    expect(screen.getByText('Condition Syntax Help')).toBeInTheDocument();
+    expect(screen.getByText('Formula Conditions')).toBeInTheDocument();
+    expect(screen.getByText('Pattern Matching')).toBeInTheDocument();
+    
+    // Check for examples using container queries instead of text matching
+    const codeElements = container.querySelectorAll('code');
+    expect(codeElements.length).toBeGreaterThan(0);
+    
+    // Check specific examples
+    expect(codeElements[0]).toHaveTextContent("=count(output='a') > 3");
+    expect(codeElements[1]).toHaveTextContent("=mean(Age) > 30");
+    expect(codeElements[2]).toHaveTextContent("=sum(Score) >= 100");
+    expect(codeElements[3]).toHaveTextContent("heads,heads,heads");
+    expect(codeElements[4]).toHaveTextContent("a,b,a");
+    
+    // Check for close button
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+  });
+  
+  it('should call onClose when close button is clicked', () => {
+    const mockOnClose = jest.fn();
+    
+    render(<ConditionHelpModal onClose={mockOnClose} />);
+    
+    const closeButton = screen.getByRole('button', { name: 'Close' });
+    fireEvent.click(closeButton);
+    
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+  });
+  
+  it('should have proper modal structure', () => {
+    const mockOnClose = jest.fn();
+    const { container } = render(<ConditionHelpModal onClose={mockOnClose} />);
+    
+    // Check for modal overlay
+    const modalOverlay = container.querySelector('.modal-overlay');
+    expect(modalOverlay).toBeInTheDocument();
+    
+    // Check for modal content
+    const modalContent = container.querySelector('.modal-content');
+    expect(modalContent).toBeInTheDocument();
+    
+    // Check for list items
+    const listItems = container.querySelectorAll('li');
+    expect(listItems.length).toBeGreaterThan(0);
   });
 }); 
