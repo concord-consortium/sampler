@@ -1,5 +1,5 @@
-import React from "react";
-import { render, screen, within } from "@testing-library/react";
+import React, { useContext, useEffect } from "react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { Collector } from "./collector";
 import { GlobalStateContext } from "../../../hooks/useGlobalState";
 import { AnimationContext } from "../../../hooks/useAnimation";
@@ -20,11 +20,11 @@ jest.mock("./collector", () => {
       handleSetEditingVarName: (variableIdx: number) => void; 
     }) => {
       // Mock implementation that renders a mixer frame and balls
-      const { globalState } = React.useContext(GlobalStateContext);
+      const { globalState } = useContext(GlobalStateContext);
       const { isRunning } = globalState;
 
       // Call handleAddDefs for each collector variable
-      React.useEffect(() => {
+      useEffect(() => {
         device.collectorVariables.forEach((_, index) => {
           const id = `${device.id}-text-clip-${100 + index}-${100 + index}`;
           handleAddDefs({
