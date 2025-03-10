@@ -12,6 +12,7 @@ We have successfully set up the following accessibility testing infrastructure:
    - Device component (`src/components/model/device.a11y.test.tsx`)
    - RepeatUntil component (`src/components/model/repeat-until.a11y.test.tsx`)
 3. Color contrast testing utilities (`src/test/color-contrast-checker.ts`)
+4. Keyboard accessibility testing utilities (`src/test/keyboard-accessibility.ts`)
 
 ## Implementation Progress
 
@@ -32,7 +33,10 @@ We have successfully set up the following accessibility testing infrastructure:
 - [x] Fix color contrast issues in RepeatUntil component
 - [x] Fix color contrast issues in Device component
 - [x] Create color contrast testing utilities
-- [ ] Ensure all interactive elements are accessible
+- [x] Create keyboard accessibility testing utilities
+- [x] Implement keyboard event handlers for RepeatUntil component
+- [x] Implement keyboard event handlers for HelpModal component
+- [ ] Ensure all interactive elements are accessible in Device component
 
 ### Phase 3: Comprehensive Implementation
 
@@ -60,7 +64,7 @@ We have successfully set up the following accessibility testing infrastructure:
 
 ### Operable
 
-- [x] 2.1 Keyboard Accessible: Make all functionality available from a keyboard (for modals)
+- [x] 2.1 Keyboard Accessible: Make all functionality available from a keyboard (for modals and RepeatUntil)
 - [ ] 2.2 Enough Time: Provide users enough time to read and use content
 - [ ] 2.3 Seizures: Do not design content in a way that is known to cause seizures
 - [ ] 2.4 Navigable: Provide ways to help users navigate, find content, and determine where they are
