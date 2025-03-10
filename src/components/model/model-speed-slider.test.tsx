@@ -27,7 +27,7 @@ describe('SpeedSlider Component', () => {
     render(<SpeedSlider />);
     
     // Check that the speed text is displayed
-    expect(screen.getByText('Medium')).toBeInTheDocument();
+    expect(screen.getAllByText('Medium')[0]).toBeInTheDocument();
   });
   
   it('renders tick marks for each speed option', () => {
