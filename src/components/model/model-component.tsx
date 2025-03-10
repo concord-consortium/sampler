@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { AnimationContext, useAnimationContextValue } from "../../hooks/useAnimation";
 import { useResizer } from "../../hooks/use-resizer";
@@ -22,7 +22,19 @@ export const ModelTab = () => {
     } else {
       setIsWide(false);
     }
+
   });
+
+  // keep the header the same width as the device outputs
+  useEffect(() => {
+    const deviceOutputs = document.querySelector('.device-outputs-container') as HTMLDivElement;
+    const modelContainer = document.querySelector('.model-header') as HTMLDivElement;
+
+    if (deviceOutputs && modelContainer) {
+      // +20 for the output on the right side
+      modelContainer.style.setProperty('--device-outputs-width', `${deviceOutputs.offsetWidth + 20}px`);
+    }
+  }, [model]);
 
   const handleOpenHelp = () => {
     setShowHelp(!showHelp);

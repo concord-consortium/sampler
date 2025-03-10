@@ -26,12 +26,11 @@ const kWidthBetweenDevices = 40;
 const getRect = (el: HTMLElement): Rect => {
   const {width, height} = el.getBoundingClientRect();
 
-  // correct for the scrolling iframe
   let x = 0;
   let y = 0;
   while (el && !isNaN(el.offsetLeft) && !isNaN(el.offsetTop)) {
-    x += el.offsetLeft - el.scrollLeft;
-    y += el.offsetTop - el.scrollTop;
+    x += el.offsetLeft;
+    y += el.offsetTop;
     el = el.offsetParent as HTMLElement;
   }
   const midY = y + (height / 2);
