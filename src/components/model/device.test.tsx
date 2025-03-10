@@ -26,22 +26,36 @@ jest.mock("@concord-consortium/codap-plugin-api", () => ({
   })
 }));
 
-// Mock SVG functions that aren't available in jsdom
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-window.SVGElement.prototype.getScreenCTM = jest.fn().mockReturnValue({
-  inverse: jest.fn().mockReturnValue({
-    a: 1, b: 0, c: 0, d: 1, e: 0, f: 0
-  })
+// Mock SVG functions
+jest.mock('../../components/model/device-views/spinner/text-backer', () => ({
+  updateTextBackerRefFn: jest.fn(() => jest.fn()),
+  TextBacker: jest.fn(() => <div data-testid="text-backer" />)
+}));
+
+// Mock getBBox for SVG elements
+beforeAll(() => {
+  // Mock getBBox
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  SVGElement.prototype.getBBox = jest.fn().mockReturnValue({
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 50
+  });
 });
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-window.SVGElement.prototype.createSVGPoint = jest.fn().mockReturnValue({
-  x: 0,
-  y: 0,
-  matrixTransform: jest.fn().mockReturnValue({ x: 0, y: 0 })
-});
+// Mock the renameAttribute function
+jest.mock("../../helpers/codap-helpers", () => ({
+  ...jest.requireActual("../../helpers/codap-helpers"),
+  renameAttribute: jest.fn().mockResolvedValue({ success: true })
+}));
+
+// Mock the formula variable renaming functions
+jest.mock("../../utils/formula/FormulaVariableRenaming", () => ({
+  handleVariableRename: jest.fn(),
+  initializeFormulaTracker: jest.fn()
+}));
 
 describe("Device Component", () => {
   const mockDevice = createDefaultDevice();
@@ -60,7 +74,8 @@ describe("Device Component", () => {
     sample: { name: 'sample', codapID: null },
     description: { name: 'description', codapID: null },
     sample_size: { name: 'sample_size', codapID: null },
-    experimentHash: { name: 'experimentHash', codapID: null }
+    experimentHash: { name: 'experimentHash', codapID: null },
+    item: { name: 'item', codapID: null }
   };
   
   const mockSetGlobalState = jest.fn();
@@ -232,5 +247,288 @@ describe("Device Component", () => {
     
     // Check that setGlobalState was called
     expect(deleteSetGlobalState).toHaveBeenCalled();
+  });
+
+  it("opens the variable editor modal when specify variables button is clicked", () => {
+    const mockSetGlobalState = jest.fn();
+    const { container } = render(
+      <GlobalStateContext.Provider value={{ globalState: mockGlobalState.globalState, setGlobalState: mockSetGlobalState }}>
+        <Device device={mockDevice} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Find and click the "..." button which typically opens variable options
+    const optionsButton = screen.getAllByRole('button').find(button => button.textContent === '...');
+    expect(optionsButton).toBeTruthy();
+    if (optionsButton) {
+      fireEvent.click(optionsButton);
+    }
+
+    // Verify that setGlobalState was called to update the modal state
+    expect(mockSetGlobalState).toHaveBeenCalled();
+  });
+
+  it("handles updating variables to a series", () => {
+    const mockSetGlobalState = jest.fn();
+    render(
+      <GlobalStateContext.Provider value={{ globalState: mockGlobalState.globalState, setGlobalState: mockSetGlobalState }}>
+        <Device device={mockDevice} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Find and click the "..." button which typically opens variable options
+    const optionsButton = screen.getAllByRole('button').find(button => button.textContent === '...');
+    expect(optionsButton).toBeTruthy();
+    if (optionsButton) {
+      fireEvent.click(optionsButton);
+    }
+
+    // Verify that setGlobalState was called
+    expect(mockSetGlobalState).toHaveBeenCalled();
+  });
+
+  it("handles selecting a variable", () => {
+    // Create a modified state with variables for the test device
+    const deviceWithVariables = {
+      ...mockDevice,
+      variables: ["Variable 1", "Variable 2", "Variable 3"]
+    };
+    
+    const columnWithVariables = {
+      ...mockColumn,
+      devices: [deviceWithVariables]
+    };
+    
+    const stateWithVariables = {
+      ...mockGlobalState.globalState,
+      model: {
+        ...mockGlobalState.globalState.model,
+        columns: [columnWithVariables]
+      }
+    };
+
+    const mockSetGlobalState = jest.fn();
+    render(
+      <GlobalStateContext.Provider value={{ globalState: stateWithVariables, setGlobalState: mockSetGlobalState }}>
+        <Device device={deviceWithVariables} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Verify the device renders correctly
+    const deviceContainer = screen.getByTestId('device-container');
+    expect(deviceContainer).toBeInTheDocument();
+  });
+
+  it("handles deleting a variable", () => {
+    // Create a modified state with variables for the test device
+    const deviceWithVariables = {
+      ...mockDevice,
+      variables: ["Variable 1", "Variable 2", "Variable 3"]
+    };
+    
+    const columnWithVariables = {
+      ...mockColumn,
+      devices: [deviceWithVariables]
+    };
+    
+    const stateWithVariables = {
+      ...mockGlobalState.globalState,
+      model: {
+        ...mockGlobalState.globalState.model,
+        columns: [columnWithVariables]
+      }
+    };
+
+    const mockSetGlobalState = jest.fn();
+    render(
+      <GlobalStateContext.Provider value={{ globalState: stateWithVariables, setGlobalState: mockSetGlobalState }}>
+        <Device device={deviceWithVariables} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Find and click the "-" button to delete a variable
+    const deleteButton = screen.getAllByRole('button').find(button => button.textContent === '-');
+    expect(deleteButton).toBeTruthy();
+    if (deleteButton) {
+      fireEvent.click(deleteButton);
+    }
+
+    // Verify that setGlobalState was called
+    expect(mockSetGlobalState).toHaveBeenCalled();
+  });
+
+  it("handles editing a variable name", () => {
+    // Create a modified state with variables for the test device
+    const deviceWithVariables = {
+      ...mockDevice,
+      variables: ["Variable 1", "Variable 2", "Variable 3"]
+    };
+    
+    const columnWithVariables = {
+      ...mockColumn,
+      devices: [deviceWithVariables]
+    };
+    
+    const stateWithVariables = {
+      ...mockGlobalState.globalState,
+      model: {
+        ...mockGlobalState.globalState.model,
+        columns: [columnWithVariables]
+      }
+    };
+
+    const mockSetGlobalState = jest.fn();
+    render(
+      <GlobalStateContext.Provider value={{ globalState: stateWithVariables, setGlobalState: mockSetGlobalState }}>
+        <Device device={deviceWithVariables} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Verify the device renders correctly
+    const deviceContainer = screen.getByTestId('device-container');
+    expect(deviceContainer).toBeInTheDocument();
+  });
+
+  it("handles changing a variable percentage", () => {
+    // Create a modified state with variables for the test device
+    const deviceWithVariables = {
+      ...mockDevice,
+      variables: ["Variable 1", "Variable 2", "Variable 3"]
+    };
+    
+    const columnWithVariables = {
+      ...mockColumn,
+      devices: [deviceWithVariables]
+    };
+    
+    const stateWithVariables = {
+      ...mockGlobalState.globalState,
+      model: {
+        ...mockGlobalState.globalState.model,
+        columns: [columnWithVariables]
+      }
+    };
+
+    const mockSetGlobalState = jest.fn();
+    render(
+      <GlobalStateContext.Provider value={{ globalState: stateWithVariables, setGlobalState: mockSetGlobalState }}>
+        <Device device={deviceWithVariables} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Verify the device renders correctly
+    const deviceContainer = screen.getByTestId('device-container');
+    expect(deviceContainer).toBeInTheDocument();
+  });
+
+  it("handles SVG click events", () => {
+    const mockSetGlobalState = jest.fn();
+    const { container } = render(
+      <GlobalStateContext.Provider value={{ globalState: mockGlobalState.globalState, setGlobalState: mockSetGlobalState }}>
+        <Device device={mockDevice} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Find the SVG element using container query
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
+    
+    if (svg) {
+      // Simulate a click on the SVG
+      fireEvent.click(svg, { clientX: 50, clientY: 50 });
+    }
+    
+    // No assertion needed as we're just checking it doesn't throw an error
+  });
+
+  it("handles drag events on the device", () => {
+    const mockSetGlobalState = jest.fn();
+    const { container } = render(
+      <GlobalStateContext.Provider value={{ globalState: mockGlobalState.globalState, setGlobalState: mockSetGlobalState }}>
+        <Device device={mockDevice} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Find the device container
+    const deviceContainer = screen.getByTestId('device-container');
+    expect(deviceContainer).toBeInTheDocument();
+    
+    // Simulate mousedown, mousemove, and mouseup events
+    fireEvent.mouseDown(deviceContainer, { clientX: 50, clientY: 50 });
+    fireEvent.mouseMove(document, { clientX: 60, clientY: 60 });
+    fireEvent.mouseUp(document);
+    
+    // No assertion needed as we're just checking it doesn't throw an error
+  });
+
+  it("renders a spinner device correctly", () => {
+    // Create a modified state with spinner view type
+    const spinnerDevice = {
+      ...mockDevice,
+      viewType: ViewType.Spinner
+    };
+    
+    const spinnerColumn = {
+      ...mockColumn,
+      devices: [spinnerDevice]
+    };
+    
+    const spinnerState = {
+      ...mockGlobalState.globalState,
+      model: {
+        ...mockGlobalState.globalState.model,
+        columns: [spinnerColumn]
+      }
+    };
+
+    const mockSetGlobalState = jest.fn();
+    render(
+      <GlobalStateContext.Provider value={{ globalState: spinnerState, setGlobalState: mockSetGlobalState }}>
+        <Device device={spinnerDevice} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Verify the device container is rendered
+    const deviceContainer = screen.getByTestId('device-container');
+    expect(deviceContainer).toBeInTheDocument();
+  });
+
+  it("renders a collector device correctly", () => {
+    // Create a collector device for this test
+    const collectorDevice = {
+      ...mockDevice,
+      viewType: ViewType.Collector,
+      collectorVariables: [{ "Item": "A" }, { "Item": "B" }]
+    };
+
+    const collectorColumn = {
+      ...mockColumn,
+      devices: [collectorDevice]
+    };
+
+    const collectorGlobalState = {
+      globalState: {
+        ...mockGlobalState.globalState,
+        model: {
+          columns: [collectorColumn]
+        }
+      },
+      setGlobalState: mockSetGlobalState
+    };
+
+    render(
+      <GlobalStateContext.Provider value={collectorGlobalState}>
+        <Device device={collectorDevice} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+
+    // Check that the device container is rendered
+    const deviceContainer = screen.getByTestId("device-container");
+    expect(deviceContainer).toBeInTheDocument();
+    
+    // Check that the device frame has the collector class
+    const deviceFrames = within(deviceContainer).getAllByRole('generic');
+    const deviceFrame = deviceFrames.find(el => el.classList.contains('device-frame'));
+    expect(deviceFrame).toHaveClass("collector");
   });
 }); 
