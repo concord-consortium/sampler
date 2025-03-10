@@ -1,13 +1,15 @@
 .measures-tab {
-  padding: 20px;
   text-align: left;
   font-size: 1rem;
 
   #measures-instructions {
+    padding: 20px 20px 0 20px;
+    border-top: solid 1px #777;
     margin-bottom: 30px;
   }
 
   #select-measure-container, #measure-name-container, #define-measure-container {
+    padding: 0 20px;
     display: flex;
     align-items: center;
     margin-top: 10px;
@@ -134,6 +136,7 @@
   #measures-bottom {
     display: flex;
     justify-content: flex-end;
+    padding-right: 20px;
   }
   label {
     margin-right: 5px;
