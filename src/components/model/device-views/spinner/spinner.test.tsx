@@ -60,14 +60,50 @@ jest.mock("./spinner", () => {
 jest.mock("./wedge", () => {
   return {
     Wedge: (props: any) => {
+      // Get the isRunning state from the context
+      const { globalState } = React.useContext(GlobalStateContext);
+      const isRunning = globalState?.isRunning || false;
+      
       return (
         <div data-testid={`wedge-${props.variableName}`}>
-          <path data-testid={`wedge-path-${props.variableName}`} onClick={props.onClick} />
-          <text data-testid={`wedge-text-${props.variableName}`}>{props.variableName}</text>
+          <path 
+            data-testid={`wedge-path-${props.variableName}`} 
+            onClick={() => {
+              if (!isRunning && props.handleSetSelectedVariable) {
+                props.handleSetSelectedVariable(props.varArrayIdx);
+              }
+            }} 
+          />
+          <text 
+            data-testid={`wedge-text-${props.variableName}`}
+            onClick={() => {
+              if (!isRunning && props.handleSetEditingVarName) {
+                props.handleSetEditingVarName(props.varArrayIdx);
+              }
+            }}
+          >
+            {props.variableName}
+          </text>
           {props.selectedWedge === props.variableName && (
             <>
-              <text data-testid={`wedge-percentage-${props.variableName}`}>{`${Math.round(props.percent * 100)}%`}</text>
-              <rect data-testid={`wedge-delete-${props.variableName}`} onClick={(e) => props.handleDeleteWedge(e, props.variableName)} />
+              <text 
+                data-testid={`wedge-percentage-${props.variableName}`}
+                onClick={() => {
+                  if (!isRunning && props.handleSetEditingPct) {
+                    props.handleSetEditingPct();
+                  }
+                }}
+              >
+                {`${Math.round(props.percent * 100)}%`}
+              </text>
+              <rect 
+                data-testid={`wedge-delete-${props.variableName}`} 
+                onClick={(e) => {
+                  if (!isRunning && props.handleDeleteWedge) {
+                    props.handleDeleteWedge(e, props.variableName);
+                  }
+                }} 
+              />
             </>
           )}
         </div>
