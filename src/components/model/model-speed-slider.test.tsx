@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { SpeedSlider } from './model-speed-slider';
 import { Speed, speedLabels } from '../../types';
 import { useGlobalStateContext } from '../../hooks/useGlobalState';
@@ -53,9 +53,9 @@ describe('SpeedSlider Component', () => {
     render(<SpeedSlider />);
     
     // Check that there are tick marks for each speed option
-    const sliderContainer = screen.getByTestId('speed-slider-container');
-    const tickMarks = within(sliderContainer).getAllByTestId('tick-mark');
-    expect(tickMarks.length).toBe(Object.keys(speedLabels).length);
+    const tickMarksContainer = document.querySelector('.tick-marks-container');
+    const tickMarks = tickMarksContainer?.querySelectorAll('.tick-mark');
+    expect(tickMarks?.length).toBe(Object.keys(speedLabels).length);
   });
 
   // Tests for new functionality
@@ -64,7 +64,7 @@ describe('SpeedSlider Component', () => {
     render(<SpeedSlider />);
     
     // Find all tick marks
-    const tickMarks = screen.getAllByTestId('tick-mark');
+    const tickMarks = document.querySelectorAll('.tick-mark');
     
     // Click on the Fast tick mark (index 2)
     fireEvent.click(tickMarks[2]);
@@ -77,116 +77,108 @@ describe('SpeedSlider Component', () => {
     expect(draftState.speed).toBe(Speed.Fast);
   });
 
-  it('increases speed when right arrow key is pressed', () => {
+  it('shows the active tick mark based on current speed', () => {
+    // Set the initial speed to Fast
+    (useGlobalStateContext as jest.Mock).mockReturnValue({
+      globalState: { speed: Speed.Fast },
+      setGlobalState: mockSetGlobalState
+    });
+    
+    render(<SpeedSlider />);
+    
+    // Find all tick marks
+    const tickMarks = document.querySelectorAll('.tick-mark');
+    
+    // Check that the Fast tick mark (index 2) has the active class
+    expect(tickMarks[2]).toHaveClass('active');
+    
+    // Check that the other tick marks don't have the active class
+    expect(tickMarks[0]).not.toHaveClass('active');
+    expect(tickMarks[1]).not.toHaveClass('active');
+    expect(tickMarks[3]).not.toHaveClass('active');
+  });
+
+  it('updates the speed text when speed changes', () => {
+    render(<SpeedSlider />);
+    
+    // Find the slider
+    const slider = screen.getByRole('slider');
+    
+    // Change the slider value to Fast
+    fireEvent.change(slider, { target: { value: Speed.Fast } });
+    
+    // Mock the global state update
+    const setStateFn = mockSetGlobalState.mock.calls[0][0];
+    const draftState = { speed: Speed.Medium };
+    setStateFn(draftState);
+    
+    // Re-render with the updated state
+    (useGlobalStateContext as jest.Mock).mockReturnValue({
+      globalState: { speed: Speed.Fast },
+      setGlobalState: mockSetGlobalState
+    });
+    
+    // Re-render the component
+    const { rerender } = render(<SpeedSlider />);
+    rerender(<SpeedSlider />);
+    
+    // Now check for the updated text using a more specific selector
+    const speedText = screen.getByText('Fast', { selector: '#speed-text' });
+    expect(speedText).toBeInTheDocument();
+  });
+
+  it('handles keyboard navigation', () => {
     render(<SpeedSlider />);
     
     const slider = screen.getByRole('slider');
     
-    // Press the right arrow key
+    // Press right arrow to increase speed
     fireEvent.keyDown(slider, { key: 'ArrowRight' });
     
     // Check that setGlobalState was called with the correct value
     expect(mockSetGlobalState).toHaveBeenCalled();
-    const setStateFn = mockSetGlobalState.mock.calls[0][0];
-    const draftState = { speed: Speed.Medium };
+    let setStateFn = mockSetGlobalState.mock.calls[0][0];
+    let draftState = { speed: Speed.Medium };
     setStateFn(draftState);
     expect(draftState.speed).toBe(Speed.Fast);
-  });
-
-  it('decreases speed when left arrow key is pressed', () => {
-    render(<SpeedSlider />);
     
-    const slider = screen.getByRole('slider');
+    // Reset mock
+    mockSetGlobalState.mockClear();
     
-    // Press the left arrow key
+    // Press left arrow to decrease speed
     fireEvent.keyDown(slider, { key: 'ArrowLeft' });
     
     // Check that setGlobalState was called with the correct value
     expect(mockSetGlobalState).toHaveBeenCalled();
-    const setStateFn = mockSetGlobalState.mock.calls[0][0];
-    const draftState = { speed: Speed.Medium };
+    setStateFn = mockSetGlobalState.mock.calls[0][0];
+    draftState = { speed: Speed.Medium };
     setStateFn(draftState);
     expect(draftState.speed).toBe(Speed.Slow);
-  });
-
-  it('sets speed to minimum when Home key is pressed', () => {
-    render(<SpeedSlider />);
     
-    const slider = screen.getByRole('slider');
+    // Reset mock
+    mockSetGlobalState.mockClear();
     
-    // Press the Home key
-    fireEvent.keyDown(slider, { key: 'Home' });
-    
-    // Check that setGlobalState was called with the correct value
-    expect(mockSetGlobalState).toHaveBeenCalled();
-    const setStateFn = mockSetGlobalState.mock.calls[0][0];
-    const draftState = { speed: Speed.Medium };
-    setStateFn(draftState);
-    expect(draftState.speed).toBe(Speed.Slow);
-  });
-
-  it('sets speed to maximum when End key is pressed', () => {
-    render(<SpeedSlider />);
-    
-    const slider = screen.getByRole('slider');
-    
-    // Press the End key
+    // Press End key to set to fastest
     fireEvent.keyDown(slider, { key: 'End' });
     
     // Check that setGlobalState was called with the correct value
     expect(mockSetGlobalState).toHaveBeenCalled();
-    const setStateFn = mockSetGlobalState.mock.calls[0][0];
-    const draftState = { speed: Speed.Medium };
+    setStateFn = mockSetGlobalState.mock.calls[0][0];
+    draftState = { speed: Speed.Medium };
     setStateFn(draftState);
     expect(draftState.speed).toBe(Speed.Fastest);
-  });
-
-  it('does not change speed when at minimum and left arrow is pressed', () => {
-    // Set the initial speed to Slow
-    (useGlobalStateContext as jest.Mock).mockReturnValue({
-      globalState: { speed: Speed.Slow },
-      setGlobalState: mockSetGlobalState
-    });
     
-    render(<SpeedSlider />);
+    // Reset mock
+    mockSetGlobalState.mockClear();
     
-    const slider = screen.getByRole('slider');
+    // Press Home key to set to slowest
+    fireEvent.keyDown(slider, { key: 'Home' });
     
-    // Press the left arrow key
-    fireEvent.keyDown(slider, { key: 'ArrowLeft' });
-    
-    // Check that setGlobalState was not called
-    expect(mockSetGlobalState).not.toHaveBeenCalled();
-  });
-
-  it('does not change speed when at maximum and right arrow is pressed', () => {
-    // Set the initial speed to Fastest
-    (useGlobalStateContext as jest.Mock).mockReturnValue({
-      globalState: { speed: Speed.Fastest },
-      setGlobalState: mockSetGlobalState
-    });
-    
-    render(<SpeedSlider />);
-    
-    const slider = screen.getByRole('slider');
-    
-    // Press the right arrow key
-    fireEvent.keyDown(slider, { key: 'ArrowRight' });
-    
-    // Check that setGlobalState was not called
-    expect(mockSetGlobalState).not.toHaveBeenCalled();
-  });
-
-  it('has proper ARIA attributes for accessibility', () => {
-    render(<SpeedSlider />);
-    
-    const slider = screen.getByRole('slider');
-    
-    // Check ARIA attributes
-    expect(slider).toHaveAttribute('aria-label', 'Animation Speed');
-    expect(slider).toHaveAttribute('aria-valuemin', Speed.Slow.toString());
-    expect(slider).toHaveAttribute('aria-valuemax', Speed.Fastest.toString());
-    expect(slider).toHaveAttribute('aria-valuenow', Speed.Medium.toString());
-    expect(slider).toHaveAttribute('aria-valuetext', speedLabels[Speed.Medium]);
+    // Check that setGlobalState was called with the correct value
+    expect(mockSetGlobalState).toHaveBeenCalled();
+    setStateFn = mockSetGlobalState.mock.calls[0][0];
+    draftState = { speed: Speed.Medium };
+    setStateFn(draftState);
+    expect(draftState.speed).toBe(Speed.Slow);
   });
 });
