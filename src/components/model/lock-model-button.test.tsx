@@ -54,6 +54,8 @@ describe('LockModelButton', () => {
     
     const lockButton = screen.getByRole('button', { name: /lock model/i });
     expect(lockButton).toBeInTheDocument();
+    expect(screen.getByText('🔓')).toBeInTheDocument();
+    expect(screen.getByText('Lock Model')).toBeInTheDocument();
   });
 
   it('renders the unlock button when model is locked', () => {
@@ -67,6 +69,8 @@ describe('LockModelButton', () => {
     
     const unlockButton = screen.getByRole('button', { name: /unlock model/i });
     expect(unlockButton).toBeInTheDocument();
+    expect(screen.getByText('🔒')).toBeInTheDocument();
+    expect(screen.getByText('Unlock Model')).toBeInTheDocument();
   });
 
   it('opens password modal when lock button is clicked and no password is set', () => {
@@ -80,6 +84,14 @@ describe('LockModelButton', () => {
     fireEvent.click(lockButton);
     
     expect(mockSetGlobalState).toHaveBeenCalledWith(expect.any(Function));
+    
+    // Test the draft function directly
+    const draftFn = mockSetGlobalState.mock.calls[0][0];
+    const mockDraft = { showPasswordModal: false, passwordModalMode: 'set' };
+    draftFn(mockDraft);
+    
+    expect(mockDraft.showPasswordModal).toBe(true);
+    expect(mockDraft.passwordModalMode).toBe('set');
   });
 
   it('opens password modal when unlock button is clicked', () => {
@@ -96,5 +108,67 @@ describe('LockModelButton', () => {
     fireEvent.click(unlockButton);
     
     expect(mockSetGlobalState).toHaveBeenCalledWith(expect.any(Function));
+    
+    // Test the draft function directly
+    const draftFn = mockSetGlobalState.mock.calls[0][0];
+    const mockDraft = { showPasswordModal: false, passwordModalMode: 'set' };
+    draftFn(mockDraft);
+    
+    expect(mockDraft.showPasswordModal).toBe(true);
+    expect(mockDraft.passwordModalMode).toBe('enter');
+  });
+
+  it('sets passwordModalMode to "set" when button is clicked with no password', () => {
+    render(
+      <GlobalStateContext.Provider value={createMockGlobalState({
+        modelPassword: '',
+        modelLocked: false
+      })}>
+        <LockModelButton />
+      </GlobalStateContext.Provider>
+    );
+    
+    const lockButton = screen.getByRole('button', { name: /lock model/i });
+    fireEvent.click(lockButton);
+    
+    // Test the draft function directly
+    const draftFn = mockSetGlobalState.mock.calls[0][0];
+    const mockDraft = { showPasswordModal: false, passwordModalMode: 'enter' };
+    draftFn(mockDraft);
+    
+    expect(mockDraft.showPasswordModal).toBe(true);
+    expect(mockDraft.passwordModalMode).toBe('set');
+  });
+
+  it('has correct accessibility attributes', () => {
+    // Test unlocked state
+    const { rerender } = render(
+      <GlobalStateContext.Provider value={createMockGlobalState({
+        modelLocked: false
+      })}>
+        <LockModelButton />
+      </GlobalStateContext.Provider>
+    );
+    
+    let button = screen.getByRole('button');
+    expect(button).toHaveAttribute('aria-label', 'Lock model');
+    expect(button).toHaveAttribute('title', 'Lock model');
+    expect(button).toHaveClass('lock-model-button');
+    expect(button).toHaveClass('unlocked');
+    
+    // Test locked state
+    rerender(
+      <GlobalStateContext.Provider value={createMockGlobalState({
+        modelLocked: true
+      })}>
+        <LockModelButton />
+      </GlobalStateContext.Provider>
+    );
+    
+    button = screen.getByRole('button');
+    expect(button).toHaveAttribute('aria-label', 'Unlock model');
+    expect(button).toHaveAttribute('title', 'Unlock model');
+    expect(button).toHaveClass('lock-model-button');
+    expect(button).toHaveClass('locked');
   });
 }); 
