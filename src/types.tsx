@@ -3,7 +3,7 @@ import { Updater } from "use-immer";
 export type Id = string;
 
 const navTabs = ["Model", "Measures", "About"] as const;
-type NavTab = typeof navTabs[number];
+export type NavTab = typeof navTabs[number];
 
 export interface IAttrForMap {
   codapID: string | null;
