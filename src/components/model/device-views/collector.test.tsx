@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { Collector } from "./collector";
 import { GlobalStateContext } from "../../../hooks/useGlobalState";
 import { AnimationContext } from "../../../hooks/useAnimation";
