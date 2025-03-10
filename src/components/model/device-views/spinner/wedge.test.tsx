@@ -32,8 +32,20 @@ jest.mock("./wedge", () => {
           <path 
             data-testid={`wedge-path-${props.variableName}`}
             onClick={() => {
-              if (!isRunning && props.handleSetSelectedVariable) {
-                props.handleSetSelectedVariable();
+              // Only call handlers if not running
+              if (!isRunning) {
+                if (props.handleSetSelectedVariable) {
+                  props.handleSetSelectedVariable();
+                }
+                if (props.handleSetEditingVarName) {
+                  props.handleSetEditingVarName();
+                }
+                if (props.handleSetEditingPct) {
+                  props.handleSetEditingPct();
+                }
+                if (props.handleDeleteWedge) {
+                  props.handleDeleteWedge();
+                }
               }
             }}
           />
