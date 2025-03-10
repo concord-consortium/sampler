@@ -1,11 +1,10 @@
-import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import React, { useEffect, createContext } from "react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { ModelTab } from "./model-component";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
 import { createDefaultDevice } from "../../models/device-model";
 import { createId } from "../../utils/id";
-import { AttrMap, ViewType, IDevice, Speed } from "../../types";
-import { AnimationContext } from "../../hooks/useAnimation";
+import { AttrMap, ViewType, Speed } from "../../types";
 
 // Mock the CODAP plugin API
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
@@ -65,10 +64,9 @@ jest.mock("./outputs", () => ({
 }));
 
 // Mock the useResizer hook
-jest.mock("../../hooks/use-resizer", () => ({
+jest.mock("../../hooks/useResizer", () => ({
   useResizer: (callback: () => void) => {
-    // Call the callback once to simulate resize
-    React.useEffect(() => {
+    useEffect(() => {
       callback();
     }, [callback]);
   }
@@ -76,15 +74,14 @@ jest.mock("../../hooks/use-resizer", () => ({
 
 // Mock the useAnimationContextValue hook
 jest.mock("../../hooks/useAnimation", () => ({
-  AnimationContext: React.createContext({}),
+  AnimationContext: createContext({}),
   useAnimationContextValue: () => ({
     isRunning: false,
     isPaused: false,
-    speed: 1,
-    startAnimation: jest.fn(),
-    stopAnimation: jest.fn(),
-    pauseAnimation: jest.fn(),
-    resumeAnimation: jest.fn()
+    handleStartRun: jest.fn(),
+    handleTogglePauseRun: jest.fn(),
+    handleStopRun: jest.fn(),
+    registerAnimationCallback: jest.fn()
   })
 }));
 
@@ -98,17 +95,9 @@ jest.mock("./help-modal", () => ({
 describe("ModelTab Component", () => {
   const mockDevice = createDefaultDevice();
   const mockColumn = {
-    name: "Test Column",
-    id: createId(),
+    name: "Column 1",
+    id: "column-1",
     devices: [mockDevice]
-  };
-  
-  const mockAttrMap: AttrMap = {
-    experiment: {codapID: null, name: "experiment"},
-    description: {codapID: null, name: "description"},
-    sample_size: {codapID: null, name: "sample size"},
-    experimentHash: {codapID: null, name: "experimentHash"},
-    sample: {codapID: null, name: "sample"},
   };
   
   const mockSetGlobalState = jest.fn();
@@ -164,7 +153,7 @@ describe("ModelTab Component", () => {
     setGlobalState: mockSetGlobalState
   };
 
-  const multiColumnState = {
+  const mockMultiColumnState = {
     globalState: {
       model: {
         columns: [
@@ -192,25 +181,28 @@ describe("ModelTab Component", () => {
                 viewType: ViewType.Mixer,
                 variables: ["c", "d"],
                 collectorVariables: [],
-                formulas: {}
+                formulas: {},
+                hidden: false,
+                lockPassword: ""
               }
             ]
           }
         ]
       },
       selectedDeviceId: "device-1",
-      selectedTab: "Model" as "Model" | "Measures" | "About",
+      selectedTab: "Model" as const,
       repeat: false,
-      replacement: false,
-      sampleSize: "10",
-      numSamples: "10",
+      replacement: true,
+      sampleSize: "1",
+      numSamples: "5",
       enableRunButton: true,
       attrMap: {
-        experiment: { name: 'experiment', codapID: null },
-        sample: { name: 'sample', codapID: null },
-        description: { name: 'description', codapID: null },
-        sample_size: { name: 'sample_size', codapID: null },
-        experimentHash: { name: 'experimentHash', codapID: null }
+        experiment: { name: "experiment", codapID: null },
+        description: { name: "description", codapID: null },
+        sample_size: { name: "sample size", codapID: null },
+        experimentHash: { name: "experimentHash", codapID: null },
+        sample: { name: "sample", codapID: null },
+        item: { name: "item", codapID: null }
       },
       dataContexts: [],
       collectorContext: undefined,
@@ -276,30 +268,8 @@ describe("ModelTab Component", () => {
   });
 
   it("renders multiple columns", () => {
-    const mockDevice2 = {
-      ...createDefaultDevice(),
-      id: createId(),
-      name: "Test Device 2"
-    };
-    
-    const mockColumn2 = {
-      name: "Test Column 2",
-      id: createId(),
-      devices: [mockDevice2]
-    };
-    
-    const multiColumnState = {
-      ...mockGlobalState,
-      globalState: {
-        ...mockGlobalState.globalState,
-        model: {
-          columns: [mockColumn, mockColumn2]
-        }
-      }
-    };
-    
     render(
-      <GlobalStateContext.Provider value={multiColumnState}>
+      <GlobalStateContext.Provider value={mockMultiColumnState}>
         <ModelTab />
       </GlobalStateContext.Provider>
     );
@@ -309,8 +279,8 @@ describe("ModelTab Component", () => {
     expect(screen.getByTestId("column-1")).toBeInTheDocument();
     
     // Check that both column names are rendered
-    expect(screen.getByText("Test Column")).toBeInTheDocument();
-    expect(screen.getByText("Test Column 2")).toBeInTheDocument();
+    expect(screen.getByText("Column 1")).toBeInTheDocument();
+    expect(screen.getByText("Column 2")).toBeInTheDocument();
   });
 
   it("adjusts layout based on width", async () => {
@@ -345,80 +315,14 @@ describe("ModelTab Component", () => {
   });
 
   it("should render multiple columns", () => {
-    const multiColumnState = {
-      globalState: {
-        model: {
-          columns: [
-            {
-              name: "Column 1",
-              id: "column-1",
-              devices: [
-                {
-                  id: "device-1",
-                  name: "Test Device 1",
-                  viewType: "spinner" as ViewType,
-                  variables: {
-                    values: ["A", "B", "C"],
-                    weights: [1, 1, 1],
-                  },
-                  collectorVariables: {
-                    values: [],
-                    weights: [],
-                  },
-                  formulas: {},
-                },
-              ],
-            },
-            {
-              name: "Column 2",
-              id: "column-2",
-              devices: [
-                {
-                  id: "device-2",
-                  name: "Test Device 2",
-                  viewType: "spinner" as ViewType,
-                  variables: {
-                    values: ["X", "Y", "Z"],
-                    weights: [1, 1, 1],
-                  },
-                  collectorVariables: {
-                    values: [],
-                    weights: [],
-                  },
-                  formulas: {},
-                },
-              ],
-            },
-          ],
-        },
-        selectedDeviceId: "device-1",
-        selectedTab: "Model",
-        repeat: false,
-        replacement: true,
-        sampleSize: "1",
-        samplerContext: undefined,
-        attrMap: {
-          experiment: { name: "Experiment", codapID: null },
-          sample: { name: "Sample", codapID: null },
-          description: { name: "Description", codapID: null },
-          sample_size: { name: "Sample Size", codapID: null },
-          experimentHash: { name: "Experiment Hash", codapID: null },
-        },
-        isPaused: false,
-        speed: 1,
-        isModelHidden: false,
-      },
-      setGlobalState: jest.fn(),
-    };
-    
     render(
-      <GlobalStateContext.Provider value={multiColumnState}>
+      <GlobalStateContext.Provider value={mockMultiColumnState}>
         <ModelTab />
       </GlobalStateContext.Provider>
     );
     
-    // Check that both column names are rendered
-    expect(screen.getByText("Column 1")).toBeInTheDocument();
-    expect(screen.getByText("Column 2")).toBeInTheDocument();
+    // Check that both columns are rendered
+    expect(screen.getByTestId("column-0")).toBeInTheDocument();
+    expect(screen.getByTestId("column-1")).toBeInTheDocument();
   });
 }); 
