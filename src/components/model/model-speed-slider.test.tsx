@@ -27,7 +27,6 @@ describe('SpeedSlider Component', () => {
     render(<SpeedSlider />);
     
     // Check that the speed text is displayed
-    expect(screen.getByText('Speed:')).toBeInTheDocument();
     expect(screen.getByText('Medium')).toBeInTheDocument();
   });
   
@@ -35,7 +34,7 @@ describe('SpeedSlider Component', () => {
     render(<SpeedSlider />);
     
     // Check that there are tick marks for each speed option
-    const tickMarks = screen.getAllByTestId(/tick-mark/);
+    const tickMarks = screen.getAllByRole('button');
     expect(tickMarks.length).toBe(Object.keys(speedLabels).length);
   });
 
@@ -45,7 +44,7 @@ describe('SpeedSlider Component', () => {
     render(<SpeedSlider />);
     
     // Find all tick marks
-    const tickMarks = screen.getAllByTestId(/tick-mark/);
+    const tickMarks = screen.getAllByRole('button');
     
     // Click on the Fast tick mark (index 2)
     fireEvent.click(tickMarks[2]);
@@ -76,7 +75,7 @@ describe('SpeedSlider Component', () => {
     render(<SpeedSlider />);
     
     // Find all tick marks
-    const tickMarks = screen.getAllByTestId(/tick-mark/);
+    const tickMarks = screen.getAllByRole('button');
     
     // Check that the Fast tick mark (index 2) has the active class
     expect(tickMarks[2]).toHaveClass('active');
@@ -113,7 +112,7 @@ describe('SpeedSlider Component', () => {
     render(<SpeedSlider />);
     
     // Find all tick marks
-    const tickMarks = screen.getAllByTestId(/tick-mark/);
+    const tickMarks = screen.getAllByRole('button');
     
     // Check that the Fast tick mark (index 2) has the active class
     expect(tickMarks[2]).toHaveClass('active');

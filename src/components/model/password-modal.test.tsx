@@ -125,8 +125,8 @@ describe('PasswordModal', () => {
     );
     
     // Get form elements
-    const passwordInput = screen.getByLabelText(/password/i);
-    const confirmInput = screen.getByLabelText(/confirm password/i);
+    const passwordInput = screen.getByLabelText('Password');
+    const confirmInput = screen.getByLabelText('Confirm Password');
     const submitButton = screen.getByRole('button', { name: /set password/i });
     
     // Enter matching passwords
@@ -161,7 +161,7 @@ describe('PasswordModal', () => {
     );
     
     // Get form elements
-    const passwordInput = screen.getByLabelText(/password/i);
+    const passwordInput = screen.getByLabelText('Password');
     const unlockButton = screen.getByRole('button', { name: /unlock/i });
     
     // Enter the correct password

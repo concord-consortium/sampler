@@ -111,7 +111,9 @@ describe("Device Component", () => {
     expect(deviceContainer).toHaveClass("device-container");
     
     // Check that the device frame has the correct view type class
-    expect(within(deviceContainer).getByRole('generic', { name: '' })).toHaveClass("mixer");
+    const deviceFrames = within(deviceContainer).getAllByRole('generic');
+    const deviceFrame = deviceFrames.find(el => el.classList.contains('device-frame'));
+    expect(deviceFrame).toHaveClass("mixer");
   });
 
   it("selects the device when clicked", () => {

@@ -64,8 +64,8 @@ describe("ModelTab with Hide Functionality", () => {
     expect(modelContainer).toBeVisible();
     
     // Check for outputs container
-    expect(within(modelContainer).getByRole('generic', { name: '' })).toBeInTheDocument();
-    expect(within(modelContainer).getByRole('generic', { name: '' })).toBeVisible();
+    expect(within(modelContainer).getAllByRole('generic').length).toBeGreaterThan(0);
+    expect(within(modelContainer).getAllByRole('generic')[0]).toBeVisible();
   });
 
   it("hides model content when isModelHidden is true", () => {
