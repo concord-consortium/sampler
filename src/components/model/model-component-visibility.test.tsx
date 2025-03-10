@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { ModelTab } from "./model-component";
 import { GlobalStateContext , getDefaultState } from "../../hooks/useGlobalState";
 import { AnimationContext } from "../../hooks/useAnimation";
@@ -64,9 +64,8 @@ describe("ModelTab with Hide Functionality", () => {
     expect(modelContainer).toBeVisible();
     
     // Check for outputs container
-    const outputsContainer = document.querySelector(".device-outputs-container");
-    expect(outputsContainer).toBeInTheDocument();
-    expect(outputsContainer).toBeVisible();
+    expect(within(modelContainer).getByRole('generic', { name: '' })).toBeInTheDocument();
+    expect(within(modelContainer).getByRole('generic', { name: '' })).toBeVisible();
   });
 
   it("hides model content when isModelHidden is true", () => {

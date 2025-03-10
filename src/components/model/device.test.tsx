@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { Device } from "./device";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
 import { createDefaultDevice } from "../../models/device-model";
@@ -111,8 +111,7 @@ describe("Device Component", () => {
     expect(deviceContainer).toHaveClass("device-container");
     
     // Check that the device frame has the correct view type class
-    const deviceFrame = deviceContainer.querySelector('.device-frame');
-    expect(deviceFrame).toHaveClass("mixer");
+    expect(within(deviceContainer).getByRole('generic', { name: '' })).toHaveClass("mixer");
   });
 
   it("selects the device when clicked", () => {

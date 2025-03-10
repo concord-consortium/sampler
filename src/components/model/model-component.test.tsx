@@ -1,5 +1,5 @@
 import React, { useEffect, createContext } from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { ModelTab } from "./model-component";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
 import { createDefaultDevice } from "../../models/device-model";
@@ -235,8 +235,7 @@ describe("ModelTab Component", () => {
     
     // Check that a device is rendered within the column
     const column = screen.getByTestId("column-0");
-    const deviceElement = column.querySelector('.device');
-    expect(deviceElement).toBeInTheDocument();
+    expect(within(column).getByRole('generic', { name: '' })).toBeInTheDocument();
   });
 
   it("shows help when help button is clicked", () => {

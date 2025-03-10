@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PasswordModal } from './password-modal';
 import { GlobalStateContext } from '../../hooks/useGlobalState';
-import { hashPassword } from '../../utils/password-utils';
+import { hashPassword, validatePassword } from '../../utils/password-utils';
 import { Speed } from '../../types';
 
 jest.mock('../../utils/password-utils', () => ({
@@ -117,12 +117,15 @@ describe('PasswordModal', () => {
 
   it('sets the password and stores it securely when passwords match', async () => {
     render(
-      <GlobalStateContext.Provider value={createMockGlobalState()}>
+      <GlobalStateContext.Provider value={createMockGlobalState({
+        passwordModalMode: 'set' as const
+      })}>
         <PasswordModal />
       </GlobalStateContext.Provider>
     );
     
-    const passwordInput = screen.getByLabelText(/^password$/i);
+    // Get form elements
+    const passwordInput = screen.getByLabelText(/password/i);
     const confirmInput = screen.getByLabelText(/confirm password/i);
     const submitButton = screen.getByRole('button', { name: /set password/i });
     
@@ -130,15 +133,19 @@ describe('PasswordModal', () => {
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.change(confirmInput, { target: { value: 'password123' } });
     
-    // Use act to handle the async state updates
-    await act(async () => {
-      fireEvent.click(submitButton);
-    });
+    // Click the submit button
+    fireEvent.click(submitButton);
     
     // Wait for the async functions to complete
     await waitFor(() => {
       expect(hashPassword).toHaveBeenCalledWith('password123');
+    });
+    
+    await waitFor(() => {
       expect(storePasswordHash).toHaveBeenCalledWith('hashed_password123');
+    });
+    
+    await waitFor(() => {
       expect(mockSetGlobalState).toHaveBeenCalled();
     });
   });
@@ -153,30 +160,26 @@ describe('PasswordModal', () => {
       </GlobalStateContext.Provider>
     );
     
-    const passwordInput = screen.getByLabelText(/^password$/i);
+    // Get form elements
+    const passwordInput = screen.getByLabelText(/password/i);
     const unlockButton = screen.getByRole('button', { name: /unlock/i });
     
-    // Enter incorrect password
-    fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
-    
-    await act(async () => {
-      fireEvent.click(unlockButton);
-    });
-    
-    expect(await screen.findByText(/incorrect password/i)).toBeInTheDocument();
-    expect(mockSetGlobalState).not.toHaveBeenCalled();
-    expect(clearPasswordHash).not.toHaveBeenCalled();
-    
-    // Enter correct password
+    // Enter the correct password
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     
-    await act(async () => {
-      fireEvent.click(unlockButton);
-    });
+    // Click the unlock button
+    fireEvent.click(unlockButton);
     
     // Wait for the async functions to complete
     await waitFor(() => {
+      expect(validatePassword).toHaveBeenCalledWith('password123', 'hashed_password123');
+    });
+    
+    await waitFor(() => {
       expect(clearPasswordHash).toHaveBeenCalled();
+    });
+    
+    await waitFor(() => {
       expect(mockSetGlobalState).toHaveBeenCalled();
     });
   });

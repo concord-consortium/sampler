@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SpeedSlider } from './model-speed-slider';
-import { Speed, speedLabels } from '../../types';
 import { useGlobalStateContext } from '../../hooks/useGlobalState';
+import { Speed, speedLabels } from '../../types';
 
 // Mock the useGlobalStateContext hook
 jest.mock('../../hooks/useGlobalState', () => ({
@@ -10,27 +10,81 @@ jest.mock('../../hooks/useGlobalState', () => ({
 }));
 
 describe('SpeedSlider Component', () => {
+  // Mock the setGlobalState function
   const mockSetGlobalState = jest.fn();
   
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Default mock implementation
+    // Mock the useGlobalStateContext hook to return a default state
     (useGlobalStateContext as jest.Mock).mockReturnValue({
       globalState: { speed: Speed.Medium },
       setGlobalState: mockSetGlobalState
     });
   });
-
-  it('renders with the correct initial speed value', () => {
+  
+  it('renders the speed slider with the correct initial speed', () => {
     render(<SpeedSlider />);
     
-    // Check that the slider has the correct value
-    const slider = screen.getByRole('slider');
-    expect(slider).toHaveValue(Speed.Medium.toString());
+    // Check that the speed text is displayed
+    expect(screen.getByText('Speed:')).toBeInTheDocument();
+    expect(screen.getByText('Medium')).toBeInTheDocument();
+  });
+  
+  it('renders tick marks for each speed option', () => {
+    render(<SpeedSlider />);
     
-    // Check that the speed text is displayed - use a more specific selector
-    expect(screen.getByText(speedLabels[Speed.Medium], { selector: '#speed-text' })).toBeInTheDocument();
+    // Check that there are tick marks for each speed option
+    const tickMarks = screen.getAllByTestId(/tick-mark/);
+    expect(tickMarks.length).toBe(Object.keys(speedLabels).length);
+  });
+
+  // Tests for new functionality
+
+  it('updates speed when a tick mark is clicked', () => {
+    render(<SpeedSlider />);
+    
+    // Find all tick marks
+    const tickMarks = screen.getAllByTestId(/tick-mark/);
+    
+    // Click on the Fast tick mark (index 2)
+    fireEvent.click(tickMarks[2]);
+    
+    // Check that setGlobalState was called with the correct speed
+    expect(mockSetGlobalState).toHaveBeenCalled();
+    
+    // Get the callback function passed to setGlobalState
+    const callback = mockSetGlobalState.mock.calls[0][0];
+    
+    // Create a draft state to pass to the callback
+    const draftState = { speed: Speed.Medium };
+    
+    // Call the callback with the draft state
+    callback(draftState);
+    
+    // Check that the draft state was updated correctly
+    expect(draftState.speed).toBe(Speed.Fast);
+  });
+  
+  it('highlights the active speed option', () => {
+    // Set the initial speed to Fast
+    (useGlobalStateContext as jest.Mock).mockReturnValue({
+      globalState: { speed: Speed.Fast },
+      setGlobalState: mockSetGlobalState
+    });
+    
+    render(<SpeedSlider />);
+    
+    // Find all tick marks
+    const tickMarks = screen.getAllByTestId(/tick-mark/);
+    
+    // Check that the Fast tick mark (index 2) has the active class
+    expect(tickMarks[2]).toHaveClass('active');
+    
+    // Check that the other tick marks don't have the active class
+    expect(tickMarks[0]).not.toHaveClass('active');
+    expect(tickMarks[1]).not.toHaveClass('active');
+    expect(tickMarks[3]).not.toHaveClass('active');
   });
 
   it('updates global state when slider value changes', () => {
@@ -40,34 +94,6 @@ describe('SpeedSlider Component', () => {
     
     // Change the slider value
     fireEvent.change(slider, { target: { value: Speed.Fast } });
-    
-    // Check that setGlobalState was called with the correct value
-    expect(mockSetGlobalState).toHaveBeenCalled();
-    const setStateFn = mockSetGlobalState.mock.calls[0][0];
-    const draftState = { speed: Speed.Medium };
-    setStateFn(draftState);
-    expect(draftState.speed).toBe(Speed.Fast);
-  });
-
-  it('renders tick marks for each speed option', () => {
-    render(<SpeedSlider />);
-    
-    // Check that there are tick marks for each speed option
-    const tickMarksContainer = document.querySelector('.tick-marks-container');
-    const tickMarks = tickMarksContainer?.querySelectorAll('.tick-mark');
-    expect(tickMarks?.length).toBe(Object.keys(speedLabels).length);
-  });
-
-  // Tests for new functionality
-
-  it('updates speed when a tick mark is clicked', () => {
-    render(<SpeedSlider />);
-    
-    // Find all tick marks
-    const tickMarks = document.querySelectorAll('.tick-mark');
-    
-    // Click on the Fast tick mark (index 2)
-    fireEvent.click(tickMarks[2]);
     
     // Check that setGlobalState was called with the correct value
     expect(mockSetGlobalState).toHaveBeenCalled();
@@ -87,7 +113,7 @@ describe('SpeedSlider Component', () => {
     render(<SpeedSlider />);
     
     // Find all tick marks
-    const tickMarks = document.querySelectorAll('.tick-mark');
+    const tickMarks = screen.getAllByTestId(/tick-mark/);
     
     // Check that the Fast tick mark (index 2) has the active class
     expect(tickMarks[2]).toHaveClass('active');

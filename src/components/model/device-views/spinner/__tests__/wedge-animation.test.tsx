@@ -60,18 +60,16 @@ jest.mock('../wedge', () => {
       }
       
       return (
-        <>
-          <path
-            id={`${props.deviceId}-wedge-${props.variableName}`}
-            data-testid={`${props.deviceId}-wedge-${props.variableName}`}
-            className={classes.join(' ')}
-            fill={props.selectedWedge === props.variableName ? '#008cba' : 'hsl(171, 71%, 66%)'}
-            stroke={props.isAnimating && props.isAnimationTarget ? '#fff' : 'none'}
-            strokeWidth={props.isAnimating && props.isAnimationTarget ? '2' : '0'}
-            style={styles}
-            {...animationAttributes}
-          />
-        </>
+        <path
+          id={`${props.deviceId}-wedge-${props.variableName}`}
+          data-testid={`${props.deviceId}-wedge-${props.variableName}`}
+          className={classes.join(' ')}
+          fill={props.selectedWedge === props.variableName ? '#008cba' : 'hsl(171, 71%, 66%)'}
+          stroke={props.isAnimating && props.isAnimationTarget ? '#fff' : 'none'}
+          strokeWidth={props.isAnimating && props.isAnimationTarget ? '2' : '0'}
+          style={styles}
+          {...animationAttributes}
+        />
       );
     }
   };

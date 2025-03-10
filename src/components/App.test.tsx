@@ -1,6 +1,6 @@
 import React from "react";
 import { App } from "./App";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import * as codapPluginAPI from "@concord-consortium/codap-plugin-api";
 
 // Mock the CODAP plugin API
@@ -38,15 +38,21 @@ describe("App Component", () => {
     jest.clearAllMocks();
   });
 
-  it("renders without crashing and shows all tabs", () => {
-    render(<App/>);
+  it("renders without crashing and shows all tabs", async () => {
+    await act(async () => {
+      render(<App/>);
+    });
+    
     expect(screen.getByText("Model")).toBeInTheDocument();
     expect(screen.getByText("Measures")).toBeInTheDocument();
     expect(screen.getByText("About")).toBeInTheDocument();
   });
 
-  it("initializes with Model tab selected by default", () => {
-    render(<App/>);
+  it("initializes with Model tab selected by default", async () => {
+    await act(async () => {
+      render(<App/>);
+    });
+    
     const modelTab = screen.getByText("Model");
     expect(modelTab).toHaveClass("selected");
     
@@ -54,8 +60,10 @@ describe("App Component", () => {
     expect(screen.getByText("Model Tab Content")).toBeInTheDocument();
   });
 
-  it("changes tab when a tab is clicked", () => {
-    render(<App/>);
+  it("changes tab when a tab is clicked", async () => {
+    await act(async () => {
+      render(<App/>);
+    });
     
     // Initially Model tab should be selected
     const modelTab = screen.getByText("Model");
@@ -63,7 +71,9 @@ describe("App Component", () => {
     
     // Click on Measures tab
     const measuresTab = screen.getByText("Measures");
-    fireEvent.click(measuresTab);
+    await act(async () => {
+      fireEvent.click(measuresTab);
+    });
     
     // Now Measures tab should be selected
     expect(measuresTab).toHaveClass("selected");
@@ -74,7 +84,9 @@ describe("App Component", () => {
     
     // Click on About tab
     const aboutTab = screen.getByText("About");
-    fireEvent.click(aboutTab);
+    await act(async () => {
+      fireEvent.click(aboutTab);
+    });
     
     // Now About tab should be selected
     expect(aboutTab).toHaveClass("selected");
@@ -85,7 +97,9 @@ describe("App Component", () => {
   });
 
   it("initializes CODAP plugin on mount", async () => {
-    render(<App/>);
+    await act(async () => {
+      render(<App/>);
+    });
     
     // Verify that initializePlugin was called
     await waitFor(() => {
@@ -94,10 +108,14 @@ describe("App Component", () => {
   });
 
   it("updates interactive state when global state changes", async () => {
-    render(<App/>);
+    await act(async () => {
+      render(<App/>);
+    });
     
     // Change tab to trigger a state update
-    fireEvent.click(screen.getByText("Measures"));
+    await act(async () => {
+      fireEvent.click(screen.getByText("Measures"));
+    });
     
     // Verify that updateInteractiveState was called
     await waitFor(() => {

@@ -93,8 +93,8 @@ Element.prototype.scrollTo = mockScrollTo;
 // Mock the scrollLeft and scrollTop properties
 Object.defineProperty(HTMLDivElement.prototype, 'scrollLeft', {
   configurable: true,
-  get: function() { return this._scrollLeft || 0; },
-  set: function(val) { 
+  get() { return this._scrollLeft || 0; },
+  set(val) { 
     this._scrollLeft = val;
     mockScrollTo();
   }
@@ -102,8 +102,8 @@ Object.defineProperty(HTMLDivElement.prototype, 'scrollLeft', {
 
 Object.defineProperty(HTMLDivElement.prototype, 'scrollTop', {
   configurable: true,
-  get: function() { return this._scrollTop || 0; },
-  set: function(val) { 
+  get() { return this._scrollTop || 0; },
+  set(val) { 
     this._scrollTop = val;
     mockScrollTo();
   }
