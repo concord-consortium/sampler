@@ -11,6 +11,7 @@ We have successfully set up the following accessibility testing infrastructure:
    - HelpModal component (`src/components/model/help-modal.a11y.test.tsx`)
    - Device component (`src/components/model/device.a11y.test.tsx`)
    - RepeatUntil component (`src/components/model/repeat-until.a11y.test.tsx`)
+3. Color contrast testing utilities (`src/test/color-contrast-checker.ts`)
 
 ## Implementation Progress
 
@@ -28,7 +29,9 @@ We have successfully set up the following accessibility testing infrastructure:
 - [x] Add ARIA attributes to RepeatUntil component
 - [x] Add screen reader text for better context
 - [x] Ensure proper keyboard navigation in modals
-- [ ] Fix color contrast issues
+- [x] Fix color contrast issues in RepeatUntil component
+- [x] Fix color contrast issues in Device component
+- [x] Create color contrast testing utilities
 - [ ] Ensure all interactive elements are accessible
 
 ### Phase 3: Comprehensive Implementation
@@ -53,7 +56,7 @@ We have successfully set up the following accessibility testing infrastructure:
 - [ ] 1.1 Text Alternatives: Provide text alternatives for non-text content
 - [ ] 1.2 Time-based Media: Provide alternatives for time-based media
 - [x] 1.3 Adaptable: Create content that can be presented in different ways
-- [ ] 1.4 Distinguishable: Make it easier for users to see and hear content
+- [x] 1.4 Distinguishable: Make it easier for users to see and hear content (improved color contrast)
 
 ### Operable
 
