@@ -147,7 +147,20 @@ export const ModelHeader = (props: IProps) => {
         {repeat &&
           <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
             <RepeatUntil />
-            <InfoIcon onClick={handleOpenHelp}/>
+            <div 
+              role="button" 
+              tabIndex={0} 
+              aria-label="Help with repeat until conditions"
+              onClick={handleOpenHelp}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleOpenHelp();
+                }
+              }}
+            >
+              <InfoIcon aria-hidden="true" />
+            </div>
             {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
           </div>
         }

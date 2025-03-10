@@ -40,19 +40,32 @@ export const App = () => {
   return (
     <GlobalStateContext.Provider value={globalStateContextValue}>
     <div className="App">
-      <div className="navigationTabs">
+      {/* Skip navigation link for keyboard users */}
+      <a href="#main-content" className="skip-nav">Skip to main content</a>
+      
+      <div className="navigationTabs" role="navigation" aria-label="Main navigation">
         { navTabs.map((tab, index) => {
             return (
               <div key={`${index}`}
                   className={`tab ${selectedTab === tab ? "selected" : ""}`}
-                  onClick={() => handleTabSelect(navTabs[index])}>
+                  onClick={() => handleTabSelect(navTabs[index])}
+                  role="tab"
+                  tabIndex={0}
+                  aria-selected={selectedTab === tab}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleTabSelect(navTabs[index]);
+                    }
+                  }}
+              >
                 {tab}
               </div>
             );
           })
         }
       </div>
-      <div className="tab-content">
+      <div id="main-content" className="tab-content" role="main" tabIndex={-1}>
         {selectedTab === "Model" ?
           <ModelTab /> :
           selectedTab === "Measures" ?

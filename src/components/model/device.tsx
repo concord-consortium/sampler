@@ -397,7 +397,7 @@ export const Device = (props: IProps) => {
               aria-label="Delete device"
               data-testid="delete-device-button"
             >
-              <DeleteIcon />
+              <DeleteIcon aria-hidden="true" />
             </div>
         }
         {/* Hidden element for screen readers to describe the device */}
