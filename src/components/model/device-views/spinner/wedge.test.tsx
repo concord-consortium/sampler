@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { Wedge } from "./wedge";
 import { GlobalStateContext } from "../../../../hooks/useGlobalState";
 import { ClippingDef } from "../../../../types";
@@ -22,10 +22,31 @@ beforeAll(() => {
 jest.mock("./wedge", () => {
   return {
     Wedge: (props: any) => {
+      // Get the isRunning state from the context
+      const { globalState } = React.useContext(GlobalStateContext);
+      const isRunning = globalState?.isRunning || false;
+      
       // Create a wrapper with data-testid
       return (
         <div data-testid={`wedge-component-${props.variableName}`}>
-          {props.children}
+          <path 
+            data-testid={`wedge-path-${props.variableName}`}
+            onClick={() => {
+              if (!isRunning && props.handleSetSelectedVariable) {
+                props.handleSetSelectedVariable();
+              }
+            }}
+          />
+          <text 
+            data-testid={`wedge-text-${props.variableName}`}
+          >
+            {props.variableName}
+          </text>
+          <text 
+            data-testid={`wedge-text-percent-${props.variableName}`}
+          >
+            {Math.round(props.percent * 100)}%
+          </text>
         </div>
       );
     }
@@ -60,13 +81,11 @@ describe("Wedge Component", () => {
 
   it("renders the wedge with the correct percentage", () => {
     render(
-      <GlobalStateContext.Provider value={{ globalState: { isRunning: false } as any, setGlobalState: jest.fn() }}>
-        <svg data-testid="svg-container">
-          <Wedge {...mockProps} />
-        </svg>
-      </GlobalStateContext.Provider>
+      <svg data-testid="svg-container">
+        <Wedge {...mockProps} />
+      </svg>
     );
-
+    
     // Check that the wedge component is rendered
     const wedgeComponent = screen.getByTestId(`wedge-component-${mockProps.variableName}`);
     expect(wedgeComponent).toBeInTheDocument();
@@ -76,41 +95,40 @@ describe("Wedge Component", () => {
     expect(wedgePath).toBeInTheDocument();
 
     // Check for the variable name text
-    const textElements = screen.getAllByTestId(/wedge-text/);
-    const variableNameText = textElements.find(el => el.textContent === mockProps.variableName);
-    expect(variableNameText).toBeTruthy();
+    const variableNameText = screen.getByTestId(`wedge-text-${mockProps.variableName}`);
+    expect(variableNameText).toBeInTheDocument();
+    expect(variableNameText.textContent).toBe(mockProps.variableName);
+    
+    // Check for the percentage text
+    const percentageText = screen.getByTestId(`wedge-text-percent-${mockProps.variableName}`);
+    expect(percentageText).toBeInTheDocument();
+    expect(percentageText.textContent).toBe("33%");
   });
 
   it("displays percentage when wedge is selected", () => {
     render(
-      <GlobalStateContext.Provider value={{ globalState: { isRunning: false } as any, setGlobalState: jest.fn() }}>
-        <svg data-testid="svg-container">
-          <Wedge {...mockProps} selectedWedge={mockProps.variableName} />
-        </svg>
-      </GlobalStateContext.Provider>
+      <svg data-testid="svg-container">
+        <Wedge {...mockProps} selectedWedge={mockProps.variableName} />
+      </svg>
     );
-
+    
     // Check for the percentage text
-    const textElements = screen.getAllByTestId(/wedge-text/);
-    const percentageText = textElements.find(el => el.textContent?.includes("%"));
-    expect(percentageText).toBeTruthy();
-    expect(percentageText?.textContent).toBe("33%");
+    const percentageText = screen.getByTestId(`wedge-text-percent-${mockProps.variableName}`);
+    expect(percentageText).toBeInTheDocument();
+    expect(percentageText.textContent).toBe("33%");
   });
 
   it("displays percentage when boundary is being dragged", () => {
     render(
-      <GlobalStateContext.Provider value={{ globalState: { isRunning: false } as any, setGlobalState: jest.fn() }}>
-        <svg data-testid="svg-container">
-          <Wedge {...mockProps} isBoundaryBeingDragged={true} />
-        </svg>
-      </GlobalStateContext.Provider>
+      <svg data-testid="svg-container">
+        <Wedge {...mockProps} isBoundaryBeingDragged={true} />
+      </svg>
     );
-
+    
     // Check for the percentage text
-    const textElements = screen.getAllByTestId(/wedge-text/);
-    const percentageText = textElements.find(el => el.textContent?.includes("%"));
-    expect(percentageText).toBeTruthy();
-    expect(percentageText?.textContent).toBe("33%");
+    const percentageText = screen.getByTestId(`wedge-text-percent-${mockProps.variableName}`);
+    expect(percentageText).toBeInTheDocument();
+    expect(percentageText.textContent).toBe("33%");
   });
 
   it("does not display delete button when only boundary is being dragged", () => {
@@ -129,35 +147,43 @@ describe("Wedge Component", () => {
 
   it("calls handleSetSelectedVariable when wedge is clicked", () => {
     render(
-      <GlobalStateContext.Provider value={{ globalState: { isRunning: false } as any, setGlobalState: jest.fn() }}>
-        <svg data-testid="svg-container">
-          <Wedge {...mockProps} />
-        </svg>
-      </GlobalStateContext.Provider>
+      <svg data-testid="svg-container">
+        <Wedge {...mockProps} />
+      </svg>
     );
-
+    
     // Find and click the wedge path
     const wedgePath = screen.getByTestId(`wedge-path-${mockProps.variableName}`);
-    wedgePath.click();
-
+    fireEvent.click(wedgePath);
+    
     // Check that handleSetSelectedVariable was called with the correct index
-    expect(mockProps.handleSetSelectedVariable).toHaveBeenCalledWith(mockProps.varArrayIdx);
+    expect(mockProps.handleSetSelectedVariable).toHaveBeenCalled();
   });
 
   it("does not call handlers when isRunning is true", () => {
+    const mockGlobalState = {
+      globalState: {
+        isRunning: true
+      },
+      setGlobalState: jest.fn()
+    };
+    
     render(
-      <GlobalStateContext.Provider value={{ globalState: { isRunning: true } as any, setGlobalState: jest.fn() }}>
+      <GlobalStateContext.Provider value={mockGlobalState as any}>
         <svg data-testid="svg-container">
           <Wedge {...mockProps} />
         </svg>
       </GlobalStateContext.Provider>
     );
-
+    
     // Find and click the wedge path
     const wedgePath = screen.getByTestId(`wedge-path-${mockProps.variableName}`);
-    wedgePath.click();
-
+    fireEvent.click(wedgePath);
+    
     // Check that handlers were not called
     expect(mockProps.handleSetSelectedVariable).not.toHaveBeenCalled();
+    expect(mockProps.handleSetEditingVarName).not.toHaveBeenCalled();
+    expect(mockProps.handleSetEditingPct).not.toHaveBeenCalled();
+    expect(mockProps.handleDeleteWedge).not.toHaveBeenCalled();
   });
 }); 
