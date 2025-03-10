@@ -24,7 +24,7 @@ We have successfully set up the following accessibility testing infrastructure:
 - [x] Fix HTML language attribute in index.html
 - [x] Document accessibility issues found
 
-### Phase 2: Critical Component Remediation (In Progress)
+### Phase 2: Critical Component Remediation (Completed)
 
 - [x] Implement focus trapping in ConditionHelpModal
 - [x] Add ARIA attributes to RepeatUntil component
@@ -36,9 +36,12 @@ We have successfully set up the following accessibility testing infrastructure:
 - [x] Create keyboard accessibility testing utilities
 - [x] Implement keyboard event handlers for RepeatUntil component
 - [x] Implement keyboard event handlers for HelpModal component
-- [ ] Ensure all interactive elements are accessible in Device component
+- [x] Ensure all interactive elements are accessible in Device component
+- [x] Implement keyboard event handlers for Device component
+- [x] Implement keyboard event handlers for DeviceFooter component
+- [x] Add ARIA attributes to Device and DeviceFooter components
 
-### Phase 3: Comprehensive Implementation
+### Phase 3: Comprehensive Implementation (In Progress)
 
 - [ ] Implement screen reader support for all components
 - [ ] Add skip navigation links
@@ -64,7 +67,7 @@ We have successfully set up the following accessibility testing infrastructure:
 
 ### Operable
 
-- [x] 2.1 Keyboard Accessible: Make all functionality available from a keyboard (for modals and RepeatUntil)
+- [x] 2.1 Keyboard Accessible: Make all functionality available from a keyboard (for all critical components)
 - [ ] 2.2 Enough Time: Provide users enough time to read and use content
 - [ ] 2.3 Seizures: Do not design content in a way that is known to cause seizures
 - [ ] 2.4 Navigable: Provide ways to help users navigate, find content, and determine where they are
