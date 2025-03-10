@@ -40,6 +40,18 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
     }
   };
 
+  /**
+   * Handle keyboard events for buttons
+   * @param e - The keyboard event
+   * @param callback - The function to call when Enter or Space is pressed
+   */
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, callback: () => void) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); // Prevent scrolling on space
+      callback();
+    }
+  };
+
   const updateFormulas = () => {
     setGlobalState(draft => {
       draft.model.columns.forEach((col) => {
@@ -132,27 +144,44 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
   };
 
   return (
-    <div className="footer">
-      { viewType !== ViewType.Collector &&
-        <div className="add-remove-variables-buttons">
-          <button disabled={isRunning} onClick={handleAddVariable}>+</button>
-          <button disabled={isRunning} onClick={(e) => handleDeleteVariable(e)}>-</button>
-          <button disabled={isRunning} onClick={handleSpecifyVariables}>...</button>
+    <div className="device-footer">
+      <div className="device-controls">
+        <div className="device-variables">
+          <button 
+            onClick={handleAddVariable} 
+            onKeyDown={(e) => handleKeyDown(e, handleAddVariable)}
+            disabled={isRunning}
+            aria-label="Add variable"
+          >
+            Add Variable
+          </button>
+          <button 
+            onClick={handleSpecifyVariables} 
+            onKeyDown={(e) => handleKeyDown(e, handleSpecifyVariables)}
+            disabled={isRunning}
+            aria-label="Specify variables"
+          >
+            Specify Variables
+          </button>
         </div>
-      }
-      <div className="device-buttons">
-        <div className="device-type-buttons">
+        <div className="device-type-selector">
           <button
             className={`device-type-button ${viewType === ViewType.Mixer ? "selected" : ""}`}
             onClick={() => handleUpdateViewType(ViewType.Mixer)}
+            onKeyDown={(e) => handleKeyDown(e, () => handleUpdateViewType(ViewType.Mixer))}
             disabled={isRunning}
+            aria-label="Switch to Mixer view"
+            aria-pressed={viewType === ViewType.Mixer}
           >
             Mixer
           </button>
           <button
             className={`device-type-button ${viewType === ViewType.Spinner ? "selected" : ""}`}
             onClick={() => handleUpdateViewType(ViewType.Spinner)}
+            onKeyDown={(e) => handleKeyDown(e, () => handleUpdateViewType(ViewType.Spinner))}
             disabled={isRunning}
+            aria-label="Switch to Spinner view"
+            aria-pressed={viewType === ViewType.Spinner}
           >
             Spinner
           </button>
@@ -160,7 +189,10 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
             <button
               className={`device-type-button ${viewType === ViewType.Collector ? "selected" : ""}`}
               onClick={() => handleUpdateViewType(ViewType.Collector)}
+              onKeyDown={(e) => handleKeyDown(e, () => handleUpdateViewType(ViewType.Collector))}
               disabled={isRunning}
+              aria-label="Switch to Collector view"
+              aria-pressed={viewType === ViewType.Collector}
             >
               Collector
             </button>
@@ -193,6 +225,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
                           fontWeight: isSelected ? 'bold' : 'normal'
                         }}
                         disabled={true}
+                        aria-pressed={isSelected}
                       >
                         {displayName}
                       </button>
@@ -203,8 +236,24 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
             </div>
           :
             <>
-              <button disabled={isRunning} onClick={handleAddDevice}>{addButtonLabel}</button>
-              {showMergeButton && <button disabled={isRunning} onClick={handleMergeDevices}>Merge</button>}
+              <button 
+                disabled={isRunning} 
+                onClick={handleAddDevice}
+                onKeyDown={(e) => handleKeyDown(e, handleAddDevice)}
+                aria-label={addButtonLabel}
+              >
+                {addButtonLabel}
+              </button>
+              {showMergeButton && 
+                <button 
+                  disabled={isRunning} 
+                  onClick={handleMergeDevices}
+                  onKeyDown={(e) => handleKeyDown(e, handleMergeDevices)}
+                  aria-label="Merge devices"
+                >
+                  Merge
+                </button>
+              }
             </>
         }
       </div>

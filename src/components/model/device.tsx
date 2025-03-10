@@ -80,6 +80,18 @@ export const Device = (props: IProps) => {
     });
   };
 
+  /**
+   * Handle keyboard events for the delete button
+   * @param e - The keyboard event
+   */
+  const handleDeleteKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Delete device on Enter or Space
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); // Prevent scrolling on space
+      handleDeleteDevice();
+    }
+  };
+
   const handleSpecifyVariables = () => {
     setShowVariableEditor(true);
   };
@@ -352,7 +364,15 @@ export const Device = (props: IProps) => {
           </div>
         </div>
         { columnIndex !== 0 && isSelectedDevice &&
-            <div className="device-delete-icon" onClick={handleDeleteDevice} data-testid="delete-device-button">
+            <div 
+              className="device-delete-icon" 
+              onClick={handleDeleteDevice} 
+              onKeyDown={handleDeleteKeyDown}
+              role="button"
+              tabIndex={0}
+              aria-label="Delete device"
+              data-testid="delete-device-button"
+            >
               <DeleteIcon />
             </div>
         }
