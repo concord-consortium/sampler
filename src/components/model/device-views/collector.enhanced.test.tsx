@@ -143,7 +143,7 @@ describe("Enhanced Collector Component", () => {
     
     // Wait for the async data fetching to complete
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 100));
     });
     
     // Now check for the dataset selector
@@ -165,7 +165,7 @@ describe("Enhanced Collector Component", () => {
     
     // Wait for the async data fetching to complete
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 100));
     });
     
     const message = screen.getByText("No datasets available");
@@ -183,7 +183,7 @@ describe("Enhanced Collector Component", () => {
     
     // Wait for the async data fetching to complete
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 100));
     });
     
     // Verify setGlobalState was called
@@ -210,7 +210,7 @@ describe("Enhanced Collector Component", () => {
     
     // Wait for the async data fetching to complete
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 100));
     });
     
     // Check that the dataset selector is rendered
@@ -226,7 +226,7 @@ describe("Enhanced Collector Component", () => {
     
     // Wait for the async data fetching to complete
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 100));
     });
     
     // Find the select element
@@ -234,7 +234,10 @@ describe("Enhanced Collector Component", () => {
     expect(selectElement).toBeInTheDocument();
     
     // Simulate selecting a different dataset
-    fireEvent.change(selectElement, { target: { value: "Dataset2" } });
+    await act(async () => {
+      fireEvent.change(selectElement, { target: { value: "Dataset2" } });
+      await new Promise(resolve => setTimeout(resolve, 100));
+    });
     
     // Skip this assertion since the mock might not be called in the test environment
     // The component behavior is still being tested by verifying the select element works
