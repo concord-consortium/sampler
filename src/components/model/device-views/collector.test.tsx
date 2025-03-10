@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { Collector } from "./collector";
 import { GlobalStateContext } from "../../../hooks/useGlobalState";
 import { AnimationContext } from "../../../hooks/useAnimation";
@@ -49,27 +49,28 @@ jest.mock("./collector", () => {
       };
 
       return (
-        <>
+        <div data-testid="collector-component">
           {/* Mixer Frame */}
-          <path className="mixer-frame-path" d="M10,10 L100,10 L100,100 L10,100 Z" />
+          <path data-testid="mixer-frame" className="mixer-frame-path" d="M10,10 L100,10 L100,100 L10,100 Z" />
           
           {/* Balls */}
           {device.collectorVariables.map((item, i) => {
             const value = Object.values(item)[0].toString();
             return (
-              <g key={`group-${i}`} onClick={() => handleGroupClick(i)}>
+              <g key={`group-${i}`} data-testid={`ball-group-${i}`} onClick={() => handleGroupClick(i)}>
                 <circle
                   key={`circle-${i}`}
+                  data-testid={`ball-${i}`}
                   cx={100 + i}
                   cy={100 + i}
                   r={14}
                   onClick={() => handleBallClick(i)}
                 />
-                <text key={`text-${i}`}>{value}</text>
+                <text key={`text-${i}`} data-testid={`ball-text-${i}`}>{value}</text>
               </g>
             );
           })}
-        </>
+        </div>
       );
     }
   };
@@ -78,29 +79,35 @@ jest.mock("./collector", () => {
 // Mock SVG functions not available in jsdom
 beforeAll(() => {
   // Mock getScreenCTM
-  // @ts-ignore - Adding missing SVG methods for testing
-  SVGElement.prototype.getScreenCTM = jest.fn().mockReturnValue({
-    inverse: jest.fn().mockReturnValue({
-      multiply: jest.fn(),
-      a: 1, b: 0, c: 0, d: 1, e: 0, f: 0
-    })
+  Object.defineProperty(SVGElement.prototype, 'getScreenCTM', {
+    value: jest.fn().mockReturnValue({
+      inverse: jest.fn().mockReturnValue({
+        multiply: jest.fn(),
+        a: 1, b: 0, c: 0, d: 1, e: 0, f: 0
+      })
+    }),
+    configurable: true
   });
 
   // Mock createSVGPoint
-  // @ts-ignore - Adding missing SVG methods for testing
-  SVGElement.prototype.createSVGPoint = jest.fn().mockReturnValue({
-    x: 0,
-    y: 0,
-    matrixTransform: jest.fn().mockReturnValue({ x: 100, y: 100 })
+  Object.defineProperty(SVGElement.prototype, 'createSVGPoint', {
+    value: jest.fn().mockReturnValue({
+      x: 0,
+      y: 0,
+      matrixTransform: jest.fn().mockReturnValue({ x: 100, y: 100 })
+    }),
+    configurable: true
   });
 
   // Mock getBBox for SVG elements
-  // @ts-ignore - Adding missing SVG methods for testing
-  SVGElement.prototype.getBBox = jest.fn().mockReturnValue({
-    x: 0,
-    y: 0,
-    width: 100,
-    height: 20
+  Object.defineProperty(SVGElement.prototype, 'getBBox', {
+    value: jest.fn().mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 20
+    }),
+    configurable: true
   });
 });
 
@@ -131,7 +138,7 @@ describe("Collector Component", () => {
     render(
       <GlobalStateContext.Provider value={{ globalState: { isRunning: false } as any, setGlobalState: jest.fn() }}>
         <AnimationContext.Provider value={{ registerAnimationCallback: jest.fn() } as any}>
-          <svg>
+          <svg data-testid="svg-container">
             <Collector
               device={mockDevice}
               handleAddDefs={mockHandleAddDefs}
@@ -143,20 +150,21 @@ describe("Collector Component", () => {
       </GlobalStateContext.Provider>
     );
 
-    // Check that the mixer frame is rendered
-    const paths = document.querySelectorAll("path");
-    expect(paths.length).toBeGreaterThan(0);
+    // Check that the collector component is rendered
+    const collectorComponent = screen.getByTestId("collector-component");
+    expect(collectorComponent).toBeInTheDocument();
     
-    // Check that at least one path has the mixer-frame-path class
-    const mixerFramePath = document.querySelector(".mixer-frame-path");
-    expect(mixerFramePath).toBeTruthy();
+    // Check that the mixer frame is rendered
+    const mixerFrame = within(collectorComponent).getByTestId("mixer-frame");
+    expect(mixerFrame).toBeInTheDocument();
+    expect(mixerFrame).toHaveClass("mixer-frame-path");
   });
 
   it("renders balls for collector variables", () => {
     render(
       <GlobalStateContext.Provider value={{ globalState: { isRunning: false } as any, setGlobalState: jest.fn() }}>
         <AnimationContext.Provider value={{ registerAnimationCallback: jest.fn() } as any}>
-          <svg>
+          <svg data-testid="svg-container">
             <Collector
               device={mockDevice}
               handleAddDefs={mockHandleAddDefs}
@@ -168,21 +176,17 @@ describe("Collector Component", () => {
       </GlobalStateContext.Provider>
     );
 
+    // Check that the collector component is rendered
+    const collectorComponent = screen.getByTestId("collector-component");
+    
     // Check that balls are rendered (circles)
-    const circles = document.querySelectorAll("circle");
-    expect(circles.length).toBe(mockDevice.collectorVariables.length); // One circle per variable
-    
-    // Check that text elements are rendered for the ball labels
-    const textElements = document.querySelectorAll("text");
-    expect(textElements.length).toBe(mockDevice.collectorVariables.length);
-    
-    // Check that the ball labels contain the expected values
-    mockDevice.collectorVariables.forEach(item => {
-      const value = Object.values(item)[0].toString();
-      const hasValue = Array.from(textElements).some(label => 
-        label.textContent === value
-      );
-      expect(hasValue).toBeTruthy();
+    mockDevice.collectorVariables.forEach((item, index) => {
+      const ball = within(collectorComponent).getByTestId(`ball-${index}`);
+      expect(ball).toBeInTheDocument();
+      
+      const ballText = within(collectorComponent).getByTestId(`ball-text-${index}`);
+      expect(ballText).toBeInTheDocument();
+      expect(ballText.textContent).toBe(Object.values(item)[0].toString());
     });
   });
 
@@ -190,7 +194,7 @@ describe("Collector Component", () => {
     render(
       <GlobalStateContext.Provider value={{ globalState: { isRunning: false } as any, setGlobalState: jest.fn() }}>
         <AnimationContext.Provider value={{ registerAnimationCallback: jest.fn() } as any}>
-          <svg>
+          <svg data-testid="svg-container">
             <Collector
               device={mockDevice}
               handleAddDefs={mockHandleAddDefs}
@@ -202,20 +206,22 @@ describe("Collector Component", () => {
       </GlobalStateContext.Provider>
     );
 
-    // Find the balls (circles) and click the first one
-    const circles = document.querySelectorAll("circle");
-    if (circles.length > 0) {
-      fireEvent.click(circles[0]);
-      // Check that handleSetSelectedVariable was called
-      expect(mockHandleSetSelectedVariable).toHaveBeenCalled();
-    }
+    // Find the collector component
+    const collectorComponent = screen.getByTestId("collector-component");
+    
+    // Click on the first ball
+    const firstBall = within(collectorComponent).getByTestId("ball-0");
+    firstBall.click();
+    
+    // Check that handleSetSelectedVariable was called with the correct index
+    expect(mockHandleSetSelectedVariable).toHaveBeenCalledWith(0);
   });
 
   it("calls handleSetEditingVarName when a ball group is clicked", () => {
     render(
       <GlobalStateContext.Provider value={{ globalState: { isRunning: false } as any, setGlobalState: jest.fn() }}>
         <AnimationContext.Provider value={{ registerAnimationCallback: jest.fn() } as any}>
-          <svg>
+          <svg data-testid="svg-container">
             <Collector
               device={mockDevice}
               handleAddDefs={mockHandleAddDefs}
@@ -227,25 +233,22 @@ describe("Collector Component", () => {
       </GlobalStateContext.Provider>
     );
 
-    // Find the ball groups (g elements) and click the first one
-    const groups = document.querySelectorAll("g");
-    if (groups.length > 0) {
-      fireEvent.click(groups[0]);
-      // Check that handleSetEditingVarName was called
-      expect(mockHandleSetEditingVarName).toHaveBeenCalled();
-    }
+    // Find the collector component
+    const collectorComponent = screen.getByTestId("collector-component");
+    
+    // Click on the first ball group
+    const firstBallGroup = within(collectorComponent).getByTestId("ball-group-0");
+    firstBallGroup.click();
+    
+    // Check that handleSetEditingVarName was called with the correct index
+    expect(mockHandleSetEditingVarName).toHaveBeenCalledWith(0);
   });
 
   it("does not call handlers when isRunning is true", () => {
-    const runningGlobalState = {
-      globalState: { isRunning: true } as any,
-      setGlobalState: jest.fn()
-    };
-
     render(
-      <GlobalStateContext.Provider value={runningGlobalState}>
+      <GlobalStateContext.Provider value={{ globalState: { isRunning: true } as any, setGlobalState: jest.fn() }}>
         <AnimationContext.Provider value={{ registerAnimationCallback: jest.fn() } as any}>
-          <svg>
+          <svg data-testid="svg-container">
             <Collector
               device={mockDevice}
               handleAddDefs={mockHandleAddDefs}
@@ -257,28 +260,27 @@ describe("Collector Component", () => {
       </GlobalStateContext.Provider>
     );
 
-    // Find the balls (circles) and click all of them
-    const circles = document.querySelectorAll("circle");
-    for (let i = 0; i < circles.length; i++) {
-      fireEvent.click(circles[i]);
-    }
-
-    // Find all groups and click them
-    const groups = document.querySelectorAll("g");
-    for (let i = 0; i < groups.length; i++) {
-      fireEvent.click(groups[i]);
-    }
-
+    // Find the collector component
+    const collectorComponent = screen.getByTestId("collector-component");
+    
+    // Click on the first ball
+    const firstBall = within(collectorComponent).getByTestId("ball-0");
+    firstBall.click();
+    
+    // Click on the first ball group
+    const firstBallGroup = within(collectorComponent).getByTestId("ball-group-0");
+    firstBallGroup.click();
+    
     // Check that handlers were not called
     expect(mockHandleSetSelectedVariable).not.toHaveBeenCalled();
     expect(mockHandleSetEditingVarName).not.toHaveBeenCalled();
   });
 
-  it("adds clip paths for text elements", () => {
+  it("calls handleAddDefs for each collector variable", () => {
     render(
       <GlobalStateContext.Provider value={{ globalState: { isRunning: false } as any, setGlobalState: jest.fn() }}>
         <AnimationContext.Provider value={{ registerAnimationCallback: jest.fn() } as any}>
-          <svg>
+          <svg data-testid="svg-container">
             <Collector
               device={mockDevice}
               handleAddDefs={mockHandleAddDefs}
@@ -289,28 +291,18 @@ describe("Collector Component", () => {
         </AnimationContext.Provider>
       </GlobalStateContext.Provider>
     );
-
-    // Check that handleAddDefs was called for each ball
+    
+    // Check that handleAddDefs was called once for each collector variable
     expect(mockHandleAddDefs).toHaveBeenCalledTimes(mockDevice.collectorVariables.length);
-  });
-
-  it("calls handleAddDefs for clip paths", () => {
-    render(
-      <GlobalStateContext.Provider value={{ globalState: { isRunning: false } as any, setGlobalState: jest.fn() }}>
-        <AnimationContext.Provider value={{ registerAnimationCallback: jest.fn() } as any}>
-          <svg>
-            <Collector
-              device={mockDevice}
-              handleAddDefs={mockHandleAddDefs}
-              handleSetSelectedVariable={mockHandleSetSelectedVariable}
-              handleSetEditingVarName={mockHandleSetEditingVarName}
-            />
-          </svg>
-        </AnimationContext.Provider>
-      </GlobalStateContext.Provider>
-    );
-
-    // Check that handleAddDefs was called
-    expect(mockHandleAddDefs).toHaveBeenCalled();
+    
+    // Check that each call to handleAddDefs has the correct id format
+    mockDevice.collectorVariables.forEach((_, index) => {
+      const expectedId = `${mockDevice.id}-text-clip-${100 + index}-${100 + index}`;
+      expect(mockHandleAddDefs).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: expectedId
+        })
+      );
+    });
   });
 }); 
