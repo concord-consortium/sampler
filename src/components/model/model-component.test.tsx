@@ -63,7 +63,7 @@ jest.mock("./outputs", () => ({
 }));
 
 // Mock the useResizer hook
-jest.mock("../../hooks/useResizer", () => ({
+jest.mock("../../hooks/use-resizer", () => ({
   useResizer: (callback: () => void) => {
     useEffect(() => {
       callback();
