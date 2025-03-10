@@ -1,7 +1,5 @@
 import React from 'react';
-import { renderHook, act } from '@testing-library/react-hooks';
-import { AnimationStep, IAnimationStepSettings, Speed, ViewType } from '../types';
-import { GlobalStateContext } from './useGlobalState';
+import { AnimationStep, IAnimationStepSettings, Speed } from '../types';
 
 // Mock components that use animation steps
 jest.mock('../components/model/device-views/spinner/needle', () => ({
@@ -29,10 +27,11 @@ describe('Animation Steps', () => {
         numItems: 3
       };
       
-      const settings: IAnimationStepSettings = {
-        t: 0.5,
-        speed: Speed.Medium
-      };
+      // Unused variable - commenting out to fix linting warning
+      // const settings: IAnimationStepSettings = {
+      //   t: 0.5,
+      //   speed: Speed.Medium
+      // };
       
       // This is a control step, so it doesn't have visual effects
       // We're just testing that it has the correct structure
@@ -187,13 +186,14 @@ describe('Animation Steps', () => {
   // Test step execution with animation settings
   describe('Step Execution', () => {
     it('should execute steps with different t values', () => {
-      const step: AnimationStep = {
-        kind: 'animateDevice',
-        deviceId: 'device-1',
-        selectedVariable: 'Item 1',
-        selectedVariableIndex: 0,
-        hideAfter: true
-      };
+      // Unused variable - commenting out to fix linting warning
+      // const step: AnimationStep = {
+      //   kind: 'animateDevice',
+      //   deviceId: 'device-1',
+      //   selectedVariable: 'Item 1',
+      //   selectedVariableIndex: 0,
+      //   hideAfter: true
+      // };
       
       // Test with t = 0 (start of animation)
       const startSettings: IAnimationStepSettings = {
@@ -201,17 +201,11 @@ describe('Animation Steps', () => {
         speed: Speed.Medium
       };
       
-      // In a real component, this would update the visual state
-      // Here we're just testing that the settings are passed correctly
-      expect(startSettings.t).toBe(0);
-      
       // Test with t = 0.5 (middle of animation)
       const midSettings: IAnimationStepSettings = {
         t: 0.5,
         speed: Speed.Medium
       };
-      
-      expect(midSettings.t).toBe(0.5);
       
       // Test with t = 1 (end of animation)
       const endSettings: IAnimationStepSettings = {
@@ -219,17 +213,20 @@ describe('Animation Steps', () => {
         speed: Speed.Medium
       };
       
+      expect(startSettings.t).toBe(0);
+      expect(midSettings.t).toBe(0.5);
       expect(endSettings.t).toBe(1);
     });
     
     it('should execute steps with different speeds', () => {
-      const step: AnimationStep = {
-        kind: 'animateDevice',
-        deviceId: 'device-1',
-        selectedVariable: 'Item 1',
-        selectedVariableIndex: 0,
-        hideAfter: true
-      };
+      // Unused variable - commenting out to fix linting warning
+      // const step: AnimationStep = {
+      //   kind: 'animateDevice',
+      //   deviceId: 'device-1',
+      //   selectedVariable: 'Item 1',
+      //   selectedVariableIndex: 0,
+      //   hideAfter: true
+      // };
       
       // Test with Slow speed
       const slowSettings: IAnimationStepSettings = {

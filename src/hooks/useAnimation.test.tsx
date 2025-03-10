@@ -1,8 +1,8 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
-import { useAnimationContextValue, createExperimentAnimationSteps, AnimationContext } from './useAnimation';
+import { useAnimationContextValue, createExperimentAnimationSteps } from './useAnimation';
 import { GlobalStateContext } from './useGlobalState';
-import { IGlobalState, IGlobalStateContext, Speed, ViewType, AttrMap, AnimationStep, IAnimationStepSettings, IExperimentAnimationResults, IExperimentResults } from '../types';
+import { IGlobalState, Speed, ViewType, AttrMap, IExperimentAnimationResults, IExperimentResults } from '../types';
 
 // Mock the CODAP plugin API
 jest.mock('@concord-consortium/codap-plugin-api', () => ({
@@ -18,35 +18,10 @@ jest.mock('../helpers/codap-helpers', () => ({
 }));
 
 jest.mock('../helpers/model-helpers', () => ({
-  computeExperimentHash: jest.fn().mockResolvedValue('hash123'),
-  modelHasSpinner: jest.fn().mockReturnValue(false),
-}));
-
-jest.mock('../models/model-model', () => ({
-  getDeviceById: jest.fn().mockImplementation((model, id) => {
-    if (id === 'device-2') {
-      return {
-        id: 'device-2',
-        viewType: ViewType.Spinner,
-        variables: ['Option A', 'Option B', 'Option C'],
-        formulas: {},
-      };
-    }
-    return null;
-  }),
-}));
-
-jest.mock('../utils/utils', () => ({
-  formatFormula: jest.fn().mockReturnValue('formatted-formula'),
-  parseFormula: jest.fn().mockReturnValue('parsed-formula'),
-}));
-
-jest.mock('../utils/formula-parser', () => ({
   getVariables: jest.fn().mockReturnValue(['var1', 'var2']),
 }));
 
 // Mock requestAnimationFrame and cancelAnimationFrame
-const originalWindow = window;
 window.requestAnimationFrame = jest.fn((callback) => {
   return setTimeout(callback, 0) as unknown as number;
 });
