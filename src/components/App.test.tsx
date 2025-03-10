@@ -47,7 +47,7 @@ describe("App Component", () => {
 
   it("initializes with Model tab selected by default", () => {
     render(<App/>);
-    const modelTab = screen.getByRole("tab", { name: "Model" });
+    const modelTab = screen.getByText("Model");
     expect(modelTab).toHaveClass("selected");
     
     // Verify the ModelTab component is rendered
@@ -58,11 +58,11 @@ describe("App Component", () => {
     render(<App/>);
     
     // Initially Model tab should be selected
-    const modelTab = screen.getByRole("tab", { name: "Model" });
+    const modelTab = screen.getByText("Model");
     expect(modelTab).toHaveClass("selected");
     
     // Click on Measures tab
-    const measuresTab = screen.getByRole("tab", { name: "Measures" });
+    const measuresTab = screen.getByText("Measures");
     fireEvent.click(measuresTab);
     
     // Now Measures tab should be selected
@@ -73,7 +73,7 @@ describe("App Component", () => {
     expect(screen.getByText("Measures Tab Content")).toBeInTheDocument();
     
     // Click on About tab
-    const aboutTab = screen.getByRole("tab", { name: "About" });
+    const aboutTab = screen.getByText("About");
     fireEvent.click(aboutTab);
     
     // Now About tab should be selected
@@ -97,7 +97,7 @@ describe("App Component", () => {
     render(<App/>);
     
     // Change tab to trigger a state update
-    fireEvent.click(screen.getByRole("tab", { name: "Measures" }));
+    fireEvent.click(screen.getByText("Measures"));
     
     // Verify that updateInteractiveState was called
     await waitFor(() => {

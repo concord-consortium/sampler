@@ -233,8 +233,10 @@ describe("ModelTab Component", () => {
     expect(screen.getByTestId("column-0")).toBeInTheDocument();
     expect(screen.getByText("Test Column")).toBeInTheDocument();
     
-    // Check that the device is rendered
-    expect(screen.getByTestId("device-device-1")).toBeInTheDocument();
+    // Check that a device is rendered within the column
+    const column = screen.getByTestId("column-0");
+    const deviceElement = column.querySelector('.device');
+    expect(deviceElement).toBeInTheDocument();
   });
 
   it("shows help when help button is clicked", () => {

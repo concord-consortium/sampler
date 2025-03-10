@@ -111,7 +111,7 @@ describe("Device Component", () => {
     expect(deviceContainer).toHaveClass("device-container");
     
     // Check that the device frame has the correct view type class
-    const deviceFrame = screen.getByTestId("device-frame");
+    const deviceFrame = deviceContainer.querySelector('.device-frame');
     expect(deviceFrame).toHaveClass("mixer");
   });
 

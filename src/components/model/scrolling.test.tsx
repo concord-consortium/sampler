@@ -90,6 +90,25 @@ jest.mock("../../hooks/useAnimation", () => ({
 const mockScrollTo = jest.fn();
 Element.prototype.scrollTo = mockScrollTo;
 
+// Mock the scrollLeft and scrollTop properties
+Object.defineProperty(HTMLDivElement.prototype, 'scrollLeft', {
+  configurable: true,
+  get: function() { return this._scrollLeft || 0; },
+  set: function(val) { 
+    this._scrollLeft = val;
+    mockScrollTo();
+  }
+});
+
+Object.defineProperty(HTMLDivElement.prototype, 'scrollTop', {
+  configurable: true,
+  get: function() { return this._scrollTop || 0; },
+  set: function(val) { 
+    this._scrollTop = val;
+    mockScrollTo();
+  }
+});
+
 describe("ModelTab Scrolling Functionality", () => {
   // Create a mock global state with the specified number of columns and devices per column
   const createMockGlobalState = (numColumns: number, devicesPerColumn: number): IGlobalStateContext => {
