@@ -1,8 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ColumnHeader } from "./column-header";
-import { GlobalStateContext, useGlobalStateContext } from "../../hooks/useGlobalState";
-import { AnimationContext, useAnimationContext } from "../../hooks/useAnimation";
+import { useGlobalStateContext } from "../../hooks/useGlobalState";
+import { useAnimationContext } from "../../hooks/useAnimation";
 import { IColumn, ViewType, IDataContext } from "../../types";
 
 // Mock the useGlobalStateContext hook

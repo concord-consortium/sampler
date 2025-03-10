@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { ModelTab } from "./model-component";
 import { GlobalStateContext , getDefaultState } from "../../hooks/useGlobalState";
 import { AnimationContext } from "../../hooks/useAnimation";
