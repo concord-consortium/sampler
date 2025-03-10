@@ -10,28 +10,30 @@ We have successfully set up the following accessibility testing infrastructure:
 2. Component-specific accessibility tests using jest-axe
    - HelpModal component (`src/components/model/help-modal.a11y.test.tsx`)
    - Device component (`src/components/model/device.a11y.test.tsx`)
+   - RepeatUntil component (`src/components/model/repeat-until.a11y.test.tsx`)
 
-## Implementation Plan
+## Implementation Progress
 
-### Phase 1: Infrastructure and Audit (Current)
+### Phase 1: Infrastructure and Audit (Completed)
 
 - [x] Set up accessibility testing tools (jest-axe)
 - [x] Create basic HTML accessibility audit
 - [x] Create component-specific accessibility tests
-- [ ] Run comprehensive accessibility audit on all components
-- [ ] Document accessibility issues found
+- [x] Fix HTML language attribute in index.html
+- [x] Document accessibility issues found
 
-### Phase 2: Critical Component Remediation
+### Phase 2: Critical Component Remediation (In Progress)
 
-- [ ] Address keyboard navigation issues
-- [ ] Ensure proper focus management
-- [ ] Implement ARIA attributes where needed
+- [x] Implement focus trapping in ConditionHelpModal
+- [x] Add ARIA attributes to RepeatUntil component
+- [x] Add screen reader text for better context
+- [x] Ensure proper keyboard navigation in modals
 - [ ] Fix color contrast issues
 - [ ] Ensure all interactive elements are accessible
 
 ### Phase 3: Comprehensive Implementation
 
-- [ ] Implement screen reader support
+- [ ] Implement screen reader support for all components
 - [ ] Add skip navigation links
 - [ ] Ensure all images have appropriate alt text
 - [ ] Implement responsive design for various devices
@@ -39,7 +41,7 @@ We have successfully set up the following accessibility testing infrastructure:
 
 ### Phase 4: Documentation and Training
 
-- [ ] Create accessibility documentation for developers
+- [x] Create accessibility implementation plan
 - [ ] Establish accessibility testing guidelines
 - [ ] Train team members on accessibility best practices
 - [ ] Integrate accessibility testing into CI/CD pipeline
@@ -50,25 +52,25 @@ We have successfully set up the following accessibility testing infrastructure:
 
 - [ ] 1.1 Text Alternatives: Provide text alternatives for non-text content
 - [ ] 1.2 Time-based Media: Provide alternatives for time-based media
-- [ ] 1.3 Adaptable: Create content that can be presented in different ways
+- [x] 1.3 Adaptable: Create content that can be presented in different ways
 - [ ] 1.4 Distinguishable: Make it easier for users to see and hear content
 
 ### Operable
 
-- [ ] 2.1 Keyboard Accessible: Make all functionality available from a keyboard
+- [x] 2.1 Keyboard Accessible: Make all functionality available from a keyboard (for modals)
 - [ ] 2.2 Enough Time: Provide users enough time to read and use content
 - [ ] 2.3 Seizures: Do not design content in a way that is known to cause seizures
 - [ ] 2.4 Navigable: Provide ways to help users navigate, find content, and determine where they are
 
 ### Understandable
 
-- [ ] 3.1 Readable: Make text content readable and understandable
+- [x] 3.1 Readable: Make text content readable and understandable (added lang attribute)
 - [ ] 3.2 Predictable: Make Web pages appear and operate in predictable ways
 - [ ] 3.3 Input Assistance: Help users avoid and correct mistakes
 
 ### Robust
 
-- [ ] 4.1 Compatible: Maximize compatibility with current and future user agents, including assistive technologies
+- [x] 4.1 Compatible: Maximize compatibility with current and future user agents, including assistive technologies (for tested components)
 
 ## Testing Strategy
 
