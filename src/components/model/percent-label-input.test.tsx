@@ -184,4 +184,97 @@ describe('PctLabelInput', () => {
     // For 'veryLongVariableName' (20 characters), width should be 30vh (maximum)
     expect(input).toHaveStyle('width: 30vh');
   });
+
+  // New tests to improve coverage
+
+  it('focuses the input on mount', () => {
+    // Save original focus method
+    const originalFocus = HTMLInputElement.prototype.focus;
+    
+    // Mock focus method
+    const mockFocus = jest.fn();
+    HTMLInputElement.prototype.focus = mockFocus;
+
+    try {
+      render(<PctLabelInput {...mockProps} />);
+      
+      // Expect focus to be called
+      expect(mockFocus).toHaveBeenCalled();
+    } finally {
+      // Restore original focus
+      HTMLInputElement.prototype.focus = originalFocus;
+    }
+  });
+
+  it('handles other key presses without triggering submit', () => {
+    render(<PctLabelInput {...mockProps} />);
+    
+    // Get the input
+    const input = screen.getByDisplayValue('50');
+    
+    // Change the input value
+    fireEvent.change(input, { target: { value: '75' } });
+    
+    // Press a different key (e.g., 'A')
+    fireEvent.keyDown(input, { key: 'A' });
+    
+    // Expect handlePctChange not to be called
+    expect(mockProps.handlePctChange).not.toHaveBeenCalled();
+    
+    // Expect onBlur not to be called
+    expect(mockProps.onBlur).not.toHaveBeenCalled();
+  });
+
+  it('handles non-numeric input values', () => {
+    render(<PctLabelInput {...mockProps} />);
+    
+    // Get the input
+    const input = screen.getByDisplayValue('50');
+    
+    // Change the input value to a non-numeric value
+    fireEvent.change(input, { target: { value: 'abc' } });
+    
+    // Expect the input value to be updated (component doesn't validate input)
+    expect(input).toHaveValue('abc');
+    
+    // Press Enter
+    fireEvent.keyDown(input, { key: 'Enter' });
+    
+    // Expect handlePctChange to be called with the non-numeric value
+    // (validation would happen in the parent component)
+    expect(mockProps.handlePctChange).toHaveBeenCalledWith(0, 'abc');
+  });
+
+  it('handles empty input values', () => {
+    render(<PctLabelInput {...mockProps} />);
+    
+    // Get the input
+    const input = screen.getByDisplayValue('50');
+    
+    // Change the input value to an empty string
+    fireEvent.change(input, { target: { value: '' } });
+    
+    // Expect the input value to be updated
+    expect(input).toHaveValue('');
+    
+    // Press Enter
+    fireEvent.keyDown(input, { key: 'Enter' });
+    
+    // Expect handlePctChange to be called with the empty string
+    expect(mockProps.handlePctChange).toHaveBeenCalledWith(0, '');
+  });
+
+  it('handles the case when getElementById returns null', () => {
+    // Mock getElementById to return null
+    document.getElementById = jest.fn().mockReturnValue(null);
+    
+    // Render should not throw an error
+    expect(() => render(<PctLabelInput {...mockProps} />)).not.toThrow();
+    
+    // Get the input
+    const input = screen.getByDisplayValue('50');
+    
+    // Input should still be rendered
+    expect(input).toBeInTheDocument();
+  });
 }); 

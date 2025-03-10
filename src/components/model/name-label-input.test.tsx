@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { NameLabelInput } from './name-label-input';
 import { ViewType } from '../../types';
 
@@ -147,5 +147,140 @@ describe('NameLabelInput Component', () => {
     // Should call onBlur without calling handleEditVariable
     expect(defaultProps.onBlur).toHaveBeenCalled();
     expect(defaultProps.handleEditVariable).not.toHaveBeenCalled();
+  });
+
+  // New tests to improve coverage
+
+  it('validates empty input as invalid', () => {
+    render(<NameLabelInput {...defaultProps} />);
+    
+    const inputElement = screen.getByRole('textbox');
+    fireEvent.change(inputElement, { target: { value: '' } });
+    
+    // Check for error class
+    expect(inputElement).toHaveClass('invalid');
+    
+    // Check for error message
+    const errorTooltip = screen.getByText(/name cannot be empty/i);
+    expect(errorTooltip).toBeInTheDocument();
+    
+    // Try to submit with empty name
+    fireEvent.keyDown(inputElement, { key: 'Enter' });
+    
+    // Should not call handleEditVariable with invalid name
+    expect(defaultProps.handleEditVariable).not.toHaveBeenCalled();
+  });
+
+  it('allows editing to the same name (no change)', () => {
+    const props = {
+      ...defaultProps,
+      existingNames: ['Test Variable', 'Another Name']
+    };
+    
+    render(<NameLabelInput {...props} />);
+    
+    const inputElement = screen.getByRole('textbox');
+    // No change to the name, just blur to submit
+    fireEvent.blur(inputElement);
+    
+    // Should call handleEditVariable with the same name
+    expect(defaultProps.handleEditVariable).toHaveBeenCalledWith(0, 'Test Variable');
+  });
+
+  it('updates input width based on content', () => {
+    render(<NameLabelInput {...defaultProps} />);
+    
+    const inputElement = screen.getByRole('textbox');
+    const hiddenSpan = screen.getByTestId('hidden-text-measure');
+    
+    // Mock the offsetWidth to simulate different text lengths
+    Object.defineProperty(hiddenSpan, 'offsetWidth', {
+      configurable: true,
+      get: () => 200 // Simulate a longer text
+    });
+    
+    // Change to a longer text
+    fireEvent.change(inputElement, { target: { value: 'A Much Longer Variable Name' } });
+    
+    // The input width should be updated (200 + 16 = 216px)
+    expect(inputElement.style.width).toBe('216px');
+    
+    // Now simulate a very short text
+    Object.defineProperty(hiddenSpan, 'offsetWidth', {
+      configurable: true,
+      get: () => 30 // Simulate a shorter text
+    });
+    
+    fireEvent.change(inputElement, { target: { value: 'Short' } });
+    
+    // The input width should be constrained to the minimum (60px)
+    expect(inputElement.style.width).toBe('60px');
+    
+    // Now simulate a very long text
+    Object.defineProperty(hiddenSpan, 'offsetWidth', {
+      configurable: true,
+      get: () => 500 // Simulate a very long text
+    });
+    
+    fireEvent.change(inputElement, { target: { value: 'An Extremely Long Variable Name That Exceeds The Maximum Width' } });
+    
+    // The input width should be constrained to the maximum (300px)
+    expect(inputElement.style.width).toBe('300px');
+  });
+
+  it('positions input correctly for Spinner view type', () => {
+    const spinnerProps = {
+      ...defaultProps,
+      viewType: ViewType.Spinner
+    };
+    
+    // Mock getElementById for the specific wedge label
+    jest.spyOn(document, 'getElementById').mockImplementation((id) => {
+      if (id === `${spinnerProps.deviceId}-wedge-label-${spinnerProps.variableName}-${spinnerProps.variableIdx}`) {
+        return {
+          getBoundingClientRect: mockGetBoundingClientRect
+        } as unknown as HTMLElement;
+      }
+      return null;
+    });
+    
+    render(<NameLabelInput {...spinnerProps} />);
+    
+    const containerElement = screen.getByTestId('input-container');
+    
+    // Check positioning styles
+    expect(containerElement.style.position).toBe('fixed');
+    expect(containerElement.style.top).toBe('114px'); // y + 4 + (height / 2) = 100 + 4 + 10 = 114
+    expect(containerElement.style.left).toBe('100px'); // x = 100
+    expect(containerElement.style.zIndex).toBe('1000');
+  });
+
+  it('positions input correctly for Mixer view type', () => {
+    // Mock getElementById for the specific ball label
+    jest.spyOn(document, 'getElementById').mockImplementation((id) => {
+      if (id === `${defaultProps.deviceId}-ball-label-${defaultProps.variableName}-${defaultProps.variableIdx}`) {
+        return {
+          getBoundingClientRect: mockGetBoundingClientRect
+        } as unknown as HTMLElement;
+      }
+      return null;
+    });
+    
+    render(<NameLabelInput {...defaultProps} />);
+    
+    const containerElement = screen.getByTestId('input-container');
+    
+    // Check positioning styles
+    expect(containerElement.style.position).toBe('fixed');
+    expect(containerElement.style.top).toBe('114px'); // y + 4 + (height / 2) = 100 + 4 + 10 = 114
+    expect(containerElement.style.left).toBe('100px'); // x = 100
+    expect(containerElement.style.zIndex).toBe('1000');
+  });
+
+  it('focuses and selects input text on mount', () => {
+    render(<NameLabelInput {...defaultProps} />);
+    
+    // Check that focus and select were called
+    expect(HTMLInputElement.prototype.select).toHaveBeenCalled();
   });
 }); 

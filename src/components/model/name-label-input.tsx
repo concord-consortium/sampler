@@ -122,7 +122,7 @@ export const NameLabelInput = ({
   };
 
   return (
-    <div ref={containerRef} className="input-container">
+    <div ref={containerRef} className="input-container" data-testid="input-container">
       {!isValid && (
         <div className={`error-tooltip ${!isValid ? 'visible' : ''}`}>
           {errorMessage}
@@ -139,7 +139,7 @@ export const NameLabelInput = ({
         aria-invalid={!isValid}
         aria-describedby={!isValid ? "error-message" : undefined}
       />
-      <span ref={measureRef} className="hidden-text-measure" aria-hidden="true"></span>
+      <span ref={measureRef} className="hidden-text-measure" aria-hidden="true" data-testid="hidden-text-measure"></span>
     </div>
   );
 };
