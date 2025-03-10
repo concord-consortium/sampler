@@ -42,6 +42,12 @@ export const Device = (props: IProps) => {
   const { viewType, variables } = device;
   const svgRef = useRef<SVGSVGElement>(null);
   const multipleColumns = model.columns.length > 1;
+  const isSelectedDevice = device.id === selectedDeviceId;
+  const deviceTypeLabel = viewType === ViewType.Mixer ? "Mixer" : 
+                         viewType === ViewType.Spinner ? "Spinner" : "Collector";
+  
+  // Accessible description for screen readers
+  const deviceDescription = `${deviceTypeLabel} device with ${variables.length} variables: ${variables.join(', ')}`;
 
   useEffect(() => {
     console.log("Device useEffect for viewBox setting running");
@@ -175,7 +181,7 @@ export const Device = (props: IProps) => {
     
     // Only proceed if the name has actually changed
     if (oldVariableName === newVariableName) return;
-    
+
     // Create new variables array with the updated name
     const newVariables: IVariables = [];
     if (viewType === ViewType.Mixer || viewType === ViewType.Collector) {
@@ -269,8 +275,6 @@ export const Device = (props: IProps) => {
     };
   }, [isDragging, handleDrag]);
 
-  const isSelectedDevice = device.id === selectedDeviceId;
-
   const getExistingVariableNames = (): string[] => {
     const allVariables: string[] = [];
     
@@ -291,11 +295,30 @@ export const Device = (props: IProps) => {
 
   return (
     <div className={`device-controls-container ${multipleColumns ? "multiple-columns" : ""}`} onClick={handleSelectDevice}>
-      <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id} data-testid="device-container">
+      <div 
+        className={`device-container ${isSelectedDevice ? "selected" : ""}`} 
+        data-device-id={device.id} 
+        data-testid="device-container"
+        role="region"
+        aria-label={`${deviceTypeLabel} device`}
+      >
         <div className="device-status-icon">
-          {isSelectedDevice && <VisibleIcon />}
+          {isSelectedDevice && <VisibleIcon aria-hidden="true" />}
         </div>
-        <div className="device-svg-container">
+        <div 
+          className="device-svg-container"
+          role="button"
+          tabIndex={0}
+          aria-pressed={isSelectedDevice}
+          aria-label={`Select ${deviceTypeLabel} device`}
+          aria-describedby={`device-description-${device.id}`}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleSelectDevice();
+            }
+          }}
+        >
           <div className={`device-frame ${viewType}`}>
             <svg
               className="svg"
@@ -306,6 +329,7 @@ export const Device = (props: IProps) => {
               viewBox={viewBox}
               xmlns="http://www.w3.org/2000/svg"
               onClick={handleSvgClick}
+              aria-hidden="true" // Hide SVG from screen readers as it's visual only
             >
               <defs>
                 {clippingDefs.length && clippingDefs.map((def) => def.element)}
@@ -338,30 +362,30 @@ export const Device = (props: IProps) => {
                   />
               }
             </svg>
-            {
-              isEditingVarName && selectedVariableIdx !== null &&
-                <NameLabelInput
-                  variableIdx={selectedVariableIdx}
-                  viewType={viewType}
-                  variableName={variables[selectedVariableIdx]}
-                  deviceId={device.id}
-                  handleEditVariable={handleEditVariable}
-                  onBlur={() => setIsEditingVarName(false)}
-                  existingNames={getExistingVariableNames()}
-                />
-            }
-            {
-              isEditingVarPct && selectedVariableIdx !== null &&
-                <PctLabelInput
-                  percent={getPercentOfVar(variables[selectedVariableIdx], variables).toString()}
-                  deviceId={device.id}
-                  variableIdx={selectedVariableIdx}
-                  variableName={variables[selectedVariableIdx]}
-                  handlePctChange={handlePctChange}
-                  onBlur={() => setIsEditingVarPct(false)}
-                />
-            }
           </div>
+          {
+            isEditingVarName && selectedVariableIdx !== null &&
+              <NameLabelInput
+                variableIdx={selectedVariableIdx}
+                viewType={viewType}
+                variableName={variables[selectedVariableIdx]}
+                deviceId={device.id}
+                handleEditVariable={handleEditVariable}
+                onBlur={() => setIsEditingVarName(false)}
+                existingNames={getExistingVariableNames()}
+              />
+          }
+          {
+            isEditingVarPct && selectedVariableIdx !== null &&
+              <PctLabelInput
+                percent={getPercentOfVar(variables[selectedVariableIdx], variables).toString()}
+                deviceId={device.id}
+                variableIdx={selectedVariableIdx}
+                variableName={variables[selectedVariableIdx]}
+                handlePctChange={handlePctChange}
+                onBlur={() => setIsEditingVarPct(false)}
+              />
+          }
         </div>
         { columnIndex !== 0 && isSelectedDevice &&
             <div 
@@ -376,6 +400,10 @@ export const Device = (props: IProps) => {
               <DeleteIcon />
             </div>
         }
+        {/* Hidden element for screen readers to describe the device */}
+        <div id={`device-description-${device.id}`} className="sr-only">
+          {deviceDescription}
+        </div>
       </div>
       { device.id === selectedDeviceId &&
           <DeviceFooter
