@@ -3,8 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { ModelTab } from "./model-component";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
 import { createDefaultDevice } from "../../models/device-model";
-import { createId } from "../../utils/id";
-import { AttrMap, ViewType, Speed } from "../../types";
+import { ViewType, Speed } from "../../types";
 
 // Mock the CODAP plugin API
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
@@ -94,37 +93,22 @@ jest.mock("./help-modal", () => ({
 
 describe("ModelTab Component", () => {
   const mockDevice = createDefaultDevice();
-  const mockColumn = {
-    name: "Column 1",
-    id: "column-1",
-    devices: [mockDevice]
-  };
   
   const mockSetGlobalState = jest.fn();
-
+  
   const mockGlobalState = {
     globalState: {
       model: {
         columns: [
           {
-            name: "Column 1",
-            id: "column-1",
-            devices: [
-              {
-                id: "device-1",
-                viewType: ViewType.Mixer,
-                variables: ["a", "b"],
-                collectorVariables: [],
-                formulas: {},
-                hidden: false,
-                lockPassword: ""
-              }
-            ]
+            name: "Test Column",
+            id: "test-column",
+            devices: [mockDevice]
           }
         ]
       },
-      selectedDeviceId: "device-1",
-      selectedTab: "Model" as "Model" | "Measures" | "About",
+      selectedDeviceId: undefined,
+      selectedTab: "Model" as const,
       repeat: false,
       replacement: false,
       sampleSize: "10",
@@ -247,7 +231,7 @@ describe("ModelTab Component", () => {
     
     // Check that the column is rendered
     expect(screen.getByTestId("column-0")).toBeInTheDocument();
-    expect(screen.getByText("Column 1")).toBeInTheDocument();
+    expect(screen.getByText("Test Column")).toBeInTheDocument();
     
     // Check that the device is rendered
     expect(screen.getByTestId("device-device-1")).toBeInTheDocument();
