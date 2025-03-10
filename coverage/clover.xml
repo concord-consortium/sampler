@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1741602618963" clover="3.2.0">
-  <project timestamp="1741602618963" name="All files">
-    <metrics statements="3075" coveredstatements="2021" conditionals="1292" coveredconditionals="634" methods="683" coveredmethods="377" elements="5050" coveredelements="3032" complexity="0" loc="3075" ncloc="3075" packages="15" files="67" classes="67"/>
+<coverage generated="1741604959014" clover="3.2.0">
+  <project timestamp="1741604959014" name="All files">
+    <metrics statements="3075" coveredstatements="2080" conditionals="1292" coveredconditionals="662" methods="683" coveredmethods="396" elements="5050" coveredelements="3138" complexity="0" loc="3075" ncloc="3075" packages="15" files="67" classes="67"/>
     <package name="src">
       <metrics statements="16" coveredstatements="16" conditionals="4" coveredconditionals="4" methods="2" coveredmethods="2"/>
       <file name="contants.ts" path="/Users/chaddorsey/Dropbox/dev/ChatGPT-experiments/sampler/src/contants.ts">
         <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
-        <line num="1" count="15" type="stmt"/>
-        <line num="2" count="15" type="stmt"/>
-        <line num="3" count="15" type="stmt"/>
-        <line num="4" count="15" type="stmt"/>
-        <line num="5" count="15" type="stmt"/>
+        <line num="1" count="16" type="stmt"/>
+        <line num="2" count="16" type="stmt"/>
+        <line num="3" count="16" type="stmt"/>
+        <line num="4" count="16" type="stmt"/>
+        <line num="5" count="16" type="stmt"/>
       </file>
       <file name="types.tsx" path="/Users/chaddorsey/Dropbox/dev/ChatGPT-experiments/sampler/src/types.tsx">
         <metrics statements="11" coveredstatements="11" conditionals="4" coveredconditionals="4" methods="2" coveredmethods="2"/>
-        <line num="5" count="20" type="stmt"/>
-        <line num="22" count="20" type="cond" truecount="2" falsecount="0"/>
-        <line num="23" count="20" type="stmt"/>
-        <line num="24" count="20" type="stmt"/>
-        <line num="25" count="20" type="stmt"/>
-        <line num="26" count="20" type="stmt"/>
-        <line num="29" count="20" type="stmt"/>
-        <line num="209" count="20" type="cond" truecount="2" falsecount="0"/>
-        <line num="210" count="20" type="stmt"/>
-        <line num="211" count="20" type="stmt"/>
-        <line num="212" count="20" type="stmt"/>
+        <line num="5" count="21" type="stmt"/>
+        <line num="22" count="21" type="cond" truecount="2" falsecount="0"/>
+        <line num="23" count="21" type="stmt"/>
+        <line num="24" count="21" type="stmt"/>
+        <line num="25" count="21" type="stmt"/>
+        <line num="26" count="21" type="stmt"/>
+        <line num="29" count="21" type="stmt"/>
+        <line num="209" count="21" type="cond" truecount="2" falsecount="0"/>
+        <line num="210" count="21" type="stmt"/>
+        <line num="211" count="21" type="stmt"/>
+        <line num="212" count="21" type="stmt"/>
       </file>
     </package>
     <package name="src.components">
@@ -462,7 +462,7 @@
       </file>
     </package>
     <package name="src.components.model">
-      <metrics statements="867" coveredstatements="469" conditionals="424" coveredconditionals="178" methods="197" coveredmethods="77"/>
+      <metrics statements="867" coveredstatements="514" conditionals="424" coveredconditionals="206" methods="197" coveredmethods="90"/>
       <file name="arrow.tsx" path="/Users/chaddorsey/Dropbox/dev/ChatGPT-experiments/sampler/src/components/model/arrow.tsx">
         <metrics statements="67" coveredstatements="13" conditionals="23" coveredconditionals="0" methods="8" coveredmethods="0"/>
         <line num="1" count="1" type="stmt"/>
@@ -612,35 +612,35 @@
         <line num="36" count="0" type="stmt"/>
       </file>
       <file name="device-footer.tsx" path="/Users/chaddorsey/Dropbox/dev/ChatGPT-experiments/sampler/src/components/model/device-footer.tsx">
-        <metrics statements="86" coveredstatements="26" conditionals="59" coveredconditionals="15" methods="22" coveredmethods="1"/>
-        <line num="1" count="2" type="stmt"/>
-        <line num="2" count="2" type="stmt"/>
-        <line num="3" count="2" type="stmt"/>
-        <line num="4" count="2" type="stmt"/>
-        <line num="5" count="2" type="stmt"/>
-        <line num="6" count="2" type="stmt"/>
-        <line num="7" count="2" type="stmt"/>
-        <line num="8" count="2" type="stmt"/>
-        <line num="9" count="2" type="stmt"/>
-        <line num="11" count="2" type="stmt"/>
-        <line num="22" count="2" type="cond" truecount="0" falsecount="1"/>
-        <line num="23" count="10" type="stmt"/>
-        <line num="24" count="10" type="stmt"/>
-        <line num="25" count="10" type="stmt"/>
-        <line num="26" count="10" type="stmt"/>
-        <line num="27" count="10" type="stmt"/>
-        <line num="28" count="10" type="cond" truecount="1" falsecount="1"/>
-        <line num="29" count="10" type="stmt"/>
-        <line num="30" count="10" type="stmt"/>
-        <line num="31" count="10" type="cond" truecount="5" falsecount="1"/>
-        <line num="33" count="10" type="stmt"/>
-        <line num="34" count="0" type="stmt"/>
-        <line num="35" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="36" count="0" type="stmt"/>
-        <line num="38" count="0" type="stmt"/>
-        <line num="39" count="0" type="stmt"/>
-        <line num="43" count="10" type="stmt"/>
-        <line num="44" count="0" type="stmt"/>
+        <metrics statements="86" coveredstatements="71" conditionals="59" coveredconditionals="43" methods="22" coveredmethods="14"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="2" count="3" type="stmt"/>
+        <line num="3" count="3" type="stmt"/>
+        <line num="4" count="3" type="stmt"/>
+        <line num="5" count="3" type="stmt"/>
+        <line num="6" count="3" type="stmt"/>
+        <line num="7" count="3" type="stmt"/>
+        <line num="8" count="3" type="stmt"/>
+        <line num="9" count="3" type="stmt"/>
+        <line num="11" count="3" type="stmt"/>
+        <line num="22" count="3" type="cond" truecount="0" falsecount="1"/>
+        <line num="23" count="22" type="stmt"/>
+        <line num="24" count="22" type="stmt"/>
+        <line num="25" count="22" type="stmt"/>
+        <line num="26" count="22" type="stmt"/>
+        <line num="27" count="22" type="stmt"/>
+        <line num="28" count="22" type="cond" truecount="1" falsecount="1"/>
+        <line num="29" count="22" type="stmt"/>
+        <line num="30" count="22" type="stmt"/>
+        <line num="31" count="22" type="cond" truecount="6" falsecount="0"/>
+        <line num="33" count="22" type="stmt"/>
+        <line num="34" count="2" type="stmt"/>
+        <line num="35" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="36" count="1" type="stmt"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="39" count="1" type="stmt"/>
+        <line num="43" count="22" type="stmt"/>
+        <line num="44" count="3" type="stmt"/>
         <line num="45" count="0" type="stmt"/>
         <line num="46" count="0" type="stmt"/>
         <line num="47" count="0" type="stmt"/>
@@ -651,54 +651,54 @@
         <line num="56" count="0" type="stmt"/>
         <line num="57" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="58" count="0" type="stmt"/>
-        <line num="67" count="10" type="stmt"/>
-        <line num="68" count="0" type="stmt"/>
-        <line num="69" count="0" type="stmt"/>
-        <line num="70" count="0" type="stmt"/>
-        <line num="71" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="73" count="0" type="stmt"/>
-        <line num="76" count="0" type="stmt"/>
-        <line num="77" count="0" type="stmt"/>
-        <line num="78" count="0" type="stmt"/>
-        <line num="81" count="0" type="stmt"/>
-        <line num="82" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="67" count="22" type="stmt"/>
+        <line num="68" count="2" type="stmt"/>
+        <line num="69" count="2" type="stmt"/>
+        <line num="70" count="2" type="stmt"/>
+        <line num="71" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="73" count="1" type="stmt"/>
+        <line num="76" count="1" type="stmt"/>
+        <line num="77" count="1" type="stmt"/>
+        <line num="78" count="1" type="stmt"/>
+        <line num="81" count="1" type="stmt"/>
+        <line num="82" count="1" type="cond" truecount="1" falsecount="1"/>
         <line num="83" count="0" type="stmt"/>
         <line num="84" count="0" type="stmt"/>
-        <line num="86" count="0" type="stmt"/>
-        <line num="87" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="86" count="1" type="stmt"/>
+        <line num="87" count="1" type="cond" truecount="0" falsecount="1"/>
         <line num="88" count="0" type="stmt"/>
-        <line num="93" count="0" type="stmt"/>
-        <line num="96" count="10" type="stmt"/>
-        <line num="97" count="0" type="stmt"/>
-        <line num="98" count="0" type="stmt"/>
-        <line num="100" count="0" type="stmt"/>
-        <line num="103" count="10" type="stmt"/>
-        <line num="104" count="0" type="stmt"/>
-        <line num="105" count="0" type="stmt"/>
-        <line num="107" count="0" type="stmt"/>
-        <line num="108" count="0" type="stmt"/>
-        <line num="109" count="0" type="stmt"/>
-        <line num="110" count="0" type="stmt"/>
-        <line num="112" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="113" count="0" type="stmt"/>
-        <line num="114" count="0" type="stmt"/>
-        <line num="117" count="0" type="cond" truecount="0" falsecount="3"/>
-        <line num="118" count="0" type="stmt"/>
-        <line num="123" count="0" type="cond" truecount="0" falsecount="3"/>
-        <line num="124" count="0" type="stmt"/>
-        <line num="125" count="0" type="stmt"/>
-        <line num="126" count="0" type="stmt"/>
+        <line num="93" count="2" type="stmt"/>
+        <line num="96" count="22" type="stmt"/>
+        <line num="97" count="1" type="stmt"/>
+        <line num="98" count="1" type="stmt"/>
+        <line num="100" count="1" type="stmt"/>
+        <line num="103" count="22" type="stmt"/>
+        <line num="104" count="2" type="stmt"/>
+        <line num="105" count="2" type="stmt"/>
+        <line num="107" count="2" type="stmt"/>
+        <line num="108" count="2" type="stmt"/>
+        <line num="109" count="2" type="stmt"/>
+        <line num="110" count="2" type="stmt"/>
+        <line num="112" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="113" count="2" type="stmt"/>
+        <line num="114" count="2" type="stmt"/>
+        <line num="117" count="2" type="cond" truecount="3" falsecount="0"/>
+        <line num="118" count="1" type="stmt"/>
+        <line num="123" count="2" type="cond" truecount="3" falsecount="0"/>
+        <line num="124" count="1" type="stmt"/>
+        <line num="125" count="1" type="stmt"/>
+        <line num="126" count="1" type="stmt"/>
         <line num="129" count="0" type="stmt"/>
-        <line num="134" count="10" type="stmt"/>
-        <line num="139" count="0" type="stmt"/>
+        <line num="134" count="22" type="stmt"/>
+        <line num="139" count="1" type="stmt"/>
         <line num="147" count="0" type="stmt"/>
-        <line num="154" count="0" type="stmt"/>
-        <line num="162" count="0" type="stmt"/>
-        <line num="178" count="0" type="cond" truecount="0" falsecount="3"/>
-        <line num="179" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="180" count="0" type="cond" truecount="0" falsecount="3"/>
-        <line num="181" count="0" type="stmt"/>
-        <line num="183" count="0" type="stmt"/>
+        <line num="154" count="1" type="stmt"/>
+        <line num="162" count="1" type="stmt"/>
+        <line num="178" count="1" type="cond" truecount="1" falsecount="2"/>
+        <line num="179" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="180" count="1" type="cond" truecount="1" falsecount="2"/>
+        <line num="181" count="1" type="stmt"/>
+        <line num="183" count="1" type="stmt"/>
       </file>
       <file name="device.tsx" path="/Users/chaddorsey/Dropbox/dev/ChatGPT-experiments/sampler/src/components/model/device.tsx">
         <metrics statements="177" coveredstatements="69" conditionals="77" coveredconditionals="18" methods="42" coveredmethods="6"/>
@@ -2753,46 +2753,46 @@
       </file>
     </package>
     <package name="src.lib">
-      <metrics statements="8" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="0"/>
+      <metrics statements="8" coveredstatements="8" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
       <file name="codap-interface.ts" path="/Users/chaddorsey/Dropbox/dev/ChatGPT-experiments/sampler/src/lib/codap-interface.ts">
-        <metrics statements="8" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="0"/>
-        <line num="24" count="7" type="stmt"/>
-        <line num="27" count="0" type="stmt"/>
-        <line num="28" count="0" type="stmt"/>
-        <line num="35" count="0" type="stmt"/>
-        <line num="36" count="0" type="stmt"/>
-        <line num="41" count="0" type="stmt"/>
-        <line num="46" count="7" type="stmt"/>
-        <line num="50" count="7" type="stmt"/>
+        <metrics statements="8" coveredstatements="8" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="24" count="8" type="stmt"/>
+        <line num="27" count="7" type="stmt"/>
+        <line num="28" count="7" type="stmt"/>
+        <line num="35" count="7" type="stmt"/>
+        <line num="36" count="6" type="stmt"/>
+        <line num="41" count="1" type="stmt"/>
+        <line num="46" count="8" type="stmt"/>
+        <line num="50" count="8" type="stmt"/>
       </file>
     </package>
     <package name="src.models">
       <metrics statements="64" coveredstatements="36" conditionals="12" coveredconditionals="4" methods="30" coveredmethods="12"/>
       <file name="device-model.tsx" path="/Users/chaddorsey/Dropbox/dev/ChatGPT-experiments/sampler/src/models/device-model.tsx">
         <metrics statements="23" coveredstatements="11" conditionals="4" coveredconditionals="0" methods="10" coveredmethods="1"/>
-        <line num="1" count="15" type="stmt"/>
-        <line num="2" count="15" type="stmt"/>
-        <line num="4" count="15" type="stmt"/>
+        <line num="1" count="16" type="stmt"/>
+        <line num="2" count="16" type="stmt"/>
+        <line num="4" count="16" type="stmt"/>
         <line num="5" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="8" count="15" type="stmt"/>
+        <line num="8" count="16" type="stmt"/>
         <line num="9" count="0" type="stmt"/>
-        <line num="12" count="15" type="stmt"/>
+        <line num="12" count="16" type="stmt"/>
         <line num="13" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="16" count="15" type="stmt"/>
+        <line num="16" count="16" type="stmt"/>
         <line num="17" count="0" type="stmt"/>
         <line num="18" count="0" type="stmt"/>
         <line num="19" count="0" type="stmt"/>
         <line num="20" count="0" type="stmt"/>
-        <line num="23" count="15" type="stmt"/>
+        <line num="23" count="16" type="stmt"/>
         <line num="24" count="0" type="stmt"/>
         <line num="25" count="0" type="stmt"/>
         <line num="26" count="0" type="stmt"/>
         <line num="27" count="0" type="stmt"/>
-        <line num="30" count="15" type="stmt"/>
+        <line num="30" count="16" type="stmt"/>
         <line num="31" count="0" type="stmt"/>
-        <line num="34" count="15" type="stmt"/>
-        <line num="35" count="15" type="stmt"/>
-        <line num="36" count="138" type="stmt"/>
+        <line num="34" count="16" type="stmt"/>
+        <line num="35" count="16" type="stmt"/>
+        <line num="36" count="149" type="stmt"/>
       </file>
       <file name="model-model.tsx" path="/Users/chaddorsey/Dropbox/dev/ChatGPT-experiments/sampler/src/models/model-model.tsx">
         <metrics statements="41" coveredstatements="25" conditionals="8" coveredconditionals="4" methods="20" coveredmethods="11"/>
@@ -2840,7 +2840,7 @@
       </file>
     </package>
     <package name="src.utils">
-      <metrics statements="305" coveredstatements="145" conditionals="89" coveredconditionals="43" methods="57" coveredmethods="21"/>
+      <metrics statements="305" coveredstatements="154" conditionals="89" coveredconditionals="43" methods="57" coveredmethods="25"/>
       <file name="condition-parser.ts" path="/Users/chaddorsey/Dropbox/dev/ChatGPT-experiments/sampler/src/utils/condition-parser.ts">
         <metrics statements="39" coveredstatements="37" conditionals="18" coveredconditionals="16" methods="7" coveredmethods="7"/>
         <line num="6" count="8" type="stmt"/>
@@ -3030,19 +3030,19 @@
         <line num="17" count="10" type="stmt"/>
       </file>
       <file name="password-utils.ts" path="/Users/chaddorsey/Dropbox/dev/ChatGPT-experiments/sampler/src/utils/password-utils.ts">
-        <metrics statements="12" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="4" coveredmethods="0"/>
-        <line num="14" count="1" type="stmt"/>
-        <line num="16" count="0" type="stmt"/>
-        <line num="17" count="0" type="stmt"/>
-        <line num="20" count="0" type="stmt"/>
-        <line num="23" count="0" type="stmt"/>
-        <line num="24" count="0" type="stmt"/>
-        <line num="26" count="0" type="stmt"/>
-        <line num="35" count="1" type="stmt"/>
-        <line num="36" count="0" type="stmt"/>
-        <line num="37" count="0" type="stmt"/>
-        <line num="45" count="1" type="stmt"/>
-        <line num="47" count="0" type="stmt"/>
+        <metrics statements="12" coveredstatements="12" conditionals="0" coveredconditionals="0" methods="4" coveredmethods="4"/>
+        <line num="14" count="2" type="stmt"/>
+        <line num="16" count="12" type="stmt"/>
+        <line num="17" count="12" type="stmt"/>
+        <line num="20" count="12" type="stmt"/>
+        <line num="23" count="12" type="stmt"/>
+        <line num="24" count="384" type="stmt"/>
+        <line num="26" count="12" type="stmt"/>
+        <line num="35" count="2" type="stmt"/>
+        <line num="36" count="4" type="stmt"/>
+        <line num="37" count="4" type="stmt"/>
+        <line num="45" count="2" type="stmt"/>
+        <line num="47" count="7" type="stmt"/>
       </file>
       <file name="secure-storage.ts" path="/Users/chaddorsey/Dropbox/dev/ChatGPT-experiments/sampler/src/utils/secure-storage.ts">
         <metrics statements="51" coveredstatements="8" conditionals="2" coveredconditionals="0" methods="6" coveredmethods="0"/>
