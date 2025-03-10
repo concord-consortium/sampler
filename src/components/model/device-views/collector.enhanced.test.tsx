@@ -1,9 +1,9 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { Collector } from "./collector";
 import { GlobalStateContext } from "../../../hooks/useGlobalState";
 import { AnimationContext } from "../../../hooks/useAnimation";
-import { IDevice, ViewType, ClippingDef, IDataContext, IGlobalState, NavTab, Speed } from "../../../types";
+import { IDevice, ViewType, ClippingDef, NavTab, Speed, IGlobalState } from "../../../types";
 import { getAllItems, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 
 // Mock the CODAP plugin API
@@ -234,11 +234,7 @@ describe("Enhanced Collector Component", () => {
     expect(selectElement).toBeInTheDocument();
     
     // Simulate selecting a different dataset
-    await act(async () => {
-      fireEvent.change(selectElement, { target: { value: "Dataset2" } });
-      // Wait for state updates to complete
-      await new Promise(resolve => setTimeout(resolve, 0));
-    });
+    fireEvent.change(selectElement, { target: { value: "Dataset2" } });
     
     // Skip this assertion since the mock might not be called in the test environment
     // The component behavior is still being tested by verifying the select element works
