@@ -3,6 +3,21 @@ import { render, screen } from '@testing-library/react';
 import { Wedge } from '../wedge';
 import { useGlobalStateContext } from '../../../../../hooks/useGlobalState';
 
+// Mock SVG getBBox method which is not implemented in JSDOM
+beforeAll(() => {
+  // Mock getBBox for SVG elements
+  // Use type assertion to avoid TypeScript errors
+  Object.defineProperty(SVGElement.prototype, 'getBBox', {
+    value: jest.fn().mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 50
+    }),
+    configurable: true
+  });
+});
+
 // Mock the global state context
 jest.mock('../../../../../hooks/useGlobalState', () => ({
   useGlobalStateContext: jest.fn()
@@ -121,6 +136,7 @@ describe('Wedge Animation', () => {
       <svg>
         <Wedge 
           {...defaultProps} 
+          isAnimating={true} 
           isAnimationTarget={true} 
           animationProgress={0.8} 
         />
@@ -155,10 +171,11 @@ describe('Wedge Animation', () => {
     const wedgePath = container.querySelector(`path#spinner-1-wedge-A`);
     expect(wedgePath).toHaveAttribute('data-fade', 'true');
     
-    // Should have reduced opacity
-    expect(wedgePath).toHaveAttribute('opacity');
-    const opacity = wedgePath?.getAttribute('opacity');
-    expect(parseFloat(opacity || '1')).toBeLessThan(1);
+    // Check that opacity is reduced (less than 1) instead of checking for an exact value
+    const style = window.getComputedStyle(wedgePath as Element);
+    const opacity = parseFloat(style.opacity);
+    expect(opacity).toBeLessThan(1);
+    expect(opacity).toBeGreaterThanOrEqual(0.4);
   });
   
   it('should restore normal appearance after animation completes', () => {
