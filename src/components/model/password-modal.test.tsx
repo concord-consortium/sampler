@@ -1,14 +1,14 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { PasswordModal } from './password-modal';
 import { GlobalStateContext } from '../../hooks/useGlobalState';
 import { hashPassword } from '../../utils/password-utils';
 import { Speed } from '../../types';
 
 jest.mock('../../utils/password-utils', () => ({
-  hashPassword: jest.fn().mockImplementation((password) => `hashed_${password}`),
+  hashPassword: jest.fn().mockImplementation((password) => Promise.resolve(`hashed_${password}`)),
   validatePassword: jest.fn().mockImplementation((password, storedHash) => 
-    storedHash === `hashed_${password}`)
+    Promise.resolve(storedHash === `hashed_${password}`))
 }));
 
 jest.mock('../../utils/secure-storage', () => ({
@@ -129,11 +129,18 @@ describe('PasswordModal', () => {
     // Enter matching passwords
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.change(confirmInput, { target: { value: 'password123' } });
-    fireEvent.click(submitButton);
     
-    expect(hashPassword).toHaveBeenCalledWith('password123');
-    expect(storePasswordHash).toHaveBeenCalledWith('hashed_password123');
-    expect(mockSetGlobalState).toHaveBeenCalled();
+    // Use act to handle the async state updates
+    await act(async () => {
+      fireEvent.click(submitButton);
+    });
+    
+    // Wait for the async functions to complete
+    await waitFor(() => {
+      expect(hashPassword).toHaveBeenCalledWith('password123');
+      expect(storePasswordHash).toHaveBeenCalledWith('hashed_password123');
+      expect(mockSetGlobalState).toHaveBeenCalled();
+    });
   });
 
   it('validates the entered password and clears it when unlocking', async () => {
@@ -151,7 +158,10 @@ describe('PasswordModal', () => {
     
     // Enter incorrect password
     fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
-    fireEvent.click(unlockButton);
+    
+    await act(async () => {
+      fireEvent.click(unlockButton);
+    });
     
     expect(await screen.findByText(/incorrect password/i)).toBeInTheDocument();
     expect(mockSetGlobalState).not.toHaveBeenCalled();
@@ -159,10 +169,16 @@ describe('PasswordModal', () => {
     
     // Enter correct password
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(unlockButton);
     
-    expect(clearPasswordHash).toHaveBeenCalled();
-    expect(mockSetGlobalState).toHaveBeenCalled();
+    await act(async () => {
+      fireEvent.click(unlockButton);
+    });
+    
+    // Wait for the async functions to complete
+    await waitFor(() => {
+      expect(clearPasswordHash).toHaveBeenCalled();
+      expect(mockSetGlobalState).toHaveBeenCalled();
+    });
   });
 
   it('closes the modal when cancel is clicked', () => {
