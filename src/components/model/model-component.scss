@@ -115,7 +115,7 @@ $pluginMinWidth: 304px;
     gap: 8px;
   }
 
-  button {
+  .animation-control-button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -138,6 +138,11 @@ $pluginMinWidth: 304px;
       min-height: 44px;
     }
 
+    &:focus {
+      outline: 2px solid #0056b3;
+      outline-offset: 2px;
+    }
+
     &.disabled {
       opacity: 0.4;
       border-radius: 1.5px;
@@ -146,32 +151,192 @@ $pluginMinWidth: 304px;
     }
   }
 
-  .speed-slider {
+  .animation-speed-control {
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
     margin: 0 8px;
-    width: 88px;
-    position: relative;
     
     @include small-mobile {
       width: 100%;
       margin: 8px 0;
     }
+    
+    label {
+      font-size: 11px;
+      margin-bottom: 2px;
+      
+      @include small-mobile {
+        font-size: 14px;
+      }
+    }
   }
 
-  span {
-    margin: 0 2px;
+  .speed-slider {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 0;
+    width: 88px;
+    position: relative;
+    
+    @include small-mobile {
+      width: 100%;
+    }
+
+    .tick-marks-container {
+      display: flex;
+      flex-direction: row;
+      align-content: stretch;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: normal;
+      color: #777;
+      width: 32px;
+      height: 22px;
+      position: absolute;
+      left: 8px;
+      top: 2px;
+
+      .tick-mark {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        transition: transform 0.1s ease;
+
+        &:hover {
+          transform: scale(1.1);
+        }
+        
+        &:focus {
+          outline: 2px solid #0056b3;
+          outline-offset: 2px;
+        }
+
+        &.active .tick-line {
+          background-color: #0077cc;
+          height: 12px;
+        }
+
+        .tick-line {
+          width: 2px;
+          height: 10px;
+          background-color: #777;
+          transition: background-color 0.2s ease, height 0.2s ease;
+        }
+
+        .tick-label {
+          font-size: 10px;
+          margin-top: 4px;
+          color: #777;
+          display: none;
+        }
+
+        &:hover .tick-label {
+          display: block;
+        }
+        
+        &:focus .tick-label {
+          display: block;
+        }
+      }
+    }
+
+    input[type='range'],
+    input[type='range']::-webkit-slider-runnable-track,
+    input[type='range']::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 45px;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    input[type='range']::-webkit-slider-runnable-track {
+      box-sizing: border-box;
+      width: 45px;
+      height: 4px;
+      border-radius: 2px;
+      background: #777;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    input[type='range']::-moz-range-track {
+      box-sizing: border-box;
+      width: 45px;
+      height: 4px;
+      border-radius: 2px;
+      background: #777;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    input[type='range']::-webkit-slider-thumb {
+      box-sizing: border-box;
+      margin-top: -5px;
+      width: 13px;
+      height: 13px;
+      border-radius: 6.5px;
+      border: solid 1px #999;
+      background-color: #f0f0f0;
+      position: relative;
+      z-index: 2;
+      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+      &:hover {
+        cursor: pointer;
+        border-color: #0077cc;
+      }
+    }
+
+    input[type='range']::-moz-range-thumb {
+      box-sizing: border-box;
+      margin-top: -5px;
+      width: 13px;
+      height: 13px;
+      border-radius: 6.5px;
+      border: solid 1px #999;
+      background-color: #f0f0f0;
+      position: relative;
+      z-index: 2;
+      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+      &:hover {
+        cursor: pointer;
+        border-color: #0077cc;
+      }
+    }
+
+    input[type='range']:focus {
+      outline: none;
+      
+      &::-webkit-slider-thumb {
+        box-shadow: 0 0 0 2px rgba(0, 119, 204, 0.3);
+        border-color: #0077cc;
+      }
+      
+      &::-moz-range-thumb {
+        box-shadow: 0 0 0 2px rgba(0, 119, 204, 0.3);
+        border-color: #0077cc;
+      }
+    }
+
+    circle:hover {
+      cursor: pointer;
+    }
+    text:hover{
+      cursor: pointer;
+    }
   }
-  .attr-name {
-    width: 56px;
-    height: 22px;
-    border-radius: 1.5px;
-    border: solid 1px #8f8f9d;
-    background-color: #fff;
-  }
+
   button.clear-data-button {
     width: 85px;
+    
+    @include small-mobile {
+      width: 100%;
+      margin-top: 8px;
+    }
   }
 }
 
@@ -535,4 +700,17 @@ $pluginMinWidth: 304px;
   background-color: #fff4e5;
   border-color: #ffd591;
   color: #d46b08;
+}
+
+// Screen reader only class
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

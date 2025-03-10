@@ -79,6 +79,30 @@ export const ModelHeader = (props: IProps) => {
     });
   };
 
+  // Get button text and aria-label based on current state
+  const getRunButtonProps = () => {
+    if (isRunning) {
+      if (isPaused) {
+        return {
+          text: "RESUME",
+          ariaLabel: "Resume animation"
+        };
+      } else {
+        return {
+          text: "PAUSE",
+          ariaLabel: "Pause animation"
+        };
+      }
+    } else {
+      return {
+        text: "START",
+        ariaLabel: "Start animation"
+      };
+    }
+  };
+
+  const runButtonProps = getRunButtonProps();
+
   return (
     <div className="model-header">
       <div className="model-title-container">
@@ -92,26 +116,35 @@ export const ModelHeader = (props: IProps) => {
           <LockModelButton />
         </div>
       </div>
-      <div className="model-controls">
+      <div className="model-controls" role="toolbar" aria-label="Animation controls">
         <button 
           disabled={startToggleDisabled || modelLocked} 
-          className={`start-button ${startToggleDisabled || modelLocked ? "disabled" : ""}`} 
+          className={`animation-control-button ${startToggleDisabled || modelLocked ? "disabled" : ""}`} 
           onClick={handleToggleRun}
+          aria-label={runButtonProps.ariaLabel}
+          tabIndex={0}
         >
-          {isRunning ? (isPaused ? "START" : "PAUSE") : "START"}
+          {runButtonProps.text}
         </button>
         <button 
           disabled={!isRunning || modelLocked} 
-          className={`stop-button ${!isRunning || modelLocked ? "disabled" : ""}`} 
+          className={`animation-control-button ${!isRunning || modelLocked ? "disabled" : ""}`} 
           onClick={handleStopRun}
+          aria-label="Stop animation"
+          tabIndex={0}
         >
           STOP
         </button>
-        <SpeedSlider />
+        <div className="animation-speed-control">
+          <label id="speed-slider-label" htmlFor="speed-slider">Animation speed:</label>
+          <SpeedSlider aria-labelledby="speed-slider-label" />
+        </div>
         <button 
           disabled={isRunning || modelLocked} 
           className={`clear-data-button ${isRunning || modelLocked ? "disabled" : ""}`} 
           onClick={handleClearData}
+          aria-label="Clear all data"
+          tabIndex={0}
         >
           CLEAR DATA
         </button>
@@ -119,7 +152,11 @@ export const ModelHeader = (props: IProps) => {
       <div className="select-repeat-controls">
         <div className="select-repeat-selection">
           <div className="select-repeat-dropdown">
-            <select disabled={isRunning || modelLocked} onChange={handleSelectRepeat}>
+            <select 
+              disabled={isRunning || modelLocked} 
+              onChange={handleSelectRepeat}
+              aria-label="Select mode"
+            >
               <option className={`select-repeat-option`} value="select">Select</option>
               <option className={`select-repeat-option`} value="repeat">Repeat</option>
             </select>
@@ -131,6 +168,7 @@ export const ModelHeader = (props: IProps) => {
             id="sample_size" 
             value={sampleSize} 
             onChange={handleSampleSizeChange}
+            aria-label="Sample size"
           />
           <span>{`${repeat ? "selecting" : ""} items`}</span>
           <div className="select-replacement-dropdown">
@@ -138,6 +176,7 @@ export const ModelHeader = (props: IProps) => {
               disabled={isRunning || !allowReplacement || modelLocked} 
               value={replacement ? "with" : "without"} 
               onChange={handleSelectReplacement}
+              aria-label="Replacement mode"
             >
               <option value="with">with replacement</option>
               <option value="without">without replacement</option>
@@ -174,6 +213,7 @@ export const ModelHeader = (props: IProps) => {
           id="num_samples" 
           value={numSamples} 
           onChange={handleNumSamplesChange}
+          aria-label="Number of samples to collect"
         />
         <span>samples</span>
       </div>

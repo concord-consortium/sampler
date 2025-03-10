@@ -2,7 +2,11 @@ import React, { useRef } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { Speed, speedLabels } from "../../types";
 
-export const SpeedSlider = () => {
+interface SpeedSliderProps {
+  'aria-labelledby'?: string;
+}
+
+export const SpeedSlider = (props: SpeedSliderProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { speed } = globalState;
   const sliderRef = useRef<HTMLInputElement>(null);
@@ -67,17 +71,24 @@ export const SpeedSlider = () => {
       .filter(value => !isNaN(parseInt(value.toString(), 10)))
       .map(speedValue => {
         const isActive = parseInt(speedValue.toString(), 10) === speed;
+        const speedName = speedLabels[speedValue as Speed];
         return (
           <div 
             className={`tick-mark ${isActive ? 'active' : ''}`} 
             key={`tick-${speedValue}`}
             onClick={() => handleTickClick(speedValue as Speed)}
             role="button"
-            tabIndex={-1}
-            aria-label={`Set speed to ${speedLabels[speedValue as Speed]}`}
+            tabIndex={0}
+            aria-label={`Set speed to ${speedName}`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleTickClick(speedValue as Speed);
+              }
+            }}
           >
             <div className="tick-line"/>
-            <span className="tick-label">{speedLabels[speedValue as Speed]}</span>
+            <span className="tick-label">{speedName}</span>
           </div>
         );
       });
@@ -96,18 +107,27 @@ export const SpeedSlider = () => {
         step={1}
         list="speedSettings"
         className="slider"
-        aria-label="Animation Speed"
+        id="speed-slider"
+        aria-label={props['aria-labelledby'] ? undefined : "Animation Speed"}
+        aria-labelledby={props['aria-labelledby']}
         aria-valuemin={Speed.Slow}
         aria-valuemax={Speed.Fastest}
         aria-valuenow={speed}
         aria-valuetext={speedLabels[speed]}
       />
-      <div className="tick-marks-container">
+      <div className="tick-marks-container" role="group" aria-label="Speed options">
         {renderTickMarks()}
       </div>
-      <span id="speed-text" data-text={`DG.plugin.Sampler.top-bar.${speedLabels[speed].toLowerCase()}-speed`}>
+      <span 
+        id="speed-text" 
+        data-text={`DG.plugin.Sampler.top-bar.${speedLabels[speed].toLowerCase()}-speed`}
+        aria-hidden="true"
+      >
         {speedLabels[speed]}
       </span>
+      <div className="sr-only">
+        Current speed: {speedLabels[speed]}
+      </div>
     </div>
   );
 };
