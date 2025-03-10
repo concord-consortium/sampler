@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { PasswordModal } from './password-modal';
 import { GlobalStateContext } from '../../hooks/useGlobalState';
 import { hashPassword } from '../../utils/password-utils';
@@ -106,13 +106,11 @@ describe('PasswordModal', () => {
     const submitButton = screen.getByRole('button', { name: /set password/i });
     
     // Enter mismatched passwords
-    await act(async () => {
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-      fireEvent.change(confirmInput, { target: { value: 'password456' } });
-      fireEvent.click(submitButton);
-    });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.change(confirmInput, { target: { value: 'password456' } });
+    fireEvent.click(submitButton);
     
-    expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument();
+    expect(await screen.findByText(/passwords do not match/i)).toBeInTheDocument();
     expect(mockSetGlobalState).not.toHaveBeenCalled();
     expect(storePasswordHash).not.toHaveBeenCalled();
   });
@@ -129,11 +127,9 @@ describe('PasswordModal', () => {
     const submitButton = screen.getByRole('button', { name: /set password/i });
     
     // Enter matching passwords
-    await act(async () => {
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-      fireEvent.change(confirmInput, { target: { value: 'password123' } });
-      fireEvent.click(submitButton);
-    });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.change(confirmInput, { target: { value: 'password123' } });
+    fireEvent.click(submitButton);
     
     expect(hashPassword).toHaveBeenCalledWith('password123');
     expect(storePasswordHash).toHaveBeenCalledWith('hashed_password123');
@@ -154,20 +150,16 @@ describe('PasswordModal', () => {
     const unlockButton = screen.getByRole('button', { name: /unlock/i });
     
     // Enter incorrect password
-    await act(async () => {
-      fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
-      fireEvent.click(unlockButton);
-    });
+    fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
+    fireEvent.click(unlockButton);
     
-    expect(screen.getByText(/incorrect password/i)).toBeInTheDocument();
+    expect(await screen.findByText(/incorrect password/i)).toBeInTheDocument();
     expect(mockSetGlobalState).not.toHaveBeenCalled();
     expect(clearPasswordHash).not.toHaveBeenCalled();
     
     // Enter correct password
-    await act(async () => {
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-      fireEvent.click(unlockButton);
-    });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.click(unlockButton);
     
     expect(clearPasswordHash).toHaveBeenCalled();
     expect(mockSetGlobalState).toHaveBeenCalled();
@@ -201,13 +193,11 @@ describe('PasswordModal', () => {
     const submitButton = screen.getByRole('button', { name: /set password/i });
     
     // Enter matching passwords
-    await act(async () => {
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-      fireEvent.change(confirmInput, { target: { value: 'password123' } });
-      fireEvent.click(submitButton);
-    });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.change(confirmInput, { target: { value: 'password123' } });
+    fireEvent.click(submitButton);
     
-    expect(screen.getByText(/failed to store password/i)).toBeInTheDocument();
+    expect(await screen.findByText(/failed to store password/i)).toBeInTheDocument();
     expect(mockSetGlobalState).not.toHaveBeenCalled();
   });
 
@@ -228,12 +218,10 @@ describe('PasswordModal', () => {
     const unlockButton = screen.getByRole('button', { name: /unlock/i });
     
     // Enter correct password
-    await act(async () => {
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-      fireEvent.click(unlockButton);
-    });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.click(unlockButton);
     
-    expect(screen.getByText(/failed to unlock model/i)).toBeInTheDocument();
+    expect(await screen.findByText(/failed to unlock model/i)).toBeInTheDocument();
     expect(mockSetGlobalState).not.toHaveBeenCalled();
   });
 }); 

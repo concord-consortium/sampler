@@ -243,7 +243,8 @@ describe('useAnimation', () => {
       const { result } = renderHook(() => useAnimationContextValue(), { wrapper });
       
       const mockCallback = jest.fn();
-      let unregister = () => {}; // Initialize with a no-op function
+      // Initialize with a no-op function that will be replaced with the actual unregister function
+      let unregister = () => { /* no-op function */ }; 
       
       act(() => {
         unregister = result.current.registerAnimationCallback(mockCallback);
@@ -257,8 +258,6 @@ describe('useAnimation', () => {
       act(() => {
         unregister();
       });
-      
-      // We can't verify the size directly, but the test passes if no errors occur
     });
 
     it('should handle starting a run', async () => {

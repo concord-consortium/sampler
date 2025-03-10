@@ -47,8 +47,8 @@ describe("App Component", () => {
 
   it("initializes with Model tab selected by default", () => {
     render(<App/>);
-    const modelTab = screen.getByText("Model");
-    expect(modelTab.closest(".tab")).toHaveClass("selected");
+    const modelTab = screen.getByRole("tab", { name: "Model" });
+    expect(modelTab).toHaveClass("selected");
     
     // Verify the ModelTab component is rendered
     expect(screen.getByText("Model Tab Content")).toBeInTheDocument();
@@ -58,24 +58,27 @@ describe("App Component", () => {
     render(<App/>);
     
     // Initially Model tab should be selected
-    expect(screen.getByText("Model").closest(".tab")).toHaveClass("selected");
+    const modelTab = screen.getByRole("tab", { name: "Model" });
+    expect(modelTab).toHaveClass("selected");
     
     // Click on Measures tab
-    fireEvent.click(screen.getByText("Measures"));
+    const measuresTab = screen.getByRole("tab", { name: "Measures" });
+    fireEvent.click(measuresTab);
     
     // Now Measures tab should be selected
-    expect(screen.getByText("Measures").closest(".tab")).toHaveClass("selected");
-    expect(screen.getByText("Model").closest(".tab")).not.toHaveClass("selected");
+    expect(measuresTab).toHaveClass("selected");
+    expect(modelTab).not.toHaveClass("selected");
     
     // Verify the MeasuresTab component is rendered
     expect(screen.getByText("Measures Tab Content")).toBeInTheDocument();
     
     // Click on About tab
-    fireEvent.click(screen.getByText("About"));
+    const aboutTab = screen.getByRole("tab", { name: "About" });
+    fireEvent.click(aboutTab);
     
     // Now About tab should be selected
-    expect(screen.getByText("About").closest(".tab")).toHaveClass("selected");
-    expect(screen.getByText("Measures").closest(".tab")).not.toHaveClass("selected");
+    expect(aboutTab).toHaveClass("selected");
+    expect(measuresTab).not.toHaveClass("selected");
     
     // Verify the AboutTab component is rendered
     expect(screen.getByText("About Tab Content")).toBeInTheDocument();
@@ -94,7 +97,7 @@ describe("App Component", () => {
     render(<App/>);
     
     // Change tab to trigger a state update
-    fireEvent.click(screen.getByText("Measures"));
+    fireEvent.click(screen.getByRole("tab", { name: "Measures" }));
     
     // Verify that updateInteractiveState was called
     await waitFor(() => {

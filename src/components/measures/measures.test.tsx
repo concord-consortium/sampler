@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MeasuresTab } from "./measures";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
 import { hasSamplesCollection, addMeasure } from "../../helpers/codap-helpers";
@@ -72,9 +72,7 @@ describe("MeasuresTab Component", () => {
     renderMeasuresTab();
     
     // Check that the instructions are displayed for no samples
-    await waitFor(() => {
-      expect(screen.getByText("Please run at least one experiment first.")).toBeInTheDocument();
-    });
+    expect(await screen.findByText("Please run at least one experiment first.")).toBeInTheDocument();
   });
 
   it("renders the measure form when samples exist", async () => {
@@ -82,16 +80,14 @@ describe("MeasuresTab Component", () => {
     
     renderMeasuresTab();
     
-    await waitFor(() => {
-      // Check that the measures header is displayed
-      expect(screen.getByRole('heading', { name: /Measures/i, level: 2 })).toBeInTheDocument();
-      
-      // Check that the measure dropdown is displayed
-      expect(screen.getByText('Select a measure!')).toBeInTheDocument();
-      
-      // Check for the form element
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
-    });
+    // Check that the measures header is displayed
+    expect(await screen.findByRole('heading', { name: /Measures/i, level: 2 })).toBeInTheDocument();
+    
+    // Check that the measure dropdown is displayed
+    expect(screen.getByText('Select a measure!')).toBeInTheDocument();
+    
+    // Check for the form element
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
 
   it("selects a formula from the dropdown", async () => {
@@ -99,19 +95,17 @@ describe("MeasuresTab Component", () => {
     
     renderMeasuresTab();
     
-    await waitFor(() => {
-      // Get the select element
-      const selectElement = screen.getByRole("combobox") as HTMLSelectElement;
-      
-      // Initially the default option should be selected
-      expect(selectElement.value).toBe("default");
-      
-      // Change the selection
-      fireEvent.change(selectElement, { target: { value: "sum" } });
-      
-      // The value should be updated
-      expect(selectElement.value).toBe("sum");
-    });
+    // Get the select element
+    const selectElement = await screen.findByRole("combobox") as HTMLSelectElement;
+    
+    // Initially the default option should be selected
+    expect(selectElement.value).toBe("default");
+    
+    // Change the selection
+    fireEvent.change(selectElement, { target: { value: "sum" } });
+    
+    // The value should be updated
+    expect(selectElement.value).toBe("sum");
   });
 
   it("allows entering a custom measure name", async () => {
@@ -119,19 +113,15 @@ describe("MeasuresTab Component", () => {
     
     renderMeasuresTab();
     
-    await waitFor(() => {
-      // Get the select element and change it to show the name input
-      const selectElement = screen.getByRole("combobox") as HTMLSelectElement;
-      fireEvent.change(selectElement, { target: { value: "sum" } });
-    });
+    // Get the select element and change it to show the name input
+    const selectElement = await screen.findByRole("combobox") as HTMLSelectElement;
+    fireEvent.change(selectElement, { target: { value: "sum" } });
     
     // Get the name input
     const nameInput = screen.getByPlaceholderText("Optional name") as HTMLInputElement;
     
     // Enter a custom name
-    await act(async () => {
-      fireEvent.change(nameInput, { target: { value: "My Custom Measure" } });
-    });
+    fireEvent.change(nameInput, { target: { value: "My Custom Measure" } });
     
     // The value should be updated
     expect(nameInput.value).toBe("My Custom Measure");
@@ -142,11 +132,9 @@ describe("MeasuresTab Component", () => {
     
     renderMeasuresTab();
     
-    await waitFor(() => {
-      // Get the select element and change it to show the formula inputs
-      const selectElement = screen.getByRole("combobox") as HTMLSelectElement;
-      fireEvent.change(selectElement, { target: { value: "sum" } });
-    });
+    // Get the select element and change it to show the formula inputs
+    const selectElement = await screen.findByRole("combobox") as HTMLSelectElement;
+    fireEvent.change(selectElement, { target: { value: "sum" } });
     
     // Get the Add Measure button
     const addMeasureButton = screen.getByText("Add Measure");
@@ -158,9 +146,7 @@ describe("MeasuresTab Component", () => {
     const formulaInputs = screen.getAllByRole("combobox");
     const attributeSelect = formulaInputs[1]; // The second select is for attributes
     
-    await act(async () => {
-      fireEvent.change(attributeSelect, { target: { value: "Column 1" } });
-    });
+    fireEvent.change(attributeSelect, { target: { value: "Column 1" } });
     
     // Now the button should be enabled
     expect(addMeasureButton).not.toBeDisabled();
@@ -171,26 +157,20 @@ describe("MeasuresTab Component", () => {
     
     renderMeasuresTab();
     
-    await waitFor(() => {
-      // Get the select element and change it to show the formula inputs
-      const selectElement = screen.getByRole("combobox") as HTMLSelectElement;
-      fireEvent.change(selectElement, { target: { value: "sum" } });
-    });
+    // Get the select element and change it to show the formula inputs
+    const selectElement = await screen.findByRole("combobox") as HTMLSelectElement;
+    fireEvent.change(selectElement, { target: { value: "sum" } });
     
     // Select an attribute
     const formulaInputs = screen.getAllByRole("combobox");
     const attributeSelect = formulaInputs[1]; // The second select is for attributes
     
-    await act(async () => {
-      fireEvent.change(attributeSelect, { target: { value: "Column 1" } });
-    });
+    fireEvent.change(attributeSelect, { target: { value: "Column 1" } });
     
     // Get the Add Measure button and click it
     const addMeasureButton = screen.getByText("Add Measure");
     
-    await act(async () => {
-      fireEvent.click(addMeasureButton);
-    });
+    fireEvent.click(addMeasureButton);
     
     // Check that addMeasure was called with the correct arguments
     expect(addMeasure).toHaveBeenCalledWith("", "sum", "sum(`Column 1`)");
@@ -209,9 +189,7 @@ describe("MeasuresTab Component", () => {
     renderMeasuresTab();
     
     // Check that the collector guidance is displayed
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Enhanced Measures in Collector Mode/i })).toBeInTheDocument();
-    });
+    expect(await screen.findByRole('heading', { name: /Enhanced Measures in Collector Mode/i })).toBeInTheDocument();
     
     // Check that the guidance text is displayed
     expect(screen.getByText(/While you cannot add common measures for each sample/i)).toBeInTheDocument();
@@ -270,47 +248,41 @@ describe('MeasuresTab Improvements', () => {
     it('should render data visualization components', async () => {
       renderMeasuresTab();
       
-      await waitFor(() => {
-        // Check for the visualization section header
-        expect(screen.getByRole('heading', { name: /Data Visualization/i })).toBeInTheDocument();
-        
-        // Check for the visualization type selector
-        expect(screen.getByText(/Visualization Type:/i)).toBeInTheDocument();
-        
-        // Check for visualization options
-        const radioButtons = screen.getAllByRole('radio');
-        const barChartRadio = radioButtons.find(radio => radio.getAttribute('value') === 'bar');
-        const lineChartRadio = radioButtons.find(radio => radio.getAttribute('value') === 'line');
-        const scatterPlotRadio = radioButtons.find(radio => radio.getAttribute('value') === 'scatter');
-        
-        expect(barChartRadio).toBeInTheDocument();
-        expect(lineChartRadio).toBeInTheDocument();
-        expect(scatterPlotRadio).toBeInTheDocument();
-      });
+      // Check for the visualization section header
+      expect(screen.getByRole('heading', { name: /Data Visualization/i })).toBeInTheDocument();
+      
+      // Check for the visualization type selector
+      expect(screen.getByText(/Visualization Type:/i)).toBeInTheDocument();
+      
+      // Check for visualization options
+      const radioButtons = screen.getAllByRole('radio');
+      const barChartRadio = radioButtons.find(radio => radio.getAttribute('value') === 'bar');
+      const lineChartRadio = radioButtons.find(radio => radio.getAttribute('value') === 'line');
+      const scatterPlotRadio = radioButtons.find(radio => radio.getAttribute('value') === 'scatter');
+      
+      expect(barChartRadio).toBeInTheDocument();
+      expect(lineChartRadio).toBeInTheDocument();
+      expect(scatterPlotRadio).toBeInTheDocument();
     });
 
     it('should handle responsive layouts', async () => {
       renderMeasuresTab();
       
-      await waitFor(() => {
-        // Check for the responsive container
-        const visualizationContainer = screen.getByTestId('visualization-container');
-        expect(visualizationContainer).toBeInTheDocument();
-        expect(visualizationContainer).toHaveClass('responsive-container');
-      });
+      // Check for the responsive container
+      const visualizationContainer = screen.getByTestId('visualization-container');
+      expect(visualizationContainer).toBeInTheDocument();
+      expect(visualizationContainer).toHaveClass('responsive-container');
     });
 
     it('should provide statistical analysis controls', async () => {
       renderMeasuresTab();
       
-      await waitFor(() => {
-        // Check for the statistical analysis section
-        expect(screen.getByText(/Statistical Analysis/i)).toBeInTheDocument();
-        
-        // Check for analysis options
-        expect(screen.getByText(/Descriptive Statistics/i)).toBeInTheDocument();
-        expect(screen.getByText(/Correlation Analysis/i)).toBeInTheDocument();
-      });
+      // Check for the statistical analysis section
+      expect(screen.getByText(/Statistical Analysis/i)).toBeInTheDocument();
+      
+      // Check for analysis options
+      expect(screen.getByText(/Descriptive Statistics/i)).toBeInTheDocument();
+      expect(screen.getByText(/Correlation Analysis/i)).toBeInTheDocument();
     });
   });
   
@@ -326,69 +298,59 @@ describe('MeasuresTab Improvements', () => {
       
       renderMeasuresTab();
       
-      await waitFor(() => {
-        // Check for the collector data processing section
-        expect(screen.getByText(/Collector Data Processing/i)).toBeInTheDocument();
-        
-        // Check for the data source selector
-        expect(screen.getByText(/Data Source:/i)).toBeInTheDocument();
-        
-        // Check for the process button
-        const processButton = screen.getByText(/Process Data/i);
-        expect(processButton).toBeInTheDocument();
-        
-        // Click the process button
-        fireEvent.click(processButton);
-        
-        // Check that the appropriate function was called
-        // This would be a new function to implement
-        // expect(processCollectorData).toHaveBeenCalled();
-      });
+      // Check for the collector data processing section
+      expect(screen.getByText(/Collector Data Processing/i)).toBeInTheDocument();
+      
+      // Check for the data source selector
+      expect(screen.getByText(/Data Source:/i)).toBeInTheDocument();
+      
+      // Check for the process button
+      const processButton = screen.getByText(/Process Data/i);
+      expect(processButton).toBeInTheDocument();
+      
+      // Click the process button
+      fireEvent.click(processButton);
     });
 
     it('should calculate statistical measures', async () => {
       renderMeasuresTab();
       
-      await waitFor(() => {
-        // Select the descriptive statistics option
-        const radioButtons = screen.getAllByRole('radio');
-        const descriptiveStatsRadio = radioButtons.find(radio => radio.getAttribute('value') === 'descriptive');
-        expect(descriptiveStatsRadio).toBeInTheDocument();
-        fireEvent.click(descriptiveStatsRadio!);
-        
-        // Select the mean measure
-        const meanRadio = radioButtons.find(radio => radio.getAttribute('value') === 'mean' && radio.getAttribute('name') === 'statisticalMeasure');
-        expect(meanRadio).toBeInTheDocument();
-        fireEvent.click(meanRadio!);
-        
-        // Click the calculate button
-        const calculateButton = screen.getByRole('button', { name: /Calculate/i });
-        fireEvent.click(calculateButton);
-      });
+      // Select the descriptive statistics option
+      const radioButtons = screen.getAllByRole('radio');
+      const descriptiveStatsRadio = radioButtons.find(radio => radio.getAttribute('value') === 'descriptive');
+      expect(descriptiveStatsRadio).toBeInTheDocument();
+      fireEvent.click(descriptiveStatsRadio!);
+      
+      // Select the mean measure
+      const meanRadio = radioButtons.find(radio => radio.getAttribute('value') === 'mean' && radio.getAttribute('name') === 'statisticalMeasure');
+      expect(meanRadio).toBeInTheDocument();
+      fireEvent.click(meanRadio!);
+      
+      // Click the calculate button
+      const calculateButton = screen.getByRole('button', { name: /Calculate/i });
+      fireEvent.click(calculateButton);
     });
 
     it('should format data for visualizations', async () => {
       renderMeasuresTab();
       
-      await waitFor(() => {
-        // Select a visualization type
-        const radioButtons = screen.getAllByRole('radio');
-        const barChartRadio = radioButtons.find(radio => radio.getAttribute('value') === 'bar');
-        expect(barChartRadio).toBeInTheDocument();
-        fireEvent.click(barChartRadio!);
-        
-        // Select a data format
-        const stackedFormatRadio = radioButtons.find(radio => radio.getAttribute('value') === 'stacked');
-        expect(stackedFormatRadio).toBeInTheDocument();
-        fireEvent.click(stackedFormatRadio!);
-        
-        // Click the apply format button
-        const applyButton = screen.getByRole('button', { name: /Apply Format/i });
-        fireEvent.click(applyButton);
-        
-        // Check that the visualization updates
-        expect(screen.getByTestId('visualization-container')).toBeInTheDocument();
-      });
+      // Select a visualization type
+      const radioButtons = screen.getAllByRole('radio');
+      const barChartRadio = radioButtons.find(radio => radio.getAttribute('value') === 'bar');
+      expect(barChartRadio).toBeInTheDocument();
+      fireEvent.click(barChartRadio!);
+      
+      // Select a data format
+      const stackedFormatRadio = radioButtons.find(radio => radio.getAttribute('value') === 'stacked');
+      expect(stackedFormatRadio).toBeInTheDocument();
+      fireEvent.click(stackedFormatRadio!);
+      
+      // Click the apply format button
+      const applyButton = screen.getByRole('button', { name: /Apply Format/i });
+      fireEvent.click(applyButton);
+      
+      // Check that the visualization updates
+      expect(screen.getByTestId('visualization-container')).toBeInTheDocument();
     });
   });
 }); 

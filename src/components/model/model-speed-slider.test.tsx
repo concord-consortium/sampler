@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { SpeedSlider } from './model-speed-slider';
 import { Speed, speedLabels } from '../../types';
 import { useGlobalStateContext } from '../../hooks/useGlobalState';
@@ -53,7 +53,8 @@ describe('SpeedSlider Component', () => {
     render(<SpeedSlider />);
     
     // Check that there are tick marks for each speed option
-    const tickMarks = document.querySelectorAll('.tick-mark');
+    const sliderContainer = screen.getByTestId('speed-slider-container');
+    const tickMarks = within(sliderContainer).getAllByTestId('tick-mark');
     expect(tickMarks.length).toBe(Object.keys(speedLabels).length);
   });
 
@@ -63,7 +64,7 @@ describe('SpeedSlider Component', () => {
     render(<SpeedSlider />);
     
     // Find all tick marks
-    const tickMarks = document.querySelectorAll('.tick-mark');
+    const tickMarks = screen.getAllByTestId('tick-mark');
     
     // Click on the Fast tick mark (index 2)
     fireEvent.click(tickMarks[2]);

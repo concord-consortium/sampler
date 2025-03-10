@@ -100,7 +100,7 @@ describe("VisibilityToggle", () => {
     
     // Focus the button
     button.focus();
-    expect(document.activeElement).toBe(button);
+    expect(screen.getByRole("button", { name: /toggle model visibility/i })).toHaveFocus();
     
     // Press Enter key
     fireEvent.keyDown(button, { key: "Enter", code: "Enter" });

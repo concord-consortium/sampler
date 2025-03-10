@@ -65,13 +65,13 @@ describe('RepeatUntil Component', () => {
   it('should not render when repeat is disabled', () => {
     const mockGlobalState = createMockGlobalState({ repeat: false });
     
-    const { container } = render(
+    render(
       <GlobalStateContext.Provider value={{ globalState: mockGlobalState, setGlobalState: mockSetGlobalState }}>
         <RepeatUntil />
       </GlobalStateContext.Provider>
     );
     
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByLabelText('Repeat Until:')).not.toBeInTheDocument();
   });
 
   it('should update global state when condition changes', () => {

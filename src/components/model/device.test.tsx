@@ -1,11 +1,9 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { Device } from "./device";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
 import { createDefaultDevice } from "../../models/device-model";
-import { createId } from "../../utils/id";
 import { ViewType, AttrMap, Speed } from "../../types";
-import * as codapPluginAPI from "@concord-consortium/codap-plugin-api";
 
 // Mock the CODAP plugin API
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
@@ -29,14 +27,16 @@ jest.mock("@concord-consortium/codap-plugin-api", () => ({
 }));
 
 // Mock SVG functions that aren't available in jsdom
-// @ts-ignore - Adding missing SVG methods for testing
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 window.SVGElement.prototype.getScreenCTM = jest.fn().mockReturnValue({
   inverse: jest.fn().mockReturnValue({
     a: 1, b: 0, c: 0, d: 1, e: 0, f: 0
   })
 });
 
-// @ts-ignore - Adding missing SVG methods for testing
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 window.SVGElement.prototype.createSVGPoint = jest.fn().mockReturnValue({
   x: 0,
   y: 0,
@@ -111,7 +111,7 @@ describe("Device Component", () => {
     expect(deviceContainer).toHaveClass("device-container");
     
     // Check that the device frame has the correct view type class
-    const deviceFrame = document.querySelector(".device-frame");
+    const deviceFrame = screen.getByTestId("device-frame");
     expect(deviceFrame).toHaveClass("mixer");
   });
 
@@ -129,7 +129,7 @@ describe("Device Component", () => {
     expect(mockGlobalState.setGlobalState).toHaveBeenCalled();
   });
 
-  it("allows selecting the device when clicked", async () => {
+  it("allows selecting the device when clicked", () => {
     const setGlobalStateMock = jest.fn();
     const mockGlobalStateWithMock = {
       ...mockGlobalState,
@@ -196,7 +196,7 @@ describe("Device Component", () => {
     
     // Create a custom global state with a mock setGlobalState function
     // and proper column structure for the delete operation
-    const mockSetGlobalState = jest.fn().mockImplementation((callback) => {
+    const deleteSetGlobalState = jest.fn().mockImplementation((callback) => {
       // No need to actually modify state in the test
     });
     
@@ -210,7 +210,7 @@ describe("Device Component", () => {
           ]
         }
       },
-      setGlobalState: mockSetGlobalState
+      setGlobalState: deleteSetGlobalState
     };
     
     render(
@@ -230,6 +230,6 @@ describe("Device Component", () => {
     fireEvent.click(deleteButton);
     
     // Check that setGlobalState was called
-    expect(mockSetGlobalState).toHaveBeenCalled();
+    expect(deleteSetGlobalState).toHaveBeenCalled();
   });
 }); 

@@ -314,12 +314,18 @@ describe("ModelTab Component", () => {
   });
 
   it("adjusts layout based on width", async () => {
-    // Create a mock implementation that simulates a wide layout
-    (document.querySelector as jest.Mock) = jest.fn().mockImplementation(() => ({
-      getBoundingClientRect: () => ({
-        width: 600
-      })
-    }));
+    // Mock the getBoundingClientRect to simulate a wide layout
+    const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = jest.fn().mockReturnValue({
+      width: 600,
+      height: 800,
+      top: 0,
+      left: 0,
+      right: 600,
+      bottom: 800,
+      x: 0,
+      y: 0
+    });
 
     render(
       <GlobalStateContext.Provider value={{ 
@@ -335,7 +341,7 @@ describe("ModelTab Component", () => {
     expect(screen.getByText("Repeat Controls")).toBeInTheDocument();
     
     // Reset the mock for the next test
-    (document.querySelector as jest.Mock).mockReset();
+    Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
   });
 
   it("should render multiple columns", () => {
@@ -404,5 +410,15 @@ describe("ModelTab Component", () => {
       },
       setGlobalState: jest.fn(),
     };
+    
+    render(
+      <GlobalStateContext.Provider value={multiColumnState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Check that both column names are rendered
+    expect(screen.getByText("Column 1")).toBeInTheDocument();
+    expect(screen.getByText("Column 2")).toBeInTheDocument();
   });
 }); 

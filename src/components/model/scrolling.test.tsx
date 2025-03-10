@@ -107,10 +107,6 @@ jest.mock("../../hooks/useAnimation", () => ({
 const mockScrollTo = jest.fn();
 Element.prototype.scrollTo = mockScrollTo;
 
-// Mock document.querySelector
-const originalQuerySelector = document.querySelector;
-const mockQuerySelector = jest.fn();
-
 describe("ModelTab Scrolling Functionality", () => {
   // Create a mock global state with the specified number of columns and devices per column
   const createMockGlobalState = (numColumns: number, devicesPerColumn: number): IGlobalStateContext => {
@@ -176,13 +172,6 @@ describe("ModelTab Scrolling Functionality", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset the mock implementation of querySelector
-    document.querySelector = mockQuerySelector;
-  });
-
-  afterEach(() => {
-    // Restore the original querySelector
-    document.querySelector = originalQuerySelector;
   });
 
   it("renders a scrollable container for the model", () => {
@@ -395,5 +384,97 @@ describe("ModelTab Scrolling Functionality", () => {
     
     fireEvent.keyDown(modelContainer, { key: "ArrowUp" });
     expect(modelContainer.scrollTop).toBeLessThan(100);
+  });
+
+  it("handles horizontal scrolling", () => {
+    const mockGlobalState = createMockGlobalState(5, 3);
+    
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Get the model container
+    const modelContainer = screen.getByTestId("model-container");
+    
+    // Simulate a scroll event
+    fireEvent.scroll(modelContainer, { target: { scrollLeft: 100 } });
+    
+    // Check that the scroll position is maintained
+    expect(mockScrollTo).toHaveBeenCalled();
+  });
+
+  it("handles vertical scrolling", () => {
+    const mockGlobalState = createMockGlobalState(5, 3);
+    
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Get the model container
+    const modelContainer = screen.getByTestId("model-container");
+    
+    // Simulate a scroll event
+    fireEvent.scroll(modelContainer, { target: { scrollTop: 50 } });
+    
+    // Check that the scroll position is maintained
+    expect(mockScrollTo).toHaveBeenCalled();
+  });
+
+  it("handles scroll events", () => {
+    const mockGlobalState = createMockGlobalState(5, 3);
+    
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Get the model container
+    const modelContainer = screen.getByTestId("model-container");
+    
+    // Simulate scroll events
+    fireEvent.scroll(modelContainer);
+    
+    // Check that the scroll position is maintained
+    expect(mockScrollTo).toHaveBeenCalled();
+  });
+
+  it("handles resize events", () => {
+    const mockGlobalState = createMockGlobalState(5, 3);
+    
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Simulate a resize event
+    fireEvent(window, new Event('resize'));
+    
+    // Check that the resize event was handled
+    expect(mockScrollTo).toHaveBeenCalled();
+  });
+
+  it("handles device selection", () => {
+    const mockGlobalState = createMockGlobalState(5, 3);
+    
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Get a device element
+    const deviceElement = screen.getAllByTestId("device-container")[0];
+    
+    // Click on the device
+    fireEvent.click(deviceElement);
+    
+    // Check that the device was selected
+    expect(mockGlobalState.setGlobalState).toHaveBeenCalled();
   });
 }); 

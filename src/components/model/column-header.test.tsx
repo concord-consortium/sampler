@@ -1,9 +1,9 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ColumnHeader } from "./column-header";
-import { GlobalStateContext } from "../../hooks/useGlobalState";
-import { AnimationContext , useAnimationContext } from "../../hooks/useAnimation";
-import { IColumn, ViewType, IDataContext, IGlobalState } from "../../types";
+import { GlobalStateContext, useGlobalStateContext } from "../../hooks/useGlobalState";
+import { AnimationContext, useAnimationContext } from "../../hooks/useAnimation";
+import { IColumn, ViewType, IDataContext } from "../../types";
 
 // Mock the useGlobalStateContext hook
 jest.mock("../../hooks/useGlobalState", () => ({
@@ -166,6 +166,4 @@ describe("ColumnHeader Component", () => {
   });
 });
 
-// Add missing imports for the mocks
-import { useGlobalStateContext } from "../../hooks/useGlobalState";
- 
+// Remove the duplicate import at the end of the file
