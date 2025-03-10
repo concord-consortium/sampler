@@ -1,0 +1,390 @@
+import {
+  evaluateResult,
+  hasSamplesCollection,
+  findOrCreateDataContext,
+  deleteAll,
+  addMeasure,
+  getNewExperimentInfo,
+  renameAttribute,
+  kDataContextName
+} from "../../src/helpers/codap-helpers";
+import { codapInterface } from "@concord-consortium/codap-plugin-api";
+import { AttrMap, IGlobalState } from "../../src/types";
+
+// Mock the codap-plugin-api
+jest.mock("@concord-consortium/codap-plugin-api", () => ({
+  codapInterface: {
+    sendRequest: jest.fn()
+  },
+  createDataContext: jest.fn(),
+  createParentCollection: jest.fn(),
+  createChildCollection: jest.fn(),
+  createNewAttribute: jest.fn(),
+  getDataContext: jest.fn(),
+  getAttributeList: jest.fn(),
+  getAllItems: jest.fn()
+}));
+
+describe("CODAP Helpers", () => {
+  // Reset mocks before each test
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("evaluateResult", () => {
+    it("should evaluate a formula and return the result", async () => {
+      // Arrange
+      const formula = "count(output='a')";
+      const value = { output: "a" };
+      const mockResponse = {
+        success: true,
+        values: [true]
+      };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(mockResponse);
+
+      // Act
+      const result = await evaluateResult(formula, value);
+
+      // Assert
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith({
+        action: "notify",
+        resource: "formulaEngine",
+        values: {
+          request: "evalExpression",
+          source: formula,
+          records: [value]
+        }
+      });
+      expect(result).toBe(true);
+    });
+
+    it("should throw an error when formula evaluation fails", async () => {
+      // Arrange
+      const formula = "invalid formula";
+      const value = { output: "a" };
+      const mockResponse = {
+        success: false
+      };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(mockResponse);
+
+      // Act & Assert
+      await expect(evaluateResult(formula, value)).rejects.toThrow("Formula evaluation failed");
+    });
+  });
+
+  describe("hasSamplesCollection", () => {
+    it("should return true when samples collection exists", async () => {
+      // Arrange
+      const mockResponse = {
+        success: true,
+        values: {
+          collections: [
+            { name: "experiments" },
+            { name: "samples" },
+            { name: "items" }
+          ]
+        }
+      };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(mockResponse);
+
+      // Act
+      const result = await hasSamplesCollection();
+
+      // Assert
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith({
+        action: "get",
+        resource: `dataContext[${kDataContextName}]`
+      });
+      expect(result).toBe(true);
+    });
+
+    it("should return false when samples collection does not exist", async () => {
+      // Arrange
+      const mockResponse = {
+        success: true,
+        values: {
+          collections: [
+            { name: "experiments" },
+            { name: "items" }
+          ]
+        }
+      };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(mockResponse);
+
+      // Act
+      const result = await hasSamplesCollection();
+
+      // Assert
+      expect(result).toBe(false);
+    });
+
+    it("should return false when dataContext does not exist", async () => {
+      // Arrange
+      const mockResponse = {
+        success: false
+      };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(mockResponse);
+
+      // Act
+      const result = await hasSamplesCollection();
+
+      // Assert
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("findOrCreateDataContext", () => {
+    it("should create a new data context when one does not exist", async () => {
+      // Arrange
+      const attrs = ["output"];
+      const attrMap: Partial<AttrMap> = {
+        experiment: { name: "experiment", id: "" },
+        description: { name: "description", id: "" },
+        sample_size: { name: "sample size", id: "" },
+        experimentHash: { name: "experimentHash", id: "" },
+        sample: { name: "sample", id: "" },
+        output: { name: "output", id: "" }
+      };
+      const setGlobalState = jest.fn();
+      
+      // Mock getDataContext to return failure (context doesn't exist)
+      const getDataContextResponse = { success: false };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValueOnce(getDataContextResponse);
+      
+      // Mock createDataContext to return success
+      const createDataContextResponse = { 
+        success: true,
+        values: { id: "dataContext1" }
+      };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValueOnce(createDataContextResponse);
+      
+      // Mock subsequent calls for collection creation
+      const createCollectionResponses = [
+        { success: true, values: { id: "collection1" } },
+        { success: true, values: { id: "collection2" } },
+        { success: true, values: { id: "collection3" } }
+      ];
+      (codapInterface.sendRequest as jest.Mock)
+        .mockResolvedValueOnce(createCollectionResponses[0])
+        .mockResolvedValueOnce(createCollectionResponses[1])
+        .mockResolvedValueOnce(createCollectionResponses[2]);
+      
+      // Mock attribute creation responses
+      const createAttributeResponse = { success: true, values: { id: "attr1" } };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(createAttributeResponse);
+
+      // Act
+      const result = await findOrCreateDataContext(attrs, attrMap as AttrMap, setGlobalState);
+
+      // Assert
+      expect(result).toBe(true);
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith({
+        action: "get",
+        resource: `dataContext[${kDataContextName}]`
+      });
+      // Verify data context creation
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith({
+        action: "create",
+        resource: "dataContext",
+        values: {
+          name: kDataContextName,
+          title: kDataContextName,
+          description: "Data from the Sampler"
+        }
+      });
+      // Verify collection creation (at least one call)
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith(expect.objectContaining({
+        action: "create",
+        resource: expect.stringContaining("collection")
+      }));
+      // Verify attribute creation (at least one call)
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith(expect.objectContaining({
+        action: "create",
+        resource: expect.stringContaining("attribute")
+      }));
+      // Verify global state update
+      expect(setGlobalState).toHaveBeenCalled();
+    });
+
+    it("should use existing data context when one exists", async () => {
+      // Arrange
+      const attrs = ["output"];
+      const attrMap: Partial<AttrMap> = {
+        experiment: { name: "experiment", id: "" },
+        description: { name: "description", id: "" },
+        sample_size: { name: "sample size", id: "" },
+        experimentHash: { name: "experimentHash", id: "" },
+        sample: { name: "sample", id: "" },
+        output: { name: "output", id: "" }
+      };
+      const setGlobalState = jest.fn();
+      
+      // Mock getDataContext to return success (context exists)
+      const getDataContextResponse = { 
+        success: true,
+        values: {
+          id: "dataContext1",
+          collections: [
+            { name: "experiments", id: "collection1" },
+            { name: "samples", id: "collection2" },
+            { name: "items", id: "collection3" }
+          ]
+        }
+      };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValueOnce(getDataContextResponse);
+      
+      // Mock getAttributeList to return attributes
+      const getAttributeListResponse = {
+        success: true,
+        values: [
+          { name: "experiment", id: "attr1" },
+          { name: "description", id: "attr2" },
+          { name: "sample size", id: "attr3" },
+          { name: "experimentHash", id: "attr4" },
+          { name: "sample", id: "attr5" },
+          { name: "output", id: "attr6" }
+        ]
+      };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(getAttributeListResponse);
+
+      // Act
+      const result = await findOrCreateDataContext(attrs, attrMap as AttrMap, setGlobalState);
+
+      // Assert
+      expect(result).toBe(true);
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith({
+        action: "get",
+        resource: `dataContext[${kDataContextName}]`
+      });
+      // Verify that data context creation was not called
+      expect(codapInterface.sendRequest).not.toHaveBeenCalledWith({
+        action: "create",
+        resource: "dataContext",
+        values: expect.anything()
+      });
+      // Verify global state update
+      expect(setGlobalState).toHaveBeenCalled();
+    });
+  });
+
+  describe("deleteAll", () => {
+    it("should delete all items from the data context", async () => {
+      // Arrange
+      const attrMap: Partial<AttrMap> = {
+        experiment: { name: "experiment", id: "attr1" },
+        description: { name: "description", id: "attr2" },
+        sample_size: { name: "sample size", id: "attr3" },
+        experimentHash: { name: "experimentHash", id: "attr4" },
+        sample: { name: "sample", id: "attr5" },
+        output: { name: "output", id: "attr6" }
+      };
+      const mockResponse = { success: true };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(mockResponse);
+
+      // Act
+      await deleteAll(attrMap as AttrMap);
+
+      // Assert
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith({
+        action: "delete",
+        resource: `dataContext[${kDataContextName}].collection[experiments].allCases`
+      });
+    });
+  });
+
+  describe("addMeasure", () => {
+    it("should add a measure to the samples collection", async () => {
+      // Arrange
+      const measureName = "countA";
+      const measureType = "numeric";
+      const formula = "count(output='a')";
+      const mockResponse = { success: true };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(mockResponse);
+
+      // Act
+      await addMeasure(measureName, measureType, formula);
+
+      // Assert
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith({
+        action: "create",
+        resource: `dataContext[${kDataContextName}].collection[samples].attribute`,
+        values: {
+          name: measureName,
+          type: measureType,
+          formula: formula,
+          description: "Measure added by the Sampler"
+        }
+      });
+    });
+  });
+
+  describe("getNewExperimentInfo", () => {
+    it("should return experiment info for a new experiment", async () => {
+      // Arrange
+      const experimentHash = "abc123";
+      const mockResponse = {
+        success: true,
+        values: [
+          { experiment: 1, description: "Test Experiment", "sample size": 10 }
+        ]
+      };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(mockResponse);
+
+      // Act
+      const result = await getNewExperimentInfo(experimentHash);
+
+      // Assert
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith({
+        action: "get",
+        resource: `dataContext[${kDataContextName}].collection[experiments].allCases`
+      });
+      expect(result).toEqual({
+        experimentNum: 2,
+        startingSampleNumber: 1
+      });
+    });
+
+    it("should handle the case when no experiments exist", async () => {
+      // Arrange
+      const experimentHash = "abc123";
+      const mockResponse = {
+        success: true,
+        values: []
+      };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(mockResponse);
+
+      // Act
+      const result = await getNewExperimentInfo(experimentHash);
+
+      // Assert
+      expect(result).toEqual({
+        experimentNum: 1,
+        startingSampleNumber: 1
+      });
+    });
+  });
+
+  describe("renameAttribute", () => {
+    it("should rename an attribute in a collection", async () => {
+      // Arrange
+      const dataContextName = kDataContextName;
+      const collectionName = "items";
+      const oldName = "output";
+      const newName = "choice";
+      const mockResponse = { success: true };
+      (codapInterface.sendRequest as jest.Mock).mockResolvedValue(mockResponse);
+
+      // Act
+      await renameAttribute(dataContextName, collectionName, oldName, newName);
+
+      // Assert
+      expect(codapInterface.sendRequest).toHaveBeenCalledWith({
+        action: "update",
+        resource: `dataContext[${dataContextName}].collection[${collectionName}].attribute[${oldName}]`,
+        values: {
+          name: newName
+        }
+      });
+    });
+  });
+}); 

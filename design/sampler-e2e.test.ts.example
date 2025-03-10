@@ -1,0 +1,306 @@
+// Example Cypress end-to-end test for the Sampler application
+// This would be placed in cypress/e2e/sampler.test.ts
+
+describe('Sampler Application', () => {
+  beforeEach(() => {
+    // Visit the application URL
+    cy.visit('/');
+    
+    // Wait for the application to load
+    cy.get('.app-container').should('be.visible');
+  });
+
+  describe('Basic Functionality', () => {
+    it('should load the application with default configuration', () => {
+      // Verify the application loads with the default mixer device
+      cy.get('.model-component').should('be.visible');
+      cy.get('.device').should('be.visible');
+      cy.get('.mixer-frame').should('be.visible');
+      
+      // Verify the default balls are present
+      cy.get('.ball').should('have.length', 10);
+      
+      // Verify the default output attribute is set
+      cy.get('.column-header').contains('output').should('be.visible');
+    });
+
+    it('should run a simulation with default settings', () => {
+      // Click the Start button
+      cy.get('button').contains('Start').click();
+      
+      // Wait for the simulation to complete
+      cy.get('button').contains('Stop').should('not.exist', { timeout: 10000 });
+      
+      // Verify that data was generated
+      cy.window().then((win) => {
+        // Access the global state to verify data was created
+        // This would need to be exposed for testing purposes
+        const state = win.appState;
+        expect(state.experimentNum).to.be.greaterThan(0);
+      });
+    });
+
+    it('should allow changing the device type', () => {
+      // Click on the device type dropdown
+      cy.get('.device-type-selector').click();
+      
+      // Select the spinner option
+      cy.get('.device-type-option').contains('Spinner').click();
+      
+      // Verify the spinner is displayed
+      cy.get('.spinner').should('be.visible');
+      cy.get('.mixer-frame').should('not.exist');
+      
+      // Verify the wedges are present
+      cy.get('.wedge').should('have.length.at.least', 2);
+    });
+  });
+
+  describe('Model Visibility and Locking', () => {
+    it('should hide and show the model', () => {
+      // Click the visibility toggle button
+      cy.get('.visibility-toggle').click();
+      
+      // Verify the model is hidden
+      cy.get('.device').should('not.be.visible');
+      
+      // Click the visibility toggle button again
+      cy.get('.visibility-toggle').click();
+      
+      // Verify the model is visible again
+      cy.get('.device').should('be.visible');
+    });
+
+    it('should lock the model with a password', () => {
+      // Click the lock button
+      cy.get('.lock-model-button').click();
+      
+      // Enter a password in the modal
+      cy.get('.password-modal').should('be.visible');
+      cy.get('.password-input').type('test123');
+      
+      // Click the lock button in the modal
+      cy.get('.password-modal button').contains('Lock').click();
+      
+      // Verify the model is locked
+      cy.get('.lock-model-button').should('have.class', 'locked');
+      
+      // Try to interact with the model (should be prevented)
+      cy.get('.device').click();
+      cy.get('.password-modal').should('be.visible');
+      
+      // Enter the correct password to unlock
+      cy.get('.password-input').type('test123');
+      cy.get('.password-modal button').contains('Unlock').click();
+      
+      // Verify the model is unlocked
+      cy.get('.lock-model-button').should('not.have.class', 'locked');
+    });
+  });
+
+  describe('Device Configuration', () => {
+    it('should allow adding and removing balls in the mixer', () => {
+      // Get the initial ball count
+      cy.get('.ball').then(($balls) => {
+        const initialCount = $balls.length;
+        
+        // Click the "..." button to open the settings
+        cy.get('.device-footer button').contains('...').click();
+        
+        // Add more balls
+        cy.get('.variable-setting-modal input[type="number"]').clear().type('15');
+        cy.get('.variable-setting-modal button').contains('OK').click();
+        
+        // Verify the ball count increased
+        cy.get('.ball').should('have.length', 15);
+        
+        // Open settings again and reduce balls
+        cy.get('.device-footer button').contains('...').click();
+        cy.get('.variable-setting-modal input[type="number"]').clear().type('5');
+        cy.get('.variable-setting-modal button').contains('OK').click();
+        
+        // Verify the ball count decreased
+        cy.get('.ball').should('have.length', 5);
+      });
+    });
+
+    it('should allow changing the device name', () => {
+      // Click on the device name to edit it
+      cy.get('.name-label-input').click();
+      
+      // Type a new name
+      cy.get('.name-label-input textarea').clear().type('My Custom Device');
+      
+      // Click outside to save
+      cy.get('.model-component').click();
+      
+      // Verify the name was updated
+      cy.get('.name-label-input').contains('My Custom Device').should('be.visible');
+    });
+
+    it('should allow adding multiple devices', () => {
+      // Click the "Add Device" button
+      cy.get('button').contains('Add Device').click();
+      
+      // Verify a new device was added
+      cy.get('.device').should('have.length', 2);
+      
+      // Verify the arrow connecting devices is visible
+      cy.get('.arrow').should('be.visible');
+    });
+  });
+
+  describe('Measures Tab', () => {
+    it('should allow adding measures', () => {
+      // Click on the Measures tab
+      cy.get('.tab-button').contains('Measures').click();
+      
+      // Verify the measures tab is active
+      cy.get('.measures-tab').should('be.visible');
+      
+      // Select a measure type
+      cy.get('.measure-type-selector').click();
+      cy.get('.measure-type-option').contains('Count').click();
+      
+      // Configure the measure
+      cy.get('.measure-config select').first().select('output');
+      cy.get('.measure-config select').eq(1).select('=');
+      cy.get('.measure-config input').type('a');
+      
+      // Add the measure
+      cy.get('button').contains('Add Measure').click();
+      
+      // Verify the measure was added
+      cy.get('.measure-list-item').should('have.length.at.least', 1);
+      
+      // Run a simulation to test the measure
+      cy.get('.tab-button').contains('Model').click();
+      cy.get('button').contains('Start').click();
+      
+      // Wait for the simulation to complete
+      cy.get('button').contains('Stop').should('not.exist', { timeout: 10000 });
+      
+      // Go back to the Measures tab
+      cy.get('.tab-button').contains('Measures').click();
+      
+      // Verify the measure has a value
+      cy.get('.measure-value').should('not.be.empty');
+    });
+  });
+
+  describe('Repeat Until Condition', () => {
+    it('should support repeat until condition', () => {
+      // Change from Select to Repeat
+      cy.get('.select-repeat-toggle').click();
+      cy.get('.select-repeat-option').contains('Repeat').click();
+      
+      // Verify the UI changed to Repeat mode
+      cy.get('.repeat-until-container').should('be.visible');
+      
+      // Enter a condition
+      cy.get('.formula-editor textarea').type('count(output="a") >= 3');
+      
+      // Run the simulation
+      cy.get('button').contains('Start').click();
+      
+      // Wait for the simulation to complete
+      cy.get('button').contains('Stop').should('not.exist', { timeout: 10000 });
+      
+      // Verify the condition was met
+      cy.window().then((win) => {
+        // This would need to be exposed for testing
+        const state = win.appState;
+        const countA = state.samples.filter(s => s.output === 'a').length;
+        expect(countA).to.be.at.least(3);
+      });
+    });
+  });
+
+  describe('Collector Functionality', () => {
+    it('should allow collecting samples from a dataset', () => {
+      // First, we need to create a dataset in CODAP
+      // This would require interacting with CODAP's iframe
+      // For this example, we'll assume a dataset exists
+      
+      // Change device type to Collector
+      cy.get('.device-type-selector').click();
+      cy.get('.device-type-option').contains('Collector').click();
+      
+      // Verify the collector is displayed
+      cy.get('.collector').should('be.visible');
+      
+      // Select a dataset from the dropdown
+      cy.get('.dataset-selector').click();
+      cy.get('.dataset-option').first().click();
+      
+      // Verify the collector shows data from the dataset
+      cy.get('.collector .ball').should('have.length.at.least', 1);
+      
+      // Run a simulation
+      cy.get('button').contains('Start').click();
+      
+      // Wait for the simulation to complete
+      cy.get('button').contains('Stop').should('not.exist', { timeout: 10000 });
+      
+      // Verify samples were collected
+      cy.window().then((win) => {
+        const state = win.appState;
+        expect(state.samples.length).to.be.greaterThan(0);
+      });
+    });
+  });
+
+  describe('Animation Speed', () => {
+    it('should allow changing animation speed', () => {
+      // Get the speed slider
+      cy.get('.speed-slider').should('be.visible');
+      
+      // Click on the fastest speed
+      cy.get('.speed-slider-fastest').click();
+      
+      // Start a simulation
+      cy.get('button').contains('Start').click();
+      
+      // Verify the simulation completes quickly (almost instantly)
+      cy.get('button').contains('Stop').should('not.exist', { timeout: 1000 });
+      
+      // Reset and try with slowest speed
+      cy.get('button').contains('Reset').click();
+      cy.get('.speed-slider-slowest').click();
+      
+      // Start a simulation
+      cy.get('button').contains('Start').click();
+      
+      // Verify the animation is visible for longer
+      cy.get('.animation-in-progress').should('be.visible');
+      
+      // Wait for it to complete
+      cy.get('button').contains('Stop').should('not.exist', { timeout: 10000 });
+    });
+  });
+
+  describe('Backward Compatibility', () => {
+    it('should load and run a document created with the previous version', () => {
+      // This would require a specific URL with a document parameter
+      cy.visit('/?documentId=legacy-document-id');
+      
+      // Verify the document loads
+      cy.get('.model-component').should('be.visible');
+      
+      // Verify the configuration matches the expected legacy document
+      cy.get('.device').should('be.visible');
+      
+      // Run a simulation
+      cy.get('button').contains('Start').click();
+      
+      // Wait for the simulation to complete
+      cy.get('button').contains('Stop').should('not.exist', { timeout: 10000 });
+      
+      // Verify data was generated correctly
+      cy.window().then((win) => {
+        const state = win.appState;
+        expect(state.experimentNum).to.be.greaterThan(0);
+      });
+    });
+  });
+}); 
