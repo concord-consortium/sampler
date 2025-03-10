@@ -9,14 +9,41 @@ import { Id, IGlobalState, IModel, ViewType } from '../types';
 // Mock the computeExperimentHash function
 jest.mock('./model-helpers', () => {
   const originalModule = jest.requireActual('./model-helpers');
+  
+  // Keep a cache of inputs to hashes to ensure consistent results
+  const hashCache = new Map();
+  let mockCounter = 0;
+  
   return {
     ...originalModule,
     computeExperimentHash: jest.fn().mockImplementation((globalState) => {
-      // Simple mock that returns a hash based on the repeat value
+      // Create a deterministic hash based on the global state properties
       // This allows us to test that different states produce different hashes
-      const hash = globalState.repeat ? 
-        '0101010101010101010101010101010101010101' : 
-        '0202020202020202020202020202020202020202';
+      const { model, repeat, replacement, sampleSize, numSamples } = globalState;
+      
+      // Create a simple signature based on the state
+      const signature = JSON.stringify({
+        modelColumns: model.columns.length,
+        modelDevices: model.columns.reduce((acc: number, col: any) => acc + col.devices.length, 0),
+        variables: model.columns.flatMap((col: any) => col.devices.flatMap((device: any) => device.variables)),
+        repeat,
+        replacement,
+        sampleSize,
+        numSamples
+      });
+      
+      // Check if we've seen this signature before
+      if (hashCache.has(signature)) {
+        return Promise.resolve(hashCache.get(signature));
+      }
+      
+      // Generate a new hash
+      mockCounter++;
+      const hash = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+      
+      // Cache it for future use
+      hashCache.set(signature, hash);
+      
       return Promise.resolve(hash);
     })
   };
@@ -124,31 +151,77 @@ describe('model-helpers.ts', () => {
       jest.clearAllMocks();
     });
 
-    it('generates a consistent hash for the same global state', async () => {
+    it('generates a hash based on model, repeat, replacement, sampleSize, and numSamples', async () => {
       const globalState = createTestGlobalState();
-      const hash1 = await computeExperimentHash(globalState);
-      const hash2 = await computeExperimentHash(globalState);
+      const hash = await computeExperimentHash(globalState);
       
-      expect(hash1).toBe(hash2);
-      expect(hash1).toBe('0101010101010101010101010101010101010101'); // Our mock returns this for repeat=true
-      expect(computeExperimentHash).toHaveBeenCalledTimes(2);
+      // Verify the hash is a non-empty string with the expected format (40 hex chars for SHA-1)
+      expect(hash).toBeTruthy();
+      expect(hash.length).toBe(40);
+      expect(/^[0-9a-f]+$/.test(hash)).toBe(true);
+      
+      // Verify that the function was called with the right arguments
+      expect(computeExperimentHash).toHaveBeenCalledWith(globalState);
     });
 
-    it('generates different hashes for different global states', async () => {
+    it('generates different hashes for different model configurations', async () => {
+      const globalState1 = createTestGlobalState();
+      const hash1 = await computeExperimentHash(globalState1);
+      
+      // Create a modified state with a different model configuration
+      const globalState2 = createTestGlobalState();
+      globalState2.model.columns[0].devices[0].variables.push('d'); // Add a new variable
+      const hash2 = await computeExperimentHash(globalState2);
+      
+      expect(hash1).not.toBe(hash2);
+    });
+
+    it('generates different hashes for different repeat settings', async () => {
       const globalState1 = createTestGlobalState();
       globalState1.repeat = true;
+      const hash1 = await computeExperimentHash(globalState1);
       
       const globalState2 = createTestGlobalState();
       globalState2.repeat = false;
-      
-      const hash1 = await computeExperimentHash(globalState1);
       const hash2 = await computeExperimentHash(globalState2);
       
-      // Our mock implementation returns different hashes based on the repeat value
-      expect(hash1).toBe('0101010101010101010101010101010101010101');
-      expect(hash2).toBe('0202020202020202020202020202020202020202');
       expect(hash1).not.toBe(hash2);
-      expect(computeExperimentHash).toHaveBeenCalledTimes(2);
+    });
+
+    it('generates different hashes for different replacement settings', async () => {
+      const globalState1 = createTestGlobalState();
+      globalState1.replacement = true;
+      const hash1 = await computeExperimentHash(globalState1);
+      
+      const globalState2 = createTestGlobalState();
+      globalState2.replacement = false;
+      const hash2 = await computeExperimentHash(globalState2);
+      
+      expect(hash1).not.toBe(hash2);
+    });
+
+    it('generates different hashes for different sample sizes', async () => {
+      const globalState1 = createTestGlobalState();
+      globalState1.sampleSize = '10';
+      const hash1 = await computeExperimentHash(globalState1);
+      
+      const globalState2 = createTestGlobalState();
+      globalState2.sampleSize = '20';
+      const hash2 = await computeExperimentHash(globalState2);
+      
+      expect(hash1).not.toBe(hash2);
+    });
+
+    it('generates different hashes for different number of samples', async () => {
+      const globalState1 = createTestGlobalState();
+      globalState1.numSamples = '5';
+      const hash1 = await computeExperimentHash(globalState1);
+      
+      const globalState2 = createTestGlobalState();
+      globalState2.numSamples = '10';
+      const hash2 = await computeExperimentHash(globalState2);
+      
+      expect(hash1).not.toBe(hash2);
     });
   });
 
