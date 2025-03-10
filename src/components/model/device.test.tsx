@@ -4,6 +4,7 @@ import { Device } from "./device";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
 import { createDefaultDevice } from "../../models/device-model";
 import { ViewType, AttrMap, Speed } from "../../types";
+import { testA11y } from "../../test/a11y-utils";
 
 // Mock the CODAP plugin API
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
@@ -953,5 +954,74 @@ describe("Device View Type Handling", () => {
     
     // Check that the viewBox is updated
     expect(updatedSvgElement?.getAttribute("viewBox")).toContain("0 0");
+  });
+});
+
+describe("Device Accessibility", () => {
+  const mockDevice = createDefaultDevice();
+  mockDevice.id = "test-device-id";
+  mockDevice.viewType = ViewType.Mixer;
+  mockDevice.variables = ["a", "b", "c"];
+  
+  const mockColumn = {
+    name: "Column 1",
+    id: "column-1",
+    devices: [mockDevice]
+  };
+  
+  const mockAttrMap: AttrMap = {
+    experiment: { name: 'experiment', codapID: null },
+    sample: { name: 'sample', codapID: null },
+    description: { name: 'description', codapID: null },
+    sample_size: { name: 'sample_size', codapID: null },
+    experimentHash: { name: 'experimentHash', codapID: null },
+    item: { name: 'item', codapID: null }
+  };
+  
+  const mockSetGlobalState = jest.fn();
+
+  const mockGlobalState = {
+    globalState: {
+      model: {
+        columns: [
+          {
+            name: "Column 1",
+            id: "column-1",
+            devices: [mockDevice]
+          }
+        ]
+      },
+      selectedDeviceId: mockDevice.id,
+      selectedTab: "Model" as "Model" | "Measures" | "About",
+      repeat: false,
+      replacement: false,
+      sampleSize: "10",
+      numSamples: "10",
+      enableRunButton: true,
+      attrMap: mockAttrMap,
+      dataContexts: [],
+      collectorContext: undefined,
+      samplerContext: undefined,
+      isRunning: false,
+      isPaused: false,
+      speed: Speed.Medium,
+      isModelHidden: false,
+      modelLocked: false,
+      modelPassword: '',
+      showPasswordModal: false,
+      passwordModalMode: 'set' as const,
+      repeatUntilCondition: ''
+    },
+    setGlobalState: mockSetGlobalState
+  };
+
+  it("should not have any accessibility violations", async () => {
+    const { container } = render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <Device device={mockDevice} columnIndex={0} />
+      </GlobalStateContext.Provider>
+    );
+    
+    await testA11y(container);
   });
 }); 

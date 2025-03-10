@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { HelpModal } from './help-modal';
+import { testA11y } from '../../test/a11y-utils';
 
 describe('HelpModal Component', () => {
   const mockSetShowHelp = jest.fn();
@@ -127,5 +128,11 @@ describe('HelpModal Component', () => {
     expect(patternExamples.some(el => el.textContent?.includes('apple,banana,orange'))).toBeTruthy();
     expect(patternExamples.some(el => el.textContent?.includes('heads,heads,heads'))).toBeTruthy();
     expect(patternExamples.some(el => el.textContent?.includes('7'))).toBeTruthy();
+  });
+
+  // Add accessibility test
+  it('should not have any accessibility violations', async () => {
+    const { container } = render(<HelpModal setShowHelp={mockSetShowHelp} />);
+    await testA11y(container);
   });
 }); 
