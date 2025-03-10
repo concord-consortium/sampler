@@ -19,6 +19,8 @@ jest.mock('../helpers/codap-helpers', () => ({
 
 jest.mock('../helpers/model-helpers', () => ({
   getVariables: jest.fn().mockReturnValue(['var1', 'var2']),
+  modelHasSpinner: jest.fn().mockReturnValue(false),
+  computeExperimentHash: jest.fn().mockReturnValue('test-hash')
 }));
 
 // Mock requestAnimationFrame and cancelAnimationFrame
@@ -46,7 +48,7 @@ window.alert = jest.fn();
 const originalConsoleError = console.error;
 beforeAll(() => {
   console.error = (...args: any[]) => {
-    if (args[0].includes('ReactDOM.render is no longer supported in React 18')) {
+    if (typeof args[0] === 'string' && args[0].includes('ReactDOM.render is no longer supported in React 18')) {
       return;
     }
     originalConsoleError(...args);
