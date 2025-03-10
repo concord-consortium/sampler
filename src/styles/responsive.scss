@@ -1,0 +1,156 @@
+// Responsive breakpoints
+$breakpoint-small-mobile: 320px;
+$breakpoint-large-mobile: 481px;
+$breakpoint-tablet: 768px;
+$breakpoint-desktop: 1024px;
+$breakpoint-large-desktop: 1280px;
+
+// Media query mixins
+@mixin small-mobile {
+  @media (max-width: #{$breakpoint-large-mobile - 1px}) {
+    @content;
+  }
+}
+
+@mixin large-mobile {
+  @media (min-width: #{$breakpoint-large-mobile}) and (max-width: #{$breakpoint-tablet - 1px}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: #{$breakpoint-tablet}) and (max-width: #{$breakpoint-desktop - 1px}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: #{$breakpoint-desktop}) and (max-width: #{$breakpoint-large-desktop - 1px}) {
+    @content;
+  }
+}
+
+@mixin large-desktop {
+  @media (min-width: #{$breakpoint-large-desktop}) {
+    @content;
+  }
+}
+
+// Convenience mixins for mobile-first approach
+@mixin mobile-and-up {
+  @media (min-width: #{$breakpoint-small-mobile}) {
+    @content;
+  }
+}
+
+@mixin tablet-and-up {
+  @media (min-width: #{$breakpoint-tablet}) {
+    @content;
+  }
+}
+
+@mixin desktop-and-up {
+  @media (min-width: #{$breakpoint-desktop}) {
+    @content;
+  }
+}
+
+// Orientation mixins
+@mixin landscape {
+  @media (orientation: landscape) {
+    @content;
+  }
+}
+
+@mixin portrait {
+  @media (orientation: portrait) {
+    @content;
+  }
+}
+
+// Touch device detection
+@mixin touch-device {
+  @media (hover: none) and (pointer: coarse) {
+    @content;
+  }
+}
+
+// High-resolution screens
+@mixin high-dpi {
+  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    @content;
+  }
+}
+
+// Utility classes for responsive visibility
+.hide-on-mobile {
+  @include small-mobile {
+    display: none !important;
+  }
+  
+  @include large-mobile {
+    display: none !important;
+  }
+}
+
+.hide-on-tablet {
+  @include tablet {
+    display: none !important;
+  }
+}
+
+.hide-on-desktop {
+  @include desktop {
+    display: none !important;
+  }
+  
+  @include large-desktop {
+    display: none !important;
+  }
+}
+
+.show-on-mobile-only {
+  display: none !important;
+  
+  @include small-mobile {
+    display: block !important;
+  }
+  
+  @include large-mobile {
+    display: block !important;
+  }
+}
+
+.show-on-tablet-only {
+  display: none !important;
+  
+  @include tablet {
+    display: block !important;
+  }
+}
+
+.show-on-desktop-only {
+  display: none !important;
+  
+  @include desktop {
+    display: block !important;
+  }
+  
+  @include large-desktop {
+    display: block !important;
+  }
+}
+
+// Fluid typography
+@function fluid-typography($min-font-size, $max-font-size, $min-screen-width, $max-screen-width) {
+  $font-size-range: $max-font-size - $min-font-size;
+  $screen-width-range: $max-screen-width - $min-screen-width;
+  $font-size-slope: $font-size-range / $screen-width-range;
+  
+  @return calc(#{$min-font-size} + #{$font-size-slope} * (100vw - #{$min-screen-width}));
+}
+
+// Example usage:
+// .fluid-text {
+//   font-size: fluid-typography(16px, 24px, $breakpoint-small-mobile, $breakpoint-desktop);
+// } 

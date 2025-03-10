@@ -1,8 +1,19 @@
+@import '../../styles/responsive.scss';
+
 .device-controls-container {
   position: relative;
   top: 25px;
+  
+  @include small-mobile {
+    top: 15px;
+  }
+  
   &.multiple-columns {
     top: 52px;
+    
+    @include small-mobile {
+      top: 30px;
+    }
   }
 }
 .device-container {
@@ -14,27 +25,69 @@
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.35);
   background-color: #f8f8f8;
   position: relative;
+  
+  @include small-mobile {
+    width: 100%;
+    max-width: 280px;
+    margin: 10px auto;
+  }
+  
+  @include tablet {
+    width: 160px;
+    height: 190px;
+  }
 
   &.selected {
     border: solid 1px #0056b3;
   }
   .set-input {
     margin-top: 50%;
+    
+    @include small-mobile {
+      margin-top: 30%;
+    }
+    
     textarea {
       width: 50%;
+      
+      @include small-mobile {
+        width: 80%;
+      }
     }
   }
   .device-svg-container {
     display: flex;
     align-items: center;
     justify-content: center;
+    
+    @include small-mobile {
+      transform: scale(1.2);
+      margin: 10px 0;
+    }
+    
+    @include tablet {
+      transform: scale(0.9);
+    }
+    
     .device-frame {
       width: 130px;
       height: 209px;
       margin-right: 10px;
+      
+      @include small-mobile {
+        width: 100%;
+        max-width: 130px;
+        margin-right: 0;
+      }
+      
       &.spinner {
         width: 180px;
         margin-right: 0px;
+        
+        @include small-mobile {
+          width: 100%;
+          max-width: 180px;
+        }
       }
     }
   }
@@ -43,11 +96,21 @@
   position: absolute;
   top: 0;
   left: 0;
+  
+  @include touch-device {
+    width: 24px;
+    height: 24px;
+  }
 }
 .device-delete-icon {
   position: absolute;
   top: 0;
   right: 0;
+  
+  @include touch-device {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 // Screen reader only class - visually hidden but accessible to screen readers

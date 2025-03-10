@@ -1,3 +1,5 @@
+@import '../styles/responsive.scss';
+
 .skip-nav {
   position: absolute;
   top: -40px;
@@ -23,15 +25,34 @@
   bottom: 0;
   right: 0;
   left: 0;
+  overflow: auto;
+  
+  @include tablet-and-up {
+    font-size: 11px;
+  }
+  
+  @include small-mobile {
+    font-size: 14px; // Larger font size for better readability on small screens
+  }
 
   button {
     &:hover:not(:disabled):not(.disabled) {
       cursor: pointer;
     }
+    
+    @include touch-device {
+      // Increase touch target size for touch devices
+      min-height: 44px;
+      min-width: 44px;
+    }
   }
 
   button, input, select {
     font-size: 11px;
+    
+    @include small-mobile {
+      font-size: 14px; // Larger font size for better readability on small screens
+    }
   }
 }
 
@@ -46,9 +67,25 @@
   padding: 0;
   font-size: 12px;
   font-weight: 500;
+  
+  @include small-mobile {
+    height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    top: 0;
+    margin-bottom: 16px;
+  }
+  
+  @include large-mobile {
+    height: auto;
+    flex-wrap: wrap;
+    top: 0;
+  }
+  
   &:before{
     z-index: 1;
   }
+  
   &:after {
     content: "";
     border-bottom: solid 1px #777;
@@ -58,6 +95,10 @@
     bottom: 0;
     left: 0;
     position: absolute;
+    
+    @include small-mobile {
+      display: none; // Hide the bottom border on small screens
+    }
   }
 
   .tab {
@@ -77,9 +118,31 @@
     background-color: #fafafa;
     letter-spacing: -0.1px;
     color: #666;
+    
+    @include small-mobile {
+      width: 100%;
+      height: 44px; // Taller tabs for touch targets
+      margin-bottom: 4px;
+      border: solid 1px #777;
+      border-radius: 4px;
+    }
+    
+    @include large-mobile {
+      height: 30px; // Taller tabs for better touch targets
+      padding: 0 12px;
+      margin-right: 4px;
+      margin-bottom: 4px;
+    }
+    
+    @include touch-device {
+      // Increase touch target size
+      min-height: 44px;
+    }
+    
     &:active {
       color: white;
     }
+    
     &.selected {
       background-color: #fff;
       color: #444;
@@ -87,6 +150,20 @@
       height: 18px;
       border-bottom: none;
       z-index: 2;
+      
+      @include small-mobile {
+        top: 0;
+        height: 44px;
+        border: solid 1px #0056b3;
+        background-color: #e6f2ff;
+      }
+      
+      @include large-mobile {
+        top: 0;
+        height: 30px;
+        border: solid 1px #777;
+        border-bottom: solid 1px #fff;
+      }
     }
   }
   
@@ -99,5 +176,17 @@
     overflow: visible;
     display: flex;
     flex-direction: column;
+    
+    @include small-mobile {
+      position: relative;
+      top: 0;
+      height: auto;
+      min-height: calc(100vh - 150px);
+    }
+    
+    @include large-mobile {
+      top: 30px;
+      height: calc(100% - 30px);
+    }
   }
 }

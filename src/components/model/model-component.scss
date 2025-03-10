@@ -1,27 +1,53 @@
+@import '../../styles/responsive.scss';
+
 $teal-dark: #177991;
 $pluginMinWidth: 304px;
 
 .model-tab {
   position: relative;
+  
+  @include small-mobile {
+    padding: 0 8px;
+  }
 }
 
 .model-header {
   min-width: $pluginMinWidth;
   width: 100%;
   
+  @include small-mobile {
+    min-width: auto;
+    width: 100%;
+  }
+  
   .model-title-container {
     display: flex;
     align-items: center;
     gap: 10px;
     
+    @include small-mobile {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
     h2 {
       margin: 0;
+      
+      @include small-mobile {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+      }
     }
     
     .model-controls-buttons {
       display: flex;
       align-items: center;
       gap: 8px;
+      
+      @include small-mobile {
+        width: 100%;
+        justify-content: space-between;
+      }
     }
   }
 }
@@ -33,10 +59,24 @@ $pluginMinWidth: 304px;
   position: relative;
   padding: 20px;
   
+  @include small-mobile {
+    height: calc(100vh - 250px);
+    padding: 10px;
+  }
+  
+  @include tablet {
+    height: calc(100vh - 220px);
+  }
+  
   /* Scrollbar styling */
   &::-webkit-scrollbar {
     width: 10px;
     height: 10px;
+    
+    @include small-mobile {
+      width: 6px;
+      height: 6px;
+    }
   }
   
   &::-webkit-scrollbar-track {
@@ -68,6 +108,12 @@ $pluginMinWidth: 304px;
   width: 100%;
   padding: 4px 12px;
   background-color: rgba(0, 140, 186, 0.3);
+  
+  @include small-mobile {
+    flex-wrap: wrap;
+    padding: 8px;
+    gap: 8px;
+  }
 
   button {
     display: flex;
@@ -81,6 +127,16 @@ $pluginMinWidth: 304px;
     border-radius: 1.5px;
     border: solid 1px #008cba;
     background-color: #dbf6ff;
+    
+    @include small-mobile {
+      height: 44px;
+      width: calc(50% - 4px);
+      margin: 0;
+    }
+    
+    @include touch-device {
+      min-height: 44px;
+    }
 
     &.disabled {
       opacity: 0.4;
@@ -97,142 +153,10 @@ $pluginMinWidth: 304px;
     margin: 0 8px;
     width: 88px;
     position: relative;
-
-    .tick-marks-container {
-      display: flex;
-      flex-direction: row;
-      align-content: stretch;
-      justify-content: space-between;
-      font-size: 14px;
-      font-weight: normal;
-      color: #777;
-      width: 32px;
-      height: 22px;
-      position: absolute;
-      left: 8px;
-      top: 2px;
-
-      .tick-mark {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        cursor: pointer;
-        transition: transform 0.1s ease;
-
-        &:hover {
-          transform: scale(1.1);
-        }
-
-        &.active .tick-line {
-          background-color: #0077cc;
-          height: 12px;
-        }
-
-        .tick-line {
-          width: 2px;
-          height: 10px;
-          background-color: #777;
-          transition: background-color 0.2s ease, height 0.2s ease;
-        }
-
-        .tick-label {
-          font-size: 10px;
-          margin-top: 4px;
-          color: #777;
-          display: none;
-        }
-
-        &:hover .tick-label {
-          display: block;
-        }
-      }
-    }
-
-    input[type='range'],
-    input[type='range']::-webkit-slider-runnable-track,
-    input[type='range']::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 45px;
-      &:hover {
-        cursor: pointer;
-      }
-    }
-
-    input[type='range']::-webkit-slider-runnable-track {
-      box-sizing: border-box;
-      width: 45px;
-      height: 4px;
-      border-radius: 2px;
-      background: #777;
-      &:hover {
-        cursor: pointer;
-      }
-    }
-
-    input[type='range']::-moz-range-track {
-      box-sizing: border-box;
-      width: 45px;
-      height: 4px;
-      border-radius: 2px;
-      background: #777;
-      &:hover {
-        cursor: pointer;
-      }
-    }
-
-    input[type='range']::-webkit-slider-thumb {
-      box-sizing: border-box;
-      margin-top: -5px;
-      width: 13px;
-      height: 13px;
-      border-radius: 6.5px;
-      border: solid 1px #999;
-      background-color: #f0f0f0;
-      position: relative;
-      z-index: 2;
-      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-      &:hover {
-        cursor: pointer;
-        border-color: #0077cc;
-      }
-    }
-
-    input[type='range']::-moz-range-thumb {
-      box-sizing: border-box;
-      margin-top: -5px;
-      width: 13px;
-      height: 13px;
-      border-radius: 6.5px;
-      border: solid 1px #999;
-      background-color: #f0f0f0;
-      position: relative;
-      z-index: 2;
-      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-      &:hover {
-        cursor: pointer;
-        border-color: #0077cc;
-      }
-    }
-
-    input[type='range']:focus {
-      outline: none;
-      
-      &::-webkit-slider-thumb {
-        box-shadow: 0 0 0 2px rgba(0, 119, 204, 0.3);
-        border-color: #0077cc;
-      }
-      
-      &::-moz-range-thumb {
-        box-shadow: 0 0 0 2px rgba(0, 119, 204, 0.3);
-        border-color: #0077cc;
-      }
-    }
-
-    circle:hover {
-      cursor: pointer;
-    }
-    text:hover{
-      cursor: pointer;
+    
+    @include small-mobile {
+      width: 100%;
+      margin: 8px 0;
     }
   }
 
@@ -387,44 +311,79 @@ $pluginMinWidth: 304px;
   }
 }
 
+.device-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 20px;
+  position: relative;
+  
+  @include small-mobile {
+    margin: 0 5px;
+    width: 100%;
+  }
+  
+  @include large-mobile {
+    margin: 0 10px;
+  }
+  
+  &.centered {
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .device-column-header {
+    margin: 5px;
+    position: absolute;
+    top: 0;
+    
+    @include small-mobile {
+      position: relative;
+      width: 100%;
+      text-align: center;
+    }
+
+    .attr-name {
+      width: 40px;
+      margin: 0 70px 8px;
+      border-radius: 1.5px;
+      border: solid 1px #8f8f9d;
+      background-color: #fff;
+      
+      @include small-mobile {
+        margin: 0 auto 8px;
+      }
+    }
+
+    .device-column-header-label {
+      font-size: 16px;
+      font-weight: 500;
+    }
+  }
+}
+
 .device-outputs-container {
   display: flex;
   flex-direction: row;
+  align-items: flex-start;
   justify-content: left;
   margin: 0 10px 0 20px;
   gap: 40px;
   position: absolute;
-
-  .device-column {
-    position: relative;
-    top: 23px;
-    display: flex;
+  
+  @include small-mobile {
     flex-direction: column;
     align-items: center;
-
-    &.centered {
-      justify-content: center;
-      display: flex;
-      flex-direction: column;
-    }
-    .device-column-header {
-      margin: 5px;
-      position: absolute;
-      top: 0;
-
-      .attr-name {
-        width: 40px;
-        margin: 0 70px 8px;
-        border-radius: 1.5px;
-        border: solid 1px #8f8f9d;
-        background-color: #fff;
-      }
-
-      .device-column-header-label {
-        font-size: 16px;
-        font-weight: 500;
-      }
-    }
+    position: relative;
+    margin: 10px 0;
+    gap: 20px;
+  }
+  
+  @include large-mobile {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
   }
 }
 
@@ -438,6 +397,24 @@ $pluginMinWidth: 304px;
   padding: 0 0 75px;
   background-color: #fff;
   z-index: 10;
+  
+  @include small-mobile {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 320px;
+    height: auto;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  @include tablet {
+    width: 320px;
+    height: auto;
+    max-height: 400px;
+  }
 
   .modal-header {
     width: 100%;
@@ -448,21 +425,44 @@ $pluginMinWidth: 304px;
     align-items: center;
     justify-content: center;
     color: white;
+    
+    @include small-mobile {
+      height: 40px;
+    }
   }
+  
   .modal-body {
     padding: 12px;
     text-align: left;
+    
+    @include small-mobile {
+      padding: 16px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
 
     .help-section-title {
       color: black;
       font-size: 12.5px;
       font-weight: bold;
+      
+      @include small-mobile {
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
     }
+    
     .help-section-body {
       color: black;
       font-weight: 500;
+      
+      @include small-mobile {
+        font-size: 14px;
+        line-height: 1.4;
+      }
     }
   }
+  
   .modal-footer {
     display: flex;
     align-items: center;
@@ -472,6 +472,12 @@ $pluginMinWidth: 304px;
     bottom: 0;
     bottom: 12px;
     position: absolute;
+    
+    @include small-mobile {
+      position: relative;
+      margin-top: 16px;
+      height: 44px;
+    }
 
     .modal-button {
       width: 48px;
@@ -482,6 +488,17 @@ $pluginMinWidth: 304px;
       display: flex;
       align-items: center;
       justify-content: center;
+      
+      @include small-mobile {
+        width: 80px;
+        height: 44px;
+        font-size: 14px;
+      }
+      
+      @include touch-device {
+        min-height: 44px;
+        min-width: 80px;
+      }
     }
   }
 }
@@ -501,6 +518,17 @@ $pluginMinWidth: 304px;
   border: 1px dashed #ccc;
   border-radius: 4px;
   margin-top: 10px;
+  
+  @include small-mobile {
+    height: calc(100vh - 250px);
+    padding: 16px;
+    font-size: 14px;
+    flex-direction: column;
+  }
+  
+  @include tablet {
+    height: calc(100vh - 220px);
+  }
 }
 
 .locked-model-message {
