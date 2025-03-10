@@ -63,10 +63,10 @@ describe("ModelTab with Hide Functionality", () => {
     expect(modelContainer).toBeInTheDocument();
     expect(modelContainer).toBeVisible();
     
-    // Check for device outputs container
-    const deviceOutputsContainer = screen.getByTestId("device-outputs-container");
-    expect(deviceOutputsContainer).toBeInTheDocument();
-    expect(deviceOutputsContainer).toBeVisible();
+    // Check for outputs container
+    const outputsContainer = document.querySelector(".device-outputs-container");
+    expect(outputsContainer).toBeInTheDocument();
+    expect(outputsContainer).toBeVisible();
   });
 
   it("hides model content when isModelHidden is true", () => {
