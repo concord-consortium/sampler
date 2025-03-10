@@ -17,6 +17,66 @@ beforeAll(() => {
   });
 });
 
+// Mock the Wedge component to add testids
+jest.mock('../wedge', () => {
+  return {
+    Wedge: (props: any) => {
+      // Create animation-related attributes
+      const animationAttributes: any = {};
+      if (props.isAnimating) {
+        animationAttributes['data-animating'] = 'true';
+        
+        if (props.isAnimationTarget) {
+          animationAttributes['data-target'] = 'true';
+        }
+        
+        if (props.selectedWedge === props.variableName) {
+          animationAttributes['data-pulse'] = 'true';
+        }
+        
+        if (!props.isAnimationTarget) {
+          animationAttributes['data-fade'] = 'true';
+        }
+      }
+      
+      // Determine classes
+      const classes = ['wedge'];
+      if (props.isAnimating && props.isAnimationTarget) {
+        classes.push('wedge-target');
+      }
+      if (props.isAnimating && props.selectedWedge === props.variableName) {
+        classes.push('wedge-pulse');
+      }
+      
+      // Determine styles
+      const styles: React.CSSProperties = {};
+      if (props.isAnimating) {
+        if (props.isAnimationTarget) {
+          // Target wedge gets highlight effect
+        } else if (!props.isAnimationTarget) {
+          // Non-target wedges get fade effect
+          styles.opacity = 0.5;
+        }
+      }
+      
+      return (
+        <>
+          <path
+            id={`${props.deviceId}-wedge-${props.variableName}`}
+            data-testid={`${props.deviceId}-wedge-${props.variableName}`}
+            className={classes.join(' ')}
+            fill={props.selectedWedge === props.variableName ? '#008cba' : 'hsl(171, 71%, 66%)'}
+            stroke={props.isAnimating && props.isAnimationTarget ? '#fff' : 'none'}
+            strokeWidth={props.isAnimating && props.isAnimationTarget ? '2' : '0'}
+            style={styles}
+            {...animationAttributes}
+          />
+        </>
+      );
+    }
+  };
+});
+
 // Mock the global state context
 jest.mock('../../../../../hooks/useGlobalState', () => ({
   useGlobalStateContext: jest.fn()
