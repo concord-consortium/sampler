@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">30% </span>
+                <span class="strong">60% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/20</span>
+                <span class='fraction'>12/20</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">25% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/16</span>
+                <span class='fraction'>4/16</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">23.52% </span>
+                <span class="strong">52.94% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>4/17</span>
+                <span class='fraction'>9/17</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -107,8 +107,8 @@
 <a name='L42'></a><a href='#L42'>42</a>
 <a name='L43'></a><a href='#L43'>43</a>
 <a name='L44'></a><a href='#L44'>44</a>
-<a name='L45'></a><a href='#L45'>45</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<a name='L45'></a><a href='#L45'>45</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -117,13 +117,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">60x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -131,11 +131,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -161,9 +161,9 @@ interface IProps {
   isDragging: boolean;
 }
 &nbsp;
-export const updateTextBackerRefFn = <span class="fstat-no" title="function not covered" >(s</span>etTextBackerPos: (value: React.SetStateAction&lt;ITextBackerPos | undefined&gt;) =&gt; void) =&gt; <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>vgText: SVGTextElement | null) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  setTextBackerPos(<span class="fstat-no" title="function not covered" >prev </span>=&gt; {</span>
-    const rect = <span class="cstat-no" title="statement not covered" >svgText?.getBBox();</span>
+export const updateTextBackerRefFn = (setTextBackerPos: (value: React.SetStateAction&lt;ITextBackerPos | undefined&gt;) =&gt; void) =&gt; (svgText: SVGTextElement | null) =&gt; {
+  setTextBackerPos(prev =&gt; {
+    const rect = svgText<span class="branch-0 cbranch-no" title="branch not covered" >?.g</span>etBBox();
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (rect) {</span>
       const {x, y, width, height} = <span class="cstat-no" title="statement not covered" >rect;</span>
 <span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (prev &amp;&amp; (prev.x === x) &amp;&amp; (prev.y === y) &amp;&amp; (prev.width === width) &amp;&amp; (prev.height === height)) {</span>
@@ -175,11 +175,11 @@ export const updateTextBackerRefFn = <span class="fstat-no" title="function not 
   });
 };
 &nbsp;
-export const TextBacker = <span class="fstat-no" title="function not covered" >({</span>pos, onClick, isDragging}: IProps) =&gt; {
-  const { globalState: { isRunning } } = <span class="cstat-no" title="statement not covered" >useGlobalStateContext();</span>
+export const TextBacker = ({pos, onClick, isDragging}: IProps) =&gt; {
+  const { globalState: { isRunning } } = useGlobalStateContext();
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (!pos) {</span>
-<span class="cstat-no" title="statement not covered" >    return null;</span>
+  if (!pos) {
+    return null;
   }
   const {x, y, width, height} = <span class="cstat-no" title="statement not covered" >pos;</span>
 &nbsp;
@@ -202,7 +202,7 @@ export const TextBacker = <span class="fstat-no" title="function not covered" >(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-03-10T11:19:07.658Z
+                at 2025-03-10T12:01:34.471Z
             </div>
         <script src="../../../../../prettify.js"></script>
         <script>
