@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import { Collector } from "./collector";
 import { GlobalStateContext } from "../../../hooks/useGlobalState";
 import { AnimationContext } from "../../../hooks/useAnimation";
@@ -211,7 +211,7 @@ describe("Collector Component", () => {
     
     // Click on the first ball
     const firstBall = within(collectorComponent).getByTestId("ball-0");
-    firstBall.click();
+    fireEvent.click(firstBall);
     
     // Check that handleSetSelectedVariable was called with the correct index
     expect(mockHandleSetSelectedVariable).toHaveBeenCalledWith(0);
@@ -238,7 +238,7 @@ describe("Collector Component", () => {
     
     // Click on the first ball group
     const firstBallGroup = within(collectorComponent).getByTestId("ball-group-0");
-    firstBallGroup.click();
+    fireEvent.click(firstBallGroup);
     
     // Check that handleSetEditingVarName was called with the correct index
     expect(mockHandleSetEditingVarName).toHaveBeenCalledWith(0);
@@ -265,11 +265,11 @@ describe("Collector Component", () => {
     
     // Click on the first ball
     const firstBall = within(collectorComponent).getByTestId("ball-0");
-    firstBall.click();
+    fireEvent.click(firstBall);
     
     // Click on the first ball group
     const firstBallGroup = within(collectorComponent).getByTestId("ball-group-0");
-    firstBallGroup.click();
+    fireEvent.click(firstBallGroup);
     
     // Check that handlers were not called
     expect(mockHandleSetSelectedVariable).not.toHaveBeenCalled();
