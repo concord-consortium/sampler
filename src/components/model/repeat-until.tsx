@@ -34,6 +34,18 @@ export const RepeatUntil: React.FC = () => {
     setShowHelp(!showHelp);
   };
 
+  /**
+   * Handle keyboard events for the help button
+   * @param e - The keyboard event
+   */
+  const handleHelpKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    // Toggle help modal on Enter or Space
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); // Prevent scrolling on space
+      toggleHelpModal();
+    }
+  };
+
   return (
     <div className="repeat-until-container" role="group" aria-labelledby="repeat-until-label">
       <label id="repeat-until-label" htmlFor="repeat-until-condition">Repeat Until:</label>
@@ -53,6 +65,7 @@ export const RepeatUntil: React.FC = () => {
         className="help-button" 
         aria-label="Help with repeat until conditions"
         onClick={toggleHelpModal}
+        onKeyDown={handleHelpKeyDown}
         disabled={modelLocked}
       >
         ?
