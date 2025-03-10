@@ -11,7 +11,7 @@
  * - renameAttribute
  */
 
-import { 
+import {
   evaluateResult,
   hasSamplesCollection,
   findOrCreateDataContext,
@@ -59,9 +59,9 @@ jest.mock('./codap-helpers', () => {
 });
 
 // Clear mocks before each test
-beforeEach(() => {
-  jest.clearAllMocks();
-});
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
 describe('codap-helpers tests', () => {
   // Test for evaluateResult function
@@ -210,15 +210,15 @@ describe('codap-helpers tests', () => {
       (codapInterface.sendRequest as jest.Mock).mockImplementation((request) => {
         if (request.action === 'get' && request.resource.includes('attributeList')) {
           return Promise.resolve({
-            success: true,
-            values: [
+        success: true,
+        values: [
               { name: 'OtherMeasure', id: 'measure1' }
-            ]
+        ]
           });
         }
         return Promise.resolve({ success: true });
       });
-    });
+      });
 
     it('should create a new attribute when the name is not already used', async () => {
       // Call addMeasure
@@ -229,7 +229,7 @@ describe('codap-helpers tests', () => {
         action: 'get',
         resource: `dataContext[${kDataContextName}].collection[samples].attributeList`
       });
-
+      
       // Verify that codapInterface.sendRequest was called for creating a new attribute
       expect(codapInterface.sendRequest).toHaveBeenCalledWith({
         action: 'create',
@@ -247,10 +247,10 @@ describe('codap-helpers tests', () => {
       (codapInterface.sendRequest as jest.Mock).mockImplementation((request) => {
         if (request.action === 'get' && request.resource.includes('attributeList')) {
           return Promise.resolve({
-            success: true,
-            values: [
+        success: true,
+        values: [
               { name: 'Measure1', id: 'measure1' }
-            ]
+        ]
           });
         }
         return Promise.resolve({ success: true });
@@ -264,7 +264,7 @@ describe('codap-helpers tests', () => {
         action: 'get',
         resource: `dataContext[${kDataContextName}].collection[samples].attributeList`
       });
-
+      
       // Verify that codapInterface.sendRequest was called for updating the attribute
       expect(codapInterface.sendRequest).toHaveBeenCalledWith({
         action: 'update',
@@ -280,8 +280,8 @@ describe('codap-helpers tests', () => {
       (codapInterface.sendRequest as jest.Mock).mockImplementation((request) => {
         if (request.action === 'get' && request.resource.includes('attributeList')) {
           return Promise.resolve({
-            success: true,
-            values: [
+        success: true,
+        values: [
               { name: 'categorical', id: 'measure1' },
               { name: 'categorical1', id: 'measure2' }
             ]
@@ -298,7 +298,7 @@ describe('codap-helpers tests', () => {
         action: 'get',
         resource: `dataContext[${kDataContextName}].collection[samples].attributeList`
       });
-
+      
       // Verify that codapInterface.sendRequest was called for creating a new attribute
       expect(codapInterface.sendRequest).toHaveBeenCalledWith({
         action: 'create',
@@ -316,8 +316,8 @@ describe('codap-helpers tests', () => {
       (codapInterface.sendRequest as jest.Mock).mockImplementation((request) => {
         if (request.action === 'get' && request.resource.includes('attributeList')) {
           return Promise.resolve({
-            success: true,
-            values: [
+        success: true,
+        values: [
               { name: 'categorical', id: 'measure1' },
               { name: 'categorical1', id: 'measure2' },
               { name: 'categorical3', id: 'measure3' }
@@ -335,7 +335,7 @@ describe('codap-helpers tests', () => {
         action: 'get',
         resource: `dataContext[${kDataContextName}].collection[samples].attributeList`
       });
-
+      
       // Verify that codapInterface.sendRequest was called for creating a new attribute
       expect(codapInterface.sendRequest).toHaveBeenCalledWith({
         action: 'create',
@@ -360,7 +360,7 @@ describe('codap-helpers tests', () => {
 
       // Call getNewExperimentInfo
       const result = await getNewExperimentInfo('hash123');
-
+      
       // Verify that the function returned the correct values
       expect(result).toEqual({
         experimentNum: 1,
@@ -390,7 +390,7 @@ describe('codap-helpers tests', () => {
 
       // Call getNewExperimentInfo
       const result = await getNewExperimentInfo('hash123');
-
+      
       // Verify that the function returned the correct values
       expect(result).toEqual({
         experimentNum: 1,
@@ -401,8 +401,8 @@ describe('codap-helpers tests', () => {
     it('should handle the case when no matching experiments are found', async () => {
       // Mock getAllItems to return non-matching experiments
       (getAllItems as jest.Mock).mockResolvedValueOnce({
-        success: true,
-        values: [
+          success: true,
+          values: [
           { values: { experiment: 1, sample: 5, experimentHash: 'other-hash' } },
           { values: { experiment: 2, sample: 3, experimentHash: 'other-hash' } }
         ]
@@ -436,7 +436,7 @@ describe('codap-helpers tests', () => {
       
       // Mock getDataContext to return a successful response
       (getDataContext as jest.Mock).mockResolvedValueOnce({
-        success: true,
+          success: true,
         values: {
           name: kDataContextName,
           collections: [
@@ -451,8 +451,8 @@ describe('codap-helpers tests', () => {
       (getAttributeList as jest.Mock).mockImplementation((contextName, collectionName) => {
         if (collectionName === 'items') {
           return Promise.resolve({
-            success: true,
-            values: [
+          success: true,
+          values: [
               { name: 'attr1', id: 'attr1' }
             ]
           });
@@ -499,10 +499,10 @@ describe('codap-helpers tests', () => {
       // Verify that codapInterface.sendRequest was called with an array of requests
       expect(codapInterface.sendRequest).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({
-            action: 'get',
+        expect.objectContaining({
+          action: 'get',
             resource: expect.stringContaining('dataContext[Sampler].collection')
-          })
+        })
         ]),
         expect.any(Function)
       );
@@ -528,7 +528,7 @@ describe('codap-helpers tests', () => {
 
       // Mock createDataContext to return a successful response
       (createDataContext as jest.Mock).mockResolvedValueOnce({
-        success: true,
+          success: true,
         values: { id: 'dc1' }
       });
 
@@ -551,8 +551,8 @@ describe('codap-helpers tests', () => {
 
       // Mock getAttributeList to return attributes for the items collection
       (getAttributeList as jest.Mock).mockResolvedValueOnce({
-        success: true,
-        values: [
+          success: true,
+          values: [
           { name: 'attr1', id: 'attr1' }
         ]
       });
@@ -614,7 +614,7 @@ describe('codap-helpers tests', () => {
       expect(codapInterface.sendRequest).toHaveBeenCalledWith({
         action: 'create',
         resource: 'component',
-        values: {
+          values: {
           type: 'caseTable',
           dataContext: kDataContextName,
           title: 'Sampler Data',
@@ -641,8 +641,8 @@ describe('codap-helpers tests', () => {
       
       // Mock getDataContext to return a successful response
       (getDataContext as jest.Mock).mockResolvedValueOnce({
-        success: true,
-        values: {
+          success: true,
+          values: {
           name: kDataContextName,
           collections: [
             { name: 'experiments' },
@@ -654,8 +654,8 @@ describe('codap-helpers tests', () => {
 
       // Mock getAttributeList to return attributes without 'attr1'
       (getAttributeList as jest.Mock).mockResolvedValueOnce({
-        success: true,
-        values: [
+          success: true,
+          values: [
           { name: 'attr2', id: 'attr2' }
         ]
       });
@@ -673,12 +673,12 @@ describe('codap-helpers tests', () => {
               { success: true, values: { name: 'Sample', id: 'sample1' } },
               { success: true, values: { name: 'attr1', id: 'attr1' } }
             ]);
-          }
-          return Promise.resolve({ success: true });
-        }
-        return Promise.resolve({ success: true });
-      });
-
+      }
+      return Promise.resolve({ success: true });
+      }
+      return Promise.resolve({ success: true });
+    });
+    
       // Call findOrCreateDataContext
       const result = await findOrCreateDataContext(['attr1'], mockAttrMap, mockSetGlobalState);
 
