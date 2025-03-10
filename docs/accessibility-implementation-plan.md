@@ -14,6 +14,7 @@ We have successfully set up the following accessibility testing infrastructure:
 3. Color contrast testing utilities (`src/test/color-contrast-checker.ts`)
 4. Keyboard accessibility testing utilities (`src/test/keyboard-accessibility.ts`)
 5. Screen reader accessibility testing utilities (`src/test/screen-reader-utils.ts`)
+6. Skip navigation testing (`src/test/skip-nav.test.tsx`)
 
 ## Implementation Progress
 
@@ -48,8 +49,8 @@ We have successfully set up the following accessibility testing infrastructure:
 - [x] Implement screen reader support for HelpModal component
 - [x] Implement screen reader support for Device component
 - [x] Create screen reader testing utilities
-- [ ] Add skip navigation links
-- [ ] Ensure all images have appropriate alt text
+- [x] Add skip navigation links
+- [x] Ensure all images have appropriate alt text or aria-hidden attributes
 - [ ] Implement responsive design for various devices
 - [ ] Test with assistive technologies
 
@@ -74,7 +75,7 @@ We have successfully set up the following accessibility testing infrastructure:
 - [x] 2.1 Keyboard Accessible: Make all functionality available from a keyboard (for all critical components)
 - [ ] 2.2 Enough Time: Provide users enough time to read and use content
 - [ ] 2.3 Seizures: Do not design content in a way that is known to cause seizures
-- [ ] 2.4 Navigable: Provide ways to help users navigate, find content, and determine where they are
+- [x] 2.4 Navigable: Provide ways to help users navigate, find content, and determine where they are (added skip navigation)
 
 ### Understandable
 
