@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { Collector } from "./collector";
 import { GlobalStateContext } from "../../../hooks/useGlobalState";
@@ -35,7 +35,7 @@ jest.mock("./shared/balls", () => ({
     handleSetEditingVarName: (index: number) => void; 
   }) => {
     // Call handleAddDefs for each ball to simulate the real component behavior
-    React.useEffect(() => {
+    useEffect(() => {
       ballsArray.forEach((ball: string, index: number) => {
         handleAddDefs({
           id: `${deviceId}-clip-${index}`,
