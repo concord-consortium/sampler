@@ -60,7 +60,7 @@
     "test:coverage:cypress:open": "cypress open --env coverage=true",
     "test:full": "npm-run-all test test:cypress",
     "strings:pull": "node bin/pull-strings.js --prefix=DG.plugin --out=./src/strings.json",
-    "test:a11y": "ts-node src/test/a11y-audit.ts"
+    "test:a11y": "jest src/test/meaningful-sequence.test.tsx src/test/resize-text.test.tsx src/test/focus-order.test.tsx src/test/focus-visible.test.tsx src/test/error-identification.test.tsx"
   },
   "repository": {
     "type": "git",
