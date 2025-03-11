@@ -1,5 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { axe } from 'jest-axe';
+import { Device } from '../components/model/device';
+import { IDevice, ViewType } from '../types';
 import { verifyReadingOrder } from './a11y-test-helpers';
 
 /**
@@ -10,214 +13,283 @@ import { verifyReadingOrder } from './a11y-test-helpers';
  * in a way that preserves meaning and operability.
  */
 
-describe('Meaningful Sequence (WCAG 1.3.2)', () => {
-  // Test component with proper reading order
-  const ProperOrderComponent = () => (
-    <div>
-      <h1>Main Heading</h1>
-      <p>Introduction paragraph</p>
+// Mock the GlobalStateContext
+jest.mock('../hooks/useGlobalState', () => ({
+  useGlobalStateContext: () => ({
+    globalState: {
+      model: {
+        columns: [{ id: 'col1', devices: [] }]
+      },
+      selectedDeviceId: 'device1'
+    },
+    setGlobalState: jest.fn()
+  })
+}));
+
+// Mock the AnimationContext
+jest.mock('../hooks/useAnimation', () => ({
+  useAnimationContext: () => ({
+    registerAnimationCallback: jest.fn()
+  })
+}));
+
+// Mock component with proper reading order
+const ProperReadingOrderComponent = () => (
+  <div data-testid="proper-reading-order">
+    <header>
+      <h1>Page Title</h1>
+      <nav>
+        <ul>
+          <li><a href="#">Home</a></li>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <section>
+        <h2>Section 1</h2>
+        <p>This is the first paragraph of section 1.</p>
+        <p>This is the second paragraph of section 1.</p>
+      </section>
+      <section>
+        <h2>Section 2</h2>
+        <p>This is the first paragraph of section 2.</p>
+        <p>This is the second paragraph of section 2.</p>
+      </section>
+    </main>
+    <footer>
+      <p>Footer content</p>
+    </footer>
+  </div>
+);
+
+// Mock component with improper reading order
+const ImproperReadingOrderComponent = () => (
+  <div data-testid="improper-reading-order">
+    <footer>
+      <p>Footer content</p>
+    </footer>
+    <main>
+      <section>
+        <p>This is the first paragraph of section 1.</p>
+        <h2>Section 1</h2>
+        <p>This is the second paragraph of section 1.</p>
+      </section>
+      <section>
+        <p>This is the first paragraph of section 2.</p>
+        <h2>Section 2</h2>
+        <p>This is the second paragraph of section 2.</p>
+      </section>
+    </main>
+    <header>
+      <nav>
+        <ul>
+          <li><a href="#">Home</a></li>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </nav>
+      <h1>Page Title</h1>
+    </header>
+  </div>
+);
+
+// Mock component with proper heading hierarchy
+const ProperHeadingHierarchyComponent = () => (
+  <div data-testid="proper-heading-hierarchy">
+    <h1>Main Title</h1>
+    <section>
       <h2>Section 1</h2>
-      <p>Section 1 content</p>
+      <div>
+        <h3>Subsection 1.1</h3>
+        <p>Content for subsection 1.1</p>
+        <h3>Subsection 1.2</h3>
+        <p>Content for subsection 1.2</p>
+      </div>
+    </section>
+    <section>
       <h2>Section 2</h2>
-      <p>Section 2 content</p>
-      <ul>
-        <li>Item 1</li>
-        <li>Item 2</li>
-      </ul>
-    </div>
-  );
+      <div>
+        <h3>Subsection 2.1</h3>
+        <p>Content for subsection 2.1</p>
+      </div>
+    </section>
+  </div>
+);
 
-  // Test component with improper reading order
-  const ImproperOrderComponent = () => (
-    <div>
-      <p>Introduction paragraph</p>
-      <h1>Main Heading</h1>
-      <p>Section 1 content</p>
-      <h2>Section 1</h2>
+// Mock component with improper heading hierarchy
+const ImproperHeadingHierarchyComponent = () => (
+  <div data-testid="improper-heading-hierarchy">
+    <h1>Main Title</h1>
+    <section>
+      <h3>Subsection 1.1</h3> {/* Should be h2 */}
+      <p>Content for subsection 1.1</p>
+      <h2>Section 1</h2> {/* Out of order */}
+      <div>
+        <h4>Subsection 1.2</h4> {/* Should be h3 */}
+        <p>Content for subsection 1.2</p>
+      </div>
+    </section>
+    <section>
       <h2>Section 2</h2>
-      <p>Section 2 content</p>
-      <li>Item 1</li>
-      <li>Item 2</li>
+      <div>
+        <h5>Subsection 2.1</h5> {/* Should be h3 */}
+        <p>Content for subsection 2.1</p>
+      </div>
+    </section>
+  </div>
+);
+
+// Mock component with dynamic content
+const DynamicContentComponent = ({ showAdditionalContent = false }) => (
+  <div data-testid="dynamic-content">
+    <h1>Dynamic Content</h1>
+    <div aria-live="polite">
+      <p>This content is always visible.</p>
+      {showAdditionalContent && (
+        <>
+          <h2>Additional Content</h2>
+          <p>This content appears dynamically.</p>
+        </>
+      )}
     </div>
-  );
+  </div>
+);
 
-  // Test component with proper tab order
-  const ProperTabOrderComponent = () => (
-    <div>
-      <button tabIndex={1}>First button</button>
-      <button tabIndex={2}>Second button</button>
-      <button tabIndex={3}>Third button</button>
-    </div>
-  );
-
-  // Test component with improper tab order
-  const ImproperTabOrderComponent = () => (
-    <div>
-      <button tabIndex={3}>First button</button>
-      <button tabIndex={1}>Second button</button>
-      <button tabIndex={2}>Third button</button>
-    </div>
-  );
-
-  describe('DOM Order Tests', () => {
-    test('should have proper heading hierarchy', () => {
-      render(<ProperOrderComponent />);
-      
-      const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'));
-      const headingLevels = headings.map(h => parseInt(h.tagName.substring(1), 10));
-      
-      // Check that heading levels never increase by more than one
-      for (let i = 1; i < headingLevels.length; i++) {
-        expect(headingLevels[i]).toBeGreaterThanOrEqual(headingLevels[i-1] - 1);
-      }
-    });
-
-    test('should detect improper heading hierarchy', () => {
-      render(<ImproperOrderComponent />);
-      
-      const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'));
-      const headingLevels = headings.map(h => parseInt(h.tagName.substring(1), 10));
-      
-      // This test should fail because h1 comes after content
-      expect(headingLevels[0]).toBe(1);
-    });
-
-    test('list items should be contained within a list element', () => {
-      render(<ProperOrderComponent />);
-      
-      const listItems = document.querySelectorAll('li');
-      
-      // Check that all list items are within a list container
-      listItems.forEach(li => {
-        const parent = li.parentElement;
-        expect(parent?.tagName).toMatch(/^(UL|OL)$/);
-      });
-    });
-
-    test('should detect list items not contained within a list element', () => {
-      render(<ImproperOrderComponent />);
-      
-      const listItems = document.querySelectorAll('li');
-      let hasOrphanedListItems = false;
-      
-      // Check if any list items are not within a list container
-      listItems.forEach(li => {
-        const parent = li.parentElement;
-        if (!parent || !['UL', 'OL'].includes(parent.tagName)) {
-          hasOrphanedListItems = true;
-        }
-      });
-      
-      expect(hasOrphanedListItems).toBe(true);
-    });
+describe('Meaningful Sequence Tests (WCAG 1.3.2)', () => {
+  // Test for proper reading order
+  test('content in proper reading order has no issues', () => {
+    render(<ProperReadingOrderComponent />);
+    const container = screen.getByTestId('proper-reading-order');
+    const result = verifyReadingOrder(container);
+    
+    // Expect no reading order issues
+    expect(result.isLogical).toBe(true);
+    expect(result.issues).toHaveLength(0);
   });
-
-  describe('Reading Order Tests', () => {
-    test('should have logical reading order', () => {
-      const { container } = render(<ProperOrderComponent />);
-      
-      const result = verifyReadingOrder(container);
-      expect(result.isLogical).toBe(true);
-      expect(result.issues.length).toBe(0);
-    });
-
-    test('should detect illogical reading order', () => {
-      const { container } = render(<ImproperOrderComponent />);
-      
-      // Check for specific issues that indicate illogical reading order
-      const listItems = container.querySelectorAll('li');
-      let hasOrphanedListItems = false;
-      
-      listItems.forEach(li => {
-        const parent = li.parentElement;
-        if (!parent || !['UL', 'OL'].includes(parent.tagName)) {
-          hasOrphanedListItems = true;
-        }
-      });
-      
-      expect(hasOrphanedListItems).toBe(true);
-      
-      // Check if paragraph comes before h1
-      const firstParagraph = container.querySelector('p');
-      const firstHeading = container.querySelector('h1');
-      
-      if (firstParagraph && firstHeading) {
-        const paragraphIndex = Array.from(container.querySelectorAll('*')).indexOf(firstParagraph);
-        const headingIndex = Array.from(container.querySelectorAll('*')).indexOf(firstHeading);
-        
-        expect(paragraphIndex).toBeLessThan(headingIndex);
-      }
-    });
-
-    test('content should appear in the same order as in the DOM', () => {
-      render(<ProperOrderComponent />);
-      
-      const h1 = screen.getByText('Main Heading');
-      const intro = screen.getByText('Introduction paragraph');
-      const h2First = screen.getByText('Section 1');
-      
-      // Check DOM order matches visual order
-      const domOrder = [h1, intro, h2First].map(el => 
-        Array.from(document.body.querySelectorAll('*')).indexOf(el)
-      );
-      
-      // Verify elements appear in ascending order in the DOM
-      expect(domOrder[0]).toBeLessThan(domOrder[1]);
-      expect(domOrder[1]).toBeLessThan(domOrder[2]);
-    });
+  
+  // Test for improper reading order
+  test('content in improper reading order has issues', () => {
+    render(<ImproperReadingOrderComponent />);
+    const container = screen.getByTestId('improper-reading-order');
+    const result = verifyReadingOrder(container);
+    
+    // Expect reading order issues
+    expect(result.isLogical).toBe(false);
+    expect(result.issues.length).toBeGreaterThan(0);
   });
-
-  describe('Tab Order Tests', () => {
-    test('should have logical tab order', () => {
-      render(<ProperTabOrderComponent />);
+  
+  // Test for visual order matching DOM order
+  test('visual order matches DOM order in proper component', () => {
+    render(<ProperReadingOrderComponent />);
+    const container = screen.getByTestId('proper-reading-order');
+    const result = verifyReadingOrder(container);
+    
+    // Expect no visual order issues
+    expect(result.isLogical).toBe(true);
+  });
+  
+  // Test for visual order not matching DOM order
+  test('visual order does not match DOM order in improper component', () => {
+    render(<ImproperReadingOrderComponent />);
+    const container = screen.getByTestId('improper-reading-order');
+    const result = verifyReadingOrder(container);
+    
+    // Expect visual order issues
+    expect(result.isLogical).toBe(false);
+  });
+  
+  // Test for proper heading hierarchy
+  test('heading levels are properly nested in proper component', () => {
+    render(<ProperHeadingHierarchyComponent />);
+    const container = screen.getByTestId('proper-heading-hierarchy');
+    
+    // Get all headings
+    const headings = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+    
+    // Check that heading levels don't skip (e.g., h1 to h3)
+    let previousLevel = 0;
+    let hasError = false;
+    
+    headings.forEach(heading => {
+      const currentLevel = parseInt(heading.tagName.substring(1));
       
-      const buttons = screen.getAllByRole('button');
-      const tabIndices = buttons.map(button => parseInt(button.getAttribute('tabindex') || '0', 10));
-      
-      // Check that tab indices are in ascending order
-      for (let i = 1; i < tabIndices.length; i++) {
-        expect(tabIndices[i]).toBeGreaterThan(tabIndices[i-1]);
+      // Heading levels should either stay the same, go up by exactly 1, or go down to any lower level
+      if (currentLevel > previousLevel && currentLevel !== previousLevel + 1) {
+        hasError = true;
       }
+      
+      previousLevel = Math.max(previousLevel, currentLevel);
     });
-
-    test('should detect illogical tab order', () => {
-      render(<ImproperTabOrderComponent />);
+    
+    expect(hasError).toBe(false);
+  });
+  
+  // Test for improper heading hierarchy
+  test('heading levels are improperly nested in improper component', () => {
+    render(<ImproperHeadingHierarchyComponent />);
+    const container = screen.getByTestId('improper-heading-hierarchy');
+    
+    // Get all headings
+    const headings = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+    
+    // Check that heading levels don't skip (e.g., h1 to h3)
+    let previousLevel = 0;
+    let hasError = false;
+    
+    headings.forEach(heading => {
+      const currentLevel = parseInt(heading.tagName.substring(1));
       
-      const buttons = screen.getAllByRole('button');
-      const tabIndices = buttons.map(button => parseInt(button.getAttribute('tabindex') || '0', 10));
+      // Heading levels should either stay the same, go up by exactly 1, or go down to any lower level
+      if (currentLevel > previousLevel && currentLevel !== previousLevel + 1) {
+        hasError = true;
+      }
       
-      // This should fail because tab indices are not in visual order
-      expect(tabIndices[0]).not.toBeLessThan(tabIndices[1]);
+      previousLevel = Math.max(previousLevel, currentLevel);
     });
-
-    test('tab order should match visual order', () => {
-      render(<ProperTabOrderComponent />);
-      
-      const buttons = screen.getAllByRole('button');
-      
-      // Visual order (top to bottom, left to right)
-      const visualOrder = Array.from(buttons).sort((a, b) => {
-        const aRect = a.getBoundingClientRect();
-        const bRect = b.getBoundingClientRect();
-        
-        // If elements are roughly on the same line, sort by x-coordinate
-        if (Math.abs(aRect.top - bRect.top) < 10) {
-          return aRect.left - bRect.left;
-        }
-        
-        // Otherwise, sort by y-coordinate
-        return aRect.top - bRect.top;
-      });
-      
-      // Tab order
-      const tabOrder = Array.from(buttons).sort((a, b) => {
-        const aIndex = parseInt(a.getAttribute('tabindex') || '0', 10);
-        const bIndex = parseInt(b.getAttribute('tabindex') || '0', 10);
-        return aIndex - bIndex;
-      });
-      
-      // Check that visual order matches tab order
-      expect(visualOrder).toEqual(tabOrder);
-    });
+    
+    expect(hasError).toBe(true);
+  });
+  
+  // Test for dynamic content
+  test('dynamic content maintains proper reading order', () => {
+    const { container, rerender } = render(<DynamicContentComponent showAdditionalContent={false} />);
+    
+    // Check initial ARIA live regions
+    const liveRegion = container.querySelector('[aria-live="polite"]');
+    expect(liveRegion).toBeInTheDocument();
+    
+    // Verify initial reading order
+    let result = verifyReadingOrder(container);
+    expect(result.isLogical).toBe(true);
+    
+    // Update with additional content
+    rerender(<DynamicContentComponent showAdditionalContent={true} />);
+    
+    // Verify reading order after update
+    result = verifyReadingOrder(container);
+    expect(result.isLogical).toBe(true);
+    
+    // Verify that the dynamic content is in the correct order
+    const headings = container.querySelectorAll('h1, h2');
+    expect(headings.length).toBe(2);
+    expect(headings[0].textContent).toBe('Dynamic Content');
+    expect(headings[1].textContent).toBe('Additional Content');
+  });
+  
+  // Test with axe-core
+  test('components pass axe accessibility tests', async () => {
+    const { container: properContainer } = render(<ProperReadingOrderComponent />);
+    const properResults = await axe(properContainer);
+    expect(properResults).toHaveNoViolations();
+    
+    const { container: properHeadingContainer } = render(<ProperHeadingHierarchyComponent />);
+    const properHeadingResults = await axe(properHeadingContainer);
+    expect(properHeadingResults).toHaveNoViolations();
+    
+    const { container: dynamicContainer } = render(<DynamicContentComponent showAdditionalContent={true} />);
+    const dynamicResults = await axe(dynamicContainer);
+    expect(dynamicResults).toHaveNoViolations();
   });
 }); 

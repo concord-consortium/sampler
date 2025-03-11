@@ -66,20 +66,63 @@ export const Outputs = () => {
   const bracket = <div className="outputs-variable-bracket">[</div>;
 
   return (
-    <div className="outputs">
-      <div className="outputs-title">sample {sampleIndex + 1}</div>
-      <div className="outputs-variables" style={{marginLeft: outsidePushMargin}}>
+    <div 
+      className="outputs"
+      role="region"
+      aria-label="Model outputs"
+    >
+      <div 
+        className="outputs-title"
+        id="outputs-title"
+      >
+        sample {sampleIndex + 1}
+      </div>
+      <div 
+        className="outputs-variables" 
+        style={{marginLeft: outsidePushMargin}}
+        aria-live="polite"
+        aria-atomic="false"
+        aria-relevant="additions text"
+      >
         {variables.map((variable, index) => (
-          <div className="outputs-variable" key={index}>
-            {bracket}<div style={{marginLeft: insidePushMargin, opacity: insidePushOpacity}}>{variable.join(", ")}</div>
+          <div 
+            className="outputs-variable" 
+            key={index}
+            aria-label={`Variable ${variable.join(", ")}`}
+          >
+            {bracket}
+            <div 
+              style={{marginLeft: insidePushMargin, opacity: insidePushOpacity}}
+              aria-live="polite"
+            >
+              {variable.join(", ")}
+            </div>
           </div>
         ))}
         {animatedVariables.length > 0 && (
-          <div className="outputs-variable" key="animated">
-            {bracket}<div style={{opacity: animatedVariablesOpacity}}>{animatedVariables.join(", ")}</div>
+          <div 
+            className="outputs-variable" 
+            key="animated"
+            aria-label={`Animated variable ${animatedVariables.join(", ")}`}
+          >
+            {bracket}
+            <div 
+              style={{opacity: animatedVariablesOpacity}}
+              aria-live="polite"
+            >
+              {animatedVariables.join(", ")}
+            </div>
           </div>
         )}
-        {showEmptyBracket && <div className="outputs-variable" key="empty">{bracket}</div>}
+        {showEmptyBracket && 
+          <div 
+            className="outputs-variable" 
+            key="empty"
+            aria-label="Empty output"
+          >
+            {bracket}
+          </div>
+        }
       </div>
     </div>
   );

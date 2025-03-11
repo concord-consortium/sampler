@@ -94,6 +94,7 @@ export const Device = (props: IProps) => {
     // Delete device on Enter or Space
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault(); // Prevent scrolling on space
+      e.stopPropagation();
       handleDeleteDevice();
     }
   };
@@ -300,7 +301,8 @@ export const Device = (props: IProps) => {
         data-device-id={device.id} 
         data-testid="device-container"
         role="region"
-        aria-label={`${deviceTypeLabel} device`}
+        aria-labelledby={`device-title-${device.id}`}
+        aria-describedby={`device-description-${device.id}`}
       >
         <div className="device-status-icon">
           {isSelectedDevice && <VisibleIcon aria-hidden="true" />}
@@ -310,8 +312,8 @@ export const Device = (props: IProps) => {
           role="button"
           tabIndex={0}
           aria-pressed={isSelectedDevice}
+          id={`device-title-${device.id}`}
           aria-label={`Select ${deviceTypeLabel} device`}
-          aria-describedby={`device-description-${device.id}`}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
@@ -394,7 +396,7 @@ export const Device = (props: IProps) => {
               onKeyDown={handleDeleteKeyDown}
               role="button"
               tabIndex={0}
-              aria-label="Delete device"
+              aria-label={`Delete ${deviceTypeLabel} device`}
               data-testid="delete-device-button"
             >
               <DeleteIcon aria-hidden="true" />
@@ -413,12 +415,15 @@ export const Device = (props: IProps) => {
             handleUpdateVariables={handleUpdateVariables}
             handleDeleteVariable={handleDeleteVariable}
             handleSpecifyVariables={handleSpecifyVariables}
+            aria-labelledby={`device-title-${device.id}`}
           />
       }
       {showVariableEditor &&
         <SetVariableSeriesModal
           setShowVariableEditor={setShowVariableEditor}
           handleUpdateVariablesToSeries={handleUpdateVariablesToSeries}
+          aria-labelledby="variable-editor-title"
+          aria-describedby={`device-description-${device.id}`}
         />}
     </div>
   );

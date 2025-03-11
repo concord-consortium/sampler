@@ -159,7 +159,7 @@ export const MeasuresTab = () => {
   const renderCollectorGuidance = () => {
     return (
       <div className="collector-guidance">
-        <h3>Measures in Collector Mode</h3>
+        <h2>Measures in Collector Mode</h2>
         <p>
           We are sorry, but at this time you cannot use this feature to add common measures for each sample when using the Collector device. 
           You can however, create a new attribute in the Sampler Data Table at the Sample level to compute a measure for a sample.
@@ -186,7 +186,7 @@ export const MeasuresTab = () => {
     return (
       <div className="enhanced-collector-mode">
         <div className="collector-guidance">
-          <h3>Enhanced Measures in Collector Mode</h3>
+          <h2>Enhanced Measures in Collector Mode</h2>
           <p>
             While you cannot add common measures for each sample when using the Collector device,
             you can now process and analyze your collector data using the tools below.

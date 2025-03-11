@@ -17,9 +17,10 @@ interface IProps {
   handleUpdateVariables: (variables: IVariables) => void;
   handleDeleteVariable: (e: React.MouseEvent, selectedVariable?: string) => void;
   handleSpecifyVariables: () => void;
+  'aria-labelledby'?: string;
 }
 
-export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSpecifyVariables, dataContexts = []}: IProps) => {
+export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSpecifyVariables, dataContexts = [], 'aria-labelledby': ariaLabelledby}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { model, isRunning, collectorContext } = globalState;
   const { viewType } = device;
@@ -144,7 +145,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
   };
 
   return (
-    <div className="device-footer">
+    <div className="device-footer" aria-labelledby={ariaLabelledby}>
       <div className="device-controls">
         <div className="device-variables">
           <button 
