@@ -58,7 +58,8 @@ describe('Ball Component', () => {
       modelPassword: '',
       showPasswordModal: false,
       passwordModalMode: 'set' as const,
-      repeatUntilCondition: ''
+      repeatUntilCondition: '',
+      reduceMotion: false
     },
     setGlobalState: jest.fn()
   };

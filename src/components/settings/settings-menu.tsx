@@ -13,8 +13,9 @@ export const SettingsMenu: React.FC = () => {
   };
   
   const handleReduceMotionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
     setGlobalState(draft => {
-      draft.reduceMotion = e.target.checked;
+      draft.reduceMotion = isChecked;
     });
   };
   

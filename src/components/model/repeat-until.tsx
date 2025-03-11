@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, FC, ChangeEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useGlobalStateContext } from '../../hooks/useGlobalState';
 import './repeat-until.scss';
 
@@ -6,7 +6,7 @@ import './repeat-until.scss';
  * RepeatUntil component allows users to specify a condition for stopping the repeat process
  * Only displayed when repeat is enabled
  */
-export const RepeatUntil: React.FC = () => {
+export const RepeatUntil: FC = () => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { repeat, repeatUntilCondition, modelLocked } = globalState;
   const [showHelp, setShowHelp] = useState(false);
@@ -20,7 +20,7 @@ export const RepeatUntil: React.FC = () => {
    * Handle changes to the repeat until condition input
    * @param e - The change event from the input
    */
-  const handleConditionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleConditionChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newCondition = e.target.value;
     setGlobalState(draft => {
       draft.repeatUntilCondition = newCondition;
@@ -38,7 +38,7 @@ export const RepeatUntil: React.FC = () => {
    * Handle keyboard events for the help button
    * @param e - The keyboard event
    */
-  const handleHelpKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+  const handleHelpKeyDown = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
     // Toggle help modal on Enter or Space
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault(); // Prevent scrolling on space
@@ -79,13 +79,13 @@ export const RepeatUntil: React.FC = () => {
 /**
  * Help modal for condition syntax
  */
-export const ConditionHelpModal: React.FC<{onClose: () => void}> = ({ onClose }) => {
+export const ConditionHelpModal: FC<{onClose: () => void}> = ({ onClose }) => {
   // Reference to the modal content for focus management
-  const modalRef = React.useRef<HTMLDivElement>(null);
-  const closeButtonRef = React.useRef<HTMLButtonElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   // Focus the modal content when it mounts
-  React.useEffect(() => {
+  useEffect(() => {
     // Save the previously focused element to restore focus when modal closes
     const previouslyFocusedElement = document.activeElement as HTMLElement;
     

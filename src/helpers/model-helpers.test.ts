@@ -122,7 +122,8 @@ describe('model-helpers.ts', () => {
     modelPassword: '',
     showPasswordModal: false,
     passwordModalMode: 'set',
-    repeatUntilCondition: ''
+    repeatUntilCondition: '',
+    reduceMotion: false
   });
 
   describe('modelHasSpinner', () => {

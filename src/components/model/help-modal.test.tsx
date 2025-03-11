@@ -29,14 +29,14 @@ describe('HelpModal Component', () => {
     expect(screen.getByText(/heads,heads,heads/)).toBeInTheDocument();
     
     // Check if close button is rendered
-    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close help modal' })).toBeInTheDocument();
   });
 
   it('calls setShowHelp with false when close button is clicked', () => {
     render(<HelpModal setShowHelp={mockSetShowHelp} />);
     
     // Find and click the close button
-    const closeButton = screen.getByRole('button', { name: 'Close' });
+    const closeButton = screen.getByRole('button', { name: 'Close help modal' });
     fireEvent.click(closeButton);
     
     // Check if setShowHelp was called with false
@@ -82,7 +82,7 @@ describe('HelpModal Component', () => {
     render(<HelpModal setShowHelp={mockSetShowHelp} />);
     
     // Get the close button
-    const closeButton = screen.getByRole('button', { name: 'Close' });
+    const closeButton = screen.getByRole('button', { name: 'Close help modal' });
     
     // Simulate keyboard interaction by focusing and pressing Enter
     closeButton.focus();

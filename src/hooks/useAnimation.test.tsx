@@ -124,7 +124,8 @@ describe('useAnimation', () => {
       modelPassword: '',
       showPasswordModal: false,
       passwordModalMode: 'set' as const,
-      repeatUntilCondition: ''
+      repeatUntilCondition: '',
+      reduceMotion: false
     };
 
     mockSetGlobalState = jest.fn(callback => {

@@ -48,6 +48,12 @@ describe('SettingsMenu', () => {
   });
   
   it('toggles the reduce motion setting when the checkbox is clicked', () => {
+    // Mock the implementation of setGlobalState to capture the draft function
+    let capturedDraftFn: Function = () => {};
+    mockSetGlobalState.mockImplementation((draftFn: Function) => {
+      capturedDraftFn = draftFn;
+    });
+    
     render(<SettingsMenu />);
     
     // Open the dropdown
@@ -61,20 +67,17 @@ describe('SettingsMenu', () => {
     // Click the checkbox
     fireEvent.click(reduceMotionCheckbox);
     
-    // Check that setGlobalState was called with the correct value
+    // Check that setGlobalState was called
     expect(mockSetGlobalState).toHaveBeenCalled();
     
-    // Get the updater function that was passed to setGlobalState
-    const updaterFn = mockSetGlobalState.mock.calls[0][0];
+    // Create a mock draft object
+    const mockDraft = { reduceMotion: false };
     
-    // Create a draft object to pass to the updater function
-    const draft = { reduceMotion: false };
+    // Apply the captured draft function to the mock draft
+    capturedDraftFn(mockDraft);
     
-    // Call the updater function
-    updaterFn(draft);
-    
-    // Check that the draft was updated correctly
-    expect(draft.reduceMotion).toBe(true);
+    // Verify that the draft function correctly sets reduceMotion to true
+    expect(mockDraft.reduceMotion).toBe(true);
   });
   
   it('closes the dropdown when clicking outside', () => {

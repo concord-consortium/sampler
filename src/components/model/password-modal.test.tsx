@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PasswordModal } from './password-modal';
 import { GlobalStateContext } from '../../hooks/useGlobalState';
 import { hashPassword, validatePassword } from '../../utils/password-utils';
-import { Speed } from '../../types';
+import { IGlobalState, Speed } from '../../types';
 
 jest.mock('../../utils/password-utils', () => ({
   hashPassword: jest.fn().mockImplementation((password) => Promise.resolve(`hashed_${password}`)),
@@ -23,40 +23,47 @@ describe('PasswordModal', () => {
   const mockSetGlobalState = jest.fn();
   
   // Create a minimal mock of the global state
-  const createMockGlobalState = (overrides = {}) => ({
-    globalState: {
-      model: { columns: [] },
-      selectedDeviceId: undefined,
-      selectedTab: 'Model' as const,
-      repeat: false,
-      replacement: true,
-      sampleSize: '1',
-      numSamples: '5',
-      enableRunButton: true,
-      attrMap: {
-        experiment: { name: 'experiment', codapID: null },
-        description: { name: 'description', codapID: null },
-        sample_size: { name: 'sample_size', codapID: null },
-        experimentHash: { name: 'experimentHash', codapID: null },
-        sample: { name: 'sample', codapID: null },
-        item: { name: 'item', codapID: null }
-      },
-      dataContexts: [],
-      collectorContext: undefined,
-      samplerContext: undefined,
-      isRunning: false,
-      isPaused: false,
-      speed: Speed.Medium,
-      isModelHidden: false,
-      modelLocked: false,
-      modelPassword: '',
-      showPasswordModal: true,
-      passwordModalMode: 'set' as const,
-      repeatUntilCondition: '',
-      ...overrides
+  const createMockGlobalState = (overrides = {}): IGlobalState => ({
+    model: { columns: [] },
+    selectedDeviceId: undefined,
+    selectedTab: 'Model' as const,
+    repeat: false,
+    replacement: true,
+    sampleSize: '1',
+    numSamples: '5',
+    enableRunButton: true,
+    attrMap: {
+      experiment: { name: 'experiment', codapID: null },
+      description: { name: 'description', codapID: null },
+      sample_size: { name: 'sample_size', codapID: null },
+      experimentHash: { name: 'experimentHash', codapID: null },
+      sample: { name: 'sample', codapID: null },
+      item: { name: 'item', codapID: null }
     },
-    setGlobalState: mockSetGlobalState
+    dataContexts: [],
+    collectorContext: undefined,
+    samplerContext: undefined,
+    isRunning: false,
+    isPaused: false,
+    speed: Speed.Medium,
+    isModelHidden: false,
+    modelLocked: false,
+    modelPassword: '',
+    showPasswordModal: true,
+    passwordModalMode: 'set' as const,
+    repeatUntilCondition: '',
+    reduceMotion: false,
+    ...overrides
   });
+  
+  // Helper function to create the context value
+  const createContextValue = (stateOverrides = {}) => {
+    const state = createMockGlobalState(stateOverrides);
+    return {
+      globalState: state,
+      setGlobalState: mockSetGlobalState
+    };
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -64,7 +71,7 @@ describe('PasswordModal', () => {
 
   it('renders the set password form when in set mode', () => {
     render(
-      <GlobalStateContext.Provider value={createMockGlobalState()}>
+      <GlobalStateContext.Provider value={createContextValue()}>
         <PasswordModal />
       </GlobalStateContext.Provider>
     );
@@ -78,7 +85,7 @@ describe('PasswordModal', () => {
 
   it('renders the enter password form when in enter mode', () => {
     render(
-      <GlobalStateContext.Provider value={createMockGlobalState({
+      <GlobalStateContext.Provider value={createContextValue({
         passwordModalMode: 'enter' as const,
         modelPassword: 'hashed_password'
       })}>
@@ -96,7 +103,7 @@ describe('PasswordModal', () => {
 
   it('validates passwords match when setting a password', async () => {
     render(
-      <GlobalStateContext.Provider value={createMockGlobalState()}>
+      <GlobalStateContext.Provider value={createContextValue()}>
         <PasswordModal />
       </GlobalStateContext.Provider>
     );
@@ -117,7 +124,7 @@ describe('PasswordModal', () => {
 
   it('sets the password and stores it securely when passwords match', async () => {
     render(
-      <GlobalStateContext.Provider value={createMockGlobalState({
+      <GlobalStateContext.Provider value={createContextValue({
         passwordModalMode: 'set' as const
       })}>
         <PasswordModal />
@@ -152,7 +159,7 @@ describe('PasswordModal', () => {
 
   it('validates the entered password and clears it when unlocking', async () => {
     render(
-      <GlobalStateContext.Provider value={createMockGlobalState({
+      <GlobalStateContext.Provider value={createContextValue({
         passwordModalMode: 'enter' as const,
         modelPassword: 'hashed_password123'
       })}>
@@ -186,7 +193,7 @@ describe('PasswordModal', () => {
 
   it('closes the modal when cancel is clicked', () => {
     render(
-      <GlobalStateContext.Provider value={createMockGlobalState()}>
+      <GlobalStateContext.Provider value={createContextValue()}>
         <PasswordModal />
       </GlobalStateContext.Provider>
     );
@@ -202,7 +209,7 @@ describe('PasswordModal', () => {
     (storePasswordHash as jest.Mock).mockRejectedValueOnce(new Error('Storage failed'));
     
     render(
-      <GlobalStateContext.Provider value={createMockGlobalState()}>
+      <GlobalStateContext.Provider value={createContextValue()}>
         <PasswordModal />
       </GlobalStateContext.Provider>
     );
@@ -225,7 +232,7 @@ describe('PasswordModal', () => {
     (clearPasswordHash as jest.Mock).mockRejectedValueOnce(new Error('Clear failed'));
     
     render(
-      <GlobalStateContext.Provider value={createMockGlobalState({
+      <GlobalStateContext.Provider value={createContextValue({
         passwordModalMode: 'enter' as const,
         modelPassword: 'hashed_password123'
       })}>

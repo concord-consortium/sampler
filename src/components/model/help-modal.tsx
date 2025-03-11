@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 
 interface IProps {
   setShowHelp: (show: boolean) => void;
@@ -7,6 +7,10 @@ interface IProps {
 export const HelpModal = ({setShowHelp}: IProps) => {
   // Reference to the close button for focus management
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  
+  const handleCloseModal = useCallback(() => {
+    setShowHelp(false);
+  }, [setShowHelp]);
   
   // Focus the close button when the modal opens
   useEffect(() => {
@@ -34,11 +38,7 @@ export const HelpModal = ({setShowHelp}: IProps) => {
       document.removeEventListener('keydown', handleKeyDown);
       previouslyFocusedElement?.focus();
     };
-  }, []);
-  
-  const handleCloseModal = () => {
-    setShowHelp(false);
-  };
+  }, [handleCloseModal]);
   
   /**
    * Handle keyboard events for the close button

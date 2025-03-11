@@ -3,7 +3,7 @@ import { render, screen, fireEvent, within } from "@testing-library/react";
 import { ModelTab } from "./model-component";
 import { GlobalStateContext } from "../../hooks/useGlobalState";
 import { createDefaultDevice } from "../../models/device-model";
-import { ViewType, Speed } from "../../types";
+import { ViewType, Speed, IGlobalState } from "../../types";
 
 // Mock the CODAP plugin API
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
@@ -132,8 +132,9 @@ describe("ModelTab Component", () => {
       modelPassword: '',
       showPasswordModal: false,
       passwordModalMode: 'set' as const,
-      repeatUntilCondition: ''
-    },
+      repeatUntilCondition: '',
+      reduceMotion: false
+    } as IGlobalState,
     setGlobalState: mockSetGlobalState
   };
 
@@ -199,8 +200,9 @@ describe("ModelTab Component", () => {
       modelPassword: '',
       showPasswordModal: false,
       passwordModalMode: 'set' as const,
-      repeatUntilCondition: ''
-    },
+      repeatUntilCondition: '',
+      reduceMotion: false
+    } as IGlobalState,
     setGlobalState: mockSetGlobalState
   };
 

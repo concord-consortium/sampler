@@ -98,7 +98,7 @@ export const useSpinnerAnimation = ({ deviceId, variableLocations }: UseSpinnerA
       }
       
       // Calculate the current rotation based on animation progress
-      let newRotation;
+      let newRotation: number;
       
       if (reduceMotion) {
         // If reduced motion is enabled, skip directly to the end rotation

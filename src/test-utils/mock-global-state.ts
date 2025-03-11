@@ -13,7 +13,6 @@ import {
 export interface IMockGlobalState extends IGlobalState {
   instanceId?: string;
   dataContextName?: string;
-  reduceMotion: boolean;
 }
 
 /**
