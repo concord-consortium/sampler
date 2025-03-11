@@ -47,6 +47,7 @@ export const useSpinnerAnimation = ({ deviceId, variableLocations }: UseSpinnerA
    */
   const animate: AnimationCallback = (step: AnimationStep, settings?: IAnimationStepSettings) => {
     const { kind } = step;
+    const reduceMotion = settings?.reduceMotion || false;
     
     if (kind === "startExperiment") {
       // Reset animation state at the start of an experiment
@@ -74,44 +75,53 @@ export const useSpinnerAnimation = ({ deviceId, variableLocations }: UseSpinnerA
         isAnimating: true,
         animationProgress: 0
       }));
-    } 
-    else if ((kind === "animateDevice") && (step.deviceId === deviceId)) {
-      const t = settings?.t ?? 1;
-      const { selectedVariable, selectedVariableIndex } = step;
+    }
+    else if (kind === "animateDevice" && step.deviceId === deviceId) {
+      if (!isAnimatingRef.current) return;
       
-      // Store the target variable information
-      targetVariableRef.current = selectedVariable;
-      targetVariableIndexRef.current = selectedVariableIndex;
+      const { t = 0 } = settings || {};
       
-      // Calculate the end rotation if not already set
-      if (endRotationRef.current === -1) {
-        const { lastPercent, currPercent } = variableLocationsRef.current[selectedVariable];
+      // If this is the first animation frame, determine the target variable
+      if (targetVariableRef.current === null) {
+        targetVariableRef.current = step.selectedVariable;
+        targetVariableIndexRef.current = step.selectedVariableIndex;
         
-        // Randomly pick a rotation inside the wedge
-        // This ensures the needle points to a random position within the selected wedge
-        const randomOffset = Math.random() * currPercent;
-        endRotationRef.current = 360 * (lastPercent + randomOffset);
+        // Calculate the end rotation based on the target variable's position
+        if (endRotationRef.current === -1 && targetVariableRef.current) {
+          const targetLocation = variableLocationsRef.current[targetVariableRef.current];
+          if (targetLocation) {
+            // Calculate the angle in degrees (0-360) based on the percentage position
+            const endAngle = targetLocation.currPercent * 360;
+            endRotationRef.current = endAngle;
+          }
+        }
       }
       
-      // Calculate the current rotation using the easing function
-      const newRotation = calculateEasedRotation(
-        startRotationRef.current,
-        endRotationRef.current,
-        t
-      );
+      // Calculate the current rotation based on animation progress
+      let newRotation;
       
-      // Update the current rotation
+      if (reduceMotion) {
+        // If reduced motion is enabled, skip directly to the end rotation
+        newRotation = endRotationRef.current;
+      } else {
+        // Otherwise, use the eased rotation calculation
+        newRotation = calculateEasedRotation(
+          startRotationRef.current,
+          endRotationRef.current,
+          t
+        );
+      }
+      
       currentRotationRef.current = newRotation;
       
-      // Update the animation state
-      setAnimationState({
-        isAnimating: true,
-        animationProgress: t,
+      setAnimationState(prev => ({
+        ...prev,
         rotation: newRotation,
+        animationProgress: t,
         targetVariable: targetVariableRef.current,
         targetVariableIndex: targetVariableIndexRef.current
-      });
-    } 
+      }));
+    }
     else if (kind === "endSelectItem") {
       // Animation for this item selection is complete
       isAnimatingRef.current = false;

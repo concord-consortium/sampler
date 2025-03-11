@@ -72,7 +72,7 @@ export const createExperimentAnimationSteps = (model: IModel, animationResults: 
 
 export const useAnimationContextValue = (): IAnimationContext => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { speed, attrMap, model, numSamples, sampleSize, repeat, repeatUntilCondition } = globalState;
+  const { speed, attrMap, model, numSamples, sampleSize, repeat, repeatUntilCondition, reduceMotion } = globalState;
   // do not allow without replacement when there is a spinner
   const hasSpinner = modelHasSpinner(model);
   const replacement = globalState.replacement || hasSpinner;
@@ -85,6 +85,11 @@ export const useAnimationContextValue = (): IAnimationContext => {
   const animationsCallbacksRef = useRef<AnimationCallback[]>([]);
   const speedRef = useRef<Speed>(Speed.Slow);
   const sampleDataRef = useRef<Array<Record<string, any>>>([]);
+
+  // Update speedRef when speed changes
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
 
   const getExperimentSample = async (variableIndexes: AvailableDeviceVariableIndexes) => {
     let currentDevice = model.columns[0].devices[0];
@@ -310,9 +315,20 @@ export const useAnimationContextValue = (): IAnimationContext => {
       const step = steps[stepIndex];
       const stepDuration = stepDurations[step.kind] ?? 0;
       const currentSpeed = speedRef.current;
-      const duration = stepDuration / (currentSpeed + 1);
-      const t = (currentSpeed === Speed.Fastest) || (duration === 0) ? 1 : Math.min(elapsed / duration, 1);
-      const settings: IAnimationStepSettings = {t, speed: currentSpeed};
+      
+      // If reduced motion is enabled, use minimal duration
+      const duration = reduceMotion ? 0 : stepDuration / (currentSpeed + 1);
+      
+      // If reduced motion is enabled or speed is fastest, skip to the end of the animation
+      const t = (currentSpeed === Speed.Fastest) || (duration === 0) || reduceMotion
+        ? 1 
+        : Math.min(elapsed / duration, 1);
+      
+      const settings: IAnimationStepSettings = {
+        t, 
+        speed: currentSpeed,
+        reduceMotion
+      };
 
       animationsCallbacksRef.current.forEach(callback => callback(step, settings));
 
@@ -443,10 +459,6 @@ export const useAnimationContextValue = (): IAnimationContext => {
       animationsCallbacksRef.current.splice(animationsCallbacksRef.current.indexOf(animationCallback), 1);
     };
   };
-
-  useEffect(() => {
-    speedRef.current = speed;
-  }, [speed]);
 
   useEffect(() => {
     // whenever the model changes re-render

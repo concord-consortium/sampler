@@ -4,6 +4,7 @@ import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
 import { PasswordModal } from "./model/password-modal";
+import { SettingsMenu } from "./settings/settings-menu";
 import { initializeFormulaTracker } from "../utils/formula/FormulaVariableRenaming";
 
 import "./App.scss";
@@ -43,27 +44,32 @@ export const App = () => {
       {/* Skip navigation link for keyboard users */}
       <a href="#main-content" className="skip-nav">Skip to main content</a>
       
-      <div className="navigationTabs" role="navigation" aria-label="Main navigation">
-        { navTabs.map((tab, index) => {
-            return (
-              <div key={`${index}`}
-                  className={`tab ${selectedTab === tab ? "selected" : ""}`}
-                  onClick={() => handleTabSelect(navTabs[index])}
-                  role="tab"
-                  tabIndex={0}
-                  aria-selected={selectedTab === tab}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleTabSelect(navTabs[index]);
-                    }
-                  }}
-              >
-                {tab}
-              </div>
-            );
-          })
-        }
+      <div className="app-header">
+        <div className="navigationTabs" role="navigation" aria-label="Main navigation">
+          { navTabs.map((tab, index) => {
+              return (
+                <div key={`${index}`}
+                    className={`tab ${selectedTab === tab ? "selected" : ""}`}
+                    onClick={() => handleTabSelect(navTabs[index])}
+                    role="tab"
+                    tabIndex={0}
+                    aria-selected={selectedTab === tab}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleTabSelect(navTabs[index]);
+                      }
+                    }}
+                >
+                  {tab}
+                </div>
+              );
+            })
+          }
+        </div>
+        <div className="app-header-right">
+          <SettingsMenu />
+        </div>
       </div>
       <div id="main-content" className="tab-content" role="main" tabIndex={-1}>
         {selectedTab === "Model" ?

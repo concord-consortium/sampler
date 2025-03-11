@@ -60,12 +60,40 @@ const getFinalPosition = ({x, y, dx, dy, vx, vy, radius}: IFinalPositionInput): 
   return {x: newX, y: newY, vx: newVx, vy: newVy, radius};
 };
 
-const animatePositions = (positions: IBallPosition[], speed: number, t: number, radius: number, selectedVariableIdx: number) => {
+const animatePositions = (positions: IBallPosition[], speed: number, t: number, radius: number, selectedVariableIdx: number, reduceMotion: boolean) => {
   return positions.map((position, index) => {
     let final: IFinalPosition;
     const { vx, vy, x, y } = position;
     const animationSpeed = speed + 1;
 
+    // If reduced motion is enabled and this is the selected ball, skip directly to the exit
+    if (reduceMotion && index === selectedVariableIdx) {
+      const targetX = kContainerX + kMixerContainerWidth / 2;
+      const targetY = kContainerY + radius;
+      
+      // If we're past the animation threshold for exiting, move the ball out
+      if (t >= animateOutOfExitT) {
+        return { 
+          ...position, 
+          x: targetX, 
+          y: targetY - radius, 
+          vx: 0, 
+          vy: 0, 
+          transform: "" 
+        };
+      } else {
+        return { 
+          ...position, 
+          x: targetX, 
+          y: targetY, 
+          vx: 0, 
+          vy: 0, 
+          transform: "" 
+        };
+      }
+    }
+    
+    // For non-reduced motion or non-selected balls, use the regular animation
     // calculate velocity and next position of all balls or the selected ball until we start animating to the exit
     if (index !== selectedVariableIdx || t < animateToExitT) {
       const dx = vx * animationSpeed;
@@ -138,7 +166,7 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
 
   const animate = (step: AnimationStep, settings?: IAnimationStepSettings) => {
     const { kind } = step;
-    const {speed, t} = settings ?? {speed: 0, t: 0};
+    const {speed, t, reduceMotion = false} = settings ?? {speed: 0, t: 0, reduceMotion: false};
 
     const updateBallPositions = (newPositions: IBallPosition[]) => {
       currentPositionsRef.current = newPositions;
@@ -166,11 +194,31 @@ export const Balls = ({ballsArray, deviceId, handleAddDefs, handleSetSelectedVar
           setHiddenBallIndexes(prev => [...prev, step.selectedVariableIndex]);
         }
         updateBallPositions(initialPositionsRef.current);
+      } else if (reduceMotion) {
+        // If reduced motion is enabled, use the special animation that skips directly to the target
+        updateBallPositions(animatePositions(
+          currentPositionsRef.current, 
+          speed, 
+          t, 
+          radiusRef.current, 
+          selectedVariableIndexRef.current,
+          true
+        ));
       } else if (numBallsRef.current < 100) {
-        updateBallPositions(animatePositions(currentPositionsRef.current, speed, t, radiusRef.current, selectedVariableIndexRef.current));
+        // For normal animation with a reasonable number of balls
+        updateBallPositions(animatePositions(
+          currentPositionsRef.current, 
+          speed, 
+          t, 
+          radiusRef.current, 
+          selectedVariableIndexRef.current,
+          false
+        ));
       } else if (numBallsRef.current < 400) {
+        // For larger numbers of balls, use simpler animations
         updateBallPositions(getRandomPositions(currentPositionsRef.current, radiusRef.current));
       } else {
+        // For very large numbers of balls, just cycle positions
         updateBallPositions(getCycledPositions(currentPositionsRef.current, selectedVariableIndexRef.current));
       }
     }

@@ -1,0 +1,82 @@
+@import '../../styles/responsive.scss';
+
+.settings-menu-container {
+  position: relative;
+  display: inline-block;
+  
+  .settings-icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    color: #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    
+    &:hover, &:focus {
+      background-color: rgba(0, 0, 0, 0.05);
+      outline: none;
+    }
+    
+    &:focus-visible {
+      outline: 2px solid #0056b3;
+      outline-offset: 2px;
+    }
+  }
+  
+  .settings-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    min-width: 180px;
+    z-index: 1000;
+    
+    .settings-item {
+      padding: 8px 12px;
+      
+      &:hover {
+        background-color: #f5f5f5;
+      }
+      
+      .settings-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        
+        input[type="checkbox"] {
+          margin-right: 8px;
+        }
+        
+        span {
+          font-size: 14px;
+          color: #333;
+        }
+      }
+    }
+  }
+  
+  @include small-mobile {
+    .settings-icon-button {
+      padding: 10px;
+    }
+    
+    .settings-dropdown {
+      min-width: 200px;
+      
+      .settings-item {
+        padding: 12px 16px;
+        
+        .settings-label span {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+} 

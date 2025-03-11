@@ -17,6 +17,11 @@ const defaultAttrMap: AttrMap = {
 };
 
 export const getDefaultState = (): IGlobalState => {
+  // Check system preference for reduced motion
+  const prefersReducedMotion = typeof window !== 'undefined' && 
+    window.matchMedia && 
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
   return {
     model: {
       columns: []
@@ -47,7 +52,8 @@ export const getDefaultState = (): IGlobalState => {
     modelPassword: '',
     showPasswordModal: false,
     passwordModalMode: 'set',
-    repeatUntilCondition: ''
+    repeatUntilCondition: '',
+    reduceMotion: prefersReducedMotion
   };
 };
 

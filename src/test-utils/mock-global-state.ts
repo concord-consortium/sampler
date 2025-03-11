@@ -13,6 +13,7 @@ import {
 export interface IMockGlobalState extends IGlobalState {
   instanceId?: string;
   dataContextName?: string;
+  reduceMotion: boolean;
 }
 
 /**
@@ -42,7 +43,7 @@ const createMockAttrMap = (): AttrMap => ({
  * Creates a mock global state for testing
  * @returns A mock global state
  */
-export const createMockGlobalState = (): IMockGlobalState => {
+export const createMockGlobalState = (options?: Partial<IMockGlobalState>): IMockGlobalState => {
   const state: IMockGlobalState = {
     model: {
       columns: [{
@@ -80,7 +81,10 @@ export const createMockGlobalState = (): IMockGlobalState => {
     passwordModalMode: "set",
     repeatUntilCondition: "",
     dataContextName: "Sampler Data",
-    instanceId: "sampler-test"
+    instanceId: "sampler-test",
+    reduceMotion: false
   };
-  return state;
+  
+  // Override with any provided options
+  return { ...state, ...options };
 }; 

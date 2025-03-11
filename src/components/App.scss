@@ -56,6 +56,21 @@
   }
 }
 
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  
+  .app-header-right {
+    padding: 8px 16px 0 0;
+    
+    @include small-mobile {
+      padding: 12px 12px 0 0;
+    }
+  }
+}
+
 .navigationTabs {
   display: flex;
   justify-content: left;

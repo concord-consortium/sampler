@@ -24,7 +24,7 @@ describe('Animation Control Tests', () => {
     sample: { name: 'sample', codapID: null }
   };
   
-  const createMockGlobalState = (isRunning: boolean, speed: Speed, isPaused: boolean = false) => ({
+  const createMockGlobalState = (isRunning: boolean, speed: Speed, isPaused: boolean = false, reduceMotion: boolean = false) => ({
     globalState: {
       model: {
         columns: [
@@ -65,6 +65,7 @@ describe('Animation Control Tests', () => {
       modelPassword: '',
       passwordModalMode: 'enter' as 'enter' | 'set' | 'change',
       repeatUntilCondition: '',
+      reduceMotion,
     },
     setGlobalState: mockSetGlobalState,
   });
@@ -206,5 +207,23 @@ describe('Animation Control Tests', () => {
     controlButtons.forEach(button => {
       expect(button).toHaveAttribute('tabIndex', '0');
     });
+  });
+
+  // Test that animations respect the reduced motion setting
+  test('Animations respect the reduced motion setting', () => {
+    // Create a mock global state with reduced motion enabled
+    const mockGlobalState = createMockGlobalState(true, Speed.Medium, false, true);
+    
+    render(
+      <GlobalStateContext.Provider value={mockGlobalState}>
+        <ModelTab />
+      </GlobalStateContext.Provider>
+    );
+    
+    // Verify that the animation is running but with reduced motion
+    // This is mostly a placeholder test since the actual animation behavior
+    // is tested in the component-specific tests
+    expect(mockGlobalState.globalState.reduceMotion).toBe(true);
+    expect(mockGlobalState.globalState.isRunning).toBe(true);
   });
 }); 

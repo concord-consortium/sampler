@@ -107,6 +107,7 @@ export type AnimationStep = {
 export interface IAnimationStepSettings {
   t: number;
   speed: Speed;
+  reduceMotion?: boolean;
 }
 
 export type AnimationCallback = (step: AnimationStep, settings?: IAnimationStepSettings) => void;
@@ -135,6 +136,7 @@ export interface IGlobalState {
   showPasswordModal: boolean;
   passwordModalMode: 'set' | 'enter' | 'change';
   repeatUntilCondition: string;
+  reduceMotion: boolean;
 }
 
 export type ISampleAnimationResults = {
