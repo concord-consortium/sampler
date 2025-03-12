@@ -71,7 +71,7 @@ export const ModelTab = () => {
       containerRef.current.scrollLeft = scrollPosition.left;
       containerRef.current.scrollTop = scrollPosition.top;
     }
-  }, [model.columns.length, scrollPosition]);
+  }, [model?.columns?.length, scrollPosition]);
 
   const animationContextValue = useAnimationContextValue();
 

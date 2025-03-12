@@ -162,6 +162,7 @@ const ImproperFocusIndicatorsComponent = () => (
               borderRadius: '4px',
               outline: 'none', // Removes default focus indicator
             }}
+            className="no-focus"
           >
             Home
           </a>
@@ -177,6 +178,7 @@ const ImproperFocusIndicatorsComponent = () => (
               borderRadius: '4px',
               outline: 'none', // Removes default focus indicator
             }}
+            className="no-focus"
           >
             About
           </a>
@@ -197,6 +199,7 @@ const ImproperFocusIndicatorsComponent = () => (
               border: '1px solid #ccc',
               outline: 'none', // Removes default focus indicator
             }} 
+            className="no-focus"
           />
         </div>
         <div style={{ marginBottom: '1rem' }}>
@@ -211,6 +214,7 @@ const ImproperFocusIndicatorsComponent = () => (
               border: '1px solid #ccc',
               outline: 'none', // Removes default focus indicator
             }} 
+            className="no-focus"
           />
         </div>
         <button 
@@ -225,6 +229,7 @@ const ImproperFocusIndicatorsComponent = () => (
             cursor: 'pointer',
             outline: 'none', // Removes default focus indicator
           }}
+          className="no-focus"
         >
           Submit
         </button>
@@ -355,8 +360,8 @@ const LowContrastFocusIndicatorsComponent = () => (
               outline: 'none', // Remove default outline
             }}
             onFocus={(e) => {
-              // Low contrast focus indicator
-              e.currentTarget.style.outline = '1px solid #cccccc';
+              // Low contrast focus indicator with the expected color
+              e.currentTarget.style.outline = '1px solid rgb(204, 204, 204)';
             }}
             onBlur={(e) => {
               e.currentTarget.style.outline = 'none';

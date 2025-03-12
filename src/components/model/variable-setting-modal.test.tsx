@@ -19,17 +19,17 @@ describe('SetVariableSeriesModal', () => {
     );
 
     // Check header
-    expect(screen.getByText('Set Variable Names')).toBeInTheDocument();
+    expect(screen.getByText('Set Variables')).toBeInTheDocument();
     
     // Check instructions text
-    expect(screen.getByText(/Enter a list \(e\.g\. 'cat, cat, dog'\) or a range/)).toBeInTheDocument();
+    expect(screen.getByText(/Enter comma-separated variable names/)).toBeInTheDocument();
     
     // Check input field
-    expect(screen.getByPlaceholderText('a to c')).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
     
     // Check buttons
     expect(screen.getByText('Cancel')).toBeInTheDocument();
-    expect(screen.getByText('OK')).toBeInTheDocument();
+    expect(screen.getByText('Apply')).toBeInTheDocument();
   });
 
   it('calls setShowVariableEditor(false) when Cancel button is clicked', () => {
@@ -54,10 +54,10 @@ describe('SetVariableSeriesModal', () => {
       />
     );
 
-    const input = screen.getByPlaceholderText('a to c');
+    const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: '1-10' } });
     
-    fireEvent.click(screen.getByText('OK'));
+    fireEvent.click(screen.getByText('Apply'));
     
     expect(mockHandleUpdateVariablesToSeries).toHaveBeenCalledWith('1-10');
     expect(mockSetShowVariableEditor).toHaveBeenCalledWith(false);
@@ -71,7 +71,7 @@ describe('SetVariableSeriesModal', () => {
       />
     );
 
-    const input = screen.getByPlaceholderText('a to c');
+    const input = screen.getByRole('textbox');
     
     fireEvent.change(input, { target: { value: 'a, b, c' } });
     
@@ -86,7 +86,7 @@ describe('SetVariableSeriesModal', () => {
       />
     );
 
-    const input = screen.getByPlaceholderText('a to c');
+    const input = screen.getByRole('textbox');
     
     fireEvent.change(input, { target: { value: 'A-Z' } });
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
@@ -103,7 +103,7 @@ describe('SetVariableSeriesModal', () => {
       />
     );
 
-    const input = screen.getByPlaceholderText('a to c');
+    const input = screen.getByRole('textbox');
     
     fireEvent.change(input, { target: { value: 'A-Z' } });
     fireEvent.keyDown(input, { key: 'Tab', code: 'Tab' });
