@@ -30,11 +30,13 @@ const maybeRenameAttr = (attr: string, renameSet: Set<string>): string => {
   }
 
   let suffix = 2;
-  while (renameSet.has(`${attr}${suffix}`)) {
-    suffix++;
-  }
-  renameSet.add(`${attr}${suffix}`);
-  return `${attr}${suffix}`;
+  let renamedAttr: string;
+  do {
+    renamedAttr = `${attr}${suffix++}`;
+  } while (renameSet.has(renamedAttr));
+
+  renameSet.add(renamedAttr);
+  return renamedAttr;
 };
 
 export const renameBuiltInVariables = (attrs: string[]): string[] => {
