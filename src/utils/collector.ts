@@ -21,37 +21,33 @@ export const isCollectorOnlyModel = (model: IModel): boolean => {
   return model.columns.length === 1 && model.columns[0].devices.length === 1 && model.columns[0].devices[0].viewType === ViewType.Collector;
 };
 
-export const getDefaultAttrCounts = (): Record<string, number> => {
-  const attrCount: Record<string, number> = {};
-  Object.keys(defaultAttrMap).forEach((attr) => {
-    attrCount[attr] = 1;
-  });
-  return attrCount;
+// internal functions, not exported
+const createRenameSet = () => new Set<string>(Object.keys(defaultAttrMap));
+const maybeRenameAttr = (attr: string, renameSet: Set<string>): string => {
+  if (!renameSet.has(attr)) {
+    renameSet.add(attr);
+    return attr;
+  }
+
+  let suffix = 2;
+  while (renameSet.has(`${attr}${suffix}`)) {
+    suffix++;
+  }
+  renameSet.add(`${attr}${suffix}`);
+  return `${attr}${suffix}`;
 };
 
 export const renameBuiltInVariables = (attrs: string[]): string[] => {
-  const attrCount = getDefaultAttrCounts();
-
-  return attrs.map((attr) => {
-    if (attrCount[attr] > 0) {
-      attrCount[attr]++;
-      return `${attr}${attrCount[attr]}`;
-    }
-    return attr;
-  });
+  const renameSet = createRenameSet();
+  return attrs.map((attr) => maybeRenameAttr(attr, renameSet));
 };
 
 export const maybeRenameCollectorItem = (collectorItem: ICollectorItem): ICollectorItem => {
-  const attrCount = getDefaultAttrCounts();
+  const renameSet = createRenameSet();
   const renamedItem: ICollectorItem = {};
   Object.keys(collectorItem).forEach((key) => {
-    if (attrCount[key] > 0) {
-      attrCount[key]++;
-      const newKey = `${key}${attrCount[key]}`;
-      renamedItem[newKey] = collectorItem[key];
-    } else {
-      renamedItem[key] = collectorItem[key];
-    }
+    const maybeNewKey = maybeRenameAttr(key, renameSet);
+    renamedItem[maybeNewKey] = collectorItem[key];
   });
   return renamedItem;
 };
