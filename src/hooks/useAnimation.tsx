@@ -7,7 +7,7 @@ import { getDeviceById } from "../models/model-model";
 import { formatFormula, parseFormula } from "../utils/utils";
 import { computeExperimentHash, modelHasSpinner } from "../helpers/model-helpers";
 import { getVariables } from "../utils/formula-parser";
-import { getCollectorAttrs, getCollectorFirstNameVariables, isCollectorOnlyModel } from "../utils/collector";
+import { getCollectorAttrs, getCollectorFirstNameVariables, isCollectorOnlyModel, maybeRenameCollectorItem } from "../utils/collector";
 import { evaluatePattern, isPattern } from "../utils/pattern";
 import { getModelAttrs } from "../utils/model";
 
@@ -152,7 +152,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
 
       if (columnName) {
         if (isCollector) {
-          const newOutputs = currentDevice.collectorVariables[selectedIndex];
+          const newOutputs = maybeRenameCollectorItem(currentDevice.collectorVariables[selectedIndex]);
           outputs = {...newOutputs};
           previousOutputs = {...newOutputs};
         } else {

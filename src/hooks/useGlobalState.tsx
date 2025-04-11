@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect } from "react";
 import { useImmer } from "use-immer";
-import { AttrMap, IColumn, IGlobalState, IGlobalStateContext, ITPSamplerPluginState, Speed, ViewType } from "../types";
+import { IColumn, IGlobalState, IGlobalStateContext, ITPSamplerPluginState, Speed, ViewType } from "../types";
 import { addDataContextChangeListener, codapInterface, IInitializePlugin, initializePlugin } from "@concord-consortium/codap-plugin-api";
 import { createDefaultDevice, createDevice } from "../models/device-model";
 import { kInitialDimensions, kPluginName, kVersion } from "../constants";
@@ -8,15 +8,7 @@ import { createId } from "../utils/id";
 import { removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
 import { ensureMinimumDimensions } from "../helpers/codap-helpers";
 import { isCollectorOnlyModel } from "../utils/collector";
-
-const defaultAttrMap: AttrMap = {
-  experiment: {codapID: null, name: "experiment"},
-  description: {codapID: null, name: "description"},
-  sample_size: {codapID: null, name: "sample size"},
-  until_formula: {codapID: null, name: "formula for until"},
-  experimentHash: {codapID: null, name: "experimentHash"},
-  sample: {codapID: null, name: "sample"},
-};
+import { defaultAttrMap } from "../utils/attr-map";
 
 export const getDefaultState = (): IGlobalState => {
   return {

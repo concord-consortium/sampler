@@ -13,10 +13,10 @@ import { calculateWedgePercentage } from "./device-views/shared/helpers";
 import { SetVariableSeriesModal } from "./variable-setting-modal";
 import DeleteIcon from "../../assets/delete-icon.svg";
 import { parseSpecifier } from "../../utils/utils";
-import { IDevice, IDataContext, ClippingDef, ViewType, IItems, IItem, IVariables } from "../../types";
+import { IDevice, IDataContext, ClippingDef, ViewType, IItem, IVariables } from "../../types";
 import { removeDeviceFromFormulas } from "../../helpers/model-helpers";
 import { DeviceVisibility } from "./device-visibility";
-import { getCollectorAttrs } from "../../utils/collector";
+import { getCollectorAttrs, getCollectorItemValues } from "../../utils/collector";
 import { deleteItemAttrs, getCollectionNames, getItemAttrs } from "../../helpers/codap-helpers";
 import { getModelAttrs } from "../../utils/model";
 
@@ -79,8 +79,7 @@ export const Device = (props: IProps) => {
         throw new Error("No attributes found in the first collection of the data context");
       }
 
-      const items = await getAllItems(dataContextName);
-      const itemValues = items.values.map((item: IItem) => item.values);
+      const itemValues = await getCollectorItemValues(dataContextName);
 
       setGlobalState(draft => {
         draft.enableRunButton = true;
@@ -213,13 +212,9 @@ export const Device = (props: IProps) => {
 
   useEffect(() => {
     if (collectorContextName) {
-      const fetchItems = async () => {
-        const res = await getAllItems(collectorContextName);
-        return res.values;
-      };
+      const fetchItems = async () => await getCollectorItemValues(collectorContextName);
 
-      fetchItems().then((items: IItems) => {
-        const itemValues = items.map((item: IItem) => item.values);
+      fetchItems().then((itemValues) => {
         setGlobalState(draft => {
           const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
           if (deviceToUpdate) {
