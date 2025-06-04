@@ -200,7 +200,7 @@ export const MeasuresTab = () => {
             <option value="sum">Sum</option>
             <option value="mean">Mean</option>
             <option value="median">Median</option>
-            <option value="conditional_percentage">Conditional percentage</option>
+            <option value="conditional_percentage">Percentage</option>
           </select>
         </div>
       </div>
