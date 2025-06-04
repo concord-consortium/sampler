@@ -302,7 +302,17 @@ export const Device = (props: IProps) => {
     });
   }, [selectedDeviceId, setGlobalState, columnIndex]);
 
+  const handleUpdateItemLabels = useCallback((itemLabels: string) => {
+    setGlobalState(draft => {
+      const deviceToUpdate = draft.model.columns[columnIndex].devices.find(dev => dev.id === selectedDeviceId);
+      if (deviceToUpdate) {
+        deviceToUpdate.itemLabels = itemLabels;
+      }
+    });
+  }, [selectedDeviceId, setGlobalState, columnIndex]);
+
   const handleUpdateVariablesToSeries = (series: string) => {
+    handleUpdateItemLabels(series);
     if (series) {
       const sequence = parseSpecifier(series, "to");
       if (sequence) {
@@ -520,6 +530,7 @@ export const Device = (props: IProps) => {
       }
       {showVariableEditor &&
         <SetVariableSeriesModal
+          defaultValue={device.itemLabels}
           setShowVariableEditor={setShowVariableEditor}
           handleUpdateVariablesToSeries={handleUpdateVariablesToSeries}
         />}
