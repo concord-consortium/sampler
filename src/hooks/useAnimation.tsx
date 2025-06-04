@@ -5,7 +5,7 @@ import { useGlobalStateContext } from "./useGlobalState";
 import { evaluateResult, findOrCreateDataContext, getNewExperimentInfo } from "../helpers/codap-helpers";
 import { getDeviceById } from "../models/model-model";
 import { formatFormula, parseFormula } from "../utils/utils";
-import { computeExperimentHash, modelHasSpinner } from "../helpers/model-helpers";
+import { computeExperimentHash, getExperimentDescription, modelHasSpinner } from "../helpers/model-helpers";
 import { getVariables } from "../utils/formula-parser";
 import { getCollectorAttrs, getCollectorFirstNameVariables, isCollectorOnlyModel, maybeRenameCollectorItem } from "../utils/collector";
 import { evaluatePattern, isPattern } from "../utils/pattern";
@@ -178,9 +178,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
   const getAllExperimentSamples = async (experimentNum: number, startingSampleNumber: number, experimentHash: string) => {
     const results: IExperimentResults = [];
     const animationResults: IExperimentAnimationResults = [];
-    const firstDevice = model.columns[0].devices[0];
     const endSampleNumber = startingSampleNumber + Number(numSamples);
-    const numItems = firstDevice.variables.length;
     const counts = {
       totalSamples: 0,
       failedSamples: 0
@@ -210,8 +208,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
         const sample: { [key: string]: string | number } = {};
         sample[attrMap.experiment.name] = experimentNum;
         sample[attrMap.sample.name] = sampleIndex;
-        const deviceStr = firstDevice.viewType.charAt(0).toUpperCase() + firstDevice.viewType.slice(1);
-        sample[attrMap.description.name] = `${deviceStr} containing ${numItems} items${replacement ? " (with replacement)" : ""}`;
+        sample[attrMap.description.name] = getExperimentDescription(model, replacement);
         if (repeat) {
           sample[attrMap.until_formula.name] = untilFormula;
         } else {

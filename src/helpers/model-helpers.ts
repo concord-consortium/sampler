@@ -70,4 +70,23 @@ export const removeMissingDevicesFromFormulas = (model: IModel) => {
   });
 };
 
+export const getExperimentDescription = (model: IModel, replacement: boolean): string => {
+  const numDevices = model.columns.reduce<number>((acc, column) => acc + column.devices.length, 0);
+  if (numDevices > 1) {
+    return "Multiple devices";
+  }
 
+  const firstDevice = model.columns[0].devices[0];
+  if (firstDevice.hidden) {
+    return `Hidden ${firstDevice.viewType}`;
+  }
+
+  const hasSpinner = modelHasSpinner(model);
+  const numItems = hasSpinner
+    ? [...new Set(firstDevice.variables)].length
+    : firstDevice.variables.length;
+  const itemsType = hasSpinner ? "segments" : "items";
+  const deviceStr = firstDevice.viewType.charAt(0).toUpperCase() + firstDevice.viewType.slice(1);
+
+  return `${deviceStr} containing ${numItems} ${itemsType}${replacement && !hasSpinner ? " (with replacement)" : ""}`;
+};
