@@ -326,8 +326,15 @@ export const getNewExperimentInfo = async (dataContextName: string, experimentHa
 
   // any cases?
   if (result.values.length > 0) {
+    /*
+      This has been disabled due to a request to always create a new experiment in SAMPLER-82.
+      If this turns out not to be the desired behavior in the future, this can be uncommented and
+      the code below that sets an empty array for matchingHashItems can be removed.
+
     // check if the experiment already exists
     const matchingHashItems = result.values.filter((item: any) => item.values?.experimentHash === experimentHash);
+    */
+    const matchingHashItems: any[] = [];
 
     if (matchingHashItems.length > 0) {
       // matching experiment found
