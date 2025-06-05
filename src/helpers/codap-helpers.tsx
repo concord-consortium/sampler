@@ -89,10 +89,8 @@ const createWideTable = async (dataContextName: string) => {
       type: "caseTable",
       dataContext: dataContextName,
       title: "Sampler Data",
-      dimensions: {
-        width: 1000,
-        height: 200
-      }
+      position: "top",
+      horizontalScrollOffset: 5000,
     }
   }) as unknown as IResult;
 };
