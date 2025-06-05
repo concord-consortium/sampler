@@ -239,9 +239,27 @@ export const deleteAllItems = async (dataContextName: string) => {
   });
 };
 
-export const getItemAttrs = async (dataContextName: string): Promise<string[]> => {
-  const result = await getAttributeList(dataContextName, getCollectionNames().items);
-  return result.success ? result.values.map((attr: any) => attr.name) : [];
+export const getItemAttrs = async (dataContextName: string, options?: {excludeFormulas?: boolean}): Promise<string[]> => {
+  const itemsCollectionName = getCollectionNames().items;
+  const result = await getAttributeList(dataContextName, itemsCollectionName);
+
+  if (!result.success) {
+    return [];
+  }
+
+  const attrs: string[] = result.values.map((attr: any) => attr.name);
+  if (!options?.excludeFormulas) {
+    return attrs;
+  }
+
+  const attrsToExclude: string[] = [];
+  for (const attr of attrs) {
+    const attrResult = await getAttribute(dataContextName, itemsCollectionName, attr);
+    if (attrResult.success && attrResult.values?.formula) {
+      attrsToExclude.push(attr);
+    }
+  }
+  return attrs.filter((attr: string) => attrsToExclude.includes(attr) === false);
 };
 
 export const deleteItemAttrs = async (dataContextName: string, attrs: string[]) => {
