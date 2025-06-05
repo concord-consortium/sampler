@@ -22,6 +22,18 @@ const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
   "pushVariables": 1200,
 };
 
+const stepsSkippedInFastMode: string[] = [
+  "animateDevice",
+  "showLabel",
+  "animateArrow",
+];
+const instantStepsInFastMode: string[] = [
+  "startSelectItem",
+  "collectVariables",
+  "endSelectItem",
+  "pushVariables",
+];
+
 export const createExperimentAnimationSteps = (model: IModel, dataContextName: string, animationResults: IExperimentAnimationResults, results: IExperimentResults, replacement: boolean, onComplete?: () => void): Array<AnimationStep> => {
   const steps: AnimationStep[] = [];
   steps.push({ kind: "startExperiment", numSamples: animationResults.length });
@@ -269,7 +281,8 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const animate = (timestamp: number) => {
-    const { mode, steps, stepIndex, lastTimestamp } = animationRef.current;
+    let { stepIndex } = animationRef.current;
+    const { mode, steps, lastTimestamp } = animationRef.current;
 
     animationRef.current.lastTimestamp = timestamp;
 
@@ -285,11 +298,23 @@ export const useAnimationContextValue = (): IAnimationContext => {
       }
       animationRef.current.elapsed = elapsed;
 
+      // skip some steps in fast mode
+      if (speedRef.current === Speed.Fast) {
+        while (stepIndex < steps.length && stepsSkippedInFastMode.includes(steps[stepIndex].kind)) {
+          stepIndex++;
+        }
+      }
+
       const step = steps[stepIndex];
       const stepDuration = stepDurations[step.kind] ?? 0;
       const currentSpeed = speedRef.current;
       const duration = stepDuration / (currentSpeed + 1);
-      const t = (currentSpeed === Speed.Fastest) || (duration === 0) ? 1 : Math.min(elapsed / duration, 1);
+      let t = (currentSpeed === Speed.Fastest) || (duration === 0) ? 1 : Math.min(elapsed / duration, 1);
+
+      // instantly finish some steps in fast mode
+      if ((speedRef.current === Speed.Fast) && instantStepsInFastMode.includes(step.kind)) {
+        t = 1;
+      }
       const settings: IAnimationStepSettings = { t, speed: currentSpeed };
 
       animationsCallbacksRef.current.forEach(callback => callback(step, settings));
