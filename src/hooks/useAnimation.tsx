@@ -368,7 +368,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
     try {
       const isCollector = isCollectorOnlyModel(model);
       const attrNames = isCollector ? getCollectorAttrs(model) : getModelAttrs(model);
-      const finalDataContextName = await findOrCreateDataContext(dataContextName, attrNames, attrMap, setGlobalState, repeat, isCollector);
+      const finalDataContextName = await findOrCreateDataContext(dataContextName, attrNames, attrMap, setGlobalState, repeat, isCollector, globalState.instance);
       if (!finalDataContextName) {
         alert("Unable to setup CODAP table");
         return;

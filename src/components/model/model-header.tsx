@@ -49,7 +49,7 @@ export const ModelHeader = (props: IProps) => {
         const attrsToDelete = existingAttrs.filter(attr => !newAttrs.includes(attr));
 
         await deleteAllItems(dataContextName);
-        await findOrCreateDataContext(dataContextName, newAttrs, attrMap, setGlobalState, repeat, isCollector);
+        await findOrCreateDataContext(dataContextName, newAttrs, attrMap, setGlobalState, repeat, isCollector, globalState.instance);
         await deleteItemAttrs(dataContextName, attrsToDelete);
 
       } catch (e) {
