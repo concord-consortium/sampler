@@ -6,9 +6,10 @@ import { createDefaultDevice, createDevice } from "../models/device-model";
 import { kInitialDimensions, kPluginName, kVersion } from "../constants";
 import { createId } from "../utils/id";
 import { removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
-import { createGlobalValue, ensureMinimumDimensions, getGlobalValue, setDimensions, updateGlobalValue, updatePluginTitle } from "../helpers/codap-helpers";
-import { isCollectorOnlyModel } from "../utils/collector";
+import { setDimensions, ensureMinimumDimensions, findOrCreateDataContext, getGlobalValue, createGlobalValue, updateGlobalValue, updatePluginTitle } from "../helpers/codap-helpers";
 import { defaultAttrMap } from "../utils/attr-map";
+import { isCollectorOnlyModel, getCollectorAttrs } from "../utils/collector";
+import { getModelAttrs } from "../utils/model";
 
 const kSamplerInstanceGlobalValueName = "__samplerInstance";
 
@@ -165,6 +166,17 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
         newGlobalState.enableRunButton = newGlobalState.collectorContextName !== "";
       }
 
+      const isCollector = isCollectorOnlyModel(newGlobalState.model);
+      const attrs = isCollector ? getCollectorAttrs(newGlobalState.model) : getModelAttrs(newGlobalState.model);
+
+      const ensureDataContext = async (instance: number) => {
+        const {dataContextName, attrMap, repeat} = newGlobalState;
+        const newDataContextName = await findOrCreateDataContext(dataContextName, attrs, attrMap, setGlobalState, repeat, isCollector, instance, false);
+        return newDataContextName ?? "";
+      };
+
+      let finalDataContextName = newGlobalState.dataContextName;
+
       if (!newGlobalState.instance) {
         // only allow one instance of the sampler plugin access to the global value
         // at a time to avoid race conditions when multiple instances are initialized
@@ -178,13 +190,15 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
             await updateGlobalValue(kSamplerInstanceGlobalValueName, instance);
           }
           await updatePluginTitle(instance);
-          setGlobalState({...newGlobalState, instance});
+          finalDataContextName = await ensureDataContext(instance);
+          setGlobalState({...newGlobalState, instance, dataContextName: finalDataContextName});
         });
       } else {
+        finalDataContextName = await ensureDataContext(newGlobalState.instance);
         await updatePluginTitle(newGlobalState.instance);
       }
 
-      setGlobalState(newGlobalState);
+      setGlobalState({...newGlobalState, dataContextName: finalDataContextName});
     };
 
     init();

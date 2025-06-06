@@ -6,6 +6,30 @@ import { getCollectorAttrNames, getCollectorFirstNameVariables, isCollectorOnlyM
 import "./measures.scss";
 
 type Measure = "default" | "conditional_count" | "sum" | "mean" | "median" | "conditional_percentage" | "count_items";
+type MeasureOption = {
+  value: Measure;
+  label: string;
+};
+
+const measureLabels: Record<Measure, string> = {
+  default: "Select a formula",
+  conditional_count: "Count",
+  sum: "Sum",
+  mean: "Mean",
+  median: "Median",
+  conditional_percentage: "Percentage",
+  count_items: "Count items"
+};
+
+const measureOptions: MeasureOption[] = [
+  { value: "default", label: measureLabels.default },
+  { value: "conditional_count", label: measureLabels.conditional_count },
+  { value: "sum", label: measureLabels.sum },
+  { value: "mean", label: measureLabels.mean },
+  { value: "median", label: measureLabels.median },
+  { value: "conditional_percentage", label: measureLabels.conditional_percentage },
+  { value: "count_items", label: measureLabels.count_items }
+];
 
 const getFormula = (measure: Measure, left: string, op: string, right: string) => {
   switch (measure) {
@@ -33,6 +57,7 @@ export const MeasuresTab = () => {
   const [opValue, setOpValue] = useState("=");
   const [rValue, setRValue] = useState("");
   const [hasSamples, setHasSamples] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const checkForSamples = async () => {
@@ -81,6 +106,15 @@ export const MeasuresTab = () => {
   const handleAddMeasure = () => {
     const formula = getFormula(selectedMeasure, lValue, opValue, rValue);
     addMeasure(dataContextName, measureName, selectedMeasure, formula);
+    setMessage(`${measureLabels[selectedMeasure]} measure added.`);
+    setSelectedMeasure("default");
+    setMeasureName("");
+    setLValue("");
+    setOpValue("=");
+    setRValue("");
+    setTimeout(() => {
+      setMessage("");
+    }, 2000);
   };
 
   const renderAttributes = () => {
@@ -197,13 +231,11 @@ export const MeasuresTab = () => {
         </label>
         <div className="select-measure-dropdown">
           <select id="select-measure" onChange={handleSelectMeasureChange} value={selectedMeasure}>
-            <option value="default">Select a formula</option>
-            <option value="conditional_count">Count</option>
-            <option value="sum">Sum</option>
-            <option value="mean">Mean</option>
-            <option value="median">Median</option>
-            <option value="conditional_percentage">Percentage</option>
-            <option value="count_items">Count items</option>
+            {measureOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -228,6 +260,10 @@ export const MeasuresTab = () => {
         <button id="add-measure" onClick={handleAddMeasure} disabled={disableAddButton} className={disableAddButton ? "disabled" : ""}>
           Add Measure
         </button>
+      </div>
+
+      <div id="measures-message">
+        {message}
       </div>
     </div>
   );
