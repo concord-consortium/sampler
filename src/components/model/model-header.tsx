@@ -38,7 +38,7 @@ export const ModelHeader = (props: IProps) => {
     const deleteItems = async () => {
       try {
         const isCollector = isCollectorOnlyModel(model);
-        const existingAttrs = await getItemAttrs(dataContextName);
+        const existingAttrs = await getItemAttrs(dataContextName, { excludeFormulas: true});
 
         let newAttrs: string[] = [];
         if (isCollector) {
