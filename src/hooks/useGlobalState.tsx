@@ -62,7 +62,8 @@ export const migrateOrCreateInteractiveState = (interactiveState: any, defaultGl
         viewType,
         variables: oldPluginState.variables ?? defaultGlobalState.model.columns[0].devices[0].variables,
         hidden: oldPluginState.hidden ?? false,
-        lockPassword: oldPluginState.password ?? ""
+        lockPassword: oldPluginState.password ?? "",
+        itemLabels: ""
       })]
     };
 
@@ -95,6 +96,11 @@ export const migrateState = (state: IGlobalState) => {
       }
       if (device.lockPassword === undefined) {
         device.lockPassword = "";
+      }
+
+      // ensure all devices have a itemLabels attribute
+      if (device.itemLabels === undefined) {
+        device.itemLabels = "";
       }
     });
   });
