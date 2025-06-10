@@ -149,6 +149,8 @@ export interface IGlobalState {
   speed: Speed;
   untilFormula: string;
   instance: number;
+  repeatCondition: RepeatCondition;
+  repeatNumUniqueValues: number;
 }
 
 export interface ITransientState {
@@ -351,3 +353,6 @@ export interface IGetNewPcts {
 
 export type AvailableDeviceVariables = Record<Id, IVariables>;
 export type AvailableDeviceVariableIndexes = Record<Id, number[]>;
+
+export type RepeatCondition = "expressionOrPattern" | "uniqueValues";
+
