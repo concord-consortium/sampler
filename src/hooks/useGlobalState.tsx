@@ -6,7 +6,7 @@ import { createDefaultDevice, createDevice } from "../models/device-model";
 import { kInitialDimensions, kPluginName, kVersion } from "../constants";
 import { createId } from "../utils/id";
 import { removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
-import { ensureMinimumDimensions } from "../helpers/codap-helpers";
+import { ensureMinimumDimensions, setDimensions } from "../helpers/codap-helpers";
 import { isCollectorOnlyModel } from "../utils/collector";
 import { defaultAttrMap } from "../utils/attr-map";
 
@@ -129,8 +129,13 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
       // migrate the existing interactive state or create a new one if it doesn't exist
       const newGlobalState = migrateOrCreateInteractiveState(interactiveState, getDefaultState());
 
-      // ensure that the plugin has the minimum dimensions
-      await ensureMinimumDimensions(kInitialDimensions);
+      if (interactiveState === undefined) {
+        // if this is a new document use the initial dimensions
+        await setDimensions(kInitialDimensions);
+      } else {
+        // otherwise ensure that the plugin in the loaded document has the minimum dimensions
+        await ensureMinimumDimensions(kInitialDimensions);
+      }
 
       // ensure there is a experiment hash on existing documents created before that attribute was added
       if (!newGlobalState.attrMap.experimentHash) {

@@ -433,3 +433,8 @@ export const ensureMinimumDimensions = async (min: Dimensions) => {
 
   await codapInterface.sendRequest({ action: "update", resource: "interactiveFrame", values});
 };
+
+export const setDimensions = async ({width, height}: Dimensions) => {
+  const values = {dimensions: {width, height}};
+  await codapInterface.sendRequest({ action: "update", resource: "interactiveFrame", values});
+};
