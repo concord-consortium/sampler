@@ -5,7 +5,7 @@ import { useGlobalStateContext } from "./useGlobalState";
 import { evaluateResult, findOrCreateDataContext, getNewExperimentInfo } from "../helpers/codap-helpers";
 import { getDeviceById } from "../models/model-model";
 import { formatFormula, parseFormula } from "../utils/utils";
-import { computeExperimentHash, modelHasSpinner } from "../helpers/model-helpers";
+import { computeExperimentHash, getExperimentDescription, modelHasSpinner } from "../helpers/model-helpers";
 import { getVariables } from "../utils/formula-parser";
 import { getCollectorAttrs, getCollectorFirstNameVariables, isCollectorOnlyModel, maybeRenameCollectorItem } from "../utils/collector";
 import { evaluatePattern, isPattern } from "../utils/pattern";
@@ -21,6 +21,18 @@ const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
   "collectVariables": 1200,
   "pushVariables": 1200,
 };
+
+const stepsSkippedInFastMode: string[] = [
+  "animateDevice",
+  "showLabel",
+  "animateArrow",
+];
+const instantStepsInFastMode: string[] = [
+  "startSelectItem",
+  "collectVariables",
+  "endSelectItem",
+  "pushVariables",
+];
 
 export const createExperimentAnimationSteps = (model: IModel, dataContextName: string, animationResults: IExperimentAnimationResults, results: IExperimentResults, replacement: boolean, onComplete?: () => void): Array<AnimationStep> => {
   const steps: AnimationStep[] = [];
@@ -178,9 +190,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
   const getAllExperimentSamples = async (experimentNum: number, startingSampleNumber: number, experimentHash: string) => {
     const results: IExperimentResults = [];
     const animationResults: IExperimentAnimationResults = [];
-    const firstDevice = model.columns[0].devices[0];
     const endSampleNumber = startingSampleNumber + Number(numSamples);
-    const numItems = firstDevice.variables.length;
     const counts = {
       totalSamples: 0,
       failedSamples: 0
@@ -210,8 +220,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
         const sample: { [key: string]: string | number } = {};
         sample[attrMap.experiment.name] = experimentNum;
         sample[attrMap.sample.name] = sampleIndex;
-        const deviceStr = firstDevice.viewType.charAt(0).toUpperCase() + firstDevice.viewType.slice(1);
-        sample[attrMap.description.name] = `${deviceStr} containing ${numItems} items${replacement ? " (with replacement)" : ""}`;
+        sample[attrMap.description.name] = getExperimentDescription(model, replacement);
         if (repeat) {
           sample[attrMap.until_formula.name] = untilFormula;
         } else {
@@ -269,7 +278,8 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const animate = (timestamp: number) => {
-    const { mode, steps, stepIndex, lastTimestamp } = animationRef.current;
+    let { stepIndex } = animationRef.current;
+    const { mode, steps, lastTimestamp } = animationRef.current;
 
     animationRef.current.lastTimestamp = timestamp;
 
@@ -285,11 +295,23 @@ export const useAnimationContextValue = (): IAnimationContext => {
       }
       animationRef.current.elapsed = elapsed;
 
+      // skip some steps in fast mode
+      if (speedRef.current === Speed.Fast) {
+        while (stepIndex < steps.length && stepsSkippedInFastMode.includes(steps[stepIndex].kind)) {
+          stepIndex++;
+        }
+      }
+
       const step = steps[stepIndex];
       const stepDuration = stepDurations[step.kind] ?? 0;
       const currentSpeed = speedRef.current;
       const duration = stepDuration / (currentSpeed + 1);
-      const t = (currentSpeed === Speed.Fastest) || (duration === 0) ? 1 : Math.min(elapsed / duration, 1);
+      let t = (currentSpeed === Speed.Fastest) || (duration === 0) ? 1 : Math.min(elapsed / duration, 1);
+
+      // instantly finish some steps in fast mode
+      if ((speedRef.current === Speed.Fast) && instantStepsInFastMode.includes(step.kind)) {
+        t = 1;
+      }
       const settings: IAnimationStepSettings = { t, speed: currentSpeed };
 
       animationsCallbacksRef.current.forEach(callback => callback(step, settings));

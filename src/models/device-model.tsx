@@ -33,7 +33,7 @@ export function findEquivNum(n: number, lcd: number) {
 
 export const kDefaultVars: IVariables = ["a", "a", "b"];
 export const createDefaultDevice = (viewType: ViewType = ViewType.Mixer): IDevice => {
-  return {id: createId(), viewType, variables: kDefaultVars, collectorVariables: [], formulas: {}, hidden: false, lockPassword: ""};
+  return {id: createId(), viewType, variables: kDefaultVars, collectorVariables: [], formulas: {}, hidden: false, lockPassword: "", itemLabels: ""};
 };
 
 interface ICreateDeviceOptions {
@@ -41,7 +41,8 @@ interface ICreateDeviceOptions {
   variables: IVariables,
   hidden: boolean,
   lockPassword: string
+  itemLabels: string;
 }
-export const createDevice = ({viewType, variables, hidden, lockPassword}: ICreateDeviceOptions): IDevice => {
-  return {id: createId(), viewType, variables, collectorVariables: [], formulas: {}, hidden, lockPassword};
+export const createDevice = ({viewType, variables, hidden, lockPassword, itemLabels}: ICreateDeviceOptions): IDevice => {
+  return {id: createId(), viewType, variables, collectorVariables: [], formulas: {}, hidden, lockPassword, itemLabels};
 };
