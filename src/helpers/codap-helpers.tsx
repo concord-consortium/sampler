@@ -17,6 +17,7 @@ import { AttrMap, IAttribute, IGlobalState } from "../types";
 import { Updater } from "use-immer";
 import { parseFormula } from "../utils/utils";
 import { renameVariable, stringify } from "../utils/formula-parser";
+import { kPluginName } from "../constants";
 
 type TCODAPRequest = { action: string; resource: string; };
 
@@ -81,14 +82,14 @@ const updateAttributeIds = async (dataContextName: string, attrs: Array<string>,
 
 // the current @concord-consortium/codap-plugin-api createTable method does not have a way to pass width (or title) options so
 // this has to be done with a direct CODAP api request
-const createWideTable = async (dataContextName: string) => {
+const createWideTable = async (dataContextName: string, instance: number) => {
   return codapInterface.sendRequest({
     action: "create",
     resource: "component",
     values: {
       type: "caseTable",
       dataContext: dataContextName,
-      title: "Sampler Data",
+      title: instance === 1 ? "Sampler Data" : `Sampler ${instance} Data`,
       position: "top",
       horizontalScrollOffset: 5000,
     }
@@ -102,7 +103,7 @@ export const hasSamplesCollection = async (dataContextName: string): Promise<boo
   return !!collections.find(c => c.name === collectionNames.samples);
 };
 
-export const findOrCreateDataContext = async (initialDataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>, repeat: boolean, isCollector: boolean): Promise<string|null> => {
+export const findOrCreateDataContext = async (initialDataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>, repeat: boolean, isCollector: boolean, instance: number): Promise<string|null> => {
   const collectionNames = getCollectionNames();
 
   // if the plugin is being loaded from a CODAP document, the initialDataContextName will be provided
@@ -209,7 +210,7 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
           const createOutputCollection =
             await createChildCollection(finalDataContextName, collectionNames.items, collectionNames.samples, itemsAttrs);
           if (createOutputCollection.success) {
-            const tableRes = await createWideTable(finalDataContextName);
+            const tableRes = await createWideTable(finalDataContextName, instance);
             if (tableRes.success) {
               await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState);
               return finalDataContextName;
@@ -430,6 +431,38 @@ export const ensureMinimumDimensions = async (min: Dimensions) => {
   const values = {dimensions: {width, height}};
 
   await codapInterface.sendRequest({ action: "update", resource: "interactiveFrame", values});
+};
+
+export const createGlobalValue = async (name: string, value: any) => {
+  await codapInterface.sendRequest({
+    action: "create",
+    resource: "global",
+    values: {name, value}
+  });
+};
+
+export const getGlobalValue = async (name: string): Promise<any> => {
+  const res: any = await codapInterface.sendRequest({
+    action: "get",
+    resource: `global[${name}]`
+  });
+  return res.success ? res.values.value : null;
+};
+
+export const updateGlobalValue = async (name: string, value: any) => {
+  await codapInterface.sendRequest({
+    action: "update",
+    resource: `global[${name}]`,
+    values: {value}
+  });
+};
+
+export const updatePluginTitle = async (instance: number) => {
+  await codapInterface.sendRequest({
+    action: "update",
+    resource: "interactiveFrame",
+    values: {title: instance === 1 ? kPluginName : `${kPluginName} ${instance}`}
+  });
 };
 
 export const setDimensions = async ({width, height}: Dimensions) => {

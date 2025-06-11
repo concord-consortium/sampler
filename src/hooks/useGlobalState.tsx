@@ -6,9 +6,11 @@ import { createDefaultDevice, createDevice } from "../models/device-model";
 import { kInitialDimensions, kPluginName, kVersion } from "../constants";
 import { createId } from "../utils/id";
 import { removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
-import { ensureMinimumDimensions, setDimensions } from "../helpers/codap-helpers";
+import { createGlobalValue, ensureMinimumDimensions, getGlobalValue, setDimensions, updateGlobalValue, updatePluginTitle } from "../helpers/codap-helpers";
 import { isCollectorOnlyModel } from "../utils/collector";
 import { defaultAttrMap } from "../utils/attr-map";
+
+const kSamplerInstanceGlobalValueName = "__samplerInstance";
 
 export const getDefaultState = (): IGlobalState => {
   return {
@@ -27,7 +29,8 @@ export const getDefaultState = (): IGlobalState => {
     isRunning: false,
     isPaused: false,
     speed: 1,
-    untilFormula: ""
+    untilFormula: "",
+    instance: 0,
   };
 };
 
@@ -105,12 +108,15 @@ export const migrateState = (state: IGlobalState) => {
     });
   });
 
-  // ensure the state has the default until formula values
+  // ensure the state has the default values
   if (state.untilFormula === undefined) {
     state.untilFormula = "";
   }
   if (state.attrMap.until_formula === undefined) {
     state.attrMap.until_formula = defaultAttrMap.until_formula;
+  }
+  if (state.instance === undefined) {
+    state.instance = 0;
   }
 };
 
@@ -150,6 +156,25 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
 
       if (isCollectorOnlyModel(newGlobalState.model)) {
         newGlobalState.enableRunButton = newGlobalState.collectorContextName !== "";
+      }
+
+      if (!newGlobalState.instance) {
+        // only allow one instance of the sampler plugin access to the global value
+        // at a time to avoid race conditions when multiple instances are initialized
+        navigator.locks.request(kSamplerInstanceGlobalValueName, async () => {
+          let instance = 1;
+          let globalValue = await getGlobalValue(kSamplerInstanceGlobalValueName);
+          if (!globalValue) {
+            await createGlobalValue(kSamplerInstanceGlobalValueName, instance);
+          } else {
+            instance = Number(globalValue) + 1;
+            await updateGlobalValue(kSamplerInstanceGlobalValueName, instance);
+          }
+          await updatePluginTitle(instance);
+          setGlobalState({...newGlobalState, instance});
+        });
+      } else {
+        await updatePluginTitle(newGlobalState.instance);
       }
 
       setGlobalState(newGlobalState);

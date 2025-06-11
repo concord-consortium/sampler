@@ -148,6 +148,7 @@ export interface IGlobalState {
   isPaused: boolean;
   speed: Speed;
   untilFormula: string;
+  instance: number;
 }
 
 export interface ITransientState {
