@@ -10,6 +10,7 @@ import { getVariables } from "../utils/formula-parser";
 import { getCollectorAttrs, getCollectorFirstNameVariables, isCollectorOnlyModel, maybeRenameCollectorItem } from "../utils/collector";
 import { evaluatePattern, isPattern } from "../utils/pattern";
 import { getModelAttrs } from "../utils/model";
+import { evaluateUniqueValues } from "../utils/unique-values";
 
 // maximum number of items to collect before stopping when the repeat until formula is not satisfied
 const maxRepeatUntilItems = 1000;
@@ -103,7 +104,7 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
 
 export const useAnimationContextValue = (): IAnimationContext => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { speed, attrMap, model, numSamples, sampleSize, dataContextName, repeat, untilFormula } = globalState;
+  const { speed, attrMap, model, numSamples, sampleSize, dataContextName, repeat, untilFormula, repeatCondition, repeatNumUniqueValues } = globalState;
   // do not allow without replacement when there is a spinner
   const hasSpinner = modelHasSpinner(model);
   const replacement = globalState.replacement || hasSpinner;
@@ -257,18 +258,27 @@ export const useAnimationContextValue = (): IAnimationContext => {
           itemIndex++;
 
           if (repeat) {
-            if (isPattern(untilFormula)) {
-              // this will throw a correctly formatted error message if the pattern is invalid
-              doneSampling = evaluatePattern(untilFormula, accumulatedOutputs);
-            } else {
-              // must use try/catch here to customize the error message
-              try {
-                const evaluationResult = await evaluateResult(untilFormula, outputs);
-                doneSampling = !!evaluationResult;
-              } catch (e) {
-                throw new Error(`Evaluating "until" formula: ${untilFormula}`);
-              }
+            switch (repeatCondition) {
+              case "expressionOrPattern":
+                if (isPattern(untilFormula)) {
+                  // this will throw a correctly formatted error message if the pattern is invalid
+                  doneSampling = evaluatePattern(untilFormula, accumulatedOutputs);
+                } else {
+                  // must use try/catch here to customize the error message
+                  try {
+                    const evaluationResult = await evaluateResult(untilFormula, outputs);
+                    doneSampling = !!evaluationResult;
+                  } catch (e) {
+                    throw new Error(`Evaluating "until" formula: ${untilFormula}`);
+                  }
+                }
+                break;
+
+              case "uniqueValues":
+                doneSampling = evaluateUniqueValues(repeatNumUniqueValues, accumulatedOutputs);
+                break;
             }
+
             if (!doneSampling && (itemIndex >= maxRepeatUntilItems)) {
               counts.failedSamples++;
               doneSampling = true;
@@ -285,7 +295,16 @@ export const useAnimationContextValue = (): IAnimationContext => {
 
     if (counts.failedSamples > 0) {
       const message = counts.totalSamples === counts.failedSamples ? "All of the samples" : `${counts.failedSamples} of the ${counts.totalSamples} samples`;
-      throw new Error(`Aborting! ${message} reached the maximum number of attempts (${maxRepeatUntilItems}) without satisfying the "formula for until" of "${untilFormula}"`);
+      let suffix = "";
+      switch (repeatCondition) {
+        case "expressionOrPattern":
+          suffix = `"${untilFormula}"`;
+          break;
+        case "uniqueValues":
+          suffix = `${repeatNumUniqueValues} unique values`;
+          break;
+      }
+      throw new Error(`Aborting! ${message} reached the maximum number of attempts (${maxRepeatUntilItems}) without satisfying the "formula for until" of ${suffix}`);
     }
 
     return { results, animationResults };
