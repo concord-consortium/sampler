@@ -23,7 +23,7 @@ const stepDurations: Partial<Record<AnimationStep["kind"], number>> = {
 };
 
 export const createExperimentAnimationSteps = (model: IModel, dataContextName: string, animationResults: IExperimentAnimationResults, results: IExperimentResults, replacement: boolean, onComplete?: () => void): Array<AnimationStep> => {
-  let lastCaseIds: any[] = [];
+  let lastCaseIdsForFastestSpeed: number[] = [];
   const steps: AnimationStep[] = [];
   steps.push({ kind: "startExperiment", numSamples: animationResults.length });
 
@@ -69,7 +69,7 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
               await selectCases(dataContextName, createItemsResult.caseIDs);
             } else {
               // keep track of the last case IDs to select at the end of the experiment
-              lastCaseIds = createItemsResult.caseIDs;
+              lastCaseIdsForFastestSpeed = createItemsResult.caseIDs;
             }
           }
         }
@@ -80,8 +80,8 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
 
   steps.push({ kind: "endExperiment", onComplete: async () => {
     // select the last case IDs if we are running at the fastest speed
-    if (lastCaseIds.length > 0) {
-      await selectCases(dataContextName, lastCaseIds);
+    if (lastCaseIdsForFastestSpeed.length > 0) {
+      await selectCases(dataContextName, lastCaseIdsForFastestSpeed);
     }
     onComplete?.();
   }});
