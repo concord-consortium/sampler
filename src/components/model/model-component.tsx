@@ -11,7 +11,7 @@ import "./model-component.scss";
 export const ModelTab = () => {
   const { globalState } = useGlobalStateContext();
   const { model } = globalState;
-  const [showHelp, setShowHelp] = useState(false);
+  const [showRepeatUntil, setShowRepeatUntil] = useState(false);
   const [isWide, setIsWide] = useState(false);
 
   useResizer(()=>{
@@ -36,8 +36,8 @@ export const ModelTab = () => {
     }
   }, [model]);
 
-  const handleOpenHelp = () => {
-    setShowHelp(!showHelp);
+  const handleSetShowRepeatUntil = (value: boolean) => {
+    setShowRepeatUntil(value);
   };
 
   const animationContextValue = useAnimationContextValue();
@@ -46,10 +46,9 @@ export const ModelTab = () => {
     <AnimationContext.Provider value={animationContextValue}>
       <div className="model-tab">
         <ModelHeader
-          showHelp={showHelp}
-          setShowHelp={setShowHelp}
+          showRepeatUntil={showRepeatUntil}
           isWide={isWide}
-          handleOpenHelp={handleOpenHelp}
+          setShowRepeatUntil={handleSetShowRepeatUntil}
         />
         <div className="model-container">
           <div className={`device-outputs-container`}>
