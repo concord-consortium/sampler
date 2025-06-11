@@ -5,7 +5,7 @@ import { getCollectorAttrNames, getCollectorFirstNameVariables, isCollectorOnlyM
 
 import "./measures.scss";
 
-type Measure = "default" | "conditional_count" | "sum" | "mean" | "median" | "conditional_percentage";
+type Measure = "default" | "conditional_count" | "sum" | "mean" | "median" | "conditional_percentage" | "count_items";
 
 const getFormula = (measure: Measure, left: string, op: string, right: string) => {
   switch (measure) {
@@ -17,6 +17,8 @@ const getFormula = (measure: Measure, left: string, op: string, right: string) =
       return `count(\`${left}\`${op}'${right}')`;
     case "conditional_percentage":
       return `100 * count(\`${left}\`${op} '${right}')/count()`;
+    case "count_items":
+      return `count()`;
     default:
       return "";
   }
@@ -43,7 +45,7 @@ export const MeasuresTab = () => {
   const isCollector = useMemo(() => isCollectorOnlyModel(model), [model]);
 
   const disableAddButton = useMemo(() => {
-    let disable = selectedMeasure === "default" || lValue.length === 0;  // measureName is optional
+    let disable = selectedMeasure === "default" || (lValue.length === 0 && selectedMeasure !== "count_items");  // measureName is optional
     if (!disable) {
       switch (selectedMeasure) {
         case "conditional_count":
@@ -200,11 +202,12 @@ export const MeasuresTab = () => {
             <option value="sum">Sum</option>
             <option value="mean">Mean</option>
             <option value="median">Median</option>
-            <option value="conditional_percentage">Conditional percentage</option>
+            <option value="conditional_percentage">Percentage</option>
+            <option value="count_items">Count items</option>
           </select>
         </div>
       </div>
-      {selectedMeasure !== "default" && (
+      {!["default", "count_items"].includes(selectedMeasure) && (
         <div id="define-measure-container">
           <label id="define-measure-label">
             Customize formula:

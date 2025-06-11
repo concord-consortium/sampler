@@ -90,10 +90,8 @@ const createWideTable = async (dataContextName: string, instance: number) => {
       type: "caseTable",
       dataContext: dataContextName,
       title: instance === 1 ? "Sampler Data" : `Sampler ${instance} Data`,
-      dimensions: {
-        width: 1000,
-        height: 200
-      }
+      position: "top",
+      horizontalScrollOffset: 5000,
     }
   }) as unknown as IResult;
 };
@@ -240,9 +238,27 @@ export const deleteAllItems = async (dataContextName: string) => {
   });
 };
 
-export const getItemAttrs = async (dataContextName: string): Promise<string[]> => {
-  const result = await getAttributeList(dataContextName, getCollectionNames().items);
-  return result.success ? result.values.map((attr: any) => attr.name) : [];
+export const getItemAttrs = async (dataContextName: string, options?: {excludeFormulas?: boolean}): Promise<string[]> => {
+  const itemsCollectionName = getCollectionNames().items;
+  const result = await getAttributeList(dataContextName, itemsCollectionName);
+
+  if (!result.success) {
+    return [];
+  }
+
+  const attrs: string[] = result.values.map((attr: any) => attr.name);
+  if (!options?.excludeFormulas) {
+    return attrs;
+  }
+
+  const attrsToExclude: string[] = [];
+  for (const attr of attrs) {
+    const attrResult = await getAttribute(dataContextName, itemsCollectionName, attr);
+    if (attrResult.success && attrResult.values?.formula) {
+      attrsToExclude.push(attr);
+    }
+  }
+  return attrs.filter((attr: string) => attrsToExclude.includes(attr) === false);
 };
 
 export const deleteItemAttrs = async (dataContextName: string, attrs: string[]) => {
@@ -327,8 +343,15 @@ export const getNewExperimentInfo = async (dataContextName: string, experimentHa
 
   // any cases?
   if (result.values.length > 0) {
+    /*
+      This has been disabled due to a request to always create a new experiment in SAMPLER-82.
+      If this turns out not to be the desired behavior in the future, this can be uncommented and
+      the code below that sets an empty array for matchingHashItems can be removed.
+
     // check if the experiment already exists
     const matchingHashItems = result.values.filter((item: any) => item.values?.experimentHash === experimentHash);
+    */
+    const matchingHashItems: any[] = [];
 
     if (matchingHashItems.length > 0) {
       // matching experiment found
@@ -442,3 +465,7 @@ export const updatePluginTitle = async (instance: number) => {
   });
 };
 
+export const setDimensions = async ({width, height}: Dimensions) => {
+  const values = {dimensions: {width, height}};
+  await codapInterface.sendRequest({ action: "update", resource: "interactiveFrame", values});
+};

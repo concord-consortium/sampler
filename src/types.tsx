@@ -240,6 +240,7 @@ export interface IDevice {
   formulas: Record<string, string>;
   hidden: boolean;
   lockPassword: string;
+  itemLabels: string;
 }
 
 // a map of variables to their percentages
