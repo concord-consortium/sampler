@@ -9,13 +9,13 @@ export const modelHasSpinner = (model: IModel) => {
 };
 
 export const computeExperimentHash = async (globalState: IGlobalState): Promise<string> => {
-  const {model, repeat, replacement, sampleSize, numSamples, untilFormula} = globalState;
+  const {model, repeat, sampleSize, numSamples, untilFormula} = globalState;
 
   const signature = model.columns.reduce<string[]>((acc, column) => {
     acc.push(JSON.stringify(column));
     return acc;
   }, [])
-  .concat(JSON.stringify({repeat, replacement, sampleSize, numSamples, untilFormula}))
+  .concat(JSON.stringify({repeat, sampleSize, numSamples, untilFormula}))
   .join("+");
 
   const encoder = new TextEncoder();
@@ -89,4 +89,14 @@ export const getExperimentDescription = (model: IModel, replacement: boolean): s
   const deviceStr = firstDevice.viewType.charAt(0).toUpperCase() + firstDevice.viewType.slice(1);
 
   return `${deviceStr} containing ${numItems} ${itemsType}${replacement && !hasSpinner ? " (with replacement)" : ""}`;
+};
+
+export const isSingleDeviceReplacement = (model: IModel): boolean => {
+  const numDevices = model.columns.reduce<number>((acc, column) => acc + column.devices.length, 0);
+  if (numDevices > 1) {
+    return false;
+  }
+
+  const firstDevice = model.columns[0].devices[0];
+  return firstDevice.viewType !== "spinner" && firstDevice.replacement;
 };

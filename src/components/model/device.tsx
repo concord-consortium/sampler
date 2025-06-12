@@ -16,6 +16,7 @@ import { parseSpecifier } from "../../utils/utils";
 import { IDevice, IDataContext, ClippingDef, ViewType, IItem, IVariables } from "../../types";
 import { removeDeviceFromFormulas } from "../../helpers/model-helpers";
 import { DeviceVisibility } from "./device-visibility";
+import { DeviceReplacement } from "./device-replacement";
 import { getCollectorAttrs, getCollectorItemValues } from "../../utils/collector";
 import { deleteItemAttrs, getCollectionNames, getItemAttrs } from "../../helpers/codap-helpers";
 import { getModelAttrs } from "../../utils/model";
@@ -443,6 +444,7 @@ export const Device = (props: IProps) => {
     <div className={`device-controls-container ${multipleColumns ? "multiple-columns" : ""}`} onClick={handleSelectDevice}>
       <div className={`device-container ${isSelectedDevice ? "selected" : ""}`} data-device-id={device.id}>
         <DeviceVisibility device={device} columnIndex={columnIndex} />
+        <DeviceReplacement device={device} columnIndex={columnIndex} />
         <div className="device-svg-container">
           <div className={`device-frame ${viewType}`}>
             <svg

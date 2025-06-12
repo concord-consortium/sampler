@@ -22,6 +22,10 @@ $teal-dark: #177991;
         fill: white;
       }
     }
+
+    &.disabled {
+      opacity: 0.4;
+    }
   }
 
   .device-visibility-dialog {

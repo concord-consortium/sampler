@@ -15,7 +15,7 @@ interface IProps {
 
 export const DeviceVisibility = ({device, columnIndex }: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { selectedDeviceId } = globalState;
+  const { selectedDeviceId, isRunning } = globalState;
   const { hidden, lockPassword } = device;
   const [ showDialog, setShowDialog ] = useState(false);
   const [ password, setPassword ] = useState("");
@@ -42,6 +42,9 @@ export const DeviceVisibility = ({device, columnIndex }: IProps) => {
   }, [hidden, lockPassword, password, showDialog]);
 
   const handleToggleVisibility = useCallback(() => {
+    if (isRunning) {
+      return; // Do not allow visibility toggle while running
+    }
     if (!hidden || lockPassword.length > 0) {
       setShowDialog(true);
     } else {
@@ -52,7 +55,7 @@ export const DeviceVisibility = ({device, columnIndex }: IProps) => {
         }
       });
     }
-  }, [columnIndex, hidden, lockPassword.length, selectedDeviceId, setGlobalState]);
+  }, [columnIndex, hidden, isRunning, lockPassword.length, selectedDeviceId, setGlobalState]);
 
   const handleCloseDialog = () => {
     setShowDialog(false);
@@ -126,7 +129,7 @@ export const DeviceVisibility = ({device, columnIndex }: IProps) => {
 
   return (
     <div className="device-visibility">
-      <div className={`device-visibility-icon-wrapper ${showDialog ? "active" : "clickable"}`}>
+      <div className={`device-visibility-icon-wrapper ${showDialog ? "active" : "clickable"} ${isRunning ? "disabled" : ""}`}>
         <VisibilityIcon className="device-visibility-icon" onClick={handleToggleVisibility} />
       </div>
       {showDialog && renderDialog()}
