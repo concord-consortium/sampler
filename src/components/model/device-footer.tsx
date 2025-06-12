@@ -121,6 +121,9 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
           draft.model.columns[columnIndex].name = "output";
           deviceToUpdate.variables = createDefaultDevice().variables;
         }
+        if (view === "spinner") {
+          deviceToUpdate.replacement = true; // reset replacement to true when switching to spinner
+        }
         draft.enableRunButton = view !== ViewType.Collector || (draft.collectorContextName !== "");
         deviceToUpdate.viewType = view;
       }
