@@ -30,6 +30,8 @@ export const getDefaultState = (): IGlobalState => {
     speed: 1,
     untilFormula: "",
     instance: 0,
+    repeatCondition: "expressionOrPattern",
+    repeatNumUniqueValues: 1,
   };
 };
 
@@ -116,6 +118,12 @@ export const migrateState = (state: IGlobalState) => {
   }
   if (state.instance === undefined) {
     state.instance = 0;
+  }
+  if (state.repeatCondition === undefined) {
+    state.repeatCondition = "expressionOrPattern";
+  }
+  if (state.repeatNumUniqueValues === undefined) {
+    state.repeatNumUniqueValues = 1;
   }
 };
 

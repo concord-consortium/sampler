@@ -91,6 +91,23 @@ export const getExperimentDescription = (model: IModel, replacement: boolean): s
   return `${deviceStr} containing ${numItems} ${itemsType}${replacement && !hasSpinner ? " (with replacement)" : ""}`;
 };
 
+export const isRunButtonEnabled = (globalState: IGlobalState): boolean => {
+  const {repeat, sampleSize, untilFormula, repeatCondition, repeatNumUniqueValues} = globalState;
+
+  if (repeat) {
+    switch (repeatCondition) {
+      case "expressionOrPattern":
+        return untilFormula.trim() !== "";
+      case "uniqueValues":
+        return repeatNumUniqueValues > 0;
+      default:
+        return false;
+    }
+  } else {
+    return sampleSize.length > 0;
+  }
+};
+
 export const isSingleDeviceReplacement = (model: IModel): boolean => {
   const numDevices = model.columns.reduce<number>((acc, column) => acc + column.devices.length, 0);
   if (numDevices > 1) {

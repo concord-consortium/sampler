@@ -275,6 +275,7 @@ $pluginMinWidth: 304px;
       input {
         margin: 0;
         padding: 2px 5px;
+        width: 200px;
       }
     }
   }
@@ -346,10 +347,12 @@ $pluginMinWidth: 304px;
   }
 }
 
-.help-modal {
+.repeat-until-modal {
   position: absolute;
-  top: 100px;
+  top: 60px;
   left: 25px;
+  width: 268px;
+  height: 300px;
   border-radius: 6px;
   box-shadow: 0 1px 20px 0 rgba(0, 0, 0, 0.25);
   padding: 0;
@@ -375,26 +378,87 @@ $pluginMinWidth: 304px;
   }
 
   .modal-body {
-    margin: 0 0 0 12px;
-    padding: 0 12px 0 0;
+    padding: 10px;
     text-align: left;
     overflow-y: auto;
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-weight: 500;
+    font-size: 11px;
 
-    .help-section-title {
-      color: black;
-      font-size: 12.5px;
-      font-weight: bold;
+    .modal-body-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+
+      label {
+        display: block;
+        font-weight: bold;
+      }
     }
 
-    .help-section-body {
-      color: black;
-      font-weight: 500;
+    .select {
+      position: relative;
+      width: 100%;
+      margin: 0;
+      display: flex;
+      flex-direction: row;
+
+      select {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 100%;
+        height: 22px;
+        padding: 1px 8px 1px 8px;
+        border-radius: 1.5px;
+        border: solid 1px #008cba;
+        background-color: #dbf6ff;
+        cursor: pointer;
+      }
+      &::after {
+        content: url("../../assets/dropdown-arrow-icon.svg");
+        position: absolute;
+        right: 0;
+        pointer-events: none;
+      }
+    }
+
+    .input {
+      position: relative;
+      width: 100%;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+
+      input[type="text"] {
+        padding: 3px 5px;
+        width: initial;
+      }
+      input[type="number"] {
+        width: 50px;
+        padding: 3px 5px;
+      }
+    }
+
+    .help {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+
+      .title {
+        font-weight: bold;;
+      }
     }
   }
 
   .modal-footer {
     display: flex;
+    gap: 10px;
     align-items: center;
     justify-content: center;
     height: 40px;
@@ -413,15 +477,5 @@ $pluginMinWidth: 304px;
       justify-content: center;
       cursor: pointer;
     }
-  }
-
-  // Resize handle
-  .resize-handle {
-    width: 24px;
-    height: 24px;
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    cursor: se-resize;
   }
 }

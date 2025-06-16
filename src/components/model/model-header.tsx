@@ -1,28 +1,26 @@
 import React, { useMemo } from "react";
 import { SpeedSlider } from "./model-speed-slider";
-import { HelpModal } from "./help-modal";
-import InfoIcon from "../../assets/help-icon.svg";
 import WithReplacementIcon from "../../assets/with-replacement-icon.svg";
 import WithoutReplacementIcon from "../../assets/without-replacement-icon.svg";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { deleteAllItems, deleteItemAttrs, findOrCreateDataContext, getItemAttrs } from "../../helpers/codap-helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
-import { modelHasSpinner } from "../../helpers/model-helpers";
+import { isRunButtonEnabled, modelHasSpinner } from "../../helpers/model-helpers";
 import { getCollectorAttrs, isCollectorOnlyModel } from "../../utils/collector";
 import { getModelAttrs } from "../../utils/model";
+import { RepeatUntilModal } from "./repeat-until-modal";
 import { CustomSelect, CustomSelectOption } from "../common/custom-select";
 
 interface IProps {
-  showHelp: boolean;
+  showRepeatUntil: boolean;
   isWide: boolean;
-  setShowHelp: (showHelp: boolean) => void;
-  handleOpenHelp: () => void;
+  setShowRepeatUntil: (value: boolean) => void
 }
 
 export const ModelHeader = (props: IProps) => {
-  const { showHelp, setShowHelp, isWide, handleOpenHelp } = props;
+  const { showRepeatUntil, isWide, setShowRepeatUntil } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, model, dataContextName, untilFormula, attrMap } = globalState;
+  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, model, dataContextName, untilFormula, attrMap, repeatCondition, repeatNumUniqueValues } = globalState;
   const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
   const startToggleDisabled = !isRunning && !enableRunButton;
 
@@ -89,11 +87,7 @@ export const ModelHeader = (props: IProps) => {
   const handleSelectRepeat = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setGlobalState(draft => {
       draft.repeat = e.target.value === "repeat";
-      if (draft.repeat) {
-        draft.enableRunButton = draft.untilFormula.trim() !== "";
-      } else {
-        draft.enableRunButton = draft.sampleSize.length > 0;
-      }
+      draft.enableRunButton = isRunButtonEnabled(draft);
     });
   };
 
@@ -125,12 +119,20 @@ export const ModelHeader = (props: IProps) => {
     });
   };
 
-  const handleUntilFormulaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setGlobalState(draft => {
-      draft.untilFormula = e.target.value;
-      draft.enableRunButton = draft.untilFormula.trim() !== "";
-    });
+  const handleShowRepeatUntil = () => {
+    setShowRepeatUntil(true);
   };
+
+  const repeatUntilDisplay = useMemo(() => {
+    switch (repeatCondition) {
+      case "expressionOrPattern":
+        return untilFormula.trim();
+      case "uniqueValues":
+        return `uniqueValues() = ${repeatNumUniqueValues}`;
+      default:
+        return "";
+    }
+  }, [repeatCondition, repeatNumUniqueValues, untilFormula]);
 
   const clearDataButtonDisabled = isRunning || dataContextName === "";
 
@@ -162,9 +164,8 @@ export const ModelHeader = (props: IProps) => {
           {repeat &&
             <div className={`repeat-until-controls ${isWide ? "wide" : ""}`}>
               <span>until</span>
-              <input type="text" value={untilFormula} onChange={handleUntilFormulaChange}></input>
-              <InfoIcon onClick={handleOpenHelp}/>
-              {showHelp && <HelpModal setShowHelp={setShowHelp}/>}
+              <input type="text" value={repeatUntilDisplay} onClick={handleShowRepeatUntil} onChange={handleShowRepeatUntil}></input>
+              {showRepeatUntil && <RepeatUntilModal setShowRepeatUntil={setShowRepeatUntil} />}
             </div>
           }
         </div>
