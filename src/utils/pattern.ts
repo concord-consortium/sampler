@@ -7,22 +7,36 @@ export const isPattern = (untilFormulaOrPattern: string): boolean => {
   return isSingleValue || (hasComma && !hasParentheses);
 };
 
-export const evaluatePattern = (untilPattern: string, outputs: ISampleResults): boolean => {
-  const desired = untilPattern
+export const evaluatePattern = (untilPattern: string, outputs: ISampleResults[]): boolean => {
+  const desiredValues = untilPattern
     .split(",")
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
-  const actual = Object.values(outputs);
+  const keys = Object.keys(outputs[0]);
 
-  if (desired.length !== actual.length) {
-    throw new Error(`Evaluating "until" pattern: ${untilPattern}.\n\nThe number of desired items does not match the number of actual items.`);
-  }
-
-  if (!desired.every((item, index) => item === actual[index])) {
+  // short circuit if we don't have enough outputs
+  if ((desiredValues.length > outputs.length) || (keys.length === 0)) {
     return false;
   }
 
-  return true;
+  // check if the desired values match any sequence in the outputs
+  for (const key of keys) {
+    const testValues = outputs.map((output) => output[key]);
+    for (let i = 0; i <= testValues.length - desiredValues.length; i++) {
+      let match = true;
+      for (let j = 0; j < desiredValues.length; j++) {
+        if (testValues[i + j] !== desiredValues[j]) {
+          match = false;
+          break;
+        }
+      }
+      if (match) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 };
 
 

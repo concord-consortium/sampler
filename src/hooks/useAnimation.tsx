@@ -233,6 +233,8 @@ export const useAnimationContextValue = (): IAnimationContext => {
 
       counts.totalSamples++;
 
+      const accumulatedOutputs: ISampleResults[] = [];
+
       while (!doneSampling) {
         const sample: { [key: string]: string | number } = {};
         sample[attrMap.experiment.name] = experimentNum;
@@ -251,6 +253,8 @@ export const useAnimationContextValue = (): IAnimationContext => {
         const outputKeys = Object.keys(outputs);
         doneSampling = outputKeys.length === 0;
 
+        accumulatedOutputs.push(outputs);
+
         if (!doneSampling) {
           outputKeys.forEach(key => {
             sample[key] = outputs[key];
@@ -262,7 +266,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
           if (repeat) {
             if (isPattern(untilFormula)) {
               // this will throw a correctly formatted error message if the pattern is invalid
-              doneSampling = evaluatePattern(untilFormula, outputs);
+              doneSampling = evaluatePattern(untilFormula, accumulatedOutputs);
             } else {
               // must use try/catch here to customize the error message
               try {
