@@ -1,0 +1,29 @@
+.device-replacement {
+  position: absolute;
+  top: 25px;
+  left: 0;
+
+  .device-replacement-icon-wrapper {
+    cursor: pointer;
+
+    .device-replacement-icon path {
+      fill: #177991;
+    }
+
+    &:hover,
+    &.active {
+      background-color: #008cba;
+      border: 1px solid #008cba;
+      border-radius: 0 5px 5px 0;
+      border-left: none;
+
+      .device-replacement-icon path {
+        fill: white;
+      }
+    }
+
+    &.disabled {
+      opacity: 0.4;
+    }
+  }
+}

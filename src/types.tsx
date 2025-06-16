@@ -136,7 +136,6 @@ export interface IGlobalState {
   selectedDeviceId: Id | undefined;
   selectedTab: NavTab;
   repeat: boolean;
-  replacement: boolean;
   sampleSize: string;
   numSamples: string;
   enableRunButton: boolean;
@@ -241,6 +240,7 @@ export interface IDevice {
   collectorVariables: ICollectorVariables;
   formulas: Record<string, string>;
   hidden: boolean;
+  replacement: boolean;
   lockPassword: string;
   itemLabels: string;
 }

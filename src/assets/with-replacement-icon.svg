@@ -1,0 +1,12 @@
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none">
+        <g fill-rule="evenodd">
+            <path d="M13 9c-3 1-7 3.776-7 7.2" />
+            <path fill="#177991" d="m17.577 7.51-4.125 4.121L12 5.81z"/>
+            <g>
+                <path d="M13 14c-1.333-2-3.066-2.624-5.2-1.873" />
+                <path fill="#177991" d="m15.188 17.262-5.405-2.188 4.792-3.611z"/>
+            </g>
+        </g>
+    </g>
+</svg>
