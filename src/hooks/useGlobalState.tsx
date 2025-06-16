@@ -18,7 +18,6 @@ export const getDefaultState = (): IGlobalState => {
     selectedTab: "Model",
     selectedDeviceId: undefined,
     repeat: false,
-    replacement: true,
     sampleSize: "5",
     numSamples: "3",
     enableRunButton: true,
@@ -68,7 +67,8 @@ export const migrateOrCreateInteractiveState = (interactiveState: any, defaultGl
         variables: oldPluginState.variables ?? defaultGlobalState.model.columns[0].devices[0].variables,
         hidden: oldPluginState.hidden ?? false,
         lockPassword: oldPluginState.password ?? "",
-        itemLabels: ""
+        itemLabels: "",
+        replacement: viewType === "spinner" ? true : (oldPluginState.withReplacement ?? true),
       })]
     };
 
@@ -76,7 +76,6 @@ export const migrateOrCreateInteractiveState = (interactiveState: any, defaultGl
       numSamples: String(oldPluginState.repeat ?? defaultGlobalState.numSamples),
       sampleSize: String(oldPluginState.draw ?? defaultGlobalState.sampleSize),
       speed,
-      replacement: oldPluginState.withReplacement ?? true,
       dataContextName: oldPluginState.dataSetName ?? "",
       model: {
         columns: [firstColumn]
