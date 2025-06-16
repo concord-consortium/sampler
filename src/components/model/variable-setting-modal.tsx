@@ -23,6 +23,8 @@ export const SetVariableSeriesModal = ({
   const [position, _setPosition] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const modalBounds = useRef<DOMRect | null>(null);
+  const appBounds = useRef<DOMRect | null>(null);
 
   const style = useMemo(() => {
     if (!dragged) {
@@ -31,10 +33,15 @@ export const SetVariableSeriesModal = ({
 
     const { x, y } = position;
 
+    const maxLeft = (appBounds.current?.width || 0) - (modalBounds.current?.width || 0);
+    const maxTop = (appBounds.current?.height || 0) - (modalBounds.current?.height || 0);
+    const left = Math.min(Math.max(0, x + delta.x), maxLeft);
+    const top = Math.min(Math.max(0, y + delta.y), maxTop);
+
     return {
       position: "fixed",
-      left: x + delta.x,
-      top: y + delta.y,
+      left,
+      top,
       zIndex: 1000,
       cursor: dragging ? "grabbing" : "default",
       touchAction: "none",
@@ -48,6 +55,9 @@ export const SetVariableSeriesModal = ({
   const startDrag = ({clientX, clientY}: ClientPosition) => {
     setDragged(true);
     setDragging(true);
+
+    modalBounds.current = modalRef.current?.getBoundingClientRect() || null;
+    appBounds.current = document.querySelector(".App")?.getBoundingClientRect() || null;
 
     setDelta({
       x: (modalRef.current?.getBoundingClientRect().left || 0) - clientX,
