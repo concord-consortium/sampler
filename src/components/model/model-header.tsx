@@ -7,7 +7,7 @@ import WithoutReplacementIcon from "../../assets/without-replacement-icon.svg";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { deleteAllItems, deleteItemAttrs, findOrCreateDataContext, getItemAttrs } from "../../helpers/codap-helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
-import { isSingleDeviceReplacement, modelHasSpinner } from "../../helpers/model-helpers";
+import { modelHasSpinner } from "../../helpers/model-helpers";
 import { getCollectorAttrs, isCollectorOnlyModel } from "../../utils/collector";
 import { getModelAttrs } from "../../utils/model";
 import { CustomSelect, CustomSelectOption } from "../common/custom-select";

@@ -5,7 +5,7 @@ import { useGlobalStateContext } from "./useGlobalState";
 import { evaluateResult, findOrCreateDataContext, getNewExperimentInfo } from "../helpers/codap-helpers";
 import { getDeviceById } from "../models/model-model";
 import { formatFormula, parseFormula } from "../utils/utils";
-import { computeExperimentHash, getExperimentDescription, isSingleDeviceReplacement, modelHasSpinner } from "../helpers/model-helpers";
+import { computeExperimentHash, getExperimentDescription, isSingleDeviceReplacement } from "../helpers/model-helpers";
 import { getVariables } from "../utils/formula-parser";
 import { getCollectorAttrs, getCollectorFirstNameVariables, isCollectorOnlyModel, maybeRenameCollectorItem } from "../utils/collector";
 import { evaluatePattern, isPattern } from "../utils/pattern";
