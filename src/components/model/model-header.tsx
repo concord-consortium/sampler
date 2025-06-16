@@ -2,12 +2,15 @@ import React, { useMemo } from "react";
 import { SpeedSlider } from "./model-speed-slider";
 import { HelpModal } from "./help-modal";
 import InfoIcon from "../../assets/help-icon.svg";
+import WithReplacementIcon from "../../assets/with-replacement-icon.svg";
+import WithoutReplacementIcon from "../../assets/without-replacement-icon.svg";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { deleteAllItems, deleteItemAttrs, findOrCreateDataContext, getItemAttrs } from "../../helpers/codap-helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { modelHasSpinner } from "../../helpers/model-helpers";
 import { getCollectorAttrs, isCollectorOnlyModel } from "../../utils/collector";
 import { getModelAttrs } from "../../utils/model";
+import { CustomSelect, CustomSelectOption } from "../common/custom-select";
 
 interface IProps {
   showHelp: boolean;
@@ -19,12 +22,35 @@ interface IProps {
 export const ModelHeader = (props: IProps) => {
   const { showHelp, setShowHelp, isWide, handleOpenHelp } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, model, replacement, dataContextName, untilFormula, attrMap } = globalState;
+  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, model, dataContextName, untilFormula, attrMap } = globalState;
   const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
   const startToggleDisabled = !isRunning && !enableRunButton;
 
-  // allowReplacement when there are no spinners
-  const allowReplacement = useMemo(() => !modelHasSpinner(model), [model]);
+  const numDevices = useMemo(() => model.columns.reduce<number>((acc, column) => acc + column.devices.length, 0), [model]);
+  const multipleDevices = useMemo(() => numDevices > 1, [numDevices]);
+  const firstDevice = useMemo(() => model.columns[0].devices[0], [model]);
+  const hasSpinner = useMemo(() => modelHasSpinner(model), [model]);
+  const replacementValue = useMemo(() => {
+    if (multipleDevices) {
+      return "multiple";
+    }
+    if (firstDevice.viewType === "spinner") {
+      return "with";
+    }
+    return firstDevice.replacement ? "with" : "without";
+  }, [multipleDevices, firstDevice.viewType, firstDevice.replacement]);
+  const allowReplacement = useMemo(() => !multipleDevices && !hasSpinner, [multipleDevices, hasSpinner]);
+
+  const replacementOptions = useMemo(() => {
+    const options: CustomSelectOption[] = [
+      { value: "with", label: "with replacement", icon: <WithReplacementIcon /> },
+      { value: "without", label: "without replacement", icon: <WithoutReplacementIcon /> }
+    ];
+    if (multipleDevices) {
+      options.unshift({ value: "multiple", label: "replacement controlled per device" });
+    }
+    return options;
+  }, [multipleDevices]);
 
   const handleToggleRun = () => {
     if (isRunning) {
@@ -82,9 +108,9 @@ export const ModelHeader = (props: IProps) => {
     });
   };
 
-  const handleSelectReplacement = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSelectReplacement = (value: string) => {
     setGlobalState(draft => {
-      draft.replacement = e.target.value === "with";
+      draft.model.columns[0].devices[0].replacement = value === "with";
     });
   };
 
@@ -130,10 +156,7 @@ export const ModelHeader = (props: IProps) => {
             {!repeat && <input disabled={isRunning} type="number" min={1} id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>}
             <span>{`${repeat ? "selecting" : ""} items`}</span>
             <div className="select-replacement-dropdown">
-              <select disabled={isRunning || !allowReplacement} value={replacement ? "with" : "without"} onChange={handleSelectReplacement}>
-                <option value="with">with replacement</option>
-                <option value="without">without replacement</option>
-              </select>
+              <CustomSelect disabled={isRunning || !allowReplacement} value={replacementValue} onChange={handleSelectReplacement} options={replacementOptions} />
             </div>
           </div>
           {repeat &&
