@@ -57,7 +57,7 @@
     "test:cypress:open": "cypress open",
     "test:coverage:cypress:open": "cypress open --env coverage=true",
     "test:full": "npm-run-all test test:cypress",
-    "strings:pull": "node bin/pull-strings.js --prefix=DG.plugin --out=./src/strings.json"
+    "strings:pull": "node scripts/pull-strings.js"
   },
   "repository": {
     "type": "git",

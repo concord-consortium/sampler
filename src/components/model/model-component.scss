@@ -25,10 +25,10 @@ $pluginMinWidth: 304px;
       align-items: center;
       justify-content: center;
       height: 22px;
-      width: 52px;
       color: black;
       letter-spacing: 0.01px;
       margin: 0 5px 0 0;
+      padding: 3px 7px;
       border-radius: 1.5px;
       border: solid 1px #008cba;
       background-color: #dbf6ff;
@@ -46,8 +46,8 @@ $pluginMinWidth: 304px;
       flex-direction: row;
       align-items: center;
       margin: 0 8px;
-      width: 88px;
       position: relative;
+      white-space: nowrap;
 
       .tick-marks-container {
         display: flex;
@@ -161,7 +161,6 @@ $pluginMinWidth: 304px;
       background-color: #fff;
     }
     button.clear-data-button {
-      width: 85px;
       white-space: nowrap;
     }
   }

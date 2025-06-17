@@ -1,4 +1,5 @@
 import { Updater } from "use-immer";
+import { tr } from "./utils/localeManager";
 
 export type Id = string;
 
@@ -28,10 +29,10 @@ export enum Speed {
 }
 
 export const speedLabels: Record<Speed, string> = {
-  [Speed.Slow]: "Slow",
-  [Speed.Medium]: "Medium",
-  [Speed.Fast]: "Fast",
-  [Speed.Fastest]: "Fastest"
+  [Speed.Slow]: tr("DG.Plugin.Sampler.speed.slow"),
+  [Speed.Medium]: tr("DG.Plugin.Sampler.speed.medium"),
+  [Speed.Fast]: tr("DG.Plugin.Sampler.speed.fast"),
+  [Speed.Fastest]: tr("DG.Plugin.Sampler.speed.Fastest")
 };
 
 export type ModelChangedAnimationStep = {
