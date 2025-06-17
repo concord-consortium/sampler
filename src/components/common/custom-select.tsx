@@ -111,12 +111,6 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           {selected?.icon && <span className="icon">{selected.icon}</span>}
           <span className={selected?.icon ? "" : "no-icon"}>{selected ? selected.label : placeholder}</span>
         </div>
-        <img
-          src="/assets/dropdown-arrow-icon.svg"
-          alt=""
-          className="dropdown-arrow"
-          aria-hidden="true"
-        />
       </div>
 
       {open && !disabled && (
