@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useState } from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { RepeatCondition } from "../../types";
 import { isRunButtonEnabled } from "../../helpers/model-helpers";
+import { useDragModal } from "../../hooks/use-drag-modal";
 
 interface IProps {
   setShowRepeatUntil: (value: boolean) => void
@@ -9,8 +10,8 @@ interface IProps {
 
 export const RepeatUntilModal = ({ setShowRepeatUntil }: IProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 25, y: 60 });
+  const {style, handleMouseDown, handleTouchStart} = useDragModal({modalRef, startPosition: { x: 25, y: 60 }});
+
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { untilFormula, repeatCondition, repeatNumUniqueValues } = globalState;
   const [expressionOrPattern, setExpressionOrPattern] = useState(untilFormula);
@@ -20,27 +21,6 @@ export const RepeatUntilModal = ({ setShowRepeatUntil }: IProps) => {
   const handleCloseModal = useCallback(() => {
     setShowRepeatUntil(false);
   }, [setShowRepeatUntil]);
-
-  const handleMouseDown = (event: React.MouseEvent) => {
-    event.preventDefault();
-    const startX = event.clientX - position.x;
-    const startY = event.clientY - position.y;
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      setPosition({
-        x: moveEvent.clientX - startX,
-        y: moveEvent.clientY - startY,
-      });
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  };
 
   const handleSave = useCallback(() => {
     const newUntilFormula = expressionOrPattern.trim();
@@ -124,12 +104,9 @@ export const RepeatUntilModal = ({ setShowRepeatUntil }: IProps) => {
     <div
       ref={modalRef}
       className="repeat-until-modal"
-      style={{
-        left: position.x,
-        top: position.y,
-      }}
+      style={style}
     >
-      <div ref={headerRef} className="modal-header" onMouseDown={handleMouseDown}>
+      <div className="modal-header" onMouseDown={handleMouseDown} onTouchStart={handleTouchStart}>
         Condition to End Repetition
       </div>
       <div className="modal-body">
