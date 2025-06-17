@@ -10,6 +10,12 @@ import { getCollectorAttrs, isCollectorOnlyModel } from "../../utils/collector";
 import { getModelAttrs } from "../../utils/model";
 import { RepeatUntilModal } from "./repeat-until-modal";
 import { CustomSelect, CustomSelectOption } from "../common/custom-select";
+import { tr } from "../../utils/localeManager";
+
+const startLabel = tr("DG.Plugin.Sampler.top-bar.run");
+const pauseLabel = tr("DG.Plugin.Sampler.top-bar.pause");
+const stopLabel = tr("DG.Plugin.Sampler.top-bar.stop");
+const clearDataLabel = tr("DG.Plugin.Sampler.reset-text");
 
 interface IProps {
   showRepeatUntil: boolean;
@@ -140,10 +146,10 @@ export const ModelHeader = (props: IProps) => {
     <div className="model-header">
       <div className="model-controls">
         <div className="inner-controls">
-          <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? (isPaused ? "START" : "PAUSE") : "START"}</button>
-          <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>STOP</button>
+          <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? (isPaused ? startLabel : pauseLabel) : startLabel}</button>
+          <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>{stopLabel}</button>
           <SpeedSlider />
-          <button disabled={clearDataButtonDisabled} className={`clear-data-button ${clearDataButtonDisabled ? "disabled" : ""}`} onClick={handleClearData}>CLEAR DATA</button>
+          <button disabled={clearDataButtonDisabled} className={`clear-data-button ${clearDataButtonDisabled ? "disabled" : ""}`} onClick={handleClearData}>{clearDataLabel}</button>
         </div>
       </div>
       <div className="select-repeat-controls">
