@@ -20,6 +20,13 @@ $teal-dark: #177991;
     align-items: center;
     justify-content: center;
     color: white;
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+
+    span {
+      pointer-events: none;
+    }
   }
   .modal-body {
     padding: 12px;
