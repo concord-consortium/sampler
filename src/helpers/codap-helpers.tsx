@@ -103,7 +103,7 @@ export const hasSamplesCollection = async (dataContextName: string): Promise<boo
   return !!collections.find(c => c.name === collectionNames.samples);
 };
 
-export const findOrCreateDataContext = async (initialDataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>, repeat: boolean, isCollector: boolean, instance: number): Promise<string|null> => {
+export const findOrCreateDataContext = async (initialDataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>, repeat: boolean, isCollector: boolean, instance: number, createTable: boolean): Promise<string|null> => {
   const collectionNames = getCollectionNames();
 
   // if the plugin is being loaded from a CODAP document, the initialDataContextName will be provided
@@ -186,6 +186,11 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
     }
 
     await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState);
+
+    if (createTable) {
+      await createWideTable(finalDataContextName, instance);
+    }
+
     return finalDataContextName;
   } else {
     const createRes = await createDataContext(finalDataContextName);
@@ -210,11 +215,11 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
           const createOutputCollection =
             await createChildCollection(finalDataContextName, collectionNames.items, collectionNames.samples, itemsAttrs);
           if (createOutputCollection.success) {
-            const tableRes = await createWideTable(finalDataContextName, instance);
-            if (tableRes.success) {
-              await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState);
-              return finalDataContextName;
+            await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState);
+            if (createTable) {
+              await createWideTable(finalDataContextName, instance);
             }
+            return finalDataContextName;
           }
         }
       }
