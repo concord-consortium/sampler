@@ -18,6 +18,7 @@ import { Updater } from "use-immer";
 import { parseFormula } from "../utils/utils";
 import { renameVariable, stringify } from "../utils/formula-parser";
 import { kPluginName } from "../constants";
+import { tr } from "../utils/localeManager";
 
 type TCODAPRequest = { action: string; resource: string; };
 
@@ -42,9 +43,9 @@ export const evaluateResult = async (formula: string, value: Record<string, stri
 
 export const getCollectionNames = () => {
   return {
-    experiments: "experiments",
-    samples: "samples",
-    items: "items"
+    experiments: tr("DG.Plugin.Sampler.dataset.experiment-collection-name"),
+    samples: tr("DG.Plugin.Sampler.dataset.sample-collection-name"),
+    items: tr("DG.Plugin.Sampler.dataset.item-collection-name")
   };
 };
 
@@ -118,7 +119,7 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
     const names = listOfDataContextsRes.values.map((dc: {name: string}) => dc.name);
 
     let index = 0;
-    const baseName = 'Sampler';
+    const baseName = tr("DG.Plugin.Sampler.dataset.name");
     finalDataContextName = baseName;
     while (names.indexOf(finalDataContextName) >= 0) {
       index++;

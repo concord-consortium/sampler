@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { tr } from "../../utils/localeManager";
 import { AnimationStep, IAnimationStepSettings } from "../../types";
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
@@ -19,6 +20,7 @@ export const Outputs = () => {
   const [ pushing, setPushing ] = useState(false);
   const [ variables, setVariables ] = useState<string[][]>([]);
   const [ animatedVariables, setAnimatedVariables ] = useState<string[]>([]);
+  const sampleAttributeName = tr("DG.Plugin.Sampler.dataset.attr-sample");
 
   const animate = (step: AnimationStep, settings?: IAnimationStepSettings) => {
     const { kind } = step;
@@ -85,7 +87,7 @@ export const Outputs = () => {
 
   return (
     <div className="outputs">
-      <div className="outputs-title">sample {sampleIndex + 1}</div>
+      <div className="outputs-title">{sampleAttributeName} {sampleIndex + 1}</div>
       <div className="outputs-variables" style={{marginLeft: outsidePushMargin}}>
         {variables.map((variable, index) => (
           <div className="outputs-variable" key={index}>

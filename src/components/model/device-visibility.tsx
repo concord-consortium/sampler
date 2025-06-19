@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
+import { tr } from "../../utils/localeManager";
 import VisibilityIconOn from "../../assets/visibility-on-icon.svg";
 import VisibilityIconOff from "../../assets/visibility-off-icon.svg";
 import LockedIcon from "../../assets/locked-icon.svg";
@@ -17,6 +18,8 @@ export const DeviceVisibility = ({device, columnIndex }: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { selectedDeviceId, isRunning } = globalState;
   const { hidden, lockPassword } = device;
+  const toolTip = hidden
+    ? tr("DG.Plugin.Sampler.tooltip.show-device") : tr("DG.Plugin.Sampler.tooltip.hide-device");
   const [ showDialog, setShowDialog ] = useState(false);
   const [ password, setPassword ] = useState("");
   const isSelectedDevice = useMemo(() => device.id === selectedDeviceId, [device, selectedDeviceId]);
@@ -128,7 +131,7 @@ export const DeviceVisibility = ({device, columnIndex }: IProps) => {
   }
 
   return (
-    <div className="device-visibility">
+    <div className="device-visibility" title={toolTip}>
       <div className={`device-visibility-icon-wrapper ${showDialog ? "active" : "clickable"} ${isRunning ? "disabled" : ""}`}>
         <VisibilityIcon className="device-visibility-icon" onClick={handleToggleVisibility} />
       </div>
