@@ -21,6 +21,8 @@ export interface AttrMap {
   [key: string]: IAttrForMap;
 }
 
+export const defaultOutputAttrName = tr("DG.Plugin.Sampler.dataset.attr-value");
+
 export enum Speed {
   Slow = 0,
   Medium = 1,
@@ -231,6 +233,18 @@ export enum ViewType {
   Spinner = "spinner",
   Collector = "collector"
 }
+
+export const deviceButtonLabels = {
+  [ViewType.Mixer]: tr("DG.Plugin.Sampler.device-selection.mixer"),
+  [ViewType.Spinner]: tr("DG.Plugin.Sampler.device-selection.spinner"),
+  [ViewType.Collector]: tr("DG.Plugin.Sampler.device-selection.collector")
+};
+
+export const deviceButtonTooltips = {
+  [ViewType.Mixer]: tr("DG.Plugin.Sampler.tooltip.choose-mixer"),
+  [ViewType.Spinner]: tr("DG.Plugin.Sampler.tooltip.choose-spinner"),
+  [ViewType.Collector]: tr("DG.Plugin.Sampler.tooltip.choose-collector")
+};
 
 export type View = ViewType.Mixer | ViewType.Spinner | ViewType.Collector;
 

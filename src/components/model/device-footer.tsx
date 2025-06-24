@@ -1,11 +1,13 @@
 import React from "react";
+import { tr } from "../../utils/localeManager";
 import { createDefaultDevice } from "../../models/device-model";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
 import { getNewColumnName, getNewVariable, getProportionalVars } from "../helpers";
 import { createNewAttribute } from "@concord-consortium/codap-plugin-api";
 import { createId } from "../../utils/id";
-import { IDataContext, IDevice, IVariables, ViewType } from "../../types";
+import {IDataContext, IDevice, IVariables, defaultOutputAttrName, ViewType, deviceButtonLabels, deviceButtonTooltips}
+  from "../../types";
 
 import "./device-footer.scss";
 
@@ -26,9 +28,11 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
   const { viewType, hidden } = device;
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
-  const addButtonLabel = targetDevices.length === 0 ? "Add Device" : "Add Branch";
+  const addButtonLabel = targetDevices.length === 0
+    ? tr("DG.Plugin.Sampler.device-add") : tr("DG.Plugin.Sampler.device-branch");
   const showCollectorButton = getNumDevices(model) === 1;
   const showMergeButton = siblingDevices.length > 0;
+  const collectorSelectPrompt = tr("DG.Plugin.Sampler.collector.select-prompt");
 
   const handleAddVariable = () => {
     const { variables } = device;
@@ -75,7 +79,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
         draft.model.columns[newColumnIndex].devices.push(newDevice);
       } else {
         // create the column and add the same number devices as the current column
-        const name: string = getNewColumnName("output", model.columns);
+        const name: string = getNewColumnName(defaultOutputAttrName, model.columns);
         const id: string = createId();
         const numNewDevices = model.columns[columnIndex].devices.length;
         const newDevices = Array.from({length: numNewDevices}, () => createDefaultDevice(currentDeviceViewType));
@@ -118,7 +122,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
 
         if (deviceToUpdate.viewType === ViewType.Collector && view !== ViewType.Collector) {
           // reset the collector device to a default device
-          draft.model.columns[columnIndex].name = "output";
+          draft.model.columns[columnIndex].name = defaultOutputAttrName;
           deviceToUpdate.variables = createDefaultDevice().variables;
         }
         if (view === "spinner") {
@@ -134,9 +138,18 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
     <div className="footer">
       { viewType !== ViewType.Collector &&
         <div className="add-remove-variables-buttons">
-          <button disabled={isRunning || hidden} onClick={handleAddVariable}>+</button>
-          <button disabled={isRunning || hidden} onClick={(e) => handleDeleteVariable(e)}>-</button>
-          <button disabled={isRunning || hidden} onClick={handleSpecifyVariables}>...</button>
+          <button disabled={isRunning || hidden} title={tr("DG.Plugin.Sampler.tooltip.add-item")}
+                  onClick={handleAddVariable}>
+            +
+          </button>
+          <button disabled={isRunning || hidden} title={tr("DG.Plugin.Sampler.tooltip.remove-item")}
+                  onClick={(e) => handleDeleteVariable(e)}>
+            -
+          </button>
+          <button disabled={isRunning || hidden} title={tr("DG.Plugin.Sampler.tooltip.specify-items")}
+                  onClick={handleSpecifyVariables}>
+            ...
+          </button>
         </div>
       }
       <div className="device-buttons">
@@ -147,10 +160,11 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
               return (
                 <button
                   className={viewType === deviceType ? "selected" : ""}
+                  title={deviceButtonTooltips[deviceType]}
                   disabled={isRunning || hidden}
                   onClick={() => handleUpdateViewType(deviceType)}
                   key={deviceType}>
-                    {deviceType}
+                    {deviceButtonLabels[deviceType]}
                 </button>
               );
             }
@@ -162,7 +176,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
           viewType === ViewType.Collector ? (
             dataContexts.length > 0 ?
               <select disabled={isRunning} value={collectorContextName} onChange={handleSelectDataContext}>
-                <option value="">Select a data context</option>
+                <option value="">{collectorSelectPrompt}</option>
                 {
                   dataContexts.map((context) => {
                     return <option value={context.name} key={context.id}>{context.name}</option>;
@@ -171,12 +185,14 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
               </select>
               :
               <div style={{display: "flex", flexDirection: "column", alignItems: "center", gap: 3}}>
-                <div>No data available for the collector.</div>
-                <div>Add a table or import a CSV file.</div>
+                <div>{tr("DG.Plugin.Sampler.collector.noDatasets")}</div>
+                <div>{tr("DG.Plugin.Sampler.collector.add-or-import")}</div>
               </div>
             ):
             <>
-              <button disabled={isRunning} onClick={handleAddDevice}>{addButtonLabel}</button>
+              <button disabled={isRunning} onClick={handleAddDevice} title={tr("DG.Plugin.Sampler.tooltip.add-device")}>
+                {addButtonLabel}
+              </button>
               {showMergeButton && <button disabled={isRunning} onClick={handleMergeDevices}>Merge</button>}
             </>
         }

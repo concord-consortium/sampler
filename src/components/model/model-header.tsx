@@ -13,9 +13,21 @@ import { CustomSelect, CustomSelectOption } from "../common/custom-select";
 import { tr } from "../../utils/localeManager";
 
 const startLabel = tr("DG.Plugin.Sampler.top-bar.run");
+const startTip = tr("DG.Plugin.Sampler.tooltip.start-sampling");
 const pauseLabel = tr("DG.Plugin.Sampler.top-bar.pause");
+const pauseTip = tr("DG.Plugin.Sampler.tooltip.pause-sampling");
 const stopLabel = tr("DG.Plugin.Sampler.top-bar.stop");
+const stopTip = tr("DG.Plugin.Sampler.tooltip.stop-sampling");
 const clearDataLabel = tr("DG.Plugin.Sampler.reset-text");
+const selectLabel = tr("DG.Plugin.Sampler.draw-settings.select-items-p1");
+const itemsLabel = tr("DG.Plugin.Sampler.draw-settings.select-items-p2");
+const repeatLabel = tr("DG.Plugin.Sampler.draw-settings.repeat-items-p1");
+const selectingItemsLabel = tr("DG.Plugin.Sampler.draw-settings.repeat-items-p2");
+const withReplacementLabel = tr("DG.Plugin.Sampler.selection-options.with-replacement");
+const withoutReplacementLabel = tr("DG.Plugin.Sampler.selection-options.without-replacement");
+const replacementPerDeviceLabel = tr("DG.Plugin.Sampler.selection-options.replacement-per-device");
+const collectLabel = tr("DG.Plugin.Sampler.draw-settings.collect-samples-p1");
+const samplesLabel = tr("DG.Plugin.Sampler.draw-settings.collect-samples-p2");
 
 interface IProps {
   showRepeatUntil: boolean;
@@ -47,11 +59,11 @@ export const ModelHeader = (props: IProps) => {
 
   const replacementOptions = useMemo(() => {
     const options: CustomSelectOption[] = [
-      { value: "with", label: "with replacement", icon: <WithReplacementIcon /> },
-      { value: "without", label: "without replacement", icon: <WithoutReplacementIcon /> }
+      { value: "with", label: withReplacementLabel, icon: <WithReplacementIcon /> },
+      { value: "without", label: withoutReplacementLabel, icon: <WithoutReplacementIcon /> }
     ];
     if (multipleDevices) {
-      options.unshift({ value: "multiple", label: "replacement controlled per device" });
+      options.unshift({ value: "multiple", label: replacementPerDeviceLabel });
     }
     return options;
   }, [multipleDevices]);
@@ -146,24 +158,34 @@ export const ModelHeader = (props: IProps) => {
     <div className="model-header">
       <div className="model-controls">
         <div className="inner-controls">
-          <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`} onClick={handleToggleRun}>{isRunning ? (isPaused ? startLabel : pauseLabel) : startLabel}</button>
-          <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`} onClick={handleStopRun}>{stopLabel}</button>
+          <button disabled={startToggleDisabled} className={`start-button ${startToggleDisabled ? "disabled" : ""}`}
+                  title={isRunning ? (isPaused ? startTip : pauseTip) : startTip}
+                  onClick={handleToggleRun}>
+            {isRunning ? (isPaused ? startLabel : pauseLabel) : startLabel}
+          </button>
+          <button disabled={!isRunning} className={`stop-button ${!isRunning ? "disabled" : ""}`}
+                  title={stopTip} onClick={handleStopRun}>
+            {stopLabel}
+          </button>
           <SpeedSlider />
-          <button disabled={clearDataButtonDisabled} className={`clear-data-button ${clearDataButtonDisabled ? "disabled" : ""}`} onClick={handleClearData}>{clearDataLabel}</button>
+          <button disabled={clearDataButtonDisabled} title={tr("DG.Plugin.Sampler.tooltip.clear-data")}
+                  className={`clear-data-button ${clearDataButtonDisabled ? "disabled" : ""}`}
+                  onClick={handleClearData}>{clearDataLabel}
+          </button>
         </div>
       </div>
       <div className="select-repeat-controls">
         <div className="inner-controls">
           <div className="select-repeat-selection">
-            <div className="select-repeat-dropdown">
+            <div className="select-repeat-dropdown" title={tr("DG.Plugin.Sampler.tooltip.select-repeat")}>
               <select disabled={isRunning} value={repeat ? "repeat" : "select"} onChange={handleSelectRepeat}>
-                <option className={`select-repeat-option`} value="select">Select</option>
-                <option className={`select-repeat-option`} value="repeat">Repeat</option>
+                <option className={`select-repeat-option`} value="select">{selectLabel}</option>
+                <option className={`select-repeat-option`} value="repeat">{repeatLabel}</option>
               </select>
             </div>
             {!repeat && <input disabled={isRunning} type="number" min={1} id="sample_size" value={sampleSize} onChange={handleSampleSizeChange}></input>}
-            <span>{`${repeat ? "selecting" : ""} items`}</span>
-            <div className="select-replacement-dropdown">
+            <span>{`${repeat ? selectingItemsLabel : ""} ${itemsLabel}`}</span>
+            <div className="select-replacement-dropdown" title={tr("DG.Plugin.Sampler.tooltip.replacement")}>
               <CustomSelect disabled={isRunning || !allowReplacement} value={replacementValue} onChange={handleSelectReplacement} options={replacementOptions} />
             </div>
           </div>
@@ -178,9 +200,9 @@ export const ModelHeader = (props: IProps) => {
       </div>
       <div className="collect-controls">
         <div className="inner-controls">
-          <span>Collect</span>
+          <span>{collectLabel}</span>
           <input disabled={isRunning} type="number" min={1} id="num_samples" value={numSamples} onChange={handleNumSamplesChange}></input>
-          <span>samples</span>
+          <span>{samplesLabel}</span>
         </div>
       </div>
     </div>

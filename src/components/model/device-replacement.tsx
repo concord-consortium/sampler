@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from "react";
+import { tr } from "../../utils/localeManager";
 import WithReplacementIcon from "../../assets/with-replacement-icon.svg";
 import WithoutReplacementIcon from "../../assets/without-replacement-icon.svg";
 import { IDevice } from "../../types";
@@ -19,13 +20,16 @@ export const DeviceReplacement = ({device, columnIndex }: IProps) => {
 
   const disabled = useMemo(() => isRunning || device.viewType === "spinner", [isRunning, device.viewType]);
   const title = useMemo(() => {
+    const withReplacementLabel = tr("DG.Plugin.Sampler.device-icon.with-replacement");
+    const withoutReplacementLabel = tr("DG.Plugin.Sampler.device-icon.without-replacement");
+    const spinnerReplacementLabel = tr("DG.Plugin.Sampler.device-icon.spinner.replacement");
     if (disabled) {
       if (isRunning) {
         return undefined; // No tooltip when running
       }
-      return "With replacement cannot be changed for Spinner";
+      return spinnerReplacementLabel;
     }
-    return device.replacement ? "With replacement" : "Without replacement";
+    return device.replacement ? withReplacementLabel : withoutReplacementLabel;
   }, [disabled, device.replacement, isRunning]);
 
   const handleToggle = useCallback(() => {

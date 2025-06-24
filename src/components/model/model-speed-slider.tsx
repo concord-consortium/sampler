@@ -1,6 +1,7 @@
 import React from "react";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { Speed, speedLabels } from "../../types";
+import { tr } from "../../utils/localeManager";
 
 export const SpeedSlider = () => {
   const { globalState, setGlobalState } = useGlobalStateContext();
@@ -13,7 +14,7 @@ export const SpeedSlider = () => {
   };
 
   return (
-    <div className="speed-slider">
+    <div className="speed-slider" title={tr("DG.Plugin.Sampler.tooltip.sampling-speed")}>
       <input
         type="range"
         min={Speed.Slow}

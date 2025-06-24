@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { tr } from "../../utils/localeManager";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { addMeasure, hasSamplesCollection } from "../../helpers/codap-helpers";
 import { getCollectorAttrNames, getCollectorFirstNameVariables, isCollectorOnlyModel } from "../../utils/collector";
@@ -12,7 +13,7 @@ type MeasureOption = {
 };
 
 const measureLabels: Record<Measure, string> = {
-  default: "Select a formula",
+  default: tr("DG.Plugin.Sampler.measures.select-measure"),
   conditional_count: "Count",
   sum: "Sum",
   mean: "Mean",
@@ -223,11 +224,11 @@ export const MeasuresTab = () => {
   return (
     <div className="measures-tab">
       <div id="measures-instructions">
-        Add common measures using formulas for each sample using the form below.
+        {tr("DG.Plugin.Sampler.measures.instructions")}
       </div>
       <div id="select-measure-container">
         <label htmlFor="select-measure" id="select-measure-label">
-          Select formula:
+          {tr("DG.Plugin.Sampler.measures.select-prompt")}
         </label>
         <div className="select-measure-dropdown">
           <select id="select-measure" onChange={handleSelectMeasureChange} value={selectedMeasure}>
@@ -242,7 +243,7 @@ export const MeasuresTab = () => {
       {!["default", "count_items"].includes(selectedMeasure) && (
         <div id="define-measure-container">
           <label id="define-measure-label">
-            Customize formula:
+            {tr("DG.Plugin.Sampler.measures.customize")}
           </label>
           <div id="measure-formulas">
             <div className="formula">
@@ -252,13 +253,14 @@ export const MeasuresTab = () => {
         </div>
       )}
       <div id="measure-name-container">
-        <label htmlFor="measure-name" id="measure-name-label">Name the measure: </label>
-        <input type="text" id="measure-name" placeholder="Enter measure name here (optional)" value={measureName} onChange={handleChangeMeasureName} />
+        <label htmlFor="measure-name" id="measure-name-label">{tr("DG.Plugin.Sampler.measures.name-prompt")}</label>
+        <input type="text" id="measure-name" placeholder={tr("DG.Plugin.Sampler.measures.name-hint")}
+               value={measureName} onChange={handleChangeMeasureName} />
       </div>
 
       <div id="measures-bottom">
         <button id="add-measure" onClick={handleAddMeasure} disabled={disableAddButton} className={disableAddButton ? "disabled" : ""}>
-          Add Measure
+          {tr("DG.Plugin.Sampler.measures.add-measure")}
         </button>
       </div>
 

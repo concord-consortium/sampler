@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { tr } from "../../utils/localeManager";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { validateFormula } from "../../utils/utils";
 import { IDevice } from "../../types";
@@ -97,7 +98,7 @@ export const FormulaEditor = ({source, target, columnIndex, arrowMidPoint, svgWi
   const labelStyle: React.CSSProperties = {top: labelTop};
 
   return (
-    <div ref={labelRef} className="arrow-label" style={labelStyle}>
+    <div ref={labelRef} className="arrow-label" style={labelStyle} title={tr("DG.Plugin.Sampler.tooltip.pass-through")}>
       { editing
         ? <form className="label-form" onSubmit={handleSubmitEdit}>
             <input disabled={isRunning} type="text" ref={inputRef} defaultValue={formula} onKeyDown={handleLabelKeyDown}

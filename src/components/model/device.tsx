@@ -22,6 +22,7 @@ import { deleteItemAttrs, getCollectionNames, getItemAttrs } from "../../helpers
 import { getModelAttrs } from "../../utils/model";
 
 import "./device.scss";
+import { tr } from "../../utils/localeManager";
 
 interface IProps {
   device: IDevice;
@@ -315,13 +316,13 @@ export const Device = (props: IProps) => {
   const handleUpdateVariablesToSeries = (series: string) => {
     handleUpdateItemLabels(series);
     if (series) {
-      const sequence = parseSpecifier(series, "to");
+      const sequence = parseSpecifier(series, tr("DG.Plugin.Sampler.range-word"));
       if (sequence) {
         // swap contents of sequence into variables without updating variables reference
         clearFixedVariables();
         handleUpdateVariables(sequence);
       }
-      else { alert("parse error in sequence"); }
+      else { alert(tr("DG.Plugin.Sampler.sample-list.parse-error")); }
     }
   };
 
@@ -513,7 +514,8 @@ export const Device = (props: IProps) => {
           </div>
         </div>
         { columnIndex !== 0 && isSelectedDevice &&
-            <div className="device-delete-icon" onClick={handleDeleteDevice}>
+            <div className="device-delete-icon" onClick={handleDeleteDevice}
+                 title={tr("DG.Plugin.Sampler.tooltip.delete-device")}>
               <DeleteIcon />
             </div>
         }

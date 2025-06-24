@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { tr } from "../../utils/localeManager";
 import { useDragModal } from "../../hooks/use-drag-modal";
 
 import "./variable-setting-modal.scss";
@@ -18,6 +19,11 @@ export const SetVariableSeriesModal = ({
 
   const modalRef = useRef<HTMLDivElement>(null);
   const {style, handleMouseDown, handleTouchStart} = useDragModal({modalRef, startPosition: { x: 0, y: 0 }});
+  const dialogBoxTitle = tr("DG.Plugin.Sampler.options.item-labels");
+  const dialogBoxPrompt = tr("DG.Plugin.Sampler.sample-list.prompt");
+  const placeholder = tr("DG.Plugin.Sampler.sample-list.initial-value");
+  const okLabel = tr("DG.Plugin.Sampler.sample-list.ok");
+  const cancelLabel = tr("DG.Plugin.Sampler.sample-list.cancel");
 
   const handleCloseModal = () => {
     setShowVariableEditor(false);
@@ -49,18 +55,16 @@ export const SetVariableSeriesModal = ({
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
       >
-        <span>Set item labels</span>
+        <span>{dialogBoxTitle}</span>
       </div>
       <div className="modal-body">
-        <label htmlFor="variable_names" className="set-variables-input-label">
-          {`Enter a list (e.g. 'cat, cat, dog') or a range (e.g. '1-50', '-5 to 5', '1.0 to 5.0', 'A-Z')`}
-        </label>
+        <label htmlFor="variable_names" className="set-variables-input-label">{dialogBoxPrompt}</label>
         <input
           id="variable_names"
           className="set-variables-input"
           type="text"
           autoFocus={true}
-          placeholder="a to c"
+          placeholder={placeholder}
           value={candidateVariable}
           onChange={(e) => handleVariablesChange(e.target.value)}
           onKeyDown={handleVariablesChangeKeyDown}
@@ -68,10 +72,10 @@ export const SetVariableSeriesModal = ({
       </div>
       <div className="modal-footer">
         <button className="modal-button" onClick={handleCloseModal}>
-          Cancel
+          {cancelLabel}
         </button>
         <button className="modal-button" onClick={handleSubmitVariableSetting}>
-          OK
+          {okLabel}
         </button>
       </div>
     </div>

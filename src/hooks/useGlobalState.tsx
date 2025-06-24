@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect } from "react";
 import { useImmer } from "use-immer";
-import { IColumn, IGlobalState, IGlobalStateContext, ITPSamplerPluginState, Speed, ViewType } from "../types";
+import {IColumn, IGlobalState, IGlobalStateContext, ITPSamplerPluginState, defaultOutputAttrName, Speed, ViewType}
+  from "../types";
 import { addDataContextChangeListener, codapInterface, IInitializePlugin, initializePlugin } from "@concord-consortium/codap-plugin-api";
 import { createDefaultDevice, createDevice } from "../models/device-model";
 import { kInitialDimensions, kPluginName, kVersion } from "../constants";
@@ -15,7 +16,7 @@ const kSamplerInstanceGlobalValueName = "__samplerInstance";
 
 export const getDefaultState = (): IGlobalState => {
   return {
-    model: {columns: [{name: "output", id: createId(), devices: [createDefaultDevice()]}]},
+    model: {columns: [{name: defaultOutputAttrName, id: createId(), devices: [createDefaultDevice()]}]},
     selectedTab: "Model",
     selectedDeviceId: undefined,
     repeat: false,
@@ -61,7 +62,7 @@ export const migrateOrCreateInteractiveState = (interactiveState: any, defaultGl
 
     // generate a model from the v1 settings
     const firstColumn: IColumn = {
-      name: oldPluginState.deviceName ?? "output",
+      name: oldPluginState.deviceName ?? defaultOutputAttrName,
       id: createId(),
       devices: [createDevice({
         viewType,
