@@ -180,6 +180,11 @@ $pluginMinWidth: 304px;
     justify-content: left;
     flex-wrap: wrap;
 
+    #sample_size {
+      width: 50px;
+      padding: 0 0 0 5px;
+    }
+
     .select-repeat-selection {
       display: flex;
       gap: 5px;
@@ -291,6 +296,11 @@ $pluginMinWidth: 304px;
     align-items: center;
     justify-content: left;
     font-weight: 500;
+
+    #num_samples {
+      width: 60px;
+      padding: 0 0 0 5px;
+    }
 
     input {
       width: 34px;
