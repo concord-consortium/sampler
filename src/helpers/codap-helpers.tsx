@@ -68,16 +68,22 @@ const updateAttributeIds = async (dataContextName: string, attrs: Array<string>,
   }));
 
   await codapInterface.sendRequest(reqs, (getAttrsResult: any[]) => {
+    const updatedAttrsIds: Record<keyof AttrMap, string> = {};
     getAttrsResult.forEach((res: {success: boolean, values: Record<string, string>}) => {
       if (res.success) {
         const matchingKey = Object.keys(attrMap).find(key => isKeyOfAttrMap(key) && attrMap[key].name === res.values.name);
         if (matchingKey) {
-          setGlobalState((draft => {
-            draft.attrMap[matchingKey as keyof AttrMap].codapID = res.values.id;
-          }));
+          updatedAttrsIds[matchingKey] = res.values.id;
         }
       }
     });
+    setGlobalState((draft => {
+      for (const [matchingKey, id] of Object.entries(updatedAttrsIds)) {
+        if (draft.attrMap[matchingKey]) {
+          draft.attrMap[matchingKey].codapID = id;
+        }
+      }
+    }));
   });
 };
 
