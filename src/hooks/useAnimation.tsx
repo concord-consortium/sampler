@@ -11,6 +11,7 @@ import { getCollectorAttrs, getCollectorFirstNameVariables, isCollectorOnlyModel
 import { evaluatePattern, isPattern } from "../utils/pattern";
 import { getModelAttrs } from "../utils/model";
 import { evaluateUniqueValues } from "../utils/unique-values";
+import { tr } from "../utils/localeManager";
 
 // maximum number of items to collect before stopping when the repeat until formula is not satisfied
 const maxRepeatUntilItems = 1000;
@@ -83,7 +84,8 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
     steps.push({
       kind: "pushVariables", onComplete: async (settings) => {
         if (sample.length > 0) {
-          const sampleResults = results.filter((result) => result.sample === sample[0].sampleNumber);
+          const sampleAttr = tr("DG.Plugin.Sampler.dataset.attr-sample") || "sample";
+          const sampleResults = results.filter((result) => result[sampleAttr] === sample[0].sampleNumber);
           const createItemsResult = await createItems(dataContextName, sampleResults) as any;
           if (createItemsResult?.caseIDs) {
             // skip selecting cases if we are running at the fastest speed
