@@ -84,7 +84,7 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
     steps.push({
       kind: "pushVariables", onComplete: async (settings) => {
         if (sample.length > 0) {
-          const sampleAttr = tr("DG.Plugin.Sampler.dataset.attr-sample");
+          const sampleAttr = tr("DG.Plugin.Sampler.dataset.attr-sample") || "sample";
           const sampleResults = results.filter((result) => result[sampleAttr] === sample[0].sampleNumber);
           const createItemsResult = await createItems(dataContextName, sampleResults) as any;
           if (createItemsResult?.caseIDs) {
