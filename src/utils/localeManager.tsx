@@ -53,3 +53,12 @@ export function tr(sID: string, args?: string[]): string {
   let ix = 0;
   return s.replace(/%@[0-9]?/g, replacer);
 }
+
+export function getAboutMarkdown(): Promise<string> {
+  return fetch(`/${locale}-about.md`)
+    .then(res => res.text())
+    .catch(() => {
+      console.warn(`Failed to load about markdown for locale "${locale}", falling back to default.`);
+      return fetch(`/en-us-about.md`).then(res => res.text());
+    });
+}

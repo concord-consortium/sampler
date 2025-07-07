@@ -19,7 +19,10 @@ module.exports = (env, argv) => {
   return {
     context: __dirname, // to automatically find tsconfig.json
     devServer: {
-      static: 'dist',
+      static: [
+        { directory: path.resolve(__dirname, 'dist') },
+        { directory: path.resolve(__dirname, 'public') },
+      ],
       allowedHosts: 'all',
       hot: true,
       https: {
