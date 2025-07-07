@@ -1,21 +1,27 @@
 import React, { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import markdownit from 'markdown-it';
 import { getAboutMarkdown } from "../../utils/localeManager";
 
 import "./about.scss";
 //import { esteemLogo } from "./esteem-logo";
 
+const md = markdownit();
+
 export const AboutTab = () => {
-  const [markdown, setMarkdown] = useState('');
+  const [renderedMarkdown, setRenderedMarkdown] = useState('');
 
   useEffect(() => {
     getAboutMarkdown()
-      .then(setMarkdown);
+      .then((markdown) => {
+        const html = md.render(markdown);
+        setRenderedMarkdown(html);
+      });
   }, []);
 
   return (
     <div className="about-tab">
-      <ReactMarkdown>{markdown}</ReactMarkdown>
+      {/* eslint-disable-next-line react/no-danger */}
+      <div dangerouslySetInnerHTML={{__html: renderedMarkdown}} />
     </div>
   );
 };
