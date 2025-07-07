@@ -5,6 +5,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const os = require('os');
 
 // DEPLOY_PATH is set by the s3-deploy-action its value will be:
@@ -20,8 +21,7 @@ module.exports = (env, argv) => {
     context: __dirname, // to automatically find tsconfig.json
     devServer: {
       static: [
-        { directory: path.resolve(__dirname, 'dist') },
-        { directory: path.resolve(__dirname, 'public') },
+        { directory: path.resolve(__dirname, 'dist') }
       ],
       allowedHosts: 'all',
       hot: true,
@@ -151,6 +151,11 @@ module.exports = (env, argv) => {
         favicon: 'src/public/favicon.ico',
         publicPath: DEPLOY_PATH
       })] : []),
+      new CopyWebpackPlugin({
+        patterns: [
+          { from: 'src/public/about', to: './about/' }
+        ]
+      }),
       new CleanWebpackPlugin(),
     ]
   };
