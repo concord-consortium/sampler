@@ -55,10 +55,10 @@ export function tr(sID: string, args?: string[]): string {
 }
 
 export function getAboutMarkdown(): Promise<string> {
-  return fetch(`/about/${locale}-about.md`)
+  return fetch(`./about/${locale}-about.md`)
     .then(res => res.text())
     .catch(() => {
       console.warn(`Failed to load about markdown for locale "${locale}", falling back to default.`);
-      return fetch(`/about/en-us-about.md`).then(res => res.text());
+      return fetch(`./about/en-us-about.md`).then(res => res.text());
     });
 }
