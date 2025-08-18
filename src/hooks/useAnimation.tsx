@@ -37,8 +37,8 @@ const instantStepsInFastMode: string[] = [
 ];
 
 export const createExperimentAnimationSteps = (model: IModel, dataContextName: string, animationResults: IExperimentAnimationResults, results: IExperimentResults, onComplete?: () => void): Array<AnimationStep> => {
-  let lastCaseIdsForFastestSpeed: number[] = [];
   const steps: AnimationStep[] = [];
+  const finalSampleResults: ISampleResults[][] = [];
 
   const devicesById = model.columns.reduce<Record<string, IModel["columns"][number]["devices"][number]>>((acc, column) => {
     column.devices.forEach(device => {
@@ -86,14 +86,13 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
         if (sample.length > 0) {
           const sampleAttr = tr("DG.Plugin.Sampler.dataset.attr-sample") || "sample";
           const sampleResults = results.filter((result) => result[sampleAttr] === sample[0].sampleNumber);
-          const createItemsResult = await createItems(dataContextName, sampleResults) as any;
-          if (createItemsResult?.caseIDs) {
-            // skip selecting cases if we are running at the fastest speed
-            if (settings.speed !== Speed.Fastest) {
+          if (settings.speed === Speed.Fastest) {
+            // in fastest mode the samples are created at the end of the experiment
+            finalSampleResults.push(sampleResults);
+          } else {
+            const createItemsResult = await createItems(dataContextName, sampleResults) as any;
+            if (createItemsResult?.caseIDs) {
               await selectCases(dataContextName, createItemsResult.caseIDs);
-            } else {
-              // keep track of the last case IDs to select at the end of the experiment
-              lastCaseIdsForFastestSpeed = createItemsResult.caseIDs;
             }
           }
         }
@@ -103,9 +102,25 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
   });
 
   steps.push({ kind: "endExperiment", onComplete: async () => {
-    // select the last case IDs if we are running at the fastest speed
-    if (lastCaseIdsForFastestSpeed.length > 0) {
-      await selectCases(dataContextName, lastCaseIdsForFastestSpeed);
+    // in fastest mode the samples are created at the end of the experiment
+    if (finalSampleResults.length > 0) {
+      // create all but the last set of samples in one shot
+      const lastSampleResults = finalSampleResults.pop();
+      if (finalSampleResults.length > 0) {
+        const mergedFinalSampleResults: ISampleResults[] = [];
+        for (const sampleResults of finalSampleResults) {
+          mergedFinalSampleResults.push(...sampleResults);
+        }
+        await createItems(dataContextName, mergedFinalSampleResults);
+      }
+
+      // create the last set of samples and select them
+      if (lastSampleResults) {
+        const createItemsResult = await createItems(dataContextName, lastSampleResults) as any;
+        if (createItemsResult?.caseIDs) {
+          await selectCases(dataContextName, createItemsResult.caseIDs);
+        }
+      }
     }
     onComplete?.();
   }});
