@@ -11,6 +11,7 @@ import { getModelAttrs } from "../../utils/model";
 import { RepeatUntilModal } from "./repeat-until-modal";
 import { CustomSelect, CustomSelectOption } from "../common/custom-select";
 import { tr } from "../../utils/localeManager";
+import { Speed } from "../../types";
 
 const startLabel = tr("DG.Plugin.Sampler.top-bar.run");
 const startTip = tr("DG.Plugin.Sampler.tooltip.start-sampling");
@@ -38,9 +39,13 @@ interface IProps {
 export const ModelHeader = (props: IProps) => {
   const { showRepeatUntil, isWide, setShowRepeatUntil } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, model, dataContextName, untilFormula, attrMap, repeatCondition, repeatNumUniqueValues } = globalState;
+  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, model, dataContextName, untilFormula, attrMap, repeatCondition, repeatNumUniqueValues, speed } = globalState;
   const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
-  const startToggleDisabled = !isRunning && !enableRunButton;
+  // At the fastest speed the experiment runs to completion in a single uninterruptible pass, so
+  // there is nothing for pause to act on. Leaving it enabled would relabel the control to Start
+  // while the run carried on regardless. Stop still applies, and remains enabled.
+  const pauseUnavailable = isRunning && speed === Speed.Fastest;
+  const startToggleDisabled = (!isRunning && !enableRunButton) || pauseUnavailable;
 
   const numDevices = useMemo(() => model.columns.reduce<number>((acc, column) => acc + column.devices.length, 0), [model]);
   const multipleDevices = useMemo(() => numDevices > 1, [numDevices]);
