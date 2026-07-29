@@ -1,10 +1,12 @@
-import { createItems, selectCases } from "@concord-consortium/codap-plugin-api";
+import { createItems, getCaseByIndex, getCaseCount, selectCases } from "@concord-consortium/codap-plugin-api";
 import { createExperimentAnimationSteps } from "./useAnimation";
 import { Speed } from "../types";
 
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
   createItems: jest.fn(),
-  selectCases: jest.fn()
+  selectCases: jest.fn(),
+  getCaseCount: jest.fn(),
+  getCaseByIndex: jest.fn()
 }));
 
 jest.mock("../utils/localeManager", () => ({
@@ -13,10 +15,12 @@ jest.mock("../utils/localeManager", () => ({
 
 const mockCreateItems = createItems as jest.Mock;
 const mockSelectCases = selectCases as jest.Mock;
+const mockGetCaseCount = getCaseCount as jest.Mock;
+const mockGetCaseByIndex = getCaseByIndex as jest.Mock;
 
 // Two samples, one item each, from a single device. In Fastest mode the animation defers item
-// creation to the end of the experiment, where the LAST sample is popped off and created by a
-// second call — so two samples is the minimum that exercises both createItems calls.
+// creation to the end of the experiment, so two samples is enough to distinguish "created every
+// sample together" from "created them one at a time".
 const model = {
   columns: [{ id: "c1", name: "Deck1", devices: [{ id: "d1", replacement: true }] }]
 } as any;
@@ -53,38 +57,69 @@ describe("createExperimentAnimationSteps endExperiment (Fastest mode)", () => {
   beforeEach(() => {
     mockCreateItems.mockReset();
     mockSelectCases.mockReset();
+    mockGetCaseCount.mockReset();
+    mockGetCaseByIndex.mockReset();
     mockSelectCases.mockResolvedValue({});
+    mockGetCaseCount.mockResolvedValue({ values: 2 });
+    mockGetCaseByIndex.mockResolvedValue({ values: { case: { id: 77 } } });
   });
 
-  it("creates the remaining samples, then the last sample, and completes", async () => {
-    mockCreateItems.mockResolvedValue({ caseIDs: ["c1"] });
+  // Every sample goes to CODAP in one request: each create costs a pass over the whole dataset,
+  // so splitting the last sample out doubles the most expensive part of the operation.
+  it("creates every sample in a single request", async () => {
+    mockCreateItems.mockResolvedValue({});
     const onComplete = jest.fn();
 
     await runExperiment(onComplete);
 
-    expect(mockCreateItems).toHaveBeenCalledTimes(2);
+    expect(mockCreateItems).toHaveBeenCalledTimes(1);
+    expect(mockCreateItems).toHaveBeenCalledWith("Sampler", [
+      { sample: 1, Deck1: "a" },
+      { sample: 2, Deck1: "b" }
+    ]);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  // The sample collection's last case is the one just collected. Selecting that case (rather than
+  // its items) is what makes the case table scroll to it and cascade to its children, because
+  // CODAP resolves the ids it is given against each collection's rows.
+  it("selects the last case in the sample collection", async () => {
+    mockCreateItems.mockResolvedValue({});
+    const onComplete = jest.fn();
+
+    await runExperiment(onComplete);
+
+    expect(mockGetCaseByIndex).toHaveBeenCalledWith("Sampler", expect.anything(), 1);
+    expect(mockSelectCases).toHaveBeenCalledWith("Sampler", [77]);
+  });
+
+  it("does not select anything when the sample collection is empty", async () => {
+    mockCreateItems.mockResolvedValue({});
+    mockGetCaseCount.mockResolvedValue({ values: 0 });
+    const onComplete = jest.fn();
+
+    await runExperiment(onComplete);
+
+    expect(mockGetCaseByIndex).not.toHaveBeenCalled();
+    expect(mockSelectCases).not.toHaveBeenCalled();
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it("completes when the last case cannot be looked up", async () => {
+    mockCreateItems.mockResolvedValue({});
+    mockGetCaseByIndex.mockRejectedValue("CODAP request timed out");
+    const onComplete = jest.fn();
+
+    await runExperiment(onComplete);
+
+    expect(mockSelectCases).not.toHaveBeenCalled();
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
   // A request that outlives the plugin API's deadline rejects even though CODAP may still be
-  // processing it successfully. That must not cost us the last sample, and must not strand the
-  // UI: the experiment has to finish either way.
-  it("still creates the last sample when the bulk create rejects", async () => {
-    mockCreateItems
-      .mockRejectedValueOnce("CODAP request timed out")
-      .mockResolvedValueOnce({ caseIDs: ["c1"] });
-    const onComplete = jest.fn();
-
-    await runExperiment(onComplete);
-
-    expect(mockCreateItems).toHaveBeenCalledTimes(2);
-    expect(onComplete).toHaveBeenCalledTimes(1);
-  });
-
-  it("completes when the last-sample create rejects", async () => {
-    mockCreateItems
-      .mockResolvedValueOnce({ caseIDs: ["c1"] })
-      .mockRejectedValueOnce("CODAP request timed out");
+  // processing it successfully. That must not strand the UI: the experiment has to finish.
+  it("completes when the create rejects", async () => {
+    mockCreateItems.mockRejectedValue("CODAP request timed out");
     const onComplete = jest.fn();
 
     await runExperiment(onComplete);
@@ -93,7 +128,7 @@ describe("createExperimentAnimationSteps endExperiment (Fastest mode)", () => {
   });
 
   it("completes when selecting the new cases rejects", async () => {
-    mockCreateItems.mockResolvedValue({ caseIDs: ["c1"] });
+    mockCreateItems.mockResolvedValue({});
     mockSelectCases.mockRejectedValue("CODAP request timed out");
     const onComplete = jest.fn();
 

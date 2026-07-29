@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useRef } from "react";
 import { AnimationCallback, AnimationStep, IAnimationContext, IAnimationRuntime, IAnimationStepSettings, IExperimentResults, IExperimentAnimationResults, IModel, ISampleResults, Speed, ISampleVariableIndexes, AvailableDeviceVariableIndexes, ViewType } from "../types";
-import { createItems, selectCases } from "@concord-consortium/codap-plugin-api";
+import { createItems, getCaseByIndex, getCaseCount, selectCases } from "@concord-consortium/codap-plugin-api";
 import { useGlobalStateContext } from "./useGlobalState";
-import { evaluateResult, findOrCreateDataContext, getNewExperimentInfo } from "../helpers/codap-helpers";
+import { evaluateResult, findOrCreateDataContext, getCollectionNames, getNewExperimentInfo } from "../helpers/codap-helpers";
 import { getDeviceById } from "../models/model-model";
 import { formatFormula, parseFormula } from "../utils/utils";
 import { computeExperimentHash, getExperimentDescription, isSingleDeviceReplacement } from "../helpers/model-helpers";
@@ -128,22 +128,31 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
     try {
       // in fastest mode the samples are created at the end of the experiment
       if (finalSampleResults.length > 0) {
-        // create all but the last set of samples in one shot
-        const lastSampleResults = finalSampleResults.pop();
-        if (finalSampleResults.length > 0) {
-          const mergedFinalSampleResults: ISampleResults[] = [];
-          for (const sampleResults of finalSampleResults) {
-            mergedFinalSampleResults.push(...sampleResults);
-          }
-          await tryRequest(() => createItems(dataContextName, mergedFinalSampleResults));
+        const mergedFinalSampleResults: ISampleResults[] = [];
+        for (const sampleResults of finalSampleResults) {
+          mergedFinalSampleResults.push(...sampleResults);
         }
 
-        // create the last set of samples and select them
-        if (lastSampleResults) {
-          const createItemsResult =
-            await tryRequest(() => createItems(dataContextName, lastSampleResults)) as any;
-          if (createItemsResult?.caseIDs) {
-            await tryRequest(() => selectCases(dataContextName, createItemsResult.caseIDs));
+        // Every sample goes over in a single request. CODAP costs a create by the size of the
+        // whole dataset rather than by the number of items sent, so a second request for the
+        // last sample alone is nearly as expensive as the first.
+        await tryRequest(() => createItems(dataContextName, mergedFinalSampleResults));
+
+        // Samples are appended in order, so the sample collection's last case is the one just
+        // collected. Select the case rather than its items: CODAP resolves the ids it is given
+        // against each collection's rows, so naming the case is what scrolls the table to it and
+        // cascades that scroll to its children. Two small reads to find it are far cheaper than
+        // the extra create that separating the last sample would cost.
+        const sampleCollectionName = getCollectionNames().samples;
+        const caseCountResult =
+          await tryRequest(() => getCaseCount(dataContextName, sampleCollectionName)) as any;
+        const sampleCount = caseCountResult?.values;
+        if (typeof sampleCount === "number" && sampleCount > 0) {
+          const lastCaseResult = await tryRequest(
+            () => getCaseByIndex(dataContextName, sampleCollectionName, sampleCount - 1)) as any;
+          const lastSampleCaseId = lastCaseResult?.values?.case?.id;
+          if (lastSampleCaseId != null) {
+            await tryRequest(() => selectCases(dataContextName, [lastSampleCaseId]));
           }
         }
       }
