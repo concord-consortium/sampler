@@ -471,11 +471,22 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const handleStartRun = async () => {
+    // Mark the run as under way before issuing any request. Setting up the data context and
+    // collecting the samples takes many round-trips to CODAP — seconds, on a large experiment —
+    // and until this lands the controls still invite the user to start a run that is already
+    // running, with nothing to show that anything is happening.
+    setGlobalState(draft => {
+      draft.isRunning = true;
+      draft.isPaused = false;
+      draft.enableRunButton = false;
+    });
+
     try {
       const isCollector = isCollectorOnlyModel(model);
       const attrNames = isCollector ? getCollectorAttrs(model) : getModelAttrs(model);
       const finalDataContextName = await findOrCreateDataContext(dataContextName, attrNames, attrMap, setGlobalState, repeat, isCollector, globalState.instance, true);
       if (!finalDataContextName) {
+        enableNewRun();
         alert("Unable to setup CODAP table");
         return;
       }
@@ -488,12 +499,6 @@ export const useAnimationContextValue = (): IAnimationContext => {
       const { experimentNum, startingSampleNumber } = await getNewExperimentInfo(finalDataContextName, experimentHash);
 
       const { results, animationResults } = await getAllExperimentSamples(experimentNum, startingSampleNumber, experimentHash);
-
-      setGlobalState(draft => {
-        draft.isRunning = true;
-        draft.isPaused = false;
-        draft.enableRunButton = false;
-      });
 
       const onEndRun = () => {
         animationsCallbacksRef.current.forEach(callback => callback({ kind: "endExperiment" }));
