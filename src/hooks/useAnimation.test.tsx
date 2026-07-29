@@ -64,8 +64,8 @@ describe("createExperimentAnimationSteps endExperiment (Fastest mode)", () => {
     mockGetCaseByIndex.mockResolvedValue({ values: { case: { id: 77 } } });
   });
 
-  // Every sample goes to CODAP in one request: each create costs a pass over the whole dataset,
-  // so splitting the last sample out doubles the most expensive part of the operation.
+  // Every sample goes to CODAP in one request: a create costs a pass over the whole dataset, so
+  // each additional request roughly doubles the most expensive part of collecting an experiment.
   it("creates every sample in a single request", async () => {
     mockCreateItems.mockResolvedValue({});
     const onComplete = jest.fn();

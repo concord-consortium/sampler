@@ -40,9 +40,9 @@ const instantStepsInFastMode: string[] = [
  * Issues a CODAP request, reporting rather than propagating a failure.
  *
  * A large request can exceed the plugin API's response deadline and reject while CODAP is still
- * processing it successfully, so a rejection here does not mean the work failed — it means we
- * stopped waiting. Letting that escape would abandon the steps that follow, which is how an
- * experiment ends up one sample short with its controls stuck mid-run.
+ * processing it successfully, so a rejection does not mean the work failed — only that we stopped
+ * waiting for it. Since the outcome is unknown either way, an experiment should carry on to its
+ * remaining steps and finish rather than abandoning them.
  */
 const tryRequest = async <T,>(request: () => Promise<T>): Promise<T | undefined> => {
   try {
@@ -107,8 +107,8 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
             // in fastest mode the samples are created at the end of the experiment
             finalSampleResults.push(sampleResults);
           } else {
-            // As at the end of the experiment, a request that outlives the response deadline must
-            // not abort the animation — the remaining samples still need to be collected.
+            // A request that outlives the response deadline must not abort the animation — the
+            // samples after this one still need collecting.
             const createItemsResult =
               await tryRequest(() => createItems(dataContextName, sampleResults)) as any;
             if (createItemsResult?.caseIDs) {
@@ -122,9 +122,9 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
   });
 
   steps.push({ kind: "endExperiment", onComplete: async () => {
-    // Each request is issued through tryRequest so that one that outlives the response deadline
-    // costs at most its own result: the last sample is still created, and the experiment still
-    // finishes. onComplete runs from a finally so the controls can never be left mid-run.
+    // Requests go through tryRequest so a slow one costs at most its own result rather than the
+    // steps after it, and onComplete runs from a finally, so the experiment always reports itself
+    // finished and the controls are never left mid-run.
     try {
       // in fastest mode the samples are created at the end of the experiment
       if (finalSampleResults.length > 0) {
@@ -133,16 +133,16 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
           mergedFinalSampleResults.push(...sampleResults);
         }
 
-        // Every sample goes over in a single request. CODAP costs a create by the size of the
-        // whole dataset rather than by the number of items sent, so a second request for the
-        // last sample alone is nearly as expensive as the first.
+        // The whole experiment goes over in one request. CODAP prices a create by the size of the
+        // dataset it is added to rather than by the number of items sent, so each additional
+        // request costs about as much as the first however little it carries.
         await tryRequest(() => createItems(dataContextName, mergedFinalSampleResults));
 
         // Samples are appended in order, so the sample collection's last case is the one just
         // collected. Select the case rather than its items: CODAP resolves the ids it is given
-        // against each collection's rows, so naming the case is what scrolls the table to it and
-        // cascades that scroll to its children. Two small reads to find it are far cheaper than
-        // the extra create that separating the last sample would cost.
+        // against each collection's rows, and naming the case is what scrolls the table to it and
+        // cascades that scroll to its children. Reading the case back costs far less than
+        // arranging for the create to report it.
         const sampleCollectionName = getCollectionNames().samples;
         const caseCountResult =
           await tryRequest(() => getCaseCount(dataContextName, sampleCollectionName)) as any;
