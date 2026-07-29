@@ -36,6 +36,23 @@ const instantStepsInFastMode: string[] = [
   "pushVariables",
 ];
 
+/**
+ * Issues a CODAP request, reporting rather than propagating a failure.
+ *
+ * A large request can exceed the plugin API's response deadline and reject while CODAP is still
+ * processing it successfully, so a rejection here does not mean the work failed — it means we
+ * stopped waiting. Letting that escape would abandon the steps that follow, which is how an
+ * experiment ends up one sample short with its controls stuck mid-run.
+ */
+const tryRequest = async <T,>(request: () => Promise<T>): Promise<T | undefined> => {
+  try {
+    return await request();
+  } catch (error) {
+    console.warn("Sampler: CODAP request did not complete:", error); // eslint-disable-line no-console
+    return undefined;
+  }
+};
+
 export const createExperimentAnimationSteps = (model: IModel, dataContextName: string, animationResults: IExperimentAnimationResults, results: IExperimentResults, onComplete?: () => void): Array<AnimationStep> => {
   const steps: AnimationStep[] = [];
   const finalSampleResults: ISampleResults[][] = [];
@@ -90,9 +107,12 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
             // in fastest mode the samples are created at the end of the experiment
             finalSampleResults.push(sampleResults);
           } else {
-            const createItemsResult = await createItems(dataContextName, sampleResults) as any;
+            // As at the end of the experiment, a request that outlives the response deadline must
+            // not abort the animation — the remaining samples still need to be collected.
+            const createItemsResult =
+              await tryRequest(() => createItems(dataContextName, sampleResults)) as any;
             if (createItemsResult?.caseIDs) {
-              await selectCases(dataContextName, createItemsResult.caseIDs);
+              await tryRequest(() => selectCases(dataContextName, createItemsResult.caseIDs));
             }
           }
         }
@@ -102,27 +122,34 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
   });
 
   steps.push({ kind: "endExperiment", onComplete: async () => {
-    // in fastest mode the samples are created at the end of the experiment
-    if (finalSampleResults.length > 0) {
-      // create all but the last set of samples in one shot
-      const lastSampleResults = finalSampleResults.pop();
+    // Each request is issued through tryRequest so that one that outlives the response deadline
+    // costs at most its own result: the last sample is still created, and the experiment still
+    // finishes. onComplete runs from a finally so the controls can never be left mid-run.
+    try {
+      // in fastest mode the samples are created at the end of the experiment
       if (finalSampleResults.length > 0) {
-        const mergedFinalSampleResults: ISampleResults[] = [];
-        for (const sampleResults of finalSampleResults) {
-          mergedFinalSampleResults.push(...sampleResults);
+        // create all but the last set of samples in one shot
+        const lastSampleResults = finalSampleResults.pop();
+        if (finalSampleResults.length > 0) {
+          const mergedFinalSampleResults: ISampleResults[] = [];
+          for (const sampleResults of finalSampleResults) {
+            mergedFinalSampleResults.push(...sampleResults);
+          }
+          await tryRequest(() => createItems(dataContextName, mergedFinalSampleResults));
         }
-        await createItems(dataContextName, mergedFinalSampleResults);
-      }
 
-      // create the last set of samples and select them
-      if (lastSampleResults) {
-        const createItemsResult = await createItems(dataContextName, lastSampleResults) as any;
-        if (createItemsResult?.caseIDs) {
-          await selectCases(dataContextName, createItemsResult.caseIDs);
+        // create the last set of samples and select them
+        if (lastSampleResults) {
+          const createItemsResult =
+            await tryRequest(() => createItems(dataContextName, lastSampleResults)) as any;
+          if (createItemsResult?.caseIDs) {
+            await tryRequest(() => selectCases(dataContextName, createItemsResult.caseIDs));
+          }
         }
       }
+    } finally {
+      onComplete?.();
     }
-    onComplete?.();
   }});
 
   return steps;
@@ -473,10 +500,6 @@ export const useAnimationContextValue = (): IAnimationContext => {
         enableNewRun();
       };
 
-      setGlobalState(draft => {
-        draft.isPaused = false;
-        draft.isRunning = true;
-      });
       const newAnimationSteps = createExperimentAnimationSteps(model, finalDataContextName, animationResults, results, onEndRun);
       startAnimation(newAnimationSteps);
     } catch (e) {
