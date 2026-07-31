@@ -50,17 +50,18 @@ export const getCollectionNames = () => {
 };
 
 const updateAttributeIds = async (dataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>) => {
+  const {experiments, samples} = getCollectionNames();
   const allAttrs = [
-    {collection: "experiments", attrName: attrMap.experiment.name},
-    {collection: "experiments", attrName: attrMap.description.name},
-    {collection: "experiments", attrName: attrMap.sample_size.name},
-    {collection: "experiments", attrName: attrMap.until_formula.name},
-    {collection: "experiments", attrName: attrMap.experimentHash.name},
-    {collection: "samples", attrName: attrMap.sample.name},
+    {collection: experiments, attrName: attrMap.experiment.name},
+    {collection: experiments, attrName: attrMap.description.name},
+    {collection: experiments, attrName: attrMap.sample_size.name},
+    {collection: experiments, attrName: attrMap.until_formula.name},
+    {collection: experiments, attrName: attrMap.experimentHash.name},
+    {collection: samples, attrName: attrMap.sample.name},
   ];
   const isKeyOfAttrMap = (key: any): key is keyof AttrMap => key in attrMap;
 
-  attrs.forEach(attr => allAttrs.push({collection: "samples", attrName: attr}));
+  attrs.forEach(attr => allAttrs.push({collection: samples, attrName: attr}));
 
   const reqs: TCODAPRequest[] = allAttrs.map(collectionAttr => ({
     "action": "get",
@@ -203,9 +204,6 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
     const createRes = await createDataContext(finalDataContextName);
     const itemsAttrs: IAttribute[] = [];
     if (createRes.success) {
-      setGlobalState((draft) => {
-        draft.samplerContext = createRes.values;
-      });
       const parentAttrs = [
         {name: attrMap.experiment.name, type: "categorical"},
         {name: attrMap.description.name, type: "categorical"},

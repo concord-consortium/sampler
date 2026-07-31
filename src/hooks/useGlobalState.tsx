@@ -26,7 +26,6 @@ export const getDefaultState = (): IGlobalState => {
     attrMap: defaultAttrMap,
     dataContextName: "",
     collectorContextName: "",
-    samplerContext: undefined,
     isRunning: false,
     isPaused: false,
     speed: 1,
@@ -170,6 +169,14 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
       const isCollector = isCollectorOnlyModel(newGlobalState.model);
       const attrs = isCollector ? getCollectorAttrs(newGlobalState.model) : getModelAttrs(newGlobalState.model);
 
+      // Publish the migrated state before touching CODAP. findOrCreateDataContext writes the
+      // attribute ids it looks up back into the state it finds, so it has to find this state and
+      // not the placeholder the hook started with — the placeholder is a separate getDefaultState()
+      // whose column has a different id, which would leave the column's attribute id unrecorded.
+      // Everything after this point updates individual properties for the same reason: replacing
+      // the whole state would discard whatever findOrCreateDataContext had just written.
+      setGlobalState(newGlobalState);
+
       const ensureDataContext = async (instance: number) => {
         const {dataContextName, attrMap, repeat} = newGlobalState;
         const newDataContextName = await findOrCreateDataContext(dataContextName, attrs, attrMap, setGlobalState, repeat, isCollector, instance, false);
@@ -192,14 +199,19 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
           }
           await updatePluginTitle(instance);
           finalDataContextName = await ensureDataContext(instance);
-          setGlobalState({...newGlobalState, instance, dataContextName: finalDataContextName});
+          setGlobalState(draft => {
+            draft.instance = instance;
+            draft.dataContextName = finalDataContextName;
+          });
         });
       } else {
         finalDataContextName = await ensureDataContext(newGlobalState.instance);
         await updatePluginTitle(newGlobalState.instance);
       }
 
-      setGlobalState({...newGlobalState, dataContextName: finalDataContextName});
+      setGlobalState(draft => {
+        draft.dataContextName = finalDataContextName;
+      });
     };
 
     init();
@@ -210,8 +222,8 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
   }, [globalState]);
 
   useEffect(() => {
-    if (globalState.samplerContext) {
-      addDataContextChangeListener(globalState.samplerContext.name, (msg: any) => {
+    if (globalState.dataContextName) {
+      addDataContextChangeListener(globalState.dataContextName, (msg: any) => {
         if (msg.values.operation === "updateAttributes") {
           msg.values.result.attrIDs.forEach((id: string, i: number) => {
             const newName = msg.values.result.attrs[i].name;
@@ -228,7 +240,7 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
       });
     }
 
-  }, [globalState.samplerContext, setGlobalState]);
+  }, [globalState.dataContextName, setGlobalState]);
 
   return {
     globalState,

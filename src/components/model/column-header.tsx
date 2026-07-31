@@ -4,7 +4,7 @@ import { getAttribute, updateAttribute } from "@concord-consortium/codap-plugin-
 import { getNewColumnName } from "../helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { AnimationStep, IAnimationStepSettings, IColumn } from "../../types";
-import { renameAttributeInFormulas } from "../../helpers/codap-helpers";
+import { getCollectionNames, renameAttributeInFormulas } from "../../helpers/codap-helpers";
 import { isCollectorOnlyModel } from "../../utils/collector";
 
 interface IProps {
@@ -67,11 +67,12 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
       return;
     }
 
-    if (globalState.samplerContext) {
-      const dataContextName = globalState.samplerContext.name;
+    if (globalState.dataContextName) {
+      const { dataContextName } = globalState;
+      const itemsCollectionName = getCollectionNames().items;
       const oldAttrName = globalState.attrMap[column.id].name;
-      const attr = (await getAttribute(dataContextName, "items", oldAttrName)).values;
-      await updateAttribute(dataContextName, "items", oldAttrName, attr, {name: newName});
+      const attr = (await getAttribute(dataContextName, itemsCollectionName, oldAttrName)).values;
+      await updateAttribute(dataContextName, itemsCollectionName, oldAttrName, attr, {name: newName});
       await renameAttributeInFormulas(dataContextName, oldAttrName, newName);
       setColumnName(newName);
       setGlobalState(draft => {

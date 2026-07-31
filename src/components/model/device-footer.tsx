@@ -5,6 +5,7 @@ import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
 import { getNewColumnName, getNewVariable, getProportionalVars } from "../helpers";
 import { createNewAttribute } from "@concord-consortium/codap-plugin-api";
+import { getCollectionNames } from "../../helpers/codap-helpers";
 import { createId } from "../../utils/id";
 import {IDataContext, IDevice, IVariables, defaultOutputAttrName, ViewType, deviceButtonLabels, deviceButtonTooltips}
   from "../../types";
@@ -92,8 +93,8 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
           delete draft.attrMap[existingAttr];
         } else {
           draft.attrMap[id] = {name, codapID: null};
-          if (draft.samplerContext) {
-            createNewAttribute(draft.samplerContext.name, "items", name)
+          if (draft.dataContextName) {
+            createNewAttribute(draft.dataContextName, getCollectionNames().items, name)
               .then((result) => {
                 if (result.success && result.values.attrs?.[0]?.id) {
                   setGlobalState(draft2 => {
