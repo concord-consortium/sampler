@@ -1,4 +1,7 @@
 module.exports = {
+  // stop the cascade here so a config above the project (e.g. when this checkout is a git worktree
+  // nested inside another checkout) can't be merged in and conflict with this one
+  root: true,
   parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: 2018,
