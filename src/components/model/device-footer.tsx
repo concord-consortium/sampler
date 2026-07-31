@@ -25,7 +25,7 @@ interface IProps {
 
 export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handleDeleteVariable, handleSelectDataContext, handleSpecifyVariables, clearFixedVariables, dataContexts}: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { model, selectedDeviceId, isRunning, collectorContextName } = globalState;
+  const { model, selectedDeviceId, isRunning, collectorContextName, attrMap, dataContextName } = globalState;
   const { viewType, hidden } = device;
   const targetDevices = getTargetDevices(model, device);
   const siblingDevices = getSiblingDevices(model, device);
@@ -71,41 +71,48 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
   };
 
   const handleAddDevice = () => {
+    const currentDeviceViewType = model.columns[columnIndex].devices[0].viewType;
+    const newColumnIndex = columnIndex + 1;
+
+    if (model.columns[newColumnIndex]) {
+      // add the device
+      setGlobalState(draft => {
+        draft.model.columns[newColumnIndex].devices.push(createDefaultDevice(currentDeviceViewType));
+      });
+      updateFormulas();
+      return;
+    }
+
+    // create the column and add the same number devices as the current column
+    const name: string = getNewColumnName(defaultOutputAttrName, model.columns);
+    const id: string = createId();
+    const numNewDevices = model.columns[columnIndex].devices.length;
+    const newDevices = Array.from({length: numNewDevices}, () => createDefaultDevice(currentDeviceViewType));
+    // check if any attrs in attrMap have same name as new column name
+    // if so, replace the old attrMap key with the new id rather than adding a CODAP attribute
+    const existingAttr = Object.keys(attrMap).find((key) => attrMap[key].name === name);
+
     setGlobalState(draft => {
-      const currentDeviceViewType = draft.model.columns[columnIndex].devices[0].viewType;
-      const newColumnIndex = columnIndex + 1;
-      if (draft.model.columns[newColumnIndex]) {
-        // add the device
-        const newDevice = createDefaultDevice(currentDeviceViewType);
-        draft.model.columns[newColumnIndex].devices.push(newDevice);
+      draft.model.columns.splice(newColumnIndex, 0, {name, id, devices: newDevices});
+      if (existingAttr) {
+        draft.attrMap[id] = {...draft.attrMap[existingAttr]};
+        delete draft.attrMap[existingAttr];
       } else {
-        // create the column and add the same number devices as the current column
-        const name: string = getNewColumnName(defaultOutputAttrName, model.columns);
-        const id: string = createId();
-        const numNewDevices = model.columns[columnIndex].devices.length;
-        const newDevices = Array.from({length: numNewDevices}, () => createDefaultDevice(currentDeviceViewType));
-        draft.model.columns.splice(newColumnIndex, 0, {name, id, devices: newDevices});
-        // check if any attrs in attrMap have same name as new column name
-        // if so, replace the old attrMap key with the new id
-        const existingAttr = Object.keys(draft.attrMap).find((key) => draft.attrMap[key].name === name);
-        if (existingAttr) {
-          draft.attrMap[id] = {...draft.attrMap[existingAttr]};
-          delete draft.attrMap[existingAttr];
-        } else {
-          draft.attrMap[id] = {name, codapID: null};
-          if (draft.dataContextName) {
-            createNewAttribute(draft.dataContextName, getCollectionNames().items, name)
-              .then((result) => {
-                if (result.success && result.values.attrs?.[0]?.id) {
-                  setGlobalState(draft2 => {
-                    draft2.attrMap[id].codapID = result.values.attrs[0].id;
-                  });
-                }
-              });
-          }
-        }
+        draft.attrMap[id] = {name, codapID: null};
       }
     });
+
+    if (!existingAttr && dataContextName) {
+      createNewAttribute(dataContextName, getCollectionNames().items, name)
+        .then((result) => {
+          if (result.success && result.values.attrs?.[0]?.id) {
+            setGlobalState(draft => {
+              draft.attrMap[id].codapID = result.values.attrs[0].id;
+            });
+          }
+        });
+    }
+
     updateFormulas();
   };
 
