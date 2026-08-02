@@ -136,23 +136,29 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
         // The whole experiment goes over in one request. CODAP prices a create by the size of the
         // dataset it is added to rather than by the number of items sent, so each additional
         // request costs about as much as the first however little it carries.
-        await tryRequest(() => createItems(dataContextName, mergedFinalSampleResults));
+        const created = await tryRequest(() => createItems(dataContextName, mergedFinalSampleResults));
 
         // Samples are appended in order, so the sample collection's last case is the one just
         // collected. Select the case rather than its items: CODAP resolves the ids it is given
         // against each collection's rows, and naming the case is what scrolls the table to it and
         // cascades that scroll to its children. Reading the case back costs far less than
         // arranging for the create to report it.
-        const sampleCollectionName = getCollectionNames().samples;
-        const caseCountResult =
-          await tryRequest(() => getCaseCount(dataContextName, sampleCollectionName)) as any;
-        const sampleCount = caseCountResult?.values;
-        if (typeof sampleCount === "number" && sampleCount > 0) {
-          const lastCaseResult = await tryRequest(
-            () => getCaseByIndex(dataContextName, sampleCollectionName, sampleCount - 1)) as any;
-          const lastSampleCaseId = lastCaseResult?.values?.case?.id;
-          if (lastSampleCaseId != null) {
-            await tryRequest(() => selectCases(dataContextName, [lastSampleCaseId]));
+        //
+        // Only once the create is known to have landed, though. Otherwise the last case may belong
+        // to an earlier experiment, and highlighting it would claim it is the sample just
+        // collected. Selecting nothing says nothing; selecting the wrong row misleads.
+        if (created) {
+          const sampleCollectionName = getCollectionNames().samples;
+          const caseCountResult =
+            await tryRequest(() => getCaseCount(dataContextName, sampleCollectionName)) as any;
+          const sampleCount = caseCountResult?.values;
+          if (typeof sampleCount === "number" && sampleCount > 0) {
+            const lastCaseResult = await tryRequest(
+              () => getCaseByIndex(dataContextName, sampleCollectionName, sampleCount - 1)) as any;
+            const lastSampleCaseId = lastCaseResult?.values?.case?.id;
+            if (lastSampleCaseId != null) {
+              await tryRequest(() => selectCases(dataContextName, [lastSampleCaseId]));
+            }
           }
         }
       }

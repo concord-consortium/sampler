@@ -127,6 +127,19 @@ describe("createExperimentAnimationSteps endExperiment (Fastest mode)", () => {
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
+  // Without a create that landed, the sample collection's last case may belong to an earlier
+  // experiment, and selecting it would claim it is the sample just collected.
+  it("selects nothing when the create rejects", async () => {
+    mockCreateItems.mockRejectedValue("CODAP request timed out");
+    const onComplete = jest.fn();
+
+    await runExperiment(onComplete);
+
+    expect(mockGetCaseCount).not.toHaveBeenCalled();
+    expect(mockGetCaseByIndex).not.toHaveBeenCalled();
+    expect(mockSelectCases).not.toHaveBeenCalled();
+  });
+
   it("completes when selecting the new cases rejects", async () => {
     mockCreateItems.mockResolvedValue({});
     mockSelectCases.mockRejectedValue("CODAP request timed out");
