@@ -48,7 +48,7 @@ const tryRequest = async <T,>(request: () => Promise<T>): Promise<T | undefined>
   try {
     return await request();
   } catch (error) {
-    console.warn("Sampler: CODAP request did not complete:", error); // eslint-disable-line no-console
+    console.warn("Sampler: CODAP request did not complete:", error);
     return undefined;
   }
 };
