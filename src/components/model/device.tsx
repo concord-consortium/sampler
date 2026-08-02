@@ -169,7 +169,7 @@ export const Device = (props: IProps) => {
       });
       await deleteItemAttrs(globalState.dataContextName, attrsToDelete);
     };
-    maybeUpdate();
+    maybeUpdate().catch(error => console.warn("Sampler: could not update item attributes", error));
   }, [attrMap, globalState.dataContextName, maybeUpdateItemAttrsSignal, model, repeat, setGlobalState, viewType]);
 
   const maybeUpdateCollectorDataContext = useCallback(() => {
@@ -190,7 +190,7 @@ export const Device = (props: IProps) => {
       if (autoSelectedDataContext) {
         changeDataContext(autoSelectedDataContext.name);
       }
-    });
+    }).catch(error => console.warn("Sampler: could not list data contexts", error));
   }, [changeDataContext, globalState.collectorContextName, globalState.dataContextName]);
 
   useEffect(() => {
@@ -223,7 +223,7 @@ export const Device = (props: IProps) => {
             deviceToUpdate.collectorVariables = itemValues;
           }
         });
-      });
+      }).catch(error => console.warn("Sampler: could not read the collector's items", error));
     }
   }, [collectorContextName, selectedDeviceId, setGlobalState, columnIndex]);
 

@@ -67,7 +67,11 @@ const updateAttributeIds = async (dataContextName: string, attrs: Array<string>,
     "resource": `dataContext[${dataContextName}].collection[${collectionAttr.collection}].attribute[${collectionAttr.attrName}]`
   }));
 
-  await codapInterface.sendRequest(reqs, (getAttrsResult: any[]) => {
+  await codapInterface.sendRequest(reqs, (getAttrsResult?: IResult[]) => {
+    // absent when CODAP didn't answer, in which case the await above throws and the existing ids
+    // are left alone rather than being overwritten from a response we never got
+    if (!getAttrsResult) { return; }
+
     const updatedAttrsIds: Record<keyof AttrMap, string> = {};
     getAttrsResult.forEach((res: {success: boolean, values: Record<string, string>}) => {
       if (res.success) {
@@ -282,66 +286,69 @@ export const deleteItemAttrs = async (dataContextName: string, attrs: string[]) 
   }
 };
 
-export const addMeasure = (dataContextName: string, measureName: string, measureType: string, formula: string) => {
+export const addMeasure = async (dataContextName: string, measureName: string, measureType: string, formula: string) => {
   const samplesColl = getCollectionNames().samples;
 
-  codapInterface.sendRequest({
-    action: "get",
-    resource: `dataContext[${dataContextName}].collection[${samplesColl}].attributeList`
-  }).then((res: any) => {
+  // Each request rejects if CODAP doesn't answer it, and nothing awaits this function, so the
+  // whole sequence is guarded here rather than leaving a rejection with nothing attached to it.
+  try {
+    const res = await codapInterface.sendRequest({
+      action: "get",
+      resource: `dataContext[${dataContextName}].collection[${samplesColl}].attributeList`
+    }) as IResult;
+
     const attrs = res.values;
     let newAttributeName = measureName ? measureName : measureType;
     // check if attr name is already used. user could add "conditional count" twice, for example,
     // but have difference formulas (output = a, output = b)
     const attrNameAlreadyUsed = attrs.find((attr: any) => attr.name === newAttributeName);
 
-      if (!attrNameAlreadyUsed) {
-        codapInterface.sendRequest({
-          action: 'create',
-          resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute`,
-          values: [{
-            name: newAttributeName,
-            type: "numeric",
-            formula
-          }]
-        });
-      } else if (attrNameAlreadyUsed && !measureName) {
-        const attrsWithSameName = attrs.filter((attr: any) => attr.name.startsWith(newAttributeName));
-        const indexes = attrsWithSameName.map((attr: any) => Number(attr.name.slice(newAttributeName.length)));
-        const highestIndex = Math.max(...indexes);
-        if (!highestIndex) {
-          newAttributeName = newAttributeName + 1;
-        } else {
-          for (let i = 1; i <= highestIndex; i++) {
-            const nameWithIndex = newAttributeName + i;
-            const isNameWithIndexUsed = attrsWithSameName.find((attr: any) => attr.name === nameWithIndex);
-            if (!isNameWithIndexUsed) {
-              newAttributeName = nameWithIndex;
-              break;
-            } else if (i === highestIndex) {
-              newAttributeName = newAttributeName + (highestIndex + 1);
-            }
+    // a named measure reuses its attribute, so the formula is updated in place
+    if (attrNameAlreadyUsed && measureName) {
+      await codapInterface.sendRequest({
+        action: "update",
+        resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute[${measureName}]`,
+        values: {
+          formula
+        }
+      });
+      return;
+    }
+
+    // an unnamed measure gets the lowest unused numeric suffix
+    if (attrNameAlreadyUsed) {
+      const attrsWithSameName = attrs.filter((attr: any) => attr.name.startsWith(newAttributeName));
+      const indexes = attrsWithSameName.map((attr: any) => Number(attr.name.slice(newAttributeName.length)));
+      const highestIndex = Math.max(...indexes);
+      if (!highestIndex) {
+        newAttributeName = newAttributeName + 1;
+      } else {
+        for (let i = 1; i <= highestIndex; i++) {
+          const nameWithIndex = newAttributeName + i;
+          const isNameWithIndexUsed = attrsWithSameName.find((attr: any) => attr.name === nameWithIndex);
+          if (!isNameWithIndexUsed) {
+            newAttributeName = nameWithIndex;
+            break;
+          } else if (i === highestIndex) {
+            newAttributeName = newAttributeName + (highestIndex + 1);
           }
         }
-        codapInterface.sendRequest({
-          action: 'create',
-          resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute`,
-          values: [{
-            name: newAttributeName,
-            type: "numeric",
-            formula
-          }]
-        });
-      } else if (attrNameAlreadyUsed && measureName) {
-        codapInterface.sendRequest({
-          action: 'update',
-          resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute[${measureName}]`,
-          values: {
-            formula
-          }
-        });
       }
+    }
+
+    await codapInterface.sendRequest({
+      action: "create",
+      resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute`,
+      values: [{
+        name: newAttributeName,
+        type: "numeric",
+        formula
+      }]
     });
+  } catch (error) {
+
+    console.warn("Sampler: could not add the measure", error);
+  }
 };
 
 export const getNewExperimentInfo = async (dataContextName: string, experimentHash: string) => {

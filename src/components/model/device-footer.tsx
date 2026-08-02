@@ -100,7 +100,7 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
                     draft2.attrMap[id].codapID = result.values.attrs[0].id;
                   });
                 }
-              });
+              }).catch(error => console.warn("Sampler: could not create the attribute", error));
           }
         }
       }
