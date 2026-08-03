@@ -80,4 +80,17 @@ describe("ColumnHeader", () => {
       dataContextName, itemsCollectionName, oldName, expect.anything(), { name: newName }
     );
   });
+
+  // Carrying on with the new name when CODAP kept the old one is how the column and its attribute
+  // drift apart, which is what leaves a stale attribute behind on the next run [SAMPLER-106].
+  it("keeps the old name when CODAP refuses the rename", async () => {
+    mockUpdateAttribute.mockResolvedValue({ success: false });
+    renderColumnHeader();
+
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: newName } });
+    fireEvent.blur(screen.getByRole("textbox"));
+
+    await waitFor(() => expect(mockUpdateAttribute).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
+  });
 });

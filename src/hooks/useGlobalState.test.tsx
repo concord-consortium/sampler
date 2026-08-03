@@ -106,4 +106,21 @@ describe("useGlobalStateContextValue initialization", () => {
     const { attrMap, model } = result.current.globalState;
     expect(attrMap[model.columns[0].id].codapID).toBe(`id-${defaultOutputAttrName}`);
   });
+
+  // CODAP resolves an attribute by name across the whole data context, so naming the wrong
+  // collection still finds it. Ask for the collection the attribute actually belongs to anyway,
+  // rather than leaning on that.
+  it("looks up a column's attribute in the collection that holds it", async () => {
+    renderHook(() => useGlobalStateContextValue());
+    await waitFor(() => expect(mockCodapInterface.sendRequest).toHaveBeenCalled());
+
+    const resources: string[] = [];
+    mockCodapInterface.sendRequest.mock.calls.forEach(([request]: any) => {
+      (Array.isArray(request) ? request : [request]).forEach((r: any) => r?.resource && resources.push(r.resource));
+    });
+    const columnAttrRequest = resources.find(resource =>
+      resource.endsWith(`.attribute[${defaultOutputAttrName}]`));
+
+    expect(columnAttrRequest).toContain(`collection[${getCollectionNames().items}]`);
+  });
 });

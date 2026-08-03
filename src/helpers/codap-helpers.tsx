@@ -50,7 +50,7 @@ export const getCollectionNames = () => {
 };
 
 const updateAttributeIds = async (dataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>) => {
-  const {experiments, samples} = getCollectionNames();
+  const {experiments, samples, items} = getCollectionNames();
   const allAttrs = [
     {collection: experiments, attrName: attrMap.experiment.name},
     {collection: experiments, attrName: attrMap.description.name},
@@ -61,7 +61,8 @@ const updateAttributeIds = async (dataContextName: string, attrs: Array<string>,
   ];
   const isKeyOfAttrMap = (key: any): key is keyof AttrMap => key in attrMap;
 
-  attrs.forEach(attr => allAttrs.push({collection: samples, attrName: attr}));
+  // the attributes standing for the model's columns belong to the items collection
+  attrs.forEach(attr => allAttrs.push({collection: items, attrName: attr}));
 
   const reqs: TCODAPRequest[] = allAttrs.map(collectionAttr => ({
     "action": "get",

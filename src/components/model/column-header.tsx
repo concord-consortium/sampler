@@ -72,7 +72,13 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
       const itemsCollectionName = getCollectionNames().items;
       const oldAttrName = globalState.attrMap[column.id].name;
       const attr = (await getAttribute(dataContextName, itemsCollectionName, oldAttrName)).values;
-      await updateAttribute(dataContextName, itemsCollectionName, oldAttrName, attr, {name: newName});
+      const renameResult = await updateAttribute(dataContextName, itemsCollectionName, oldAttrName, attr, {name: newName});
+      if (!renameResult.success) {
+        // renaming the column anyway would leave it naming an attribute that no longer answers to it,
+        // and the next run would add the new name alongside the old one
+        setColumnName(column.name);
+        return;
+      }
       // formulas that reference the attribute are CODAP's to update -- see renameAttributeInFormulas
       setColumnName(newName);
       setGlobalState(draft => {
