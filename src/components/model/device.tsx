@@ -164,10 +164,16 @@ export const Device = (props: IProps) => {
       });
       const attrsToDelete = maybeAttrsToDelete.filter(attr => !attrsToKeep.has(attr));
 
-      // awaited together: a forEach would drop these promises, leaving a failure with nothing
-      // attached to it and the attribute silently missing
-      await Promise.all(attrsToAdd.map(attr =>
-        createNewAttribute(globalState.dataContextName, getCollectionNames().items, attr)));
+      // awaited together, and reported one at a time: a forEach would drop these promises,
+      // leaving a failure with nothing attached to it, and a create that fails should cost no
+      // more than its own attribute -- the deletes below still need doing
+      await Promise.all(attrsToAdd.map(async (attr) => {
+        try {
+          await createNewAttribute(globalState.dataContextName, getCollectionNames().items, attr);
+        } catch (error) {
+          console.warn("Sampler: could not add the item attribute", attr, error);
+        }
+      }));
       await deleteItemAttrs(globalState.dataContextName, attrsToDelete);
     };
     maybeUpdate().catch(error => console.warn("Sampler: could not update item attributes", error));
