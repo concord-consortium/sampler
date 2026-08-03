@@ -75,22 +75,27 @@ export const MeasuresTab = () => {
 
   const isCollector = useMemo(() => isCollectorOnlyModel(model), [model]);
 
-  const disableAddButton = useMemo(() => {
-    // adding takes up to three requests to CODAP, and a second click while they are in flight
-    // would compute the same name from the same attribute list, which CODAP refuses as a
-    // duplicate -- reporting a failure for a measure that was in fact added
-    let disable = addingMeasure ||
+  // An incomplete form genuinely disables the button: there is nothing to add. Being mid-add is
+  // different — it is transient, and taking the button out of the tab order while it holds focus
+  // drops a keyboard or screen reader user to the top of the document for the length of up to
+  // three requests without putting them back. That is the one path this state exists to serve,
+  // where they have to notice a failure and try again, so it is expressed with aria-disabled and
+  // refused in the handler instead.
+  const formIncomplete = useMemo(() => {
+    let incomplete =
       selectedMeasure === "default" || (lValue.length === 0 && selectedMeasure !== "count_items");  // measureName is optional
-    if (!disable) {
+    if (!incomplete) {
       switch (selectedMeasure) {
         case "conditional_count":
         case "conditional_percentage":
-          disable = rValue.length === 0;
+          incomplete = rValue.length === 0;
           break;
       }
     }
-    return disable;
-  }, [addingMeasure, selectedMeasure, lValue, rValue]);
+    return incomplete;
+  }, [selectedMeasure, lValue, rValue]);
+
+  const addUnavailable = formIncomplete || addingMeasure;
 
   const uniqueVariables = useMemo(() => {
     const set = new Set<string>();
@@ -114,6 +119,11 @@ export const MeasuresTab = () => {
   const handleChangeRValue = (e: React.ChangeEvent<HTMLSelectElement>) => setRValue(e.target.value);
 
   const handleAddMeasure = async () => {
+    // adding takes up to three requests to CODAP, and a second activation while they are in flight
+    // would compute the same name from the same attribute list, which CODAP refuses as a duplicate
+    // -- reporting a failure for a measure that was in fact added
+    if (addUnavailable) { return; }
+
     // the timer from an earlier success would otherwise clear whatever this attempt has to say
     clearTimeout(clearMessageTimerRef.current);
     setMessage("");
@@ -283,7 +293,9 @@ export const MeasuresTab = () => {
       </div>
 
       <div id="measures-bottom">
-        <button id="add-measure" onClick={handleAddMeasure} disabled={disableAddButton} className={disableAddButton ? "disabled" : ""}>
+        <button id="add-measure" onClick={handleAddMeasure} disabled={formIncomplete}
+                aria-disabled={addUnavailable} aria-busy={addingMeasure}
+                className={addUnavailable ? "disabled" : ""}>
           {tr("DG.Plugin.Sampler.measures.add-measure")}
         </button>
       </div>
