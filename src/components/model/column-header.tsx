@@ -74,15 +74,17 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
     if (globalState.dataContextName) {
       const { dataContextName } = globalState;
       const itemsCollectionName = getCollectionNames().items;
-      const oldAttrName = globalState.attrMap[column.id].name;
       try {
+        // deleting a column takes its attrMap entry with it, so this can be gone by the time a
+        // pending edit is committed
+        const oldAttrName = globalState.attrMap[column.id].name;
+        // updateAttribute renames by name and ignores the attribute it is handed, so this asks only
+        // whether there is still something to rename
         const attrResult = await getAttribute(dataContextName, itemsCollectionName, oldAttrName);
         if (!attrResult.success) {
           setColumnName(column.name);
           return;
         }
-        // updateAttribute ignores the attribute it is handed and renames by name, so this is only
-        // a check that there is still something to rename
         const renameResult =
           await updateAttribute(dataContextName, itemsCollectionName, oldAttrName, attrResult.values, {name: newName});
         if (!renameResult.success) {
@@ -90,6 +92,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
           return;
         }
       } catch (e) {
+        console.error(e);
         setColumnName(column.name);
         return;
       }

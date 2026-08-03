@@ -68,7 +68,7 @@ describe("ColumnHeader", () => {
   });
 
   // Renaming a column has to reach CODAP. When it doesn't, the case table keeps the old attribute
-  // and running the experiment adds the new one alongside it [SAMPLER-106].
+  // and running the experiment adds the new one alongside it.
   it("renames the CODAP attribute when the column is renamed", async () => {
     renderColumnHeader();
 
@@ -82,7 +82,7 @@ describe("ColumnHeader", () => {
   });
 
   // Carrying on with the new name when CODAP kept the old one is how the column and its attribute
-  // drift apart, which is what leaves a stale attribute behind on the next run [SAMPLER-106].
+  // drift apart, which is what leaves a stale attribute behind on the next run.
   it("keeps the old name when CODAP refuses the rename", async () => {
     mockUpdateAttribute.mockResolvedValue({ success: false });
     renderColumnHeader();

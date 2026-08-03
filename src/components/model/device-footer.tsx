@@ -112,6 +112,9 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
                 draft.attrMap[id].codapID = result.values.attrs[0].id;
               }
             });
+          } else {
+            // the next run recreates the attribute, so this is only worth reporting
+            console.error(`Could not create the CODAP attribute for column ${name}`);
           }
         })
         .catch(e => console.error(e));

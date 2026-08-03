@@ -90,7 +90,7 @@ describe("DeviceFooter", () => {
   });
 
   // A column added here has to reach CODAP right away. Otherwise its attribute is missing from the
-  // case table until the next experiment run happens to recreate it [SAMPLER-106].
+  // case table until the next experiment run happens to recreate it.
   it("creates the CODAP attribute for a newly added column", async () => {
     renderDeviceFooter();
 

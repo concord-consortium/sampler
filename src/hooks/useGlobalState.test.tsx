@@ -58,8 +58,9 @@ const createdDataContext = { name: dataContextName, id: 1, title: dataContextNam
 
 // updateAttributeIds asks CODAP for every attribute by name in one batched request. CODAP answers
 // with the attribute's id, which the plugin stores in attrMap so it can recognize the attribute
-// later when CODAP reports a change to it. A request naming a collection that does not exist fails,
-// exactly as CODAP would answer it.
+// later when CODAP reports a change to it. This is deliberately stricter than CODAP, which resolves
+// an attribute by name across the whole data context and so would answer a request naming the wrong
+// collection: being strict is what lets these tests tell the right collection from a wrong one.
 const attributeIdRequestResponse = (resource: string) => {
   const [, collection, name] = resource.match(/collection\[(.*)\]\.attribute\[(.*)\]$/) ?? [];
   if (!Object.values(getCollectionNames()).includes(collection)) {
@@ -100,7 +101,7 @@ describe("useGlobalStateContextValue initialization", () => {
   });
 
   // The plugin matches CODAP's change notifications against these ids, so losing them means a
-  // rename made in the case table is never applied to the model [SAMPLER-106].
+  // rename made in the case table is never applied to the model.
   it("keeps the attribute ids it looked up", async () => {
     const { result } = renderHook(() => useGlobalStateContextValue());
 
@@ -129,8 +130,8 @@ describe("useGlobalStateContextValue initialization", () => {
   });
 
   // The reported bug was worst in a document that was reloaded rather than created: it already has
-  // an instance, so init takes the branch that reaches the trailing state write directly, and the
-  // data context already exists so nothing sets it up along the way [SAMPLER-106].
+  // an instance, so init records the data context name directly rather than inside the lock
+  // callback, and the data context already exists so nothing sets it up along the way.
   it("keeps the attribute ids it looked up in a reloaded document", async () => {
     const savedColumnId = "saved-column";
     mockInitializePlugin.mockResolvedValue({

@@ -172,7 +172,7 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
 
       // Publish the migrated state before touching CODAP. findOrCreateDataContext writes the
       // attribute ids it looks up back into the state it finds, so it has to find this state and
-      // not the placeholder the hook started with — the placeholder is a separate getDefaultState()
+      // not the placeholder the hook started with -- the placeholder is a separate getDefaultState()
       // whose column has a different id, which would leave the column's attribute id unrecorded.
       // Everything after this point updates individual properties for the same reason: replacing
       // the whole state would discard whatever findOrCreateDataContext had just written. This is
@@ -216,7 +216,9 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
       }
     };
 
-    init();
+    // every CODAP request init makes can reject rather than report failure -- on a timeout and on a
+    // closed connection -- and a rejection here would otherwise go unreported
+    init().catch(e => console.error(e));
   }, [setGlobalState]);
 
   useEffect(() => {
@@ -229,7 +231,6 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
     // data context could not be found and starting an experiment sets it again -- and every
     // notification would then be handled once per registration.
     if (globalState.dataContextName && globalState.dataContextName !== listenedToDataContextName.current) {
-      listenedToDataContextName.current = globalState.dataContextName;
       addDataContextChangeListener(globalState.dataContextName, (msg: any) => {
         if (msg.values.operation === "updateAttributes") {
           msg.values.result.attrIDs.forEach((id: string, i: number) => {
@@ -245,6 +246,7 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
           });
         }
       });
+      listenedToDataContextName.current = globalState.dataContextName;
     }
 
   }, [globalState.dataContextName, setGlobalState]);

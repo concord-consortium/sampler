@@ -14,8 +14,7 @@ import {
   updateAttribute} from "@concord-consortium/codap-plugin-api";
 import { AttrMap, IAttribute, IGlobalState } from "../types";
 import { Updater } from "use-immer";
-// these are only used by the commented-out renameAttributeInFormulas below, along with
-// getCollectionList from the plugin api import above
+// only the commented-out renameAttributeInFormulas below uses these
 // import { parseFormula } from "../utils/utils";
 // import { renameVariable, stringify } from "../utils/formula-parser";
 import { kPluginName } from "../constants";
@@ -356,7 +355,7 @@ export const getNewExperimentInfo = async (dataContextName: string, experimentHa
   // any cases?
   if (result.values.length > 0) {
     /*
-      This has been disabled due to a request to always create a new experiment in SAMPLER-82.
+      This has been disabled due to a request to always create a new experiment.
       If this turns out not to be the desired behavior in the future, this can be uncommented and
       the code below that sets an empty array for matchingHashItems can be removed.
 
@@ -389,11 +388,12 @@ export const getNewExperimentInfo = async (dataContextName: string, experimentHa
 // on its own -- it stores them against attribute ids and regenerates the displayed text -- so calling
 // this overwrote a correct formula with the output of the parser below, which drops backticks and
 // quotes and turns references to other attributes into string constants. CODAP v2 has no such
-// handling, but it has also gone without this since SAMPLER-78 made the call unreachable. Rewriting
-// formulas safely means parsing them the way CODAP parses them rather than approximating it here.
+// handling, but it has also gone without this ever since an earlier change to initialization left
+// the call unreachable. Rewriting formulas safely means parsing them the way CODAP parses them
+// rather than approximating it here.
 //
-// If we decide v2 does not need fixing, delete this along with the parseFormula, renameVariable and
-// stringify imports, which nothing else in this file uses.
+// If we decide v2 does not need fixing, delete this and the commented-out imports above it. To put
+// it back, uncomment those imports and add getCollectionList to the plugin api import.
 //
 // export const renameAttributeInFormulas = async (dataContextName: string, oldName: string, newName: string) => {
 //   const collectionListResult = await getCollectionList(dataContextName);
