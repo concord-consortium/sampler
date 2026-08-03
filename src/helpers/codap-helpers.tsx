@@ -287,16 +287,25 @@ export const deleteItemAttrs = async (dataContextName: string, attrs: string[]) 
   }
 };
 
-export const addMeasure = async (dataContextName: string, measureName: string, measureType: string, formula: string) => {
+/**
+ * Adds (or, for a named measure that already exists, updates) a measure attribute.
+ *
+ * Reports whether the measure made it into the table: a request CODAP doesn't answer rejects, and
+ * one it refuses resolves with success false, and neither is something the caller can tell the
+ * user about after the fact.
+ */
+export const addMeasure = async (dataContextName: string, measureName: string, measureType: string, formula: string): Promise<boolean> => {
   const samplesColl = getCollectionNames().samples;
 
-  // Each request rejects if CODAP doesn't answer it, and nothing awaits this function, so the
-  // whole sequence is guarded here rather than leaving a rejection with nothing attached to it.
   try {
     const res = await codapInterface.sendRequest({
       action: "get",
       resource: `dataContext[${dataContextName}].collection[${samplesColl}].attributeList`
     }) as IResult;
+
+    if (!res.success) {
+      return false;
+    }
 
     const attrs = res.values;
     let newAttributeName = measureName ? measureName : measureType;
@@ -306,14 +315,14 @@ export const addMeasure = async (dataContextName: string, measureName: string, m
 
     // a named measure reuses its attribute, so the formula is updated in place
     if (attrNameAlreadyUsed && measureName) {
-      await codapInterface.sendRequest({
+      const updated = await codapInterface.sendRequest({
         action: "update",
         resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute[${measureName}]`,
         values: {
           formula
         }
-      });
-      return;
+      }) as IResult;
+      return updated.success;
     }
 
     // an unnamed measure gets the lowest unused numeric suffix
@@ -337,7 +346,7 @@ export const addMeasure = async (dataContextName: string, measureName: string, m
       }
     }
 
-    await codapInterface.sendRequest({
+    const created = await codapInterface.sendRequest({
       action: "create",
       resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute`,
       values: [{
@@ -345,10 +354,11 @@ export const addMeasure = async (dataContextName: string, measureName: string, m
         type: "numeric",
         formula
       }]
-    });
+    }) as IResult;
+    return created.success;
   } catch (error) {
-
     console.warn("Sampler: could not add the measure", error);
+    return false;
   }
 };
 

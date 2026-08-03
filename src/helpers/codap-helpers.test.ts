@@ -90,12 +90,25 @@ describe("addMeasure", () => {
     expect(secondRequest().values[0].name).toBe("count1");
   });
 
-  // Nothing awaits addMeasure, so a rejection here would have nothing attached to observe it.
+  // The caller tells the user the measure was added, so it has to hear about a measure that was
+  // not: a request CODAP never answers rejects, and one it refuses answers with success false.
+  it("reports success when the measure is created", async () => {
+    mockSendRequest.mockResolvedValueOnce(attributeList([]));
+
+    await expect(addMeasure("ctx", "My Measure", "count", "count()")).resolves.toBe(true);
+  });
+
+  it("reports success when an existing named measure is updated", async () => {
+    mockSendRequest.mockResolvedValueOnce(attributeList(["My Measure"]));
+
+    await expect(addMeasure("ctx", "My Measure", "count", "count()")).resolves.toBe(true);
+  });
+
   it("reports a failed request rather than letting it escape", async () => {
     const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     mockSendRequest.mockRejectedValue(new Error("CODAP request timed out"));
 
-    await expect(addMeasure("ctx", "My Measure", "count", "count()")).resolves.toBeUndefined();
+    await expect(addMeasure("ctx", "My Measure", "count", "count()")).resolves.toBe(false);
 
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
@@ -107,9 +120,25 @@ describe("addMeasure", () => {
       .mockResolvedValueOnce(attributeList([]))
       .mockRejectedValueOnce(new Error("CODAP request timed out"));
 
-    await expect(addMeasure("ctx", "My Measure", "count", "count()")).resolves.toBeUndefined();
+    await expect(addMeasure("ctx", "My Measure", "count", "count()")).resolves.toBe(false);
 
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+
+  it("reports a create CODAP refused", async () => {
+    mockSendRequest
+      .mockResolvedValueOnce(attributeList([]))
+      .mockResolvedValueOnce({ success: false, values: { error: "duplicate attribute name" } });
+
+    await expect(addMeasure("ctx", "My Measure", "count", "count()")).resolves.toBe(false);
+  });
+
+  it("does not create anything when the attribute list cannot be read", async () => {
+    mockSendRequest.mockResolvedValueOnce({ success: false, values: { error: "no such collection" } });
+
+    await expect(addMeasure("ctx", "My Measure", "count", "count()")).resolves.toBe(false);
+
+    expect(mockSendRequest).toHaveBeenCalledTimes(1);
   });
 });

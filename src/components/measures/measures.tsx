@@ -104,9 +104,19 @@ export const MeasuresTab = () => {
   const handleChangeOpValue = (e: React.ChangeEvent<HTMLSelectElement>) => setOpValue(e.target.value);
   const handleChangeRValue = (e: React.ChangeEvent<HTMLSelectElement>) => setRValue(e.target.value);
 
-  const handleAddMeasure = () => {
+  const handleAddMeasure = async () => {
+    setMessage("");
     const formula = getFormula(selectedMeasure, lValue, opValue, rValue);
-    addMeasure(dataContextName, measureName, selectedMeasure, formula);
+    const added = await addMeasure(dataContextName, measureName, selectedMeasure, formula);
+
+    // A measure that never reached the table has to say so, and the form keeps what the user
+    // entered so they can try again without describing the measure a second time. The message
+    // stays until the next attempt rather than timing out, since there is nothing else to notice.
+    if (!added) {
+      setMessage(`Could not add the ${measureLabels[selectedMeasure]} measure. Please try again.`);
+      return;
+    }
+
     setMessage(`${measureLabels[selectedMeasure]} measure added.`);
     setSelectedMeasure("default");
     setMeasureName("");
