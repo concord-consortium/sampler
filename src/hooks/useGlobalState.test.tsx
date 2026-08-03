@@ -129,8 +129,8 @@ describe("useGlobalStateContextValue initialization", () => {
     expect(columnAttrRequest).toContain(`collection[${getCollectionNames().items}]`);
   });
 
-  // The reported bug was worst in a document that was reloaded rather than created: it already has
-  // an instance, so init records the data context name directly rather than inside the lock
+  // A document that was reloaded rather than created takes the other path through init: it already
+  // has an instance, so the data context name is recorded directly rather than inside the lock
   // callback, and the data context already exists so nothing sets it up along the way.
   it("keeps the attribute ids it looked up in a reloaded document", async () => {
     const savedColumnId = "saved-column";

@@ -97,7 +97,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
     }
 
     // formulas that reference the attribute are CODAP's to update -- see the commented-out
-    // renameAttributeInFormulas in codap-helpers for why the plugin no longer rewrites them
+    // renameAttributeInFormulas in codap-helpers for why the plugin leaves them alone
     setColumnName(newName);
     setGlobalState(draft => {
       draft.model.columns[columnIndex].name = newName;

@@ -422,9 +422,9 @@ export const getNewExperimentInfo = async (dataContextName: string, experimentHa
   // any cases?
   if (result.values.length > 0) {
     /*
-      This has been disabled due to a request to always create a new experiment.
-      If this turns out not to be the desired behavior in the future, this can be uncommented and
-      the code below that sets an empty array for matchingHashItems can be removed.
+      Every run starts a new experiment, so a run matching an existing one is never looked for.
+      If matching is wanted again, this can be uncommented and the code below that sets an empty
+      array for matchingHashItems can be removed.
 
     // check if the experiment already exists
     const matchingHashItems = result.values.filter((item: any) => item.values?.experimentHash === experimentHash);
@@ -455,9 +455,8 @@ export const getNewExperimentInfo = async (dataContextName: string, experimentHa
 // on its own -- it stores them against attribute ids and regenerates the displayed text -- so calling
 // this overwrote a correct formula with the output of the parser below, which drops backticks and
 // quotes and turns references to other attributes into string constants. CODAP v2 has no such
-// handling, but it has also gone without this ever since an earlier change to initialization left
-// the call unreachable. Rewriting formulas safely means parsing them the way CODAP parses them
-// rather than approximating it here.
+// handling, so a formula there keeps the old name after a rename. Rewriting formulas safely means
+// parsing them the way CODAP parses them rather than approximating it here.
 //
 // If we decide v2 does not need fixing, delete this and the commented-out imports above it. To put
 // it back, uncomment those imports and add getCollectionList to the plugin api import.

@@ -176,8 +176,8 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
       // whose column has a different id, which would leave the column's attribute id unrecorded.
       // Everything after this point updates individual properties for the same reason: replacing
       // the whole state would discard whatever findOrCreateDataContext had just written. This is
-      // the only place left that replaces the state wholesale, so nothing may write global state
-      // before it lands -- such a write would be discarded here.
+      // the only place that replaces the state wholesale, so nothing may write global state before
+      // it lands -- such a write would be discarded here.
       setGlobalState(newGlobalState);
 
       const ensureDataContext = async (instance: number) => {
