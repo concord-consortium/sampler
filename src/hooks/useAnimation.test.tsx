@@ -9,8 +9,15 @@ jest.mock("@concord-consortium/codap-plugin-api", () => ({
   getCaseByIndex: jest.fn()
 }));
 
+// Distinct names per key: which collection the last case is read from is the point of these
+// tests, and a mock that answered every key alike could not tell the three collections apart.
 jest.mock("../utils/localeManager", () => ({
-  tr: () => "sample"
+  tr: (key: string) => ({
+    "DG.Plugin.Sampler.dataset.attr-sample": "sample",
+    "DG.Plugin.Sampler.dataset.experiment-collection-name": "experiments",
+    "DG.Plugin.Sampler.dataset.sample-collection-name": "samples",
+    "DG.Plugin.Sampler.dataset.item-collection-name": "items"
+  } as Record<string, string>)[key] ?? key
 }));
 
 const mockCreateItems = createItems as jest.Mock;
@@ -89,7 +96,8 @@ describe("createExperimentAnimationSteps endExperiment (Fastest mode)", () => {
 
     await runExperiment(onComplete);
 
-    expect(mockGetCaseByIndex).toHaveBeenCalledWith("Sampler", expect.anything(), 1);
+    expect(mockGetCaseCount).toHaveBeenCalledWith("Sampler", "samples");
+    expect(mockGetCaseByIndex).toHaveBeenCalledWith("Sampler", "samples", 1);
     expect(mockSelectCases).toHaveBeenCalledWith("Sampler", [77]);
   });
 
