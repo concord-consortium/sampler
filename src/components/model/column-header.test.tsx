@@ -1,6 +1,6 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { getAttribute, getCollectionList, updateAttribute } from "@concord-consortium/codap-plugin-api";
+import { getAttribute, updateAttribute } from "@concord-consortium/codap-plugin-api";
 import { ColumnHeader } from "./column-header";
 import { GlobalStateContext, getDefaultState } from "../../hooks/useGlobalState";
 import { IGlobalState } from "../../types";
@@ -35,7 +35,6 @@ jest.mock("../../utils/localeManager", () => ({
 }));
 
 const mockGetAttribute = getAttribute as jest.Mock;
-const mockGetCollectionList = getCollectionList as jest.Mock;
 const mockUpdateAttribute = updateAttribute as jest.Mock;
 
 const dataContextName = "Sampler";
@@ -66,8 +65,6 @@ describe("ColumnHeader", () => {
     jest.clearAllMocks();
     mockGetAttribute.mockResolvedValue({ success: true, values: { id: "id-output", name: oldName } });
     mockUpdateAttribute.mockResolvedValue({ success: true });
-    // no collections to walk, so renaming the attribute in formulas is a no-op here
-    mockGetCollectionList.mockResolvedValue({ success: false });
   });
 
   // Renaming a column has to reach CODAP. When it doesn't, the case table keeps the old attribute

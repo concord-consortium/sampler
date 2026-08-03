@@ -383,6 +383,11 @@ export const getNewExperimentInfo = async (dataContextName: string, experimentHa
   return {experimentNum, startingSampleNumber};
 };
 
+// Nothing calls this. CODAP v3 keeps formulas that reference a renamed attribute correct on its own --
+// it stores them against attribute ids and regenerates the displayed text -- so calling this would
+// overwrite a correct formula with the output of the parser below, which drops backticks and quotes and
+// turns references to other attributes into string constants. CODAP v2 does need the rewrite, but doing
+// it safely means parsing formulas the way CODAP parses them rather than approximating it here.
 export const renameAttributeInFormulas = async (dataContextName: string, oldName: string, newName: string) => {
   const collectionListResult = await getCollectionList(dataContextName);
   if (!collectionListResult.success) {
