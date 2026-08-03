@@ -67,7 +67,7 @@ describe("createExperimentAnimationSteps endExperiment (Fastest mode)", () => {
   // Every sample goes to CODAP in one request: a create costs a pass over the whole dataset, so
   // each additional request roughly doubles the most expensive part of collecting an experiment.
   it("creates every sample in a single request", async () => {
-    mockCreateItems.mockResolvedValue({});
+    mockCreateItems.mockResolvedValue({ success: true });
     const onComplete = jest.fn();
 
     await runExperiment(onComplete);
@@ -84,7 +84,7 @@ describe("createExperimentAnimationSteps endExperiment (Fastest mode)", () => {
   // its items) is what makes the case table scroll to it and cascade to its children, because
   // CODAP resolves the ids it is given against each collection's rows.
   it("selects the last case in the sample collection", async () => {
-    mockCreateItems.mockResolvedValue({});
+    mockCreateItems.mockResolvedValue({ success: true });
     const onComplete = jest.fn();
 
     await runExperiment(onComplete);
@@ -94,7 +94,7 @@ describe("createExperimentAnimationSteps endExperiment (Fastest mode)", () => {
   });
 
   it("does not select anything when the sample collection is empty", async () => {
-    mockCreateItems.mockResolvedValue({});
+    mockCreateItems.mockResolvedValue({ success: true });
     mockGetCaseCount.mockResolvedValue({ values: 0 });
     const onComplete = jest.fn();
 
@@ -106,7 +106,7 @@ describe("createExperimentAnimationSteps endExperiment (Fastest mode)", () => {
   });
 
   it("completes when the last case cannot be looked up", async () => {
-    mockCreateItems.mockResolvedValue({});
+    mockCreateItems.mockResolvedValue({ success: true });
     mockGetCaseByIndex.mockRejectedValue("CODAP request timed out");
     const onComplete = jest.fn();
 
@@ -140,8 +140,22 @@ describe("createExperimentAnimationSteps endExperiment (Fastest mode)", () => {
     expect(mockSelectCases).not.toHaveBeenCalled();
   });
 
+  // CODAP answers a create it refuses rather than failing to answer, so a response is not by
+  // itself evidence that the samples landed.
+  it("selects nothing when the create is refused", async () => {
+    mockCreateItems.mockResolvedValue({ success: false, values: { error: "no such collection" } });
+    const onComplete = jest.fn();
+
+    await runExperiment(onComplete);
+
+    expect(mockGetCaseCount).not.toHaveBeenCalled();
+    expect(mockGetCaseByIndex).not.toHaveBeenCalled();
+    expect(mockSelectCases).not.toHaveBeenCalled();
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
   it("completes when selecting the new cases rejects", async () => {
-    mockCreateItems.mockResolvedValue({});
+    mockCreateItems.mockResolvedValue({ success: true });
     mockSelectCases.mockRejectedValue("CODAP request timed out");
     const onComplete = jest.fn();
 

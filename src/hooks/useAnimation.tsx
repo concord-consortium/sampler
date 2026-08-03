@@ -146,8 +146,10 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
         //
         // Only once the create is known to have landed, though. Otherwise the last case may belong
         // to an earlier experiment, and highlighting it would claim it is the sample just
-        // collected. Selecting nothing says nothing; selecting the wrong row misleads.
-        if (created) {
+        // collected. Selecting nothing says nothing; selecting the wrong row misleads. A refused
+        // create resolves with success false rather than rejecting, so the request has to be asked
+        // whether it worked, not merely whether it answered.
+        if (created?.success) {
           const sampleCollectionName = getCollectionNames().samples;
           const caseCountResult =
             await tryRequest(() => getCaseCount(dataContextName, sampleCollectionName)) as any;
