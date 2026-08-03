@@ -164,9 +164,10 @@ export const Device = (props: IProps) => {
       });
       const attrsToDelete = maybeAttrsToDelete.filter(attr => !attrsToKeep.has(attr));
 
-      attrsToAdd.forEach(async (attr) => {
-        await createNewAttribute(globalState.dataContextName, getCollectionNames().items, attr);
-      });
+      // awaited together: a forEach would drop these promises, leaving a failure with nothing
+      // attached to it and the attribute silently missing
+      await Promise.all(attrsToAdd.map(attr =>
+        createNewAttribute(globalState.dataContextName, getCollectionNames().items, attr)));
       await deleteItemAttrs(globalState.dataContextName, attrsToDelete);
     };
     maybeUpdate().catch(error => console.warn("Sampler: could not update item attributes", error));
