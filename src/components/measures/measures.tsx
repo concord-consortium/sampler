@@ -136,6 +136,13 @@ export const MeasuresTab = () => {
     // A measure that never reached the table has to say so, and the form keeps what the user
     // entered so they can try again without describing the measure a second time. The message
     // stays until the next attempt rather than timing out, since there is nothing else to notice.
+    //
+    // TODO: localise this message and the one below it. tr() displays the raw string id when a key
+    // is missing, so the entries have to exist before the keys are used here -- otherwise
+    // DG.Plugin.Sampler.measures.add-failed appears on screen in place of the sentence. The
+    // Sampler's strings live in the CODAP POEditor project, so adding them there is the immediate
+    // route; moving them into a project of their own would be the better one, and would take
+    // plugin strings off the CODAP build and string-synchronization cycle.
     if (!added) {
       setMessage(`Could not add the ${measureLabels[selectedMeasure]} measure. Please try again.`);
       return;
