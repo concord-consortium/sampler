@@ -47,14 +47,16 @@ function resetState() {
   state = {
     speed: Speed.Fastest,
     // The samples are named after these attributes, so an empty map would fail the run before it
-    // ever reached the animation these tests are about.
+    // ever reached the animation these tests are about. The sample attribute carries the
+    // translated name the animation itself looks samples up by, so a run whose rows are to reach
+    // the create has to use it rather than a name of the test's own choosing.
     attrMap: {
-      experiment: { codapID: null, name: "Experiment" },
-      description: { codapID: null, name: "Description" },
-      sample_size: { codapID: null, name: "Sample Size" },
-      until_formula: { codapID: null, name: "Until" },
+      experiment: { codapID: null, name: "experiment" },
+      description: { codapID: null, name: "description" },
+      sample_size: { codapID: null, name: "sample size" },
+      until_formula: { codapID: null, name: "formula for until" },
       experimentHash: { codapID: null, name: "experimentHash" },
-      sample: { codapID: null, name: "Sample" }
+      sample: { codapID: null, name: "sample" }
     },
     model: { columns: [{ id: "c1", name: "Deck1", devices: [{ id: "d1", viewType: "mixer", variables: ["a"], replacement: true, formulas: {} }] }] },
     numSamples: "1",
@@ -125,6 +127,121 @@ describe("handleStartRun run-state feedback", () => {
     expect(mockCreateItems).not.toHaveBeenCalled();
     expect(state.isRunning).toBe(false);
     expect(state.enableRunButton).toBe(true);
+  });
+
+  // The animation steps hold on to the run's end callback, and the request they are waiting on can
+  // settle long after the user gave up on that run. Ending it then would hand the controls back
+  // over the run that took its place.
+  it("does not end the run that replaced one the user stopped", async () => {
+    mockFindOrCreateDataContext.mockResolvedValue("Sampler");
+    let releaseFirstCreate: (value: unknown) => void = () => undefined;
+    mockCreateItems
+      .mockImplementationOnce(() => new Promise(resolve => { releaseFirstCreate = resolve; }))
+      // the replacement run is still writing its own samples when the first run's create lands
+      .mockImplementationOnce(() => new Promise(() => undefined));
+
+    const { result } = renderHook(() => useAnimationContextValue());
+
+    await result.current.handleStartRun();
+    await flushRequests();
+
+    await result.current.handleStopRun();
+    await result.current.handleStartRun();
+    await flushRequests();
+
+    releaseFirstCreate({ success: true });
+    await flushRequests();
+
+    expect(state.isRunning).toBe(true);
+    expect(state.enableRunButton).toBe(false);
+  });
+
+  // Setting up is several requests long, and the answer to Stop cannot wait for the one still in
+  // flight: a run stopped anywhere in there has to abandon itself before it animates.
+  it("abandons a run stopped after the data context is set up", async () => {
+    mockFindOrCreateDataContext.mockResolvedValue("Sampler");
+    let releaseExperimentInfo: (value: unknown) => void = () => undefined;
+    mockGetNewExperimentInfo.mockImplementation(
+      () => new Promise(resolve => { releaseExperimentInfo = resolve; }));
+
+    const { result } = renderHook(() => useAnimationContextValue());
+
+    const run = result.current.handleStartRun();
+    await flushRequests();
+    await result.current.handleStopRun();
+
+    releaseExperimentInfo({ experimentNum: 1, startingSampleNumber: 1 });
+    await run;
+    await flushRequests();
+
+    expect(mockCreateItems).not.toHaveBeenCalled();
+    expect(state.isRunning).toBe(false);
+  });
+
+  // Stopping during the setup has to be answered before the run reports a setup failure of its
+  // own: the user is not waiting on a table for a run they abandoned.
+  it("does not report a setup failure for a run the user stopped", async () => {
+    const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => undefined);
+    let releaseDataContext: (value: string) => void = () => undefined;
+    mockFindOrCreateDataContext.mockImplementation(
+      () => new Promise<string>(resolve => { releaseDataContext = resolve; }));
+
+    const { result } = renderHook(() => useAnimationContextValue());
+
+    const run = result.current.handleStartRun();
+    await result.current.handleStopRun();
+
+    releaseDataContext("");
+    await run;
+
+    expect(alertSpy).not.toHaveBeenCalled();
+  });
+
+  // Starting again abandons the run being set up for the same reason stopping does: only one run
+  // can be under way, and it is the one the user asked for last.
+  it("abandons a run superseded by another start", async () => {
+    const releaseDataContexts: Array<(value: string) => void> = [];
+    mockFindOrCreateDataContext.mockImplementation(
+      () => new Promise<string>(resolve => { releaseDataContexts.push(resolve); }));
+
+    const { result } = renderHook(() => useAnimationContextValue());
+
+    const firstRun = result.current.handleStartRun();
+    const secondRun = result.current.handleStartRun();
+
+    releaseDataContexts[0]("Sampler");
+    await firstRun;
+    await flushRequests();
+
+    expect(mockCreateItems).not.toHaveBeenCalled();
+
+    releaseDataContexts[1]("Sampler");
+    await secondRun;
+    await flushRequests();
+
+    expect(mockCreateItems).toHaveBeenCalledTimes(1);
+  });
+
+  // The controls read this to decide whether pause can still act on the run, so it has to follow
+  // the run itself: set when the run enters the pass that finishes it, cleared when the run ends.
+  it("reports a fastest run as uninterruptible until it ends", async () => {
+    mockFindOrCreateDataContext.mockResolvedValue("Sampler");
+    let releaseCreate: (value: unknown) => void = () => undefined;
+    mockCreateItems.mockImplementationOnce(() => new Promise(resolve => { releaseCreate = resolve; }));
+
+    const { result } = renderHook(() => useAnimationContextValue());
+    expect(result.current.isRunUninterruptible()).toBe(false);
+
+    await result.current.handleStartRun();
+    await flushRequests();
+
+    expect(result.current.isRunUninterruptible()).toBe(true);
+
+    releaseCreate({ success: true });
+    await flushRequests();
+
+    expect(result.current.isRunUninterruptible()).toBe(false);
+    expect(state.isRunning).toBe(false);
   });
 
   // Pausing during the setup pauses an animation that is about to be replaced by the one the run

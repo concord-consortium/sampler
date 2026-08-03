@@ -545,6 +545,12 @@ export const useAnimationContextValue = (): IAnimationContext => {
       }
 
       const onEndRun = () => {
+        // The steps hold on to this, and a request they are waiting on can settle long after the
+        // run was stopped or replaced. Ending a run that is no longer the one under way would
+        // hand its controls back over a run that is still going.
+        if (!isCurrentRun()) {
+          return;
+        }
         animationsCallbacksRef.current.forEach(callback => callback({ kind: "endExperiment" }));
         enableNewRun();
       };
