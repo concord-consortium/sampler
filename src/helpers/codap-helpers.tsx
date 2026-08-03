@@ -67,10 +67,13 @@ const updateAttributeIds = async (dataContextName: string, attrs: Array<string>,
     "resource": `dataContext[${dataContextName}].collection[${collectionAttr.collection}].attribute[${collectionAttr.attrName}]`
   }));
 
-  await codapInterface.sendRequest(reqs, (getAttrsResult?: IResult[]) => {
-    // a batched get is answered with one result per request; anything else — no answer at all, or
-    // a single error for the batch — leaves the existing ids alone rather than overwriting them
-    // from a response that never carried any
+  await codapInterface.sendRequest(reqs, (getAttrsResult?: IResult | IResult[]) => {
+    // A batched get is answered with one result per request. Anything else carries no ids to read:
+    // undefined when the request is given up on, a single result when CODAP answers the batch with
+    // one error. Either way the ids already held are better than nothing.
+    //
+    // Being given up on does not cancel the request, so a late answer calls this a second time —
+    // with the results, which are then applied.
     if (!Array.isArray(getAttrsResult)) { return; }
 
     const updatedAttrsIds: Record<keyof AttrMap, string> = {};
@@ -183,9 +186,16 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
     // ensure that if a user deleted a CODAP attr representing a device column, it is reinstated
     const missingAttrs = attrs.filter(attr => !attrNames.includes(attr));
     if (missingAttrs.length > 0) {
-      missingAttrs.forEach(async (attr) => {
-        await createNewAttribute(finalDataContextName, collectionNames.items, attr);
-      });
+      // awaited, and reported one at a time: a forEach would drop these promises, leaving a
+      // failure with nothing attached to it, and one attribute that cannot be reinstated should
+      // not cost the rest of the setup
+      await Promise.all(missingAttrs.map(async (attr) => {
+        try {
+          await createNewAttribute(finalDataContextName, collectionNames.items, attr);
+        } catch (error) {
+          console.warn("Sampler: could not reinstate the item attribute", attr, error);
+        }
+      }));
     }
 
     // if this is a collector run and there are no existing items remove all non-collector attributes
@@ -197,10 +207,17 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
       }
     }
 
-    await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState);
+    // Neither of these is worth the run: updateAttributeIds only refreshes cached attribute ids,
+    // and the table createWideTable opens is already open on a document being run again. Setting
+    // up sends more requests than any other part of a run, so it is the likeliest place for one
+    // to outlive the response deadline, and an experiment must not be abandoned before it starts
+    // over a request that told us nothing we did not already have.
+    await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState)
+      .catch(error => console.warn("Sampler: could not refresh the attribute ids", error));
 
     if (createTable) {
-      await createWideTable(finalDataContextName, instance);
+      await createWideTable(finalDataContextName, instance)
+        .catch(error => console.warn("Sampler: could not open the case table", error));
     }
 
     return finalDataContextName;
@@ -227,9 +244,12 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
           const createOutputCollection =
             await createChildCollection(finalDataContextName, collectionNames.items, collectionNames.samples, itemsAttrs);
           if (createOutputCollection.success) {
-            await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState);
+            // as above: neither of these is worth abandoning a run over
+            await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState)
+              .catch(error => console.warn("Sampler: could not refresh the attribute ids", error));
             if (createTable) {
-              await createWideTable(finalDataContextName, instance);
+              await createWideTable(finalDataContextName, instance)
+                .catch(error => console.warn("Sampler: could not open the case table", error));
             }
             return finalDataContextName;
           }
