@@ -93,4 +93,30 @@ describe("ColumnHeader", () => {
     await waitFor(() => expect(mockUpdateAttribute).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
   });
+
+  // A request that times out or meets a closed connection rejects rather than reporting failure, so
+  // the answer has to be the same as a refusal or the column and its attribute drift apart anyway.
+  it("keeps the old name when the rename request never answers", async () => {
+    mockUpdateAttribute.mockRejectedValue(new Error("connection closed"));
+    renderColumnHeader();
+
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: newName } });
+    fireEvent.blur(screen.getByRole("textbox"));
+
+    await waitFor(() => expect(mockUpdateAttribute).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
+  });
+
+  // The attribute may be gone -- deleted in the case table -- in which case there is nothing to
+  // rename and carrying on would leave the column naming an attribute that does not exist.
+  it("keeps the old name when the attribute is no longer in CODAP", async () => {
+    mockGetAttribute.mockResolvedValue({ success: false });
+    renderColumnHeader();
+
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: newName } });
+    fireEvent.blur(screen.getByRole("textbox"));
+
+    await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
+    expect(mockUpdateAttribute).not.toHaveBeenCalled();
+  });
 });

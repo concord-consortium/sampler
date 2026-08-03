@@ -67,31 +67,41 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
       return;
     }
 
+    // Renaming the column while CODAP still knows the attribute by its old name is what leaves the
+    // stale attribute behind on the next run, so the column keeps its old name unless CODAP renamed
+    // the attribute. A request can also reject rather than report failure -- it does so on a timeout
+    // and on a closed connection -- which has to mean the same thing here.
     if (globalState.dataContextName) {
       const { dataContextName } = globalState;
       const itemsCollectionName = getCollectionNames().items;
       const oldAttrName = globalState.attrMap[column.id].name;
-      const attr = (await getAttribute(dataContextName, itemsCollectionName, oldAttrName)).values;
-      const renameResult = await updateAttribute(dataContextName, itemsCollectionName, oldAttrName, attr, {name: newName});
-      if (!renameResult.success) {
-        // renaming the column anyway would leave it naming an attribute that no longer answers to it,
-        // and the next run would add the new name alongside the old one
+      try {
+        const attrResult = await getAttribute(dataContextName, itemsCollectionName, oldAttrName);
+        if (!attrResult.success) {
+          setColumnName(column.name);
+          return;
+        }
+        // updateAttribute ignores the attribute it is handed and renames by name, so this is only
+        // a check that there is still something to rename
+        const renameResult =
+          await updateAttribute(dataContextName, itemsCollectionName, oldAttrName, attrResult.values, {name: newName});
+        if (!renameResult.success) {
+          setColumnName(column.name);
+          return;
+        }
+      } catch (e) {
         setColumnName(column.name);
         return;
       }
-      // formulas that reference the attribute are CODAP's to update -- see renameAttributeInFormulas
-      setColumnName(newName);
-      setGlobalState(draft => {
-        draft.model.columns[columnIndex].name = newName;
-        draft.attrMap[column.id].name = newName;
-      });
-    } else {
-      setColumnName(newName);
-      setGlobalState(draft => {
-        draft.model.columns[columnIndex].name = newName;
-        draft.attrMap[column.id].name = newName;
-      });
     }
+
+    // formulas that reference the attribute are CODAP's to update -- see the commented-out
+    // renameAttributeInFormulas in codap-helpers for why the plugin no longer rewrites them
+    setColumnName(newName);
+    setGlobalState(draft => {
+      draft.model.columns[columnIndex].name = newName;
+      draft.attrMap[column.id].name = newName;
+    });
   };
 
   const resetInput = useCallback(() => {

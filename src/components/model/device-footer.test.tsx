@@ -4,7 +4,6 @@ import { useImmer } from "use-immer";
 import { createNewAttribute } from "@concord-consortium/codap-plugin-api";
 import { DeviceFooter } from "./device-footer";
 import { GlobalStateContext, getDefaultState } from "../../hooks/useGlobalState";
-import { getCollectionNames } from "../../helpers/codap-helpers";
 import { IGlobalState } from "../../types";
 
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
@@ -27,6 +26,21 @@ jest.mock("@concord-consortium/codap-plugin-api", () => ({
   getListOfDataContexts: jest.fn(),
   initializePlugin: jest.fn(),
   updateAttribute: jest.fn()
+}));
+
+// Stand in for a non-English locale, where the items collection is not named "items", so that the
+// expected collection name cannot come out of the same call the code under test makes. The rest are
+// named so the test reads in English; anything else resolves to its own id.
+const itemsCollectionName = "objekter";
+jest.mock("../../utils/localeManager", () => ({
+  tr: (key: string) => {
+    switch (key) {
+      case "DG.Plugin.Sampler.dataset.item-collection-name": return "objekter";
+      case "DG.Plugin.Sampler.dataset.attr-value": return "output";
+      case "DG.Plugin.Sampler.device-add": return "Add Device";
+      default: return key;
+    }
+  }
 }));
 
 const mockCreateNewAttribute = createNewAttribute as jest.Mock;
@@ -83,6 +97,6 @@ describe("DeviceFooter", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add Device" }));
 
     await waitFor(() => expect(mockCreateNewAttribute).toHaveBeenCalledTimes(1));
-    expect(mockCreateNewAttribute).toHaveBeenCalledWith(dataContextName, getCollectionNames().items, "output2");
+    expect(mockCreateNewAttribute).toHaveBeenCalledWith(dataContextName, itemsCollectionName, "output2");
   });
 });

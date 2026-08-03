@@ -4,12 +4,15 @@ import {
   createChildCollection,
   createDataContext,
   createParentCollection,
+  getAttributeList,
   getDataContext,
   getListOfDataContexts,
   initializePlugin} from "@concord-consortium/codap-plugin-api";
 import { useGlobalStateContextValue } from "./useGlobalState";
 import { defaultOutputAttrName } from "../types";
 import { getCollectionNames } from "../helpers/codap-helpers";
+import { createDefaultDevice } from "../models/device-model";
+import { defaultAttrMap } from "../utils/attr-map";
 import { tr } from "../utils/localeManager";
 
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
@@ -38,6 +41,7 @@ const mockCodapInterface = codapInterface as jest.Mocked<typeof codapInterface>;
 const mockCreateChildCollection = createChildCollection as jest.Mock;
 const mockCreateDataContext = createDataContext as jest.Mock;
 const mockCreateParentCollection = createParentCollection as jest.Mock;
+const mockGetAttributeList = getAttributeList as jest.Mock;
 const mockGetDataContext = getDataContext as jest.Mock;
 const mockGetListOfDataContexts = getListOfDataContexts as jest.Mock;
 const mockInitializePlugin = initializePlugin as jest.Mock;
@@ -122,5 +126,30 @@ describe("useGlobalStateContextValue initialization", () => {
       resource.endsWith(`.attribute[${defaultOutputAttrName}]`));
 
     expect(columnAttrRequest).toContain(`collection[${getCollectionNames().items}]`);
+  });
+
+  // The reported bug was worst in a document that was reloaded rather than created: it already has
+  // an instance, so init takes the branch that reaches the trailing state write directly, and the
+  // data context already exists so nothing sets it up along the way [SAMPLER-106].
+  it("keeps the attribute ids it looked up in a reloaded document", async () => {
+    const savedColumnId = "saved-column";
+    mockInitializePlugin.mockResolvedValue({
+      instance: 1,
+      dataContextName,
+      model: { columns: [{ name: defaultOutputAttrName, id: savedColumnId, devices: [createDefaultDevice()] }] },
+      attrMap: { ...defaultAttrMap, [savedColumnId]: { codapID: null, name: defaultOutputAttrName } }
+    });
+    mockGetDataContext.mockResolvedValue({ success: true, values: { name: dataContextName } });
+    mockGetAttributeList.mockResolvedValue({ success: true, values: [
+      { name: defaultAttrMap.sample_size.name },
+      { name: defaultAttrMap.experimentHash.name },
+      { name: defaultOutputAttrName }
+    ] });
+
+    const { result } = renderHook(() => useGlobalStateContextValue());
+
+    await waitFor(() => expect(result.current.globalState.dataContextName).toBe(dataContextName));
+
+    expect(result.current.globalState.attrMap[savedColumnId].codapID).toBe(`id-${defaultOutputAttrName}`);
   });
 });

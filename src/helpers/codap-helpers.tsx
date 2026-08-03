@@ -9,14 +9,15 @@ import {
   getAttribute,
   getAttributeList,
   getCaseCount,
-  getCollectionList,
   getDataContext,
   getListOfDataContexts,
   updateAttribute} from "@concord-consortium/codap-plugin-api";
 import { AttrMap, IAttribute, IGlobalState } from "../types";
 import { Updater } from "use-immer";
-import { parseFormula } from "../utils/utils";
-import { renameVariable, stringify } from "../utils/formula-parser";
+// these are only used by the commented-out renameAttributeInFormulas below, along with
+// getCollectionList from the plugin api import above
+// import { parseFormula } from "../utils/utils";
+// import { renameVariable, stringify } from "../utils/formula-parser";
 import { kPluginName } from "../constants";
 import { tr } from "../utils/localeManager";
 
@@ -384,50 +385,55 @@ export const getNewExperimentInfo = async (dataContextName: string, experimentHa
   return {experimentNum, startingSampleNumber};
 };
 
-// Nothing calls this. CODAP v3 keeps formulas that reference a renamed attribute correct on its own --
-// it stores them against attribute ids and regenerates the displayed text -- so calling this would
-// overwrite a correct formula with the output of the parser below, which drops backticks and quotes and
-// turns references to other attributes into string constants. CODAP v2 does need the rewrite, but doing
-// it safely means parsing formulas the way CODAP parses them rather than approximating it here.
-export const renameAttributeInFormulas = async (dataContextName: string, oldName: string, newName: string) => {
-  const collectionListResult = await getCollectionList(dataContextName);
-  if (!collectionListResult.success) {
-    return;
-  }
-
-  const collections = collectionListResult.values.map((c: any) => c.name);
-  for (const collection of collections) {
-    const attrListResult = await getAttributeList(dataContextName, collection);
-    if (!attrListResult.success) {
-      continue;
-    }
-
-    const attributes = attrListResult.values;
-    for (const attr of attributes) {
-      const attributeResult = await getAttribute(dataContextName, collection, attr.name);
-      if (!attributeResult.success) {
-        continue;
-      }
-      const { formula } = attributeResult.values;
-
-      // a bug in CODAPv2 causes multiple equals signs to be added to formulas when renaming attributes
-      let finalFormula = formula?.replace(/={1,}/g, "=");
-
-      if (finalFormula?.includes(oldName)) {
-        // this returns a binary expression of left: "", op: =, right: parsedFormula
-        // so we only need to update the variable name in the right side
-        const parsed = parseFormula(finalFormula, "");
-        if (parsed.type === "BinaryExpression") {
-          const renamed = renameVariable(parsed.right, oldName, newName);
-          finalFormula = stringify(renamed, [newName]);
-        }
-      }
-      if (finalFormula !== formula) {
-        await updateAttribute(dataContextName, collection, attr.name, attr, {formula: finalFormula});
-      }
-    }
-  }
-};
+// Kept in case CODAP v2 needs it. CODAP v3 keeps formulas that reference a renamed attribute correct
+// on its own -- it stores them against attribute ids and regenerates the displayed text -- so calling
+// this overwrote a correct formula with the output of the parser below, which drops backticks and
+// quotes and turns references to other attributes into string constants. CODAP v2 has no such
+// handling, but it has also gone without this since SAMPLER-78 made the call unreachable. Rewriting
+// formulas safely means parsing them the way CODAP parses them rather than approximating it here.
+//
+// If we decide v2 does not need fixing, delete this along with the parseFormula, renameVariable and
+// stringify imports, which nothing else in this file uses.
+//
+// export const renameAttributeInFormulas = async (dataContextName: string, oldName: string, newName: string) => {
+//   const collectionListResult = await getCollectionList(dataContextName);
+//   if (!collectionListResult.success) {
+//     return;
+//   }
+//
+//   const collections = collectionListResult.values.map((c: any) => c.name);
+//   for (const collection of collections) {
+//     const attrListResult = await getAttributeList(dataContextName, collection);
+//     if (!attrListResult.success) {
+//       continue;
+//     }
+//
+//     const attributes = attrListResult.values;
+//     for (const attr of attributes) {
+//       const attributeResult = await getAttribute(dataContextName, collection, attr.name);
+//       if (!attributeResult.success) {
+//         continue;
+//       }
+//       const { formula } = attributeResult.values;
+//
+//       // a bug in CODAPv2 causes multiple equals signs to be added to formulas when renaming attributes
+//       let finalFormula = formula?.replace(/={1,}/g, "=");
+//
+//       if (finalFormula?.includes(oldName)) {
+//         // this returns a binary expression of left: "", op: =, right: parsedFormula
+//         // so we only need to update the variable name in the right side
+//         const parsed = parseFormula(finalFormula, "");
+//         if (parsed.type === "BinaryExpression") {
+//           const renamed = renameVariable(parsed.right, oldName, newName);
+//           finalFormula = stringify(renamed, [newName]);
+//         }
+//       }
+//       if (finalFormula !== formula) {
+//         await updateAttribute(dataContextName, collection, attr.name, attr, {formula: finalFormula});
+//       }
+//     }
+//   }
+// };
 
 
 type Dimensions = {width: number; height: number};

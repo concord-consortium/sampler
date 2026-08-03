@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
 import { useImmer } from "use-immer";
 import {IColumn, IGlobalState, IGlobalStateContext, ITPSamplerPluginState, defaultOutputAttrName, Speed, ViewType}
   from "../types";
@@ -130,6 +130,7 @@ export const migrateState = (state: IGlobalState) => {
 
 export const useGlobalStateContextValue = (): IGlobalStateContext => {
   const [globalState, setGlobalState] = useImmer<IGlobalState>(getDefaultState());
+  const listenedToDataContextName = useRef("");
 
   useEffect(() => {
     const init = async () => {
@@ -174,7 +175,9 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
       // not the placeholder the hook started with — the placeholder is a separate getDefaultState()
       // whose column has a different id, which would leave the column's attribute id unrecorded.
       // Everything after this point updates individual properties for the same reason: replacing
-      // the whole state would discard whatever findOrCreateDataContext had just written.
+      // the whole state would discard whatever findOrCreateDataContext had just written. This is
+      // the only place left that replaces the state wholesale, so nothing may write global state
+      // before it lands -- such a write would be discarded here.
       setGlobalState(newGlobalState);
 
       const ensureDataContext = async (instance: number) => {
@@ -183,11 +186,11 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
         return newDataContextName ?? "";
       };
 
-      let finalDataContextName = newGlobalState.dataContextName;
-
       if (!newGlobalState.instance) {
         // only allow one instance of the sampler plugin access to the global value
-        // at a time to avoid race conditions when multiple instances are initialized
+        // at a time to avoid race conditions when multiple instances are initialized.
+        // This is deliberately not awaited, so the data context name is recorded inside the
+        // callback -- anything after this block would run before the callback has one.
         navigator.locks.request(kSamplerInstanceGlobalValueName, async () => {
           let instance = 1;
           let globalValue = await getGlobalValue(kSamplerInstanceGlobalValueName);
@@ -198,20 +201,19 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
             await updateGlobalValue(kSamplerInstanceGlobalValueName, instance);
           }
           await updatePluginTitle(instance);
-          finalDataContextName = await ensureDataContext(instance);
+          const finalDataContextName = await ensureDataContext(instance);
           setGlobalState(draft => {
             draft.instance = instance;
             draft.dataContextName = finalDataContextName;
           });
-        });
+        }).catch(e => console.error(e));
       } else {
-        finalDataContextName = await ensureDataContext(newGlobalState.instance);
+        const finalDataContextName = await ensureDataContext(newGlobalState.instance);
         await updatePluginTitle(newGlobalState.instance);
+        setGlobalState(draft => {
+          draft.dataContextName = finalDataContextName;
+        });
       }
-
-      setGlobalState(draft => {
-        draft.dataContextName = finalDataContextName;
-      });
     };
 
     init();
@@ -222,7 +224,12 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
   }, [globalState]);
 
   useEffect(() => {
-    if (globalState.dataContextName) {
+    // Listeners cannot be removed, so a data context name we have already subscribed to must not be
+    // subscribed to again. The name can return to an earlier value -- init leaves it empty when the
+    // data context could not be found and starting an experiment sets it again -- and every
+    // notification would then be handled once per registration.
+    if (globalState.dataContextName && globalState.dataContextName !== listenedToDataContextName.current) {
+      listenedToDataContextName.current = globalState.dataContextName;
       addDataContextChangeListener(globalState.dataContextName, (msg: any) => {
         if (msg.values.operation === "updateAttributes") {
           msg.values.result.attrIDs.forEach((id: string, i: number) => {

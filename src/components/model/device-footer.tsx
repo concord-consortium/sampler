@@ -107,10 +107,14 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
         .then((result) => {
           if (result.success && result.values.attrs?.[0]?.id) {
             setGlobalState(draft => {
-              draft.attrMap[id].codapID = result.values.attrs[0].id;
+              // the column can be deleted while this is in flight, taking its attrMap entry with it
+              if (draft.attrMap[id]) {
+                draft.attrMap[id].codapID = result.values.attrs[0].id;
+              }
             });
           }
-        });
+        })
+        .catch(e => console.error(e));
     }
 
     updateFormulas();
