@@ -162,6 +162,37 @@ describe("handleStartRun run-state feedback", () => {
     expect(state.enableRunButton).toBe(false);
   });
 
+  // The fastest pass walks the steps of the run it started on. Reading the current runtime each
+  // time round the loop instead would let a superseded run resume into its replacement: it would
+  // advance the replacement's step index — skipping whichever step that landed on, losing the
+  // samples of a pushVariables — and announce an end of experiment over a run still collecting.
+  it("does not step or end the run that replaced a superseded fastest pass", async () => {
+    mockFindOrCreateDataContext.mockResolvedValue("Sampler");
+    let releaseFirstCreate: (value: unknown) => void = () => undefined;
+    mockCreateItems
+      .mockImplementationOnce(() => new Promise(resolve => { releaseFirstCreate = resolve; }))
+      .mockImplementationOnce(() => new Promise(() => undefined));
+
+    const { result } = renderHook(() => useAnimationContextValue());
+
+    await result.current.handleStartRun();
+    await flushRequests();
+
+    await result.current.handleStopRun();
+    await result.current.handleStartRun();
+    await flushRequests();
+
+    // watch the replacement run only, from the point it is under way
+    const steps: AnimationStep["kind"][] = [];
+    const unregister = result.current.registerAnimationCallback(step => steps.push(step.kind));
+
+    releaseFirstCreate({ success: true });
+    await flushRequests();
+    unregister();
+
+    expect(steps).not.toContain("endExperiment");
+  });
+
   // Setting up is several requests long, and the answer to Stop cannot wait for the one still in
   // flight: a run stopped anywhere in there has to abandon itself before it animates.
   it("abandons a run stopped after the data context is set up", async () => {

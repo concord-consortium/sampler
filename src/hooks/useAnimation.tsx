@@ -461,11 +461,21 @@ export const useAnimationContextValue = (): IAnimationContext => {
         const settings: IAnimationStepSettings = { t: 1, speed: Speed.Fastest };
         const endAnimations = () => animationsCallbacksRef.current.forEach(callback => callback({kind: "endExperiment"}, settings));
 
+        // The pass walks the steps of the run it started on. A step can still be awaiting CODAP
+        // when the user stops and starts again, and by then animationRef holds the run that
+        // replaced this one -- reading it again below would step and end that run instead.
+        const runtime = animationRef.current;
+
         // run through all the steps and call onComplete for each one
-        while (animationRef.current.stepIndex < animationRef.current.steps.length) {
-          const step = animationRef.current.steps[animationRef.current.stepIndex];
+        while (runtime.stepIndex < runtime.steps.length) {
+          const step = runtime.steps[runtime.stepIndex];
           await step.onComplete?.(settings);
-          animationRef.current.stepIndex++;
+
+          // superseded while that step was in flight: the replacement owns the animation now
+          if (animationRef.current !== runtime) {
+            return;
+          }
+          runtime.stepIndex++;
 
           if (stopAnimationAtRef.current > startedFinishAt) {
             // if we were asked to stop while finishing, stop immediately
