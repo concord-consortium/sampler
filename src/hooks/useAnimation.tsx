@@ -184,6 +184,12 @@ export const useAnimationContextValue = (): IAnimationContext => {
   const animationsCallbacksRef = useRef<AnimationCallback[]>([]);
   const speedRef = useRef<Speed>(Speed.Slow);
   const stopAnimationAtRef = useRef<number>(0);
+  // A run is set up before it animates, so the controls act on it while there is no animation to
+  // act on. These record what the user asked for during the setup so the run can honor it once it
+  // has something to animate: the id identifies the run still wanted, and the pause flag whether
+  // it should begin paused.
+  const runIdRef = useRef<number>(0);
+  const isPausedRef = useRef<boolean>(false);
   const globalReplacement = isSingleDeviceReplacement(model);
 
   const getExperimentSample = async (variableIndexes: AvailableDeviceVariableIndexes) => {
@@ -480,6 +486,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const enableNewRun = () => {
+    isPausedRef.current = false;
     setGlobalState(draft => {
       draft.isRunning = false;
       draft.isPaused = false;
@@ -492,16 +499,26 @@ export const useAnimationContextValue = (): IAnimationContext => {
     // collecting the samples takes many round-trips to CODAP — seconds, on a large experiment —
     // and until this lands the controls still invite the user to start a run that is already
     // running, with nothing to show that anything is happening.
+    const runId = ++runIdRef.current;
+    isPausedRef.current = false;
     setGlobalState(draft => {
       draft.isRunning = true;
       draft.isPaused = false;
       draft.enableRunButton = false;
     });
 
+    // The run being set up is only still wanted while it is the most recent one requested: stopping
+    // it, or starting another, leaves it to abandon itself, since there is no animation yet for
+    // those to act on.
+    const isCurrentRun = () => runIdRef.current === runId;
+
     try {
       const isCollector = isCollectorOnlyModel(model);
       const attrNames = isCollector ? getCollectorAttrs(model) : getModelAttrs(model);
       const finalDataContextName = await findOrCreateDataContext(dataContextName, attrNames, attrMap, setGlobalState, repeat, isCollector, globalState.instance, true);
+      if (!isCurrentRun()) {
+        return;
+      }
       if (!finalDataContextName) {
         enableNewRun();
         alert("Unable to setup CODAP table");
@@ -516,6 +533,9 @@ export const useAnimationContextValue = (): IAnimationContext => {
       const { experimentNum, startingSampleNumber } = await getNewExperimentInfo(finalDataContextName, experimentHash);
 
       const { results, animationResults } = await getAllExperimentSamples(experimentNum, startingSampleNumber, experimentHash);
+      if (!isCurrentRun()) {
+        return;
+      }
 
       const onEndRun = () => {
         animationsCallbacksRef.current.forEach(callback => callback({ kind: "endExperiment" }));
@@ -524,7 +544,16 @@ export const useAnimationContextValue = (): IAnimationContext => {
 
       const newAnimationSteps = createExperimentAnimationSteps(model, finalDataContextName, animationResults, results, onEndRun);
       startAnimation(newAnimationSteps);
+      // startAnimation runs whatever it is given, so a pause requested during the setup has to be
+      // re-applied to the animation it just replaced.
+      if (isPausedRef.current) {
+        togglePauseAnimation(true);
+      }
     } catch (e) {
+      if (!isCurrentRun()) {
+        console.warn("Sampler: abandoned run failed to start:", e);
+        return;
+      }
       stopAnimation();
       enableNewRun();
       alert(e);
@@ -532,6 +561,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const handleTogglePauseRun = async (pause: boolean) => {
+    isPausedRef.current = pause;
     togglePauseAnimation(pause);
     setGlobalState(draft => {
       draft.isPaused = pause;
@@ -539,6 +569,8 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const handleStopRun = async () => {
+    // Abandon a run that is still being set up; stopAnimation only reaches one that is animating.
+    runIdRef.current++;
     stopAnimation();
     animationsCallbacksRef.current.forEach(callback => callback({ kind: "endExperiment" }));
     enableNewRun();
