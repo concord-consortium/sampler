@@ -68,9 +68,10 @@ const updateAttributeIds = async (dataContextName: string, attrs: Array<string>,
   }));
 
   await codapInterface.sendRequest(reqs, (getAttrsResult?: IResult[]) => {
-    // absent when CODAP didn't answer, in which case the await above throws and the existing ids
-    // are left alone rather than being overwritten from a response we never got
-    if (!getAttrsResult) { return; }
+    // a batched get is answered with one result per request; anything else — no answer at all, or
+    // a single error for the batch — leaves the existing ids alone rather than overwriting them
+    // from a response that never carried any
+    if (!Array.isArray(getAttrsResult)) { return; }
 
     const updatedAttrsIds: Record<keyof AttrMap, string> = {};
     getAttrsResult.forEach((res: {success: boolean, values: Record<string, string>}) => {
