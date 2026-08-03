@@ -7,7 +7,7 @@ import { createDefaultDevice, createDevice } from "../models/device-model";
 import { kInitialDimensions, kPluginName, kVersion } from "../constants";
 import { createId } from "../utils/id";
 import { removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
-import { setDimensions, ensureMinimumDimensions, findOrCreateDataContext, getGlobalValue, createGlobalValue, updateGlobalValue, updatePluginTitle } from "../helpers/codap-helpers";
+import { setDimensions, ensureMinimumDimensions, findOrCreateDataContext, getGlobalValue, createGlobalValue, updateGlobalValue, updatePluginTitle, tryRequest } from "../helpers/codap-helpers";
 import { defaultAttrMap } from "../utils/attr-map";
 import { isCollectorOnlyModel, getCollectorAttrs } from "../utils/collector";
 import { getModelAttrs } from "../utils/model";
@@ -191,7 +191,7 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
         // at a time to avoid race conditions when multiple instances are initialized.
         // This is deliberately not awaited, so the data context name is recorded inside the
         // callback -- anything after this block would run before the callback has one.
-        navigator.locks.request(kSamplerInstanceGlobalValueName, async () => {
+        tryRequest(() => navigator.locks.request(kSamplerInstanceGlobalValueName, async () => {
           let instance = 1;
           let globalValue = await getGlobalValue(kSamplerInstanceGlobalValueName);
           if (!globalValue) {
@@ -206,7 +206,7 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
             draft.instance = instance;
             draft.dataContextName = finalDataContextName;
           });
-        }).catch(e => console.error(e));
+        }), "could not claim an instance number");
       } else {
         const finalDataContextName = await ensureDataContext(newGlobalState.instance);
         await updatePluginTitle(newGlobalState.instance);
@@ -218,7 +218,7 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
 
     // every CODAP request init makes can reject rather than report failure -- on a timeout and on a
     // closed connection -- and a rejection here would otherwise go unreported
-    init().catch(e => console.error(e));
+    tryRequest(init, "initialization did not complete");
   }, [setGlobalState]);
 
   useEffect(() => {

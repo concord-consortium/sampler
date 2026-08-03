@@ -11,6 +11,7 @@ import { getModelAttrs } from "../../utils/model";
 import { RepeatUntilModal } from "./repeat-until-modal";
 import { CustomSelect, CustomSelectOption } from "../common/custom-select";
 import { tr } from "../../utils/localeManager";
+import { Speed } from "../../types";
 
 const startLabel = tr("DG.Plugin.Sampler.top-bar.run");
 const startTip = tr("DG.Plugin.Sampler.tooltip.start-sampling");
@@ -38,9 +39,18 @@ interface IProps {
 export const ModelHeader = (props: IProps) => {
   const { showRepeatUntil, isWide, setShowRepeatUntil } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
-  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, model, dataContextName, untilFormula, attrMap, repeatCondition, repeatNumUniqueValues } = globalState;
-  const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
-  const startToggleDisabled = !isRunning && !enableRunButton;
+  const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, model, dataContextName, untilFormula, attrMap, repeatCondition, repeatNumUniqueValues, speed } = globalState;
+  const { handleStartRun, handleTogglePauseRun, handleStopRun, isRunUninterruptible } = useAnimationContext();
+  // Pause has nothing to act on during the fastest pass, which runs to the end of the experiment
+  // whatever the speed does from here; left enabled it would relabel itself to Start while the run
+  // carried on. Two conditions because they ask about different runs: the speed about one yet to
+  // reach that pass, the latch about one already in it. Stop applies throughout, and stays enabled.
+  //
+  // The latch is a ref, so reading it does not re-render this. It does not have to: the latch only
+  // decides the outcome once the speed has been lowered mid-pass, and that speed change is itself a
+  // state change that re-renders. A latch that could flip without one would need to become state.
+  const pauseUnavailable = isRunning && (speed === Speed.Fastest || isRunUninterruptible());
+  const startToggleDisabled = (!isRunning && !enableRunButton) || pauseUnavailable;
 
   const numDevices = useMemo(() => model.columns.reduce<number>((acc, column) => acc + column.devices.length, 0), [model]);
   const multipleDevices = useMemo(() => numDevices > 1, [numDevices]);

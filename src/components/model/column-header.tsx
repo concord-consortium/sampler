@@ -4,7 +4,7 @@ import { getAttribute, updateAttribute } from "@concord-consortium/codap-plugin-
 import { getNewColumnName } from "../helpers";
 import { useAnimationContext } from "../../hooks/useAnimation";
 import { AnimationStep, IAnimationStepSettings, IColumn } from "../../types";
-import { getCollectionNames } from "../../helpers/codap-helpers";
+import { getCollectionNames, tryRequest } from "../../helpers/codap-helpers";
 import { isCollectorOnlyModel } from "../../utils/collector";
 
 interface IProps {
@@ -74,25 +74,23 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
     if (globalState.dataContextName) {
       const { dataContextName } = globalState;
       const itemsCollectionName = getCollectionNames().items;
-      try {
-        // deleting a column takes its attrMap entry with it, so this can be gone by the time a
-        // pending edit is committed
-        const oldAttrName = globalState.attrMap[column.id].name;
-        // updateAttribute renames by name and ignores the attribute it is handed, so this asks only
-        // whether there is still something to rename
-        const attrResult = await getAttribute(dataContextName, itemsCollectionName, oldAttrName);
-        if (!attrResult.success) {
-          setColumnName(column.name);
-          return;
-        }
-        const renameResult =
-          await updateAttribute(dataContextName, itemsCollectionName, oldAttrName, attrResult.values, {name: newName});
-        if (!renameResult.success) {
-          setColumnName(column.name);
-          return;
-        }
-      } catch (e) {
-        console.error(e);
+      // deleting a column takes its attrMap entry with it, so this can be gone by the time a pending
+      // edit is committed
+      const oldAttrName = globalState.attrMap[column.id]?.name;
+      // updateAttribute renames by name and ignores the attribute it is handed, so this asks only
+      // whether there is still something to rename
+      const attrResult = oldAttrName
+        ? await tryRequest(() => getAttribute(dataContextName, itemsCollectionName, oldAttrName),
+            `could not look up the attribute named ${oldAttrName}`)
+        : undefined;
+      if (!attrResult?.success) {
+        setColumnName(column.name);
+        return;
+      }
+      const renameResult = await tryRequest(
+        () => updateAttribute(dataContextName, itemsCollectionName, oldAttrName, attrResult.values, {name: newName}),
+        `could not rename the attribute ${oldAttrName}`);
+      if (!renameResult?.success) {
         setColumnName(column.name);
         return;
       }

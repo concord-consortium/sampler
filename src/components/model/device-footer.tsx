@@ -5,7 +5,7 @@ import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { getNumDevices, getSiblingDevices, getTargetDevices } from "../../models/model-model";
 import { getNewColumnName, getNewVariable, getProportionalVars } from "../helpers";
 import { createNewAttribute } from "@concord-consortium/codap-plugin-api";
-import { getCollectionNames } from "../../helpers/codap-helpers";
+import { getCollectionNames, tryRequest } from "../../helpers/codap-helpers";
 import { createId } from "../../utils/id";
 import {IDataContext, IDevice, IVariables, defaultOutputAttrName, ViewType, deviceButtonLabels, deviceButtonTooltips}
   from "../../types";
@@ -102,22 +102,22 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
       }
     });
 
+    // TODO: tell the user. Adding a column is an explicit action, and a create that fails leaves the
+    // column in the model with a null codapID and no attribute behind it, with nothing on screen to
+    // say so. The next run recreates the attribute, so a warning will do until then.
     if (!existingAttr && dataContextName) {
-      createNewAttribute(dataContextName, getCollectionNames().items, name)
+      tryRequest(() => createNewAttribute(dataContextName, getCollectionNames().items, name),
+        `could not create the attribute for column ${name}`)
         .then((result) => {
-          if (result.success && result.values.attrs?.[0]?.id) {
+          if (result?.success && result.values.attrs?.[0]?.id) {
             setGlobalState(draft => {
               // the column can be deleted while this is in flight, taking its attrMap entry with it
               if (draft.attrMap[id]) {
                 draft.attrMap[id].codapID = result.values.attrs[0].id;
               }
             });
-          } else {
-            // the next run recreates the attribute, so this is only worth reporting
-            console.error(`Could not create the CODAP attribute for column ${name}`);
           }
-        })
-        .catch(e => console.error(e));
+        });
     }
 
     updateFormulas();

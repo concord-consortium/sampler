@@ -97,6 +97,7 @@ describe("ColumnHeader", () => {
   // A request that times out or meets a closed connection rejects rather than reporting failure, so
   // the answer has to be the same as a refusal or the column and its attribute drift apart anyway.
   it("keeps the old name when the rename request never answers", async () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     mockUpdateAttribute.mockRejectedValue(new Error("connection closed"));
     renderColumnHeader();
 
@@ -105,6 +106,8 @@ describe("ColumnHeader", () => {
 
     await waitFor(() => expect(mockUpdateAttribute).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   // The attribute may be gone -- deleted in the case table -- in which case there is nothing to
