@@ -47,8 +47,8 @@ const results = [
  * `endExperiment` handler. At Fastest the samples are queued for end-of-experiment creation; at
  * any other speed each sample is created as it is collected.
  */
-async function runExperiment(onComplete: () => void, speed: Speed = Speed.Fastest) {
-  const steps = createExperimentAnimationSteps(model, "Sampler", animationResults, results, onComplete);
+async function runExperiment(onComplete: () => void, speed: Speed = Speed.Fastest, experimentResults = results) {
+  const steps = createExperimentAnimationSteps(model, "Sampler", animationResults, experimentResults, onComplete);
 
   for (const step of steps) {
     if (step.kind === "pushVariables") {
@@ -146,6 +146,22 @@ describe("createExperimentAnimationSteps endExperiment (Fastest mode)", () => {
     expect(mockGetCaseCount).not.toHaveBeenCalled();
     expect(mockGetCaseByIndex).not.toHaveBeenCalled();
     expect(mockSelectCases).not.toHaveBeenCalled();
+  });
+
+  // A sample can be animated without producing any rows — a device with no variables collects
+  // nothing — and creating no items succeeds without adding anything. There is then no sample just
+  // collected, so selecting the collection's last case would point at an earlier experiment's.
+  it("creates and selects nothing when the samples produced no rows", async () => {
+    mockCreateItems.mockResolvedValue({ success: true });
+    const onComplete = jest.fn();
+
+    await runExperiment(onComplete, Speed.Fastest, [] as any);
+
+    expect(mockCreateItems).not.toHaveBeenCalled();
+    expect(mockGetCaseCount).not.toHaveBeenCalled();
+    expect(mockGetCaseByIndex).not.toHaveBeenCalled();
+    expect(mockSelectCases).not.toHaveBeenCalled();
+    expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
   // CODAP answers a create it refuses rather than failing to answer, so a response is not by

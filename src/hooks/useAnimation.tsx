@@ -133,6 +133,13 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
           mergedFinalSampleResults.push(...sampleResults);
         }
 
+        // A sample can be animated without producing any rows — a device with no variables
+        // collects nothing — and creating no items succeeds without adding anything. There is
+        // then no sample just collected, so there is nothing to select and nothing to scroll to.
+        if (mergedFinalSampleResults.length === 0) {
+          return;
+        }
+
         // The whole experiment goes over in one request. CODAP prices a create by the size of the
         // dataset it is added to rather than by the number of items sent, so each additional
         // request costs about as much as the first however little it carries.
