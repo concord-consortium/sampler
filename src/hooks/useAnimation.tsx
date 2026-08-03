@@ -585,7 +585,11 @@ export const useAnimationContextValue = (): IAnimationContext => {
       }
       stopAnimation();
       enableNewRun();
-      alert(e);
+      // The run's own failures — an until formula that cannot be evaluated, samples that never
+      // satisfied it — carry a message written for the user. Anything else is a rejection string
+      // written for a developer, which belongs in the console.
+      console.warn("Sampler: could not run the experiment:", e);
+      alert(e instanceof Error ? e.message : "Unable to run the experiment. Please try again.");
     }
   };
 
