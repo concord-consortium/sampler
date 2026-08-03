@@ -49,6 +49,40 @@ export const getCollectionNames = () => {
   };
 };
 
+/**
+ * Issues a CODAP request, reporting rather than propagating a failure.
+ *
+ * A large request can exceed the plugin API's response deadline and reject while CODAP is still
+ * processing it successfully, so a rejection does not mean the work failed — only that we stopped
+ * waiting for it. Since the outcome is unknown either way, work that does not depend on the answer
+ * should carry on rather than being abandoned.
+ *
+ * This is the one spelling of "report, don't propagate" in the plugin; reach for it rather than
+ * writing another `.catch` that logs, so the rule stays in one place.
+ */
+export const tryRequest = async <T,>(
+  request: () => Promise<T>, describe = "CODAP request did not complete"
+): Promise<T | undefined> => {
+  try {
+    return await request();
+  } catch (error) {
+    console.warn(`Sampler: ${describe}`, error);
+    return undefined;
+  }
+};
+
+/**
+ * Creates the named attributes on the items collection.
+ *
+ * Awaited together and reported one at a time: a forEach would drop these promises, leaving a
+ * failure with nothing attached to it, and one attribute that cannot be created should not cost
+ * the rest.
+ */
+export const createItemAttributes = async (dataContextName: string, attrNames: string[], describe: string) => {
+  await Promise.all(attrNames.map(attr =>
+    tryRequest(() => createNewAttribute(dataContextName, getCollectionNames().items, attr), `${describe} ${attr}`)));
+};
+
 const updateAttributeIds = async (dataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>) => {
   const allAttrs = [
     {collection: "experiments", attrName: attrMap.experiment.name},
@@ -161,13 +195,14 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
       }
 
       if (createNewAttr) {
-        await createNewAttribute(finalDataContextName, collectionNames.experiments, experimentAttrName);
+        await tryRequest(() => createNewAttribute(finalDataContextName, collectionNames.experiments, experimentAttrName),
+          "could not add the experiment column");
       }
     }
 
     // ensure that the experimentHash column exists (it will not exist in older TPSampler documents)
     if (!attrList.find((attr: {name: string}) => attr.name === attrMap.experimentHash.name)) {
-      await codapInterface.sendRequest({
+      await tryRequest(() => codapInterface.sendRequest({
         action: "create",
         resource: `dataContext[${finalDataContextName}].collection[${collectionNames.experiments}].attribute`,
         values: [
@@ -177,33 +212,27 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
             hidden: true
           }
         ]
-      });
+      }), "could not add the experiment hash column");
     }
 
-    attrList = (await getAttributeList(finalDataContextName, collectionNames.items)).values;
+    attrList = (await tryRequest(() => getAttributeList(finalDataContextName, collectionNames.items),
+      "could not list the item attributes"))?.values ?? [];
     const attrNames: string[] = attrList.map((attr: {id: number, name: string, title: string}) => attr.name);
 
     // ensure that if a user deleted a CODAP attr representing a device column, it is reinstated
     const missingAttrs = attrs.filter(attr => !attrNames.includes(attr));
     if (missingAttrs.length > 0) {
-      // awaited, and reported one at a time: a forEach would drop these promises, leaving a
-      // failure with nothing attached to it, and one attribute that cannot be reinstated should
-      // not cost the rest of the setup
-      await Promise.all(missingAttrs.map(async (attr) => {
-        try {
-          await createNewAttribute(finalDataContextName, collectionNames.items, attr);
-        } catch (error) {
-          console.warn("Sampler: could not reinstate the item attribute", attr, error);
-        }
-      }));
+      await createItemAttributes(finalDataContextName, missingAttrs, "could not reinstate the item attribute");
     }
 
     // if this is a collector run and there are no existing items remove all non-collector attributes
     if (isCollector) {
-      const itemCountResult = await getCaseCount(finalDataContextName, collectionNames.items);
-      if (itemCountResult.success && itemCountResult.values === 0) {
+      const itemCountResult = await tryRequest(() => getCaseCount(finalDataContextName, collectionNames.items),
+        "could not count the existing items");
+      if (itemCountResult?.success && itemCountResult.values === 0) {
         const nonCollectorAttrs = attrNames.filter(attr => !attrs.includes(attr));
-        deleteItemAttrs(finalDataContextName, nonCollectorAttrs);
+        await tryRequest(() => deleteItemAttrs(finalDataContextName, nonCollectorAttrs),
+          "could not remove the non-collector attributes");
       }
     }
 

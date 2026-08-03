@@ -13,6 +13,9 @@ jest.mock("@concord-consortium/codap-plugin-api", () => ({
 }));
 
 jest.mock("../helpers/codap-helpers", () => ({
+  // tryRequest is a plain wrapper rather than a CODAP call, so the real one is what these tests
+  // should be running through
+  ...jest.requireActual("../helpers/codap-helpers"),
   findOrCreateDataContext: jest.fn(),
   getNewExperimentInfo: jest.fn(),
   getCollectionNames: jest.fn(() => ({ experiments: "experiments", samples: "samples", items: "items" })),
@@ -77,7 +80,10 @@ describe("handleStartRun run-state feedback", () => {
   beforeEach(() => {
     resetState();
     mockSetGlobalState.mockClear();
-    mockCreateItems.mockClear();
+    // reset rather than clear: several tests queue a mockImplementationOnce that never resolves, and
+    // clearing leaves an unconsumed one to be handed to whichever test calls createItems next
+    mockCreateItems.mockReset();
+    mockCreateItems.mockResolvedValue({ success: true });
     mockGetNewExperimentInfo.mockResolvedValue({ experimentNum: 1, startingSampleNumber: 1 });
     mockComputeExperimentHash.mockResolvedValue("hash");
   });

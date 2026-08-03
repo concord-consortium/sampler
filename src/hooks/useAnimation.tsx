@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef } from "react";
 import { AnimationCallback, AnimationStep, IAnimationContext, IAnimationRuntime, IAnimationStepSettings, IExperimentResults, IExperimentAnimationResults, IModel, ISampleResults, Speed, ISampleVariableIndexes, AvailableDeviceVariableIndexes, ViewType } from "../types";
 import { createItems, getCaseByIndex, getCaseCount, selectCases } from "@concord-consortium/codap-plugin-api";
 import { useGlobalStateContext } from "./useGlobalState";
-import { evaluateResult, findOrCreateDataContext, getCollectionNames, getNewExperimentInfo } from "../helpers/codap-helpers";
+import { evaluateResult, findOrCreateDataContext, getCollectionNames, getNewExperimentInfo, tryRequest } from "../helpers/codap-helpers";
 import { getDeviceById } from "../models/model-model";
 import { formatFormula, parseFormula } from "../utils/utils";
 import { computeExperimentHash, getExperimentDescription, isSingleDeviceReplacement } from "../helpers/model-helpers";
@@ -36,24 +36,7 @@ const instantStepsInFastMode: string[] = [
   "pushVariables",
 ];
 
-/**
- * Issues a CODAP request, reporting rather than propagating a failure.
- *
- * A large request can exceed the plugin API's response deadline and reject while CODAP is still
- * processing it successfully, so a rejection does not mean the work failed — only that we stopped
- * waiting for it. Since the outcome is unknown either way, an experiment should carry on to its
- * remaining steps and finish rather than abandoning them.
- */
-const tryRequest = async <T,>(request: () => Promise<T>): Promise<T | undefined> => {
-  try {
-    return await request();
-  } catch (error) {
-    console.warn("Sampler: CODAP request did not complete:", error);
-    return undefined;
-  }
-};
-
-export const createExperimentAnimationSteps = (model: IModel, dataContextName: string, animationResults: IExperimentAnimationResults, results: IExperimentResults, onComplete?: () => void): Array<AnimationStep> => {
+export const createExperimentAnimationSteps = (model: IModel, dataContextName: string, animationResults: IExperimentAnimationResults, results: IExperimentResults, onComplete?: () => void, isCurrentRun: () => boolean = () => true): Array<AnimationStep> => {
   const steps: AnimationStep[] = [];
   const finalSampleResults: ISampleResults[][] = [];
 
