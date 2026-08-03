@@ -273,6 +273,33 @@ describe("handleStartRun run-state feedback", () => {
     expect(state.isPaused).toBe(true);
   });
 
+  // Unless the run reaches the fastest speed before it starts animating, where it runs in one pass
+  // that no pause can reach. Carrying the pause over there would leave the controls offering to
+  // resume a run that never stopped.
+  it("drops a pause carried from setup when the run reaches the fastest speed", async () => {
+    state.speed = Speed.Slow;
+    let releaseDataContext: (value: string) => void = () => undefined;
+    mockFindOrCreateDataContext.mockImplementation(
+      () => new Promise<string>(resolve => { releaseDataContext = resolve; }));
+    // the run is still writing its samples when the pause is asserted on
+    mockCreateItems.mockImplementationOnce(() => new Promise(() => undefined));
+
+    const { result, rerender } = renderHook(() => useAnimationContextValue());
+
+    const run = result.current.handleStartRun();
+    await result.current.handleTogglePauseRun(true);
+
+    state.speed = Speed.Fastest;
+    rerender();
+
+    releaseDataContext("Sampler");
+    await run;
+    await flushRequests();
+
+    expect(state.isPaused).toBe(false);
+    expect(state.isRunning).toBe(true);
+  });
+
   it("re-enables the run button when the data context cannot be set up", async () => {
     jest.spyOn(window, "alert").mockImplementation(() => undefined);
     mockFindOrCreateDataContext.mockResolvedValue("");

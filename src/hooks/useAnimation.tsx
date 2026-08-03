@@ -565,9 +565,18 @@ export const useAnimationContextValue = (): IAnimationContext => {
       const newAnimationSteps = createExperimentAnimationSteps(model, finalDataContextName, animationResults, results, onEndRun);
       startAnimation(newAnimationSteps);
       // startAnimation runs whatever it is given, so a pause requested during the setup has to be
-      // re-applied to the animation it just replaced.
+      // re-applied to the animation it just replaced — unless the run has reached the fastest
+      // speed in the meantime, where it runs in one pass that no pause can reach. Carrying the
+      // pause over there would leave the controls offering to resume a run already under way.
       if (isPausedRef.current) {
-        togglePauseAnimation(true);
+        if (speedRef.current === Speed.Fastest) {
+          isPausedRef.current = false;
+          setGlobalState(draft => {
+            draft.isPaused = false;
+          });
+        } else {
+          togglePauseAnimation(true);
+        }
       }
     } catch (e) {
       if (!isCurrentRun()) {
