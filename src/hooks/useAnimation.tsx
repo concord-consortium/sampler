@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useRef } from "react";
 import { AnimationCallback, AnimationStep, IAnimationContext, IAnimationRuntime, IAnimationStepSettings, IExperimentResults, IExperimentAnimationResults, IModel, ISampleResults, Speed, ISampleVariableIndexes, AvailableDeviceVariableIndexes, ViewType } from "../types";
-import { createItems, selectCases } from "@concord-consortium/codap-plugin-api";
+import { createItems, getCaseByIndex, getCaseCount, selectCases } from "@concord-consortium/codap-plugin-api";
 import { useGlobalStateContext } from "./useGlobalState";
-import { evaluateResult, findOrCreateDataContext, getNewExperimentInfo } from "../helpers/codap-helpers";
+import { evaluateResult, findOrCreateDataContext, getCollectionNames, getNewExperimentInfo, tryRequest } from "../helpers/codap-helpers";
 import { getDeviceById } from "../models/model-model";
 import { formatFormula, parseFormula } from "../utils/utils";
 import { computeExperimentHash, getExperimentDescription, isSingleDeviceReplacement } from "../helpers/model-helpers";
@@ -36,7 +36,7 @@ const instantStepsInFastMode: string[] = [
   "pushVariables",
 ];
 
-export const createExperimentAnimationSteps = (model: IModel, dataContextName: string, animationResults: IExperimentAnimationResults, results: IExperimentResults, onComplete?: () => void): Array<AnimationStep> => {
+export const createExperimentAnimationSteps = (model: IModel, dataContextName: string, animationResults: IExperimentAnimationResults, results: IExperimentResults, onComplete?: () => void, isCurrentRun: () => boolean = () => true): Array<AnimationStep> => {
   const steps: AnimationStep[] = [];
   const finalSampleResults: ISampleResults[][] = [];
 
@@ -90,9 +90,14 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
             // in fastest mode the samples are created at the end of the experiment
             finalSampleResults.push(sampleResults);
           } else {
-            const createItemsResult = await createItems(dataContextName, sampleResults) as any;
-            if (createItemsResult?.caseIDs) {
-              await selectCases(dataContextName, createItemsResult.caseIDs);
+            // A request that outlives the response deadline must not abort the animation — the
+            // samples after this one still need collecting.
+            const createItemsResult =
+              await tryRequest(() => createItems(dataContextName, sampleResults)) as any;
+            // a run the user stopped or replaced must not move the selection over the one
+            // that took its place
+            if (createItemsResult?.caseIDs && isCurrentRun()) {
+              await tryRequest(() => selectCases(dataContextName, createItemsResult.caseIDs));
             }
           }
         }
@@ -102,27 +107,56 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
   });
 
   steps.push({ kind: "endExperiment", onComplete: async () => {
-    // in fastest mode the samples are created at the end of the experiment
-    if (finalSampleResults.length > 0) {
-      // create all but the last set of samples in one shot
-      const lastSampleResults = finalSampleResults.pop();
+    // onComplete runs from a finally: whatever becomes of these requests, the experiment reports
+    // itself finished and the controls are never left mid-run.
+    try {
+      // in fastest mode the samples are created at the end of the experiment
       if (finalSampleResults.length > 0) {
         const mergedFinalSampleResults: ISampleResults[] = [];
         for (const sampleResults of finalSampleResults) {
           mergedFinalSampleResults.push(...sampleResults);
         }
-        await createItems(dataContextName, mergedFinalSampleResults);
-      }
 
-      // create the last set of samples and select them
-      if (lastSampleResults) {
-        const createItemsResult = await createItems(dataContextName, lastSampleResults) as any;
-        if (createItemsResult?.caseIDs) {
-          await selectCases(dataContextName, createItemsResult.caseIDs);
+        // A sample can be animated without producing any rows — a device with no variables
+        // collects nothing — and creating no items succeeds without adding anything. There is
+        // then no sample just collected, so there is nothing to select and nothing to scroll to.
+        if (mergedFinalSampleResults.length === 0) {
+          return;
+        }
+
+        // The whole experiment goes over in one request. CODAP prices a create by the size of the
+        // dataset it is added to rather than by the number of items sent, so each additional
+        // request costs about as much as the first however little it carries.
+        const created = await tryRequest(() => createItems(dataContextName, mergedFinalSampleResults));
+
+        // Samples are appended in order, so the sample collection's last case is the one just
+        // collected. Selecting the case rather than its items is what scrolls the table to it and
+        // cascades that scroll to its children, and reading it back costs far less than arranging
+        // for the create to report it.
+        //
+        // Both conditions carry weight. A refused create resolves with success false rather than
+        // rejecting, so the request has to be asked whether it worked and not merely whether it
+        // answered; without a create that landed, the last case may belong to an earlier
+        // experiment. And a stopped or superseded run would scroll the table away from the run
+        // collecting now. Selecting nothing says nothing; selecting the wrong row misleads.
+        if (created?.success && isCurrentRun()) {
+          const sampleCollectionName = getCollectionNames().samples;
+          const caseCountResult =
+            await tryRequest(() => getCaseCount(dataContextName, sampleCollectionName)) as any;
+          const sampleCount = caseCountResult?.values;
+          if (typeof sampleCount === "number" && sampleCount > 0) {
+            const lastCaseResult = await tryRequest(
+              () => getCaseByIndex(dataContextName, sampleCollectionName, sampleCount - 1)) as any;
+            const lastSampleCaseId = lastCaseResult?.values?.case?.id;
+            if (lastSampleCaseId != null) {
+              await tryRequest(() => selectCases(dataContextName, [lastSampleCaseId]));
+            }
+          }
         }
       }
+    } finally {
+      onComplete?.();
     }
-    onComplete?.();
   }});
 
   return steps;
@@ -140,6 +174,14 @@ export const useAnimationContextValue = (): IAnimationContext => {
   const animationsCallbacksRef = useRef<AnimationCallback[]>([]);
   const speedRef = useRef<Speed>(Speed.Slow);
   const stopAnimationAtRef = useRef<number>(0);
+  // A run is set up before it animates, so the controls act on it while there is no animation to
+  // act on. These record what the user asked for during the setup so the run can honor it once it
+  // has something to animate: the id identifies the run still wanted, and the pause flag whether
+  // it should begin paused.
+  const runIdRef = useRef<number>(0);
+  const isPausedRef = useRef<boolean>(false);
+  // set once the run enters the single pass that finishes it, which nothing can pause part-way
+  const uninterruptibleRunRef = useRef<boolean>(false);
   const globalReplacement = isSingleDeviceReplacement(model);
 
   const getExperimentSample = async (variableIndexes: AvailableDeviceVariableIndexes) => {
@@ -387,6 +429,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const startAnimation = (newAnimationSteps: AnimationStep[]) => {
+    uninterruptibleRunRef.current = false;
     animationRef.current = {
       frame: 0,
       steps: newAnimationSteps,
@@ -410,16 +453,29 @@ export const useAnimationContextValue = (): IAnimationContext => {
 
     // instantly finish all the steps if we start or change to fastest speed
     if (speedRef.current === Speed.Fastest) {
+      // this pass runs to the end of the experiment whatever the speed does from here, so the
+      // controls have to know that pausing can no longer reach it
+      uninterruptibleRunRef.current = true;
       const finish = async () => {
         const startedFinishAt = Date.now();
         const settings: IAnimationStepSettings = { t: 1, speed: Speed.Fastest };
         const endAnimations = () => animationsCallbacksRef.current.forEach(callback => callback({kind: "endExperiment"}, settings));
 
+        // The pass walks the steps of the run it started on. A step can still be awaiting CODAP
+        // when the user stops and starts again, and by then animationRef holds the run that
+        // replaced this one -- reading it again below would step and end that run instead.
+        const runtime = animationRef.current;
+
         // run through all the steps and call onComplete for each one
-        while (animationRef.current.stepIndex < animationRef.current.steps.length) {
-          const step = animationRef.current.steps[animationRef.current.stepIndex];
+        while (runtime.stepIndex < runtime.steps.length) {
+          const step = runtime.steps[runtime.stepIndex];
           await step.onComplete?.(settings);
-          animationRef.current.stepIndex++;
+
+          // superseded while that step was in flight: the replacement owns the animation now
+          if (animationRef.current !== runtime) {
+            return;
+          }
+          runtime.stepIndex++;
 
           if (stopAnimationAtRef.current > startedFinishAt) {
             // if we were asked to stop while finishing, stop immediately
@@ -436,6 +492,8 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const enableNewRun = () => {
+    isPausedRef.current = false;
+    uninterruptibleRunRef.current = false;
     setGlobalState(draft => {
       draft.isRunning = false;
       draft.isPaused = false;
@@ -444,11 +502,32 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const handleStartRun = async () => {
+    // Mark the run as under way before issuing any request. Setting up the data context and
+    // collecting the samples takes many round-trips to CODAP — seconds, on a large experiment —
+    // and until this lands the controls still invite the user to start a run that is already
+    // running, with nothing to show that anything is happening.
+    const runId = ++runIdRef.current;
+    isPausedRef.current = false;
+    setGlobalState(draft => {
+      draft.isRunning = true;
+      draft.isPaused = false;
+      draft.enableRunButton = false;
+    });
+
+    // The run being set up is only still wanted while it is the most recent one requested: stopping
+    // it, or starting another, leaves it to abandon itself, since there is no animation yet for
+    // those to act on.
+    const isCurrentRun = () => runIdRef.current === runId;
+
     try {
       const isCollector = isCollectorOnlyModel(model);
       const attrNames = isCollector ? getCollectorAttrs(model) : getModelAttrs(model);
       const finalDataContextName = await findOrCreateDataContext(dataContextName, attrNames, attrMap, setGlobalState, repeat, isCollector, globalState.instance, true);
+      if (!isCurrentRun()) {
+        return;
+      }
       if (!finalDataContextName) {
+        enableNewRun();
         alert("Unable to setup CODAP table");
         return;
       }
@@ -461,32 +540,54 @@ export const useAnimationContextValue = (): IAnimationContext => {
       const { experimentNum, startingSampleNumber } = await getNewExperimentInfo(finalDataContextName, experimentHash);
 
       const { results, animationResults } = await getAllExperimentSamples(experimentNum, startingSampleNumber, experimentHash);
-
-      setGlobalState(draft => {
-        draft.isRunning = true;
-        draft.isPaused = false;
-        draft.enableRunButton = false;
-      });
+      if (!isCurrentRun()) {
+        return;
+      }
 
       const onEndRun = () => {
+        // The steps hold on to this, and a request they are waiting on can settle long after the
+        // run was stopped or replaced. Ending a run that is no longer the one under way would
+        // hand its controls back over a run that is still going.
+        if (!isCurrentRun()) {
+          return;
+        }
         animationsCallbacksRef.current.forEach(callback => callback({ kind: "endExperiment" }));
         enableNewRun();
       };
 
-      setGlobalState(draft => {
-        draft.isPaused = false;
-        draft.isRunning = true;
-      });
-      const newAnimationSteps = createExperimentAnimationSteps(model, finalDataContextName, animationResults, results, onEndRun);
+      const newAnimationSteps = createExperimentAnimationSteps(model, finalDataContextName, animationResults, results, onEndRun, isCurrentRun);
       startAnimation(newAnimationSteps);
+      // startAnimation runs whatever it is given, so a pause requested during the setup has to be
+      // re-applied to the animation it just replaced — unless the run has reached the fastest
+      // speed in the meantime, where it runs in one pass that no pause can reach. Carrying the
+      // pause over there would leave the controls offering to resume a run already under way.
+      if (isPausedRef.current) {
+        if (speedRef.current === Speed.Fastest) {
+          isPausedRef.current = false;
+          setGlobalState(draft => {
+            draft.isPaused = false;
+          });
+        } else {
+          togglePauseAnimation(true);
+        }
+      }
     } catch (e) {
+      if (!isCurrentRun()) {
+        console.warn("Sampler: abandoned run failed to start:", e);
+        return;
+      }
       stopAnimation();
       enableNewRun();
-      alert(e);
+      // The run's own failures — an until formula that cannot be evaluated, samples that never
+      // satisfied it — carry a message written for the user. Anything else is a rejection string
+      // written for a developer, which belongs in the console.
+      console.warn("Sampler: could not run the experiment:", e);
+      alert(e instanceof Error ? e.message : "Unable to run the experiment. Please try again.");
     }
   };
 
   const handleTogglePauseRun = async (pause: boolean) => {
+    isPausedRef.current = pause;
     togglePauseAnimation(pause);
     setGlobalState(draft => {
       draft.isPaused = pause;
@@ -494,6 +595,8 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const handleStopRun = async () => {
+    // Abandon a run that is still being set up; stopAnimation only reaches one that is animating.
+    runIdRef.current++;
     stopAnimation();
     animationsCallbacksRef.current.forEach(callback => callback({ kind: "endExperiment" }));
     enableNewRun();
@@ -520,6 +623,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
     handleStartRun,
     handleTogglePauseRun,
     handleStopRun,
+    isRunUninterruptible: () => uninterruptibleRunRef.current,
     registerAnimationCallback
   };
 };
@@ -528,6 +632,7 @@ export const AnimationContext = createContext<IAnimationContext>({
   handleStartRun: () => Promise.resolve(),
   handleTogglePauseRun: (pause: boolean) => Promise.resolve(),
   handleStopRun: () => Promise.resolve(),
+  isRunUninterruptible: () => false,
   registerAnimationCallback: () => () => undefined
 });
 export const useAnimationContext = () => useContext(AnimationContext);

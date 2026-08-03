@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { tr } from "../../utils/localeManager";
 import { useGlobalStateContext } from "../../hooks/useGlobalState";
 import { addMeasure, hasSamplesCollection } from "../../helpers/codap-helpers";
@@ -59,6 +59,9 @@ export const MeasuresTab = () => {
   const [rValue, setRValue] = useState("");
   const [hasSamples, setHasSamples] = useState(false);
   const [message, setMessage] = useState("");
+  const [addingMeasure, setAddingMeasure] = useState(false);
+  // the timer that clears a success message, held so that a later message is not cleared by it
+  const clearMessageTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     const checkForSamples = async () => {
@@ -68,20 +71,31 @@ export const MeasuresTab = () => {
     checkForSamples();
   }, [dataContextName]);
 
+  useEffect(() => () => clearTimeout(clearMessageTimerRef.current), []);
+
   const isCollector = useMemo(() => isCollectorOnlyModel(model), [model]);
 
-  const disableAddButton = useMemo(() => {
-    let disable = selectedMeasure === "default" || (lValue.length === 0 && selectedMeasure !== "count_items");  // measureName is optional
-    if (!disable) {
+  // An incomplete form genuinely disables the button: there is nothing to add. Being mid-add is
+  // different — it is transient, and taking the button out of the tab order while it holds focus
+  // drops a keyboard or screen reader user to the top of the document for the length of up to
+  // three requests without putting them back. That is the one path this state exists to serve,
+  // where they have to notice a failure and try again, so it is expressed with aria-disabled and
+  // refused in the handler instead.
+  const formIncomplete = useMemo(() => {
+    let incomplete =
+      selectedMeasure === "default" || (lValue.length === 0 && selectedMeasure !== "count_items");  // measureName is optional
+    if (!incomplete) {
       switch (selectedMeasure) {
         case "conditional_count":
         case "conditional_percentage":
-          disable = rValue.length === 0;
+          incomplete = rValue.length === 0;
           break;
       }
     }
-    return disable;
+    return incomplete;
   }, [selectedMeasure, lValue, rValue]);
+
+  const addUnavailable = formIncomplete || addingMeasure;
 
   const uniqueVariables = useMemo(() => {
     const set = new Set<string>();
@@ -104,16 +118,43 @@ export const MeasuresTab = () => {
   const handleChangeOpValue = (e: React.ChangeEvent<HTMLSelectElement>) => setOpValue(e.target.value);
   const handleChangeRValue = (e: React.ChangeEvent<HTMLSelectElement>) => setRValue(e.target.value);
 
-  const handleAddMeasure = () => {
+  const handleAddMeasure = async () => {
+    // adding takes up to three requests to CODAP, and a second activation while they are in flight
+    // would compute the same name from the same attribute list, which CODAP refuses as a duplicate
+    // -- reporting a failure for a measure that was in fact added
+    if (addUnavailable) { return; }
+
+    // the timer from an earlier success would otherwise clear whatever this attempt has to say
+    clearTimeout(clearMessageTimerRef.current);
+    setMessage("");
+    setAddingMeasure(true);
+
     const formula = getFormula(selectedMeasure, lValue, opValue, rValue);
-    addMeasure(dataContextName, measureName, selectedMeasure, formula);
+    const added = await addMeasure(dataContextName, measureName, selectedMeasure, formula);
+    setAddingMeasure(false);
+
+    // A measure that never reached the table has to say so, and the form keeps what the user
+    // entered so they can try again without describing the measure a second time. The message
+    // stays until the next attempt rather than timing out, since there is nothing else to notice.
+    //
+    // TODO: localise this message and the one below it. tr() displays the raw string id when a key
+    // is missing, so the entries have to exist before the keys are used here -- otherwise
+    // DG.Plugin.Sampler.measures.add-failed appears on screen in place of the sentence. The
+    // Sampler's strings live in the CODAP POEditor project, so adding them there is the immediate
+    // route; moving them into a project of their own would be the better one, and would take
+    // plugin strings off the CODAP build and string-synchronization cycle.
+    if (!added) {
+      setMessage(`Could not add the ${measureLabels[selectedMeasure]} measure. Please try again.`);
+      return;
+    }
+
     setMessage(`${measureLabels[selectedMeasure]} measure added.`);
     setSelectedMeasure("default");
     setMeasureName("");
     setLValue("");
     setOpValue("=");
     setRValue("");
-    setTimeout(() => {
+    clearMessageTimerRef.current = setTimeout(() => {
       setMessage("");
     }, 2000);
   };
@@ -259,12 +300,14 @@ export const MeasuresTab = () => {
       </div>
 
       <div id="measures-bottom">
-        <button id="add-measure" onClick={handleAddMeasure} disabled={disableAddButton} className={disableAddButton ? "disabled" : ""}>
+        <button id="add-measure" onClick={handleAddMeasure} disabled={formIncomplete}
+                aria-disabled={addUnavailable} aria-busy={addingMeasure}
+                className={addUnavailable ? "disabled" : ""}>
           {tr("DG.Plugin.Sampler.measures.add-measure")}
         </button>
       </div>
 
-      <div id="measures-message">
+      <div id="measures-message" role="status" aria-live="polite">
         {message}
       </div>
     </div>

@@ -75,7 +75,7 @@
     "report-dir": "coverage-cypress"
   },
   "devDependencies": {
-    "@concord-consortium/codap-plugin-api": "^0.1.5",
+    "@concord-consortium/codap-plugin-api": "^0.2.0",
     "@cypress/code-coverage": "^3.10.6",
     "@cypress/webpack-preprocessor": "^5.17.1",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",

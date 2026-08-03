@@ -7,7 +7,7 @@ import { NameLabelInput } from "./name-label-input";
 import { PctLabelInput } from "./percent-label-input";
 import { DeviceFooter } from "./device-footer";
 import { kMixerContainerHeight, kMixerContainerWidth, kSpinnerContainerHeight, kSpinnerContainerWidth, kSpinnerX, kSpinnerY } from "./device-views/shared/constants";
-import { codapInterface, createNewAttribute, getAllItems, getDataContext, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
+import { codapInterface, getAllItems, getDataContext, getListOfDataContexts } from "@concord-consortium/codap-plugin-api";
 import { createNewVarArray, getNextVariable, getPercentOfVar } from "../helpers";
 import { calculateWedgePercentage } from "./device-views/shared/helpers";
 import { SetVariableSeriesModal } from "./variable-setting-modal";
@@ -18,7 +18,7 @@ import { removeDeviceFromFormulas } from "../../helpers/model-helpers";
 import { DeviceVisibility } from "./device-visibility";
 import { DeviceReplacement } from "./device-replacement";
 import { getCollectorAttrs, getCollectorItemValues } from "../../utils/collector";
-import { deleteItemAttrs, getCollectionNames, getItemAttrs } from "../../helpers/codap-helpers";
+import { createItemAttributes, deleteItemAttrs, getItemAttrs } from "../../helpers/codap-helpers";
 import { getModelAttrs } from "../../utils/model";
 
 import "./device.scss";
@@ -164,12 +164,11 @@ export const Device = (props: IProps) => {
       });
       const attrsToDelete = maybeAttrsToDelete.filter(attr => !attrsToKeep.has(attr));
 
-      attrsToAdd.forEach(async (attr) => {
-        await createNewAttribute(globalState.dataContextName, getCollectionNames().items, attr);
-      });
+      // the deletes below still need doing, so a create that fails costs no more than its attribute
+      await createItemAttributes(globalState.dataContextName, attrsToAdd, "could not add the item attribute");
       await deleteItemAttrs(globalState.dataContextName, attrsToDelete);
     };
-    maybeUpdate();
+    maybeUpdate().catch(error => console.warn("Sampler: could not update item attributes", error));
   }, [attrMap, globalState.dataContextName, maybeUpdateItemAttrsSignal, model, repeat, setGlobalState, viewType]);
 
   const maybeUpdateCollectorDataContext = useCallback(() => {
@@ -190,7 +189,7 @@ export const Device = (props: IProps) => {
       if (autoSelectedDataContext) {
         changeDataContext(autoSelectedDataContext.name);
       }
-    });
+    }).catch(error => console.warn("Sampler: could not list data contexts", error));
   }, [changeDataContext, globalState.collectorContextName, globalState.dataContextName]);
 
   useEffect(() => {
@@ -223,7 +222,7 @@ export const Device = (props: IProps) => {
             deviceToUpdate.collectorVariables = itemValues;
           }
         });
-      });
+      }).catch(error => console.warn("Sampler: could not read the collector's items", error));
     }
   }, [collectorContextName, selectedDeviceId, setGlobalState, columnIndex]);
 

@@ -100,7 +100,11 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
                     draft2.attrMap[id].codapID = result.values.attrs[0].id;
                   });
                 }
-              });
+              // TODO: tell the user. Adding a column is an explicit action, and a create that fails
+              // leaves the column in the model with a null codapID and no attribute behind it, with
+              // nothing on screen to say so. Reporting it means reaching outside the immer recipe
+              // this runs inside, which is why it is a console warning for now.
+              }).catch(error => console.warn("Sampler: could not create the attribute", error));
           }
         }
       }

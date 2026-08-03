@@ -49,6 +49,40 @@ export const getCollectionNames = () => {
   };
 };
 
+/**
+ * Issues a CODAP request, reporting rather than propagating a failure.
+ *
+ * A large request can exceed the plugin API's response deadline and reject while CODAP is still
+ * processing it successfully, so a rejection does not mean the work failed — only that we stopped
+ * waiting for it. Since the outcome is unknown either way, work that does not depend on the answer
+ * should carry on rather than being abandoned.
+ *
+ * This is the one spelling of "report, don't propagate" in the plugin; reach for it rather than
+ * writing another `.catch` that logs, so the rule stays in one place.
+ */
+export const tryRequest = async <T,>(
+  request: () => Promise<T>, describe = "CODAP request did not complete"
+): Promise<T | undefined> => {
+  try {
+    return await request();
+  } catch (error) {
+    console.warn(`Sampler: ${describe}`, error);
+    return undefined;
+  }
+};
+
+/**
+ * Creates the named attributes on the items collection.
+ *
+ * Awaited together and reported one at a time: a forEach would drop these promises, leaving a
+ * failure with nothing attached to it, and one attribute that cannot be created should not cost
+ * the rest.
+ */
+export const createItemAttributes = async (dataContextName: string, attrNames: string[], describe: string) => {
+  await Promise.all(attrNames.map(attr =>
+    tryRequest(() => createNewAttribute(dataContextName, getCollectionNames().items, attr), `${describe} ${attr}`)));
+};
+
 const updateAttributeIds = async (dataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>) => {
   const allAttrs = [
     {collection: "experiments", attrName: attrMap.experiment.name},
@@ -67,7 +101,15 @@ const updateAttributeIds = async (dataContextName: string, attrs: Array<string>,
     "resource": `dataContext[${dataContextName}].collection[${collectionAttr.collection}].attribute[${collectionAttr.attrName}]`
   }));
 
-  await codapInterface.sendRequest(reqs, (getAttrsResult: any[]) => {
+  await codapInterface.sendRequest(reqs, (getAttrsResult?: IResult | IResult[]) => {
+    // A batched get is answered with one result per request. Anything else carries no ids to read:
+    // undefined when the request is given up on, a single result when CODAP answers the batch with
+    // one error. Either way the ids already held are better than nothing.
+    //
+    // Being given up on does not cancel the request, so a late answer calls this a second time —
+    // with the results, which are then applied.
+    if (!Array.isArray(getAttrsResult)) { return; }
+
     const updatedAttrsIds: Record<keyof AttrMap, string> = {};
     getAttrsResult.forEach((res: {success: boolean, values: Record<string, string>}) => {
       if (res.success) {
@@ -153,13 +195,14 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
       }
 
       if (createNewAttr) {
-        await createNewAttribute(finalDataContextName, collectionNames.experiments, experimentAttrName);
+        await tryRequest(() => createNewAttribute(finalDataContextName, collectionNames.experiments, experimentAttrName),
+          "could not add the experiment column");
       }
     }
 
     // ensure that the experimentHash column exists (it will not exist in older TPSampler documents)
     if (!attrList.find((attr: {name: string}) => attr.name === attrMap.experimentHash.name)) {
-      await codapInterface.sendRequest({
+      await tryRequest(() => codapInterface.sendRequest({
         action: "create",
         resource: `dataContext[${finalDataContextName}].collection[${collectionNames.experiments}].attribute`,
         values: [
@@ -169,33 +212,41 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
             hidden: true
           }
         ]
-      });
+      }), "could not add the experiment hash column");
     }
 
-    attrList = (await getAttributeList(finalDataContextName, collectionNames.items)).values;
+    attrList = (await tryRequest(() => getAttributeList(finalDataContextName, collectionNames.items),
+      "could not list the item attributes"))?.values ?? [];
     const attrNames: string[] = attrList.map((attr: {id: number, name: string, title: string}) => attr.name);
 
     // ensure that if a user deleted a CODAP attr representing a device column, it is reinstated
     const missingAttrs = attrs.filter(attr => !attrNames.includes(attr));
     if (missingAttrs.length > 0) {
-      missingAttrs.forEach(async (attr) => {
-        await createNewAttribute(finalDataContextName, collectionNames.items, attr);
-      });
+      await createItemAttributes(finalDataContextName, missingAttrs, "could not reinstate the item attribute");
     }
 
     // if this is a collector run and there are no existing items remove all non-collector attributes
     if (isCollector) {
-      const itemCountResult = await getCaseCount(finalDataContextName, collectionNames.items);
-      if (itemCountResult.success && itemCountResult.values === 0) {
+      const itemCountResult = await tryRequest(() => getCaseCount(finalDataContextName, collectionNames.items),
+        "could not count the existing items");
+      if (itemCountResult?.success && itemCountResult.values === 0) {
         const nonCollectorAttrs = attrNames.filter(attr => !attrs.includes(attr));
-        deleteItemAttrs(finalDataContextName, nonCollectorAttrs);
+        await tryRequest(() => deleteItemAttrs(finalDataContextName, nonCollectorAttrs),
+          "could not remove the non-collector attributes");
       }
     }
 
-    await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState);
+    // Neither of these is worth the run: updateAttributeIds only refreshes cached attribute ids,
+    // and the table createWideTable opens is already open on a document being run again. Setting
+    // up sends more requests than any other part of a run, so it is the likeliest place for one
+    // to outlive the response deadline, and an experiment must not be abandoned before it starts
+    // over a request that told us nothing we did not already have.
+    await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState)
+      .catch(error => console.warn("Sampler: could not refresh the attribute ids", error));
 
     if (createTable) {
-      await createWideTable(finalDataContextName, instance);
+      await createWideTable(finalDataContextName, instance)
+        .catch(error => console.warn("Sampler: could not open the case table", error));
     }
 
     return finalDataContextName;
@@ -222,9 +273,12 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
           const createOutputCollection =
             await createChildCollection(finalDataContextName, collectionNames.items, collectionNames.samples, itemsAttrs);
           if (createOutputCollection.success) {
-            await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState);
+            // as above: neither of these is worth abandoning a run over
+            await updateAttributeIds(finalDataContextName, attrs, attrMap, setGlobalState)
+              .catch(error => console.warn("Sampler: could not refresh the attribute ids", error));
             if (createTable) {
-              await createWideTable(finalDataContextName, instance);
+              await createWideTable(finalDataContextName, instance)
+                .catch(error => console.warn("Sampler: could not open the case table", error));
             }
             return finalDataContextName;
           }
@@ -282,66 +336,79 @@ export const deleteItemAttrs = async (dataContextName: string, attrs: string[]) 
   }
 };
 
-export const addMeasure = (dataContextName: string, measureName: string, measureType: string, formula: string) => {
+/**
+ * Adds (or, for a named measure that already exists, updates) a measure attribute.
+ *
+ * Reports whether the measure made it into the table: a request CODAP doesn't answer rejects, and
+ * one it refuses resolves with success false, and neither is something the caller can tell the
+ * user about after the fact.
+ */
+export const addMeasure = async (dataContextName: string, measureName: string, measureType: string, formula: string): Promise<boolean> => {
   const samplesColl = getCollectionNames().samples;
 
-  codapInterface.sendRequest({
-    action: "get",
-    resource: `dataContext[${dataContextName}].collection[${samplesColl}].attributeList`
-  }).then((res: any) => {
+  try {
+    const res = await codapInterface.sendRequest({
+      action: "get",
+      resource: `dataContext[${dataContextName}].collection[${samplesColl}].attributeList`
+    }) as IResult;
+
+    if (!res.success) {
+      return false;
+    }
+
     const attrs = res.values;
     let newAttributeName = measureName ? measureName : measureType;
     // check if attr name is already used. user could add "conditional count" twice, for example,
     // but have difference formulas (output = a, output = b)
     const attrNameAlreadyUsed = attrs.find((attr: any) => attr.name === newAttributeName);
 
-      if (!attrNameAlreadyUsed) {
-        codapInterface.sendRequest({
-          action: 'create',
-          resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute`,
-          values: [{
-            name: newAttributeName,
-            type: "numeric",
-            formula
-          }]
-        });
-      } else if (attrNameAlreadyUsed && !measureName) {
-        const attrsWithSameName = attrs.filter((attr: any) => attr.name.startsWith(newAttributeName));
-        const indexes = attrsWithSameName.map((attr: any) => Number(attr.name.slice(newAttributeName.length)));
-        const highestIndex = Math.max(...indexes);
-        if (!highestIndex) {
-          newAttributeName = newAttributeName + 1;
-        } else {
-          for (let i = 1; i <= highestIndex; i++) {
-            const nameWithIndex = newAttributeName + i;
-            const isNameWithIndexUsed = attrsWithSameName.find((attr: any) => attr.name === nameWithIndex);
-            if (!isNameWithIndexUsed) {
-              newAttributeName = nameWithIndex;
-              break;
-            } else if (i === highestIndex) {
-              newAttributeName = newAttributeName + (highestIndex + 1);
-            }
+    // a named measure reuses its attribute, so the formula is updated in place
+    if (attrNameAlreadyUsed && measureName) {
+      const updated = await codapInterface.sendRequest({
+        action: "update",
+        resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute[${measureName}]`,
+        values: {
+          formula
+        }
+      }) as IResult;
+      return updated.success;
+    }
+
+    // an unnamed measure gets the lowest unused numeric suffix
+    if (attrNameAlreadyUsed) {
+      const attrsWithSameName = attrs.filter((attr: any) => attr.name.startsWith(newAttributeName));
+      const indexes = attrsWithSameName.map((attr: any) => Number(attr.name.slice(newAttributeName.length)));
+      const highestIndex = Math.max(...indexes);
+      if (!highestIndex) {
+        newAttributeName = newAttributeName + 1;
+      } else {
+        for (let i = 1; i <= highestIndex; i++) {
+          const nameWithIndex = newAttributeName + i;
+          const isNameWithIndexUsed = attrsWithSameName.find((attr: any) => attr.name === nameWithIndex);
+          if (!isNameWithIndexUsed) {
+            newAttributeName = nameWithIndex;
+            break;
+          } else if (i === highestIndex) {
+            newAttributeName = newAttributeName + (highestIndex + 1);
           }
         }
-        codapInterface.sendRequest({
-          action: 'create',
-          resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute`,
-          values: [{
-            name: newAttributeName,
-            type: "numeric",
-            formula
-          }]
-        });
-      } else if (attrNameAlreadyUsed && measureName) {
-        codapInterface.sendRequest({
-          action: 'update',
-          resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute[${measureName}]`,
-          values: {
-            formula
-          }
-        });
       }
-    });
+    }
+
+    const created = await codapInterface.sendRequest({
+      action: "create",
+      resource: `dataContext[${dataContextName}].collection[${samplesColl}].attribute`,
+      values: [{
+        name: newAttributeName,
+        type: "numeric",
+        formula
+      }]
+    }) as IResult;
+    return created.success;
+  } catch (error) {
+    console.warn("Sampler: could not add the measure", error);
+    return false;
+  }
 };
 
 export const getNewExperimentInfo = async (dataContextName: string, experimentHash: string) => {
