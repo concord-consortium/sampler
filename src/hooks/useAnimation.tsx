@@ -94,7 +94,9 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
             // samples after this one still need collecting.
             const createItemsResult =
               await tryRequest(() => createItems(dataContextName, sampleResults)) as any;
-            if (createItemsResult?.caseIDs) {
+            // a run the user stopped or replaced must not move the selection over the one
+            // that took its place
+            if (createItemsResult?.caseIDs && isCurrentRun()) {
               await tryRequest(() => selectCases(dataContextName, createItemsResult.caseIDs));
             }
           }
@@ -105,9 +107,8 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
   });
 
   steps.push({ kind: "endExperiment", onComplete: async () => {
-    // Requests go through tryRequest so a slow one costs at most its own result rather than the
-    // steps after it, and onComplete runs from a finally, so the experiment always reports itself
-    // finished and the controls are never left mid-run.
+    // onComplete runs from a finally: whatever becomes of these requests, the experiment reports
+    // itself finished and the controls are never left mid-run.
     try {
       // in fastest mode the samples are created at the end of the experiment
       if (finalSampleResults.length > 0) {
@@ -129,17 +130,16 @@ export const createExperimentAnimationSteps = (model: IModel, dataContextName: s
         const created = await tryRequest(() => createItems(dataContextName, mergedFinalSampleResults));
 
         // Samples are appended in order, so the sample collection's last case is the one just
-        // collected. Select the case rather than its items: CODAP resolves the ids it is given
-        // against each collection's rows, and naming the case is what scrolls the table to it and
-        // cascades that scroll to its children. Reading the case back costs far less than
-        // arranging for the create to report it.
+        // collected. Selecting the case rather than its items is what scrolls the table to it and
+        // cascades that scroll to its children, and reading it back costs far less than arranging
+        // for the create to report it.
         //
-        // Only once the create is known to have landed, though. Otherwise the last case may belong
-        // to an earlier experiment, and highlighting it would claim it is the sample just
-        // collected. Selecting nothing says nothing; selecting the wrong row misleads. A refused
-        // create resolves with success false rather than rejecting, so the request has to be asked
-        // whether it worked, not merely whether it answered.
-        if (created?.success) {
+        // Both conditions carry weight. A refused create resolves with success false rather than
+        // rejecting, so the request has to be asked whether it worked and not merely whether it
+        // answered; without a create that landed, the last case may belong to an earlier
+        // experiment. And a stopped or superseded run would scroll the table away from the run
+        // collecting now. Selecting nothing says nothing; selecting the wrong row misleads.
+        if (created?.success && isCurrentRun()) {
           const sampleCollectionName = getCollectionNames().samples;
           const caseCountResult =
             await tryRequest(() => getCaseCount(dataContextName, sampleCollectionName)) as any;
@@ -555,7 +555,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
         enableNewRun();
       };
 
-      const newAnimationSteps = createExperimentAnimationSteps(model, finalDataContextName, animationResults, results, onEndRun);
+      const newAnimationSteps = createExperimentAnimationSteps(model, finalDataContextName, animationResults, results, onEndRun, isCurrentRun);
       startAnimation(newAnimationSteps);
       // startAnimation runs whatever it is given, so a pause requested during the setup has to be
       // re-applied to the animation it just replaced — unless the run has reached the fastest

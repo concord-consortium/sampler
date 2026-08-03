@@ -41,13 +41,14 @@ export const ModelHeader = (props: IProps) => {
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, model, dataContextName, untilFormula, attrMap, repeatCondition, repeatNumUniqueValues, speed } = globalState;
   const { handleStartRun, handleTogglePauseRun, handleStopRun, isRunUninterruptible } = useAnimationContext();
-  // At the fastest speed the experiment runs to completion in a single uninterruptible pass, so
-  // there is nothing for pause to act on. Leaving it enabled would relabel the control to Start
-  // while the run carried on regardless. Stop still applies, and remains enabled.
+  // Pause has nothing to act on during the fastest pass, which runs to the end of the experiment
+  // whatever the speed does from here; left enabled it would relabel itself to Start while the run
+  // carried on. Two conditions because they ask about different runs: the speed about one yet to
+  // reach that pass, the latch about one already in it. Stop applies throughout, and stays enabled.
   //
-  // The speed asks about a run that has yet to reach that pass; the run itself is asked about one
-  // already in it, since slowing down from fastest part-way through does not bring it back within
-  // reach of pause.
+  // The latch is a ref, so reading it does not re-render this. It does not have to: the latch only
+  // decides the outcome once the speed has been lowered mid-pass, and that speed change is itself a
+  // state change that re-renders. A latch that could flip without one would need to become state.
   const pauseUnavailable = isRunning && (speed === Speed.Fastest || isRunUninterruptible());
   const startToggleDisabled = (!isRunning && !enableRunButton) || pauseUnavailable;
 
