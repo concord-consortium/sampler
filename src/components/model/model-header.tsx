@@ -40,11 +40,15 @@ export const ModelHeader = (props: IProps) => {
   const { showRepeatUntil, isWide, setShowRepeatUntil } = props;
   const { globalState, setGlobalState } = useGlobalStateContext();
   const { repeat, sampleSize, numSamples, enableRunButton, isRunning, isPaused, model, dataContextName, untilFormula, attrMap, repeatCondition, repeatNumUniqueValues, speed } = globalState;
-  const { handleStartRun, handleTogglePauseRun, handleStopRun } = useAnimationContext();
+  const { handleStartRun, handleTogglePauseRun, handleStopRun, isRunUninterruptible } = useAnimationContext();
   // At the fastest speed the experiment runs to completion in a single uninterruptible pass, so
   // there is nothing for pause to act on. Leaving it enabled would relabel the control to Start
   // while the run carried on regardless. Stop still applies, and remains enabled.
-  const pauseUnavailable = isRunning && speed === Speed.Fastest;
+  //
+  // The speed asks about a run that has yet to reach that pass; the run itself is asked about one
+  // already in it, since slowing down from fastest part-way through does not bring it back within
+  // reach of pause.
+  const pauseUnavailable = isRunning && (speed === Speed.Fastest || isRunUninterruptible());
   const startToggleDisabled = (!isRunning && !enableRunButton) || pauseUnavailable;
 
   const numDevices = useMemo(() => model.columns.reduce<number>((acc, column) => acc + column.devices.length, 0), [model]);

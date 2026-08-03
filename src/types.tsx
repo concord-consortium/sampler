@@ -216,6 +216,8 @@ export interface IAnimationContext {
   handleStartRun: () => Promise<void>
   handleTogglePauseRun: (pause: boolean) => Promise<void>
   handleStopRun: () => Promise<void>
+  // whether the run under way is one that pause can no longer act on
+  isRunUninterruptible: () => boolean
   registerAnimationCallback: RegisterAnimationCallbackFn
 }
 

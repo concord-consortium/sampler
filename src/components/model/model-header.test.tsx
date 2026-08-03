@@ -15,11 +15,14 @@ jest.mock("../../hooks/useGlobalState", () => ({
   useGlobalStateContext: () => ({ globalState: state, setGlobalState: jest.fn() })
 }));
 
+let runIsUninterruptible = false;
+
 jest.mock("../../hooks/useAnimation", () => ({
   useAnimationContext: () => ({
     handleStartRun: jest.fn(),
     handleTogglePauseRun: jest.fn(),
-    handleStopRun: jest.fn()
+    handleStopRun: jest.fn(),
+    isRunUninterruptible: () => runIsUninterruptible
   })
 }));
 
@@ -51,6 +54,10 @@ function renderHeader() {
 }
 
 describe("ModelHeader start/pause control", () => {
+  beforeEach(() => {
+    runIsUninterruptible = false;
+  });
+
   it("is enabled before a run when the model is runnable", () => {
     setState({ isRunning: false, enableRunButton: true });
     expect(renderHeader().startToggle.disabled).toBe(false);
@@ -65,6 +72,14 @@ describe("ModelHeader start/pause control", () => {
   // act on; leaving it enabled would relabel the control to Start while the run continued.
   it("is disabled while running at the fastest speed", () => {
     setState({ isRunning: true, speed: Speed.Fastest });
+    expect(renderHeader().startToggle.disabled).toBe(true);
+  });
+
+  // Slowing down part-way through the fastest pass does not bring the run back within reach of
+  // pause: the pass ignores the speed once it has started, so the control must stay disabled.
+  it("stays disabled when the speed is lowered during an uninterruptible run", () => {
+    runIsUninterruptible = true;
+    setState({ isRunning: true, speed: Speed.Slow });
     expect(renderHeader().startToggle.disabled).toBe(true);
   });
 

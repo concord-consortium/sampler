@@ -190,6 +190,8 @@ export const useAnimationContextValue = (): IAnimationContext => {
   // it should begin paused.
   const runIdRef = useRef<number>(0);
   const isPausedRef = useRef<boolean>(false);
+  // set once the run enters the single pass that finishes it, which nothing can pause part-way
+  const uninterruptibleRunRef = useRef<boolean>(false);
   const globalReplacement = isSingleDeviceReplacement(model);
 
   const getExperimentSample = async (variableIndexes: AvailableDeviceVariableIndexes) => {
@@ -437,6 +439,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
   };
 
   const startAnimation = (newAnimationSteps: AnimationStep[]) => {
+    uninterruptibleRunRef.current = false;
     animationRef.current = {
       frame: 0,
       steps: newAnimationSteps,
@@ -460,6 +463,9 @@ export const useAnimationContextValue = (): IAnimationContext => {
 
     // instantly finish all the steps if we start or change to fastest speed
     if (speedRef.current === Speed.Fastest) {
+      // this pass runs to the end of the experiment whatever the speed does from here, so the
+      // controls have to know that pausing can no longer reach it
+      uninterruptibleRunRef.current = true;
       const finish = async () => {
         const startedFinishAt = Date.now();
         const settings: IAnimationStepSettings = { t: 1, speed: Speed.Fastest };
@@ -487,6 +493,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
 
   const enableNewRun = () => {
     isPausedRef.current = false;
+    uninterruptibleRunRef.current = false;
     setGlobalState(draft => {
       draft.isRunning = false;
       draft.isPaused = false;
@@ -597,6 +604,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
     handleStartRun,
     handleTogglePauseRun,
     handleStopRun,
+    isRunUninterruptible: () => uninterruptibleRunRef.current,
     registerAnimationCallback
   };
 };
@@ -605,6 +613,7 @@ export const AnimationContext = createContext<IAnimationContext>({
   handleStartRun: () => Promise.resolve(),
   handleTogglePauseRun: (pause: boolean) => Promise.resolve(),
   handleStopRun: () => Promise.resolve(),
+  isRunUninterruptible: () => false,
   registerAnimationCallback: () => () => undefined
 });
 export const useAnimationContext = () => useContext(AnimationContext);
