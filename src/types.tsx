@@ -145,7 +145,6 @@ export interface IGlobalState {
   attrMap: AttrMap;
   dataContextName: string;
   collectorContextName: string;
-  samplerContext: IDataContext | undefined;
   isRunning: boolean;
   isPaused: boolean;
   speed: Speed;

@@ -1,4 +1,7 @@
 module.exports = {
+  // this is the project's root config, so stop the cascade here rather than merging in whatever
+  // config happens to sit above the checkout
+  root: true,
   parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: 2018,

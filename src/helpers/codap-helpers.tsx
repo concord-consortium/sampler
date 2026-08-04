@@ -9,14 +9,14 @@ import {
   getAttribute,
   getAttributeList,
   getCaseCount,
-  getCollectionList,
   getDataContext,
   getListOfDataContexts,
   updateAttribute} from "@concord-consortium/codap-plugin-api";
 import { AttrMap, IAttribute, IGlobalState } from "../types";
 import { Updater } from "use-immer";
-import { parseFormula } from "../utils/utils";
-import { renameVariable, stringify } from "../utils/formula-parser";
+// only the commented-out renameAttributeInFormulas below uses these
+// import { parseFormula } from "../utils/utils";
+// import { renameVariable, stringify } from "../utils/formula-parser";
 import { kPluginName } from "../constants";
 import { tr } from "../utils/localeManager";
 
@@ -84,17 +84,19 @@ export const createItemAttributes = async (dataContextName: string, attrNames: s
 };
 
 const updateAttributeIds = async (dataContextName: string, attrs: Array<string>, attrMap: AttrMap, setGlobalState: Updater<IGlobalState>) => {
+  const {experiments, samples, items} = getCollectionNames();
   const allAttrs = [
-    {collection: "experiments", attrName: attrMap.experiment.name},
-    {collection: "experiments", attrName: attrMap.description.name},
-    {collection: "experiments", attrName: attrMap.sample_size.name},
-    {collection: "experiments", attrName: attrMap.until_formula.name},
-    {collection: "experiments", attrName: attrMap.experimentHash.name},
-    {collection: "samples", attrName: attrMap.sample.name},
+    {collection: experiments, attrName: attrMap.experiment.name},
+    {collection: experiments, attrName: attrMap.description.name},
+    {collection: experiments, attrName: attrMap.sample_size.name},
+    {collection: experiments, attrName: attrMap.until_formula.name},
+    {collection: experiments, attrName: attrMap.experimentHash.name},
+    {collection: samples, attrName: attrMap.sample.name},
   ];
   const isKeyOfAttrMap = (key: any): key is keyof AttrMap => key in attrMap;
 
-  attrs.forEach(attr => allAttrs.push({collection: "samples", attrName: attr}));
+  // the attributes standing for the model's columns belong to the items collection
+  attrs.forEach(attr => allAttrs.push({collection: items, attrName: attr}));
 
   const reqs: TCODAPRequest[] = allAttrs.map(collectionAttr => ({
     "action": "get",
@@ -254,9 +256,6 @@ export const findOrCreateDataContext = async (initialDataContextName: string, at
     const createRes = await createDataContext(finalDataContextName);
     const itemsAttrs: IAttribute[] = [];
     if (createRes.success) {
-      setGlobalState((draft) => {
-        draft.samplerContext = createRes.values;
-      });
       const parentAttrs = [
         {name: attrMap.experiment.name, type: "categorical"},
         {name: attrMap.description.name, type: "categorical"},
@@ -423,9 +422,9 @@ export const getNewExperimentInfo = async (dataContextName: string, experimentHa
   // any cases?
   if (result.values.length > 0) {
     /*
-      This has been disabled due to a request to always create a new experiment in SAMPLER-82.
-      If this turns out not to be the desired behavior in the future, this can be uncommented and
-      the code below that sets an empty array for matchingHashItems can be removed.
+      Every run starts a new experiment, so a run matching an existing one is never looked for.
+      If matching is wanted again, this can be uncommented and the code below that sets an empty
+      array for matchingHashItems can be removed.
 
     // check if the experiment already exists
     const matchingHashItems = result.values.filter((item: any) => item.values?.experimentHash === experimentHash);
@@ -452,45 +451,59 @@ export const getNewExperimentInfo = async (dataContextName: string, experimentHa
   return {experimentNum, startingSampleNumber};
 };
 
-export const renameAttributeInFormulas = async (dataContextName: string, oldName: string, newName: string) => {
-  const collectionListResult = await getCollectionList(dataContextName);
-  if (!collectionListResult.success) {
-    return;
-  }
-
-  const collections = collectionListResult.values.map((c: any) => c.name);
-  for (const collection of collections) {
-    const attrListResult = await getAttributeList(dataContextName, collection);
-    if (!attrListResult.success) {
-      continue;
-    }
-
-    const attributes = attrListResult.values;
-    for (const attr of attributes) {
-      const attributeResult = await getAttribute(dataContextName, collection, attr.name);
-      if (!attributeResult.success) {
-        continue;
-      }
-      const { formula } = attributeResult.values;
-
-      // a bug in CODAPv2 causes multiple equals signs to be added to formulas when renaming attributes
-      let finalFormula = formula?.replace(/={1,}/g, "=");
-
-      if (finalFormula?.includes(oldName)) {
-        // this returns a binary expression of left: "", op: =, right: parsedFormula
-        // so we only need to update the variable name in the right side
-        const parsed = parseFormula(finalFormula, "");
-        if (parsed.type === "BinaryExpression") {
-          const renamed = renameVariable(parsed.right, oldName, newName);
-          finalFormula = stringify(renamed, [newName]);
-        }
-      }
-      if (finalFormula !== formula) {
-        await updateAttribute(dataContextName, collection, attr.name, attr, {formula: finalFormula});
-      }
-    }
-  }
-};
+// Kept in case CODAP v2 needs it. CODAP v3 keeps formulas that reference a renamed attribute correct
+// on its own -- it stores them against attribute ids and regenerates the displayed text -- so calling
+// this overwrote a correct formula with the output of the parser below, which drops backticks and
+// quotes and turns references to other attributes into string constants. CODAP v2 has no such
+// handling, so a formula there keeps the old name after a rename. Rewriting formulas safely means
+// parsing them the way CODAP parses them rather than approximating it here.
+//
+// If we decide v2 does not need fixing, delete this and the commented-out imports above it, along
+// with renameVariable in utils/formula-parser, whose only caller is below. To put this back,
+// uncomment those imports and add getCollectionList to the plugin api import.
+//
+// Being commented out, none of it is checked by TypeScript or ESLint, so it will not be told when
+// the API or the types it uses move underneath it.
+//
+// export const renameAttributeInFormulas = async (dataContextName: string, oldName: string, newName: string) => {
+//   const collectionListResult = await getCollectionList(dataContextName);
+//   if (!collectionListResult.success) {
+//     return;
+//   }
+//
+//   const collections = collectionListResult.values.map((c: any) => c.name);
+//   for (const collection of collections) {
+//     const attrListResult = await getAttributeList(dataContextName, collection);
+//     if (!attrListResult.success) {
+//       continue;
+//     }
+//
+//     const attributes = attrListResult.values;
+//     for (const attr of attributes) {
+//       const attributeResult = await getAttribute(dataContextName, collection, attr.name);
+//       if (!attributeResult.success) {
+//         continue;
+//       }
+//       const { formula } = attributeResult.values;
+//
+//       // a bug in CODAPv2 causes multiple equals signs to be added to formulas when renaming attributes
+//       let finalFormula = formula?.replace(/={1,}/g, "=");
+//
+//       if (finalFormula?.includes(oldName)) {
+//         // this returns a binary expression of left: "", op: =, right: parsedFormula
+//         // so we only need to update the variable name in the right side
+//         const parsed = parseFormula(finalFormula, "");
+//         if (parsed.type === "BinaryExpression") {
+//           const renamed = renameVariable(parsed.right, oldName, newName);
+//           finalFormula = stringify(renamed, [newName]);
+//         }
+//       }
+//       if (finalFormula !== formula) {
+//         await updateAttribute(dataContextName, collection, attr.name, attr, {formula: finalFormula});
+//       }
+//     }
+//   }
+// };
 
 
 type Dimensions = {width: number; height: number};

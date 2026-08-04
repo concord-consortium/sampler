@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
 import { useImmer } from "use-immer";
 import {IColumn, IGlobalState, IGlobalStateContext, ITPSamplerPluginState, defaultOutputAttrName, Speed, ViewType}
   from "../types";
@@ -7,7 +7,7 @@ import { createDefaultDevice, createDevice } from "../models/device-model";
 import { kInitialDimensions, kPluginName, kVersion } from "../constants";
 import { createId } from "../utils/id";
 import { removeMissingDevicesFromFormulas } from "../helpers/model-helpers";
-import { setDimensions, ensureMinimumDimensions, findOrCreateDataContext, getGlobalValue, createGlobalValue, updateGlobalValue, updatePluginTitle } from "../helpers/codap-helpers";
+import { setDimensions, ensureMinimumDimensions, findOrCreateDataContext, getGlobalValue, createGlobalValue, updateGlobalValue, updatePluginTitle, tryRequest } from "../helpers/codap-helpers";
 import { defaultAttrMap } from "../utils/attr-map";
 import { isCollectorOnlyModel, getCollectorAttrs } from "../utils/collector";
 import { getModelAttrs } from "../utils/model";
@@ -26,7 +26,6 @@ export const getDefaultState = (): IGlobalState => {
     attrMap: defaultAttrMap,
     dataContextName: "",
     collectorContextName: "",
-    samplerContext: undefined,
     isRunning: false,
     isPaused: false,
     speed: 1,
@@ -131,6 +130,7 @@ export const migrateState = (state: IGlobalState) => {
 
 export const useGlobalStateContextValue = (): IGlobalStateContext => {
   const [globalState, setGlobalState] = useImmer<IGlobalState>(getDefaultState());
+  const listenedToDataContextNames = useRef(new Set<string>());
 
   useEffect(() => {
     const init = async () => {
@@ -170,18 +170,28 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
       const isCollector = isCollectorOnlyModel(newGlobalState.model);
       const attrs = isCollector ? getCollectorAttrs(newGlobalState.model) : getModelAttrs(newGlobalState.model);
 
+      // Publish the migrated state before touching CODAP. findOrCreateDataContext writes the
+      // attribute ids it looks up back into the state it finds, so it has to find this state and
+      // not the placeholder the hook started with -- the placeholder is a separate getDefaultState()
+      // whose column has a different id, which would leave the column's attribute id unrecorded.
+      // Everything after this point updates individual properties for the same reason: replacing
+      // the whole state would discard whatever findOrCreateDataContext had just written. This is
+      // the only place that replaces the state wholesale, so nothing may write global state before
+      // it lands -- such a write would be discarded here.
+      setGlobalState(newGlobalState);
+
       const ensureDataContext = async (instance: number) => {
         const {dataContextName, attrMap, repeat} = newGlobalState;
         const newDataContextName = await findOrCreateDataContext(dataContextName, attrs, attrMap, setGlobalState, repeat, isCollector, instance, false);
         return newDataContextName ?? "";
       };
 
-      let finalDataContextName = newGlobalState.dataContextName;
-
       if (!newGlobalState.instance) {
         // only allow one instance of the sampler plugin access to the global value
-        // at a time to avoid race conditions when multiple instances are initialized
-        navigator.locks.request(kSamplerInstanceGlobalValueName, async () => {
+        // at a time to avoid race conditions when multiple instances are initialized.
+        // This is deliberately not awaited, so the data context name is recorded inside the
+        // callback -- anything after this block would run before the callback has one.
+        tryRequest(() => navigator.locks.request(kSamplerInstanceGlobalValueName, async () => {
           let instance = 1;
           let globalValue = await getGlobalValue(kSamplerInstanceGlobalValueName);
           if (!globalValue) {
@@ -191,18 +201,24 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
             await updateGlobalValue(kSamplerInstanceGlobalValueName, instance);
           }
           await updatePluginTitle(instance);
-          finalDataContextName = await ensureDataContext(instance);
-          setGlobalState({...newGlobalState, instance, dataContextName: finalDataContextName});
-        });
+          const finalDataContextName = await ensureDataContext(instance);
+          setGlobalState(draft => {
+            draft.instance = instance;
+            draft.dataContextName = finalDataContextName;
+          });
+        }), "could not claim an instance number");
       } else {
-        finalDataContextName = await ensureDataContext(newGlobalState.instance);
+        const finalDataContextName = await ensureDataContext(newGlobalState.instance);
         await updatePluginTitle(newGlobalState.instance);
+        setGlobalState(draft => {
+          draft.dataContextName = finalDataContextName;
+        });
       }
-
-      setGlobalState({...newGlobalState, dataContextName: finalDataContextName});
     };
 
-    init();
+    // every CODAP request init makes can reject rather than report failure -- on a timeout and on a
+    // closed connection -- and a rejection here would otherwise go unreported
+    tryRequest(init, "initialization did not complete");
   }, [setGlobalState]);
 
   useEffect(() => {
@@ -210,8 +226,13 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
   }, [globalState]);
 
   useEffect(() => {
-    if (globalState.samplerContext) {
-      addDataContextChangeListener(globalState.samplerContext.name, (msg: any) => {
+    // Listeners cannot be removed, so a data context name we have already subscribed to must not be
+    // subscribed to again. The name can return to any earlier value -- init leaves it empty when the
+    // data context could not be found, starting an experiment sets it again, and a collector can
+    // point the plugin at a different context and back -- and every notification would then be
+    // handled once per registration, permanently. Hence every name seen, not just the last one.
+    if (globalState.dataContextName && !listenedToDataContextNames.current.has(globalState.dataContextName)) {
+      addDataContextChangeListener(globalState.dataContextName, (msg: any) => {
         if (msg.values.operation === "updateAttributes") {
           msg.values.result.attrIDs.forEach((id: string, i: number) => {
             const newName = msg.values.result.attrs[i].name;
@@ -226,9 +247,10 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
           });
         }
       });
+      listenedToDataContextNames.current.add(globalState.dataContextName);
     }
 
-  }, [globalState.samplerContext, setGlobalState]);
+  }, [globalState.dataContextName, setGlobalState]);
 
   return {
     globalState,
