@@ -56,7 +56,9 @@ which point the project code and the prefix filter in that script both need revi
 ## Releasing
 
 1. Raise the version in `package.json`, `package-lock.json`, and `kVersion` in `src/constants.ts`,
-   and merge that to `main`.
+   and merge that to `main`. `npm version <version> --no-git-tag-version` does the first two;
+   `kVersion` is by hand. A unit test fails if the two get out of step, so forgetting one of them
+   fails CI rather than shipping a mismatch.
 
 2. Tag the merge commit and push the tag:
 
