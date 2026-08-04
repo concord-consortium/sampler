@@ -1,9 +1,11 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { getAttribute, updateAttribute } from "@concord-consortium/codap-plugin-api";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useImmer } from "use-immer";
+import { getAttribute, getAttributeList, updateAttribute } from "@concord-consortium/codap-plugin-api";
 import { ColumnHeader } from "./column-header";
 import { GlobalStateContext, getDefaultState } from "../../hooks/useGlobalState";
-import { IGlobalState } from "../../types";
+import { createDefaultDevice } from "../../models/device-model";
+import { IGlobalState, IGlobalStateContext } from "../../types";
 
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
   codapInterface: {
@@ -35,13 +37,14 @@ jest.mock("../../utils/localeManager", () => ({
 }));
 
 const mockGetAttribute = getAttribute as jest.Mock;
+const mockGetAttributeList = getAttributeList as jest.Mock;
 const mockUpdateAttribute = updateAttribute as jest.Mock;
 
 const dataContextName = "Sampler";
 const oldName = "output";
 const newName = "choice";
 
-const renderColumnHeader = () => {
+const stateWithColumn = () => {
   const globalState: IGlobalState = getDefaultState();
   const column = globalState.model.columns[0];
   column.name = oldName;
@@ -50,13 +53,42 @@ const renderColumnHeader = () => {
     ...globalState.attrMap,
     [column.id]: { codapID: "id-output", name: oldName }
   };
+  return { globalState, column };
+};
 
+// Some of what the commit does is only observable in the state it writes, so these render against a
+// real store rather than a stub updater, which would never run the recipe at all.
+let store: IGlobalStateContext;
+const StateProvider = ({ initialState, children }: { initialState: IGlobalState, children: React.ReactNode }) => {
+  const [globalState, setGlobalState] = useImmer<IGlobalState>(initialState);
+  store = { globalState, setGlobalState };
+  return <GlobalStateContext.Provider value={store}>{children}</GlobalStateContext.Provider>;
+};
+
+const renderWithStore = () => {
+  const { globalState, column } = stateWithColumn();
+  render(
+    <StateProvider initialState={globalState}>
+      <ColumnHeader column={column} columnIndex={0} />
+    </StateProvider>
+  );
+  return { column };
+};
+
+const typeNewName = () => {
+  const textbox = screen.getByRole("textbox");
+  textbox.focus();
+  fireEvent.change(textbox, { target: { value: newName } });
+  return textbox;
+};
+
+const renderColumnHeader = () => {
+  const { globalState, column } = stateWithColumn();
   render(
     <GlobalStateContext.Provider value={{ globalState, setGlobalState: jest.fn() }}>
       <ColumnHeader column={column} columnIndex={0} />
     </GlobalStateContext.Provider>
   );
-
   return { column };
 };
 
@@ -121,5 +153,97 @@ describe("ColumnHeader", () => {
 
     await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
     expect(mockUpdateAttribute).not.toHaveBeenCalled();
+  });
+
+  // Blurring is what commits, and Enter blurs, so committing on Enter as well would run the whole
+  // exchange a second time -- against a name CODAP has already renamed, which reads as a refusal and
+  // puts the old name back.
+  it("commits once when the edit is finished with Enter", async () => {
+    renderColumnHeader();
+
+    const textbox = typeNewName();
+    fireEvent.keyDown(textbox, { code: "Enter" });
+
+    await waitFor(() => expect(mockUpdateAttribute).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(newName));
+  });
+
+  // Escape abandons the edit, and since blurring commits, cancelling has to reach the commit too.
+  it("does not rename anything when the edit is abandoned with Escape", async () => {
+    renderColumnHeader();
+
+    const textbox = typeNewName();
+    fireEvent.keyDown(textbox, { code: "Escape" });
+
+    await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
+    expect(mockUpdateAttribute).not.toHaveBeenCalled();
+  });
+
+  // A request that stops answering has not necessarily failed, so the name CODAP holds decides it.
+  it("takes the new name when CODAP turns out to hold it after all", async () => {
+    mockUpdateAttribute.mockRejectedValue(new Error("connection closed"));
+    mockGetAttributeList.mockResolvedValue({ success: true, values: [{ name: newName }] });
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    renderColumnHeader();
+
+    const textbox = typeNewName();
+    fireEvent.blur(textbox);
+
+    await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(newName));
+    warn.mockRestore();
+  });
+
+  it("keeps the old name when CODAP turns out not to hold the new one", async () => {
+    mockUpdateAttribute.mockRejectedValue(new Error("connection closed"));
+    mockGetAttributeList.mockResolvedValue({ success: true, values: [{ name: oldName }] });
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    renderColumnHeader();
+
+    const textbox = typeNewName();
+    fireEvent.blur(textbox);
+
+    await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
+    warn.mockRestore();
+  });
+
+  // Deleting a column takes its attrMap entry with it, so a commit that outlives the entry it was
+  // opened on must not write through it. Writing through it throws inside the recipe, which escapes
+  // as far as the error boundary.
+  it("survives the column's attrMap entry being deleted while the rename is in flight", async () => {
+    let finishRename = (result: unknown) => { /* replaced below */ };
+    mockUpdateAttribute.mockImplementation(() => new Promise(resolve => { finishRename = resolve; }));
+    const { column } = renderWithStore();
+
+    fireEvent.blur(typeNewName());
+    await waitFor(() => expect(mockUpdateAttribute).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      store.setGlobalState(draft => { delete draft.attrMap[column.id]; });
+    });
+    await act(async () => { finishRename({ success: true }); });
+
+    expect(store.globalState.attrMap[column.id]).toBeUndefined();
+    expect(store.globalState.model.columns[0].name).toBe(newName);
+  });
+
+  // Columns are addressed by index everywhere else, but an index means something different once a
+  // column to the left is gone, and a commit can outlive that too.
+  it("renames the column it was opened on rather than whatever now sits at its index", async () => {
+    let finishRename = (result: unknown) => { /* replaced below */ };
+    mockUpdateAttribute.mockImplementation(() => new Promise(resolve => { finishRename = resolve; }));
+    renderWithStore();
+
+    fireEvent.blur(typeNewName());
+    await waitFor(() => expect(mockUpdateAttribute).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      store.setGlobalState(draft => {
+        draft.model.columns.unshift({ name: "first", id: "other-column", devices: [createDefaultDevice()] });
+      });
+    });
+    await act(async () => { finishRename({ success: true }); });
+
+    expect(store.globalState.model.columns[0].name).toBe("first");
+    expect(store.globalState.model.columns[1].name).toBe(newName);
   });
 });

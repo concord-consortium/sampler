@@ -130,7 +130,7 @@ export const migrateState = (state: IGlobalState) => {
 
 export const useGlobalStateContextValue = (): IGlobalStateContext => {
   const [globalState, setGlobalState] = useImmer<IGlobalState>(getDefaultState());
-  const listenedToDataContextName = useRef("");
+  const listenedToDataContextNames = useRef(new Set<string>());
 
   useEffect(() => {
     const init = async () => {
@@ -227,10 +227,11 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
 
   useEffect(() => {
     // Listeners cannot be removed, so a data context name we have already subscribed to must not be
-    // subscribed to again. The name can return to an earlier value -- init leaves it empty when the
-    // data context could not be found and starting an experiment sets it again -- and every
-    // notification would then be handled once per registration.
-    if (globalState.dataContextName && globalState.dataContextName !== listenedToDataContextName.current) {
+    // subscribed to again. The name can return to any earlier value -- init leaves it empty when the
+    // data context could not be found, starting an experiment sets it again, and a collector can
+    // point the plugin at a different context and back -- and every notification would then be
+    // handled once per registration, permanently. Hence every name seen, not just the last one.
+    if (globalState.dataContextName && !listenedToDataContextNames.current.has(globalState.dataContextName)) {
       addDataContextChangeListener(globalState.dataContextName, (msg: any) => {
         if (msg.values.operation === "updateAttributes") {
           msg.values.result.attrIDs.forEach((id: string, i: number) => {
@@ -246,7 +247,7 @@ export const useGlobalStateContextValue = (): IGlobalStateContext => {
           });
         }
       });
-      listenedToDataContextName.current = globalState.dataContextName;
+      listenedToDataContextNames.current.add(globalState.dataContextName);
     }
 
   }, [globalState.dataContextName, setGlobalState]);

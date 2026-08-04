@@ -352,6 +352,14 @@ $pluginMinWidth: 304px;
         position: absolute;
         width: 100%;
       }
+
+      // positioned like the label so that saying why a rename did not take does not move the model
+      .device-column-header-message {
+        font-size: 11px;
+        color: #b00020;
+        position: absolute;
+        width: 100%;
+      }
     }
   }
 }

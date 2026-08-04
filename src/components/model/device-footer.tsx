@@ -116,6 +116,9 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
                 draft.attrMap[id].codapID = result.values.attrs[0].id;
               }
             });
+          } else if (result) {
+            // tryRequest reports a request that never answered; this is one that answered no
+            console.warn(`Sampler: could not create the attribute for column ${name}`);
           }
         });
     }

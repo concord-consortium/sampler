@@ -1,5 +1,6 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import {
+  addDataContextChangeListener,
   codapInterface,
   createChildCollection,
   createDataContext,
@@ -37,6 +38,7 @@ jest.mock("@concord-consortium/codap-plugin-api", () => ({
   updateAttribute: jest.fn()
 }));
 
+const mockAddDataContextChangeListener = addDataContextChangeListener as jest.Mock;
 const mockCodapInterface = codapInterface as jest.Mocked<typeof codapInterface>;
 const mockCreateChildCollection = createChildCollection as jest.Mock;
 const mockCreateDataContext = createDataContext as jest.Mock;
@@ -152,5 +154,27 @@ describe("useGlobalStateContextValue initialization", () => {
     await waitFor(() => expect(result.current.globalState.dataContextName).toBe(dataContextName));
 
     expect(result.current.globalState.attrMap[savedColumnId].codapID).toBe(`id-${defaultOutputAttrName}`);
+  });
+
+  // A listener cannot be removed once added, so subscribing to a name a second time would handle
+  // every notification for it twice, for as long as the plugin is open. The name can return to an
+  // earlier value: init leaves it empty when the data context cannot be found, and starting an
+  // experiment sets it again.
+  it("subscribes to a data context once however often its name comes back", async () => {
+    const { result } = renderHook(() => useGlobalStateContextValue());
+    await waitFor(() => expect(result.current.globalState.dataContextName).toBe(dataContextName));
+    expect(mockAddDataContextChangeListener).toHaveBeenCalledTimes(1);
+
+    const setName = (name: string) =>
+      act(() => { result.current.setGlobalState(draft => { draft.dataContextName = name; }); });
+
+    setName("");
+    setName(dataContextName);
+    setName("another context");
+    setName(dataContextName);
+
+    expect(mockAddDataContextChangeListener).toHaveBeenCalledTimes(2);
+    expect(mockAddDataContextChangeListener.mock.calls.map(([name]: [string]) => name))
+      .toEqual([dataContextName, "another context"]);
   });
 });

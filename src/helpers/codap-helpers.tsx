@@ -458,8 +458,12 @@ export const getNewExperimentInfo = async (dataContextName: string, experimentHa
 // handling, so a formula there keeps the old name after a rename. Rewriting formulas safely means
 // parsing them the way CODAP parses them rather than approximating it here.
 //
-// If we decide v2 does not need fixing, delete this and the commented-out imports above it. To put
-// it back, uncomment those imports and add getCollectionList to the plugin api import.
+// If we decide v2 does not need fixing, delete this and the commented-out imports above it, along
+// with renameVariable in utils/formula-parser, whose only caller is below. To put this back,
+// uncomment those imports and add getCollectionList to the plugin api import.
+//
+// Being commented out, none of it is checked by TypeScript or ESLint, so it will not be told when
+// the API or the types it uses move underneath it.
 //
 // export const renameAttributeInFormulas = async (dataContextName: string, oldName: string, newName: string) => {
 //   const collectionListResult = await getCollectionList(dataContextName);
