@@ -234,7 +234,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
             nextDeviceId = deviceId;
             break;
           }
-        } catch (e) {
+        } catch {
           throw new Error(`Error evaluating transition formula: ${formula}`);
         }
       }
@@ -334,7 +334,7 @@ export const useAnimationContextValue = (): IAnimationContext => {
                   try {
                     const evaluationResult = await evaluateResult(untilFormula, outputs);
                     doneSampling = !!evaluationResult;
-                  } catch (e) {
+                  } catch {
                     throw new Error(`Evaluating "until" formula: ${untilFormula}`);
                   }
                 }
