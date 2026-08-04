@@ -8,12 +8,15 @@
 // live there, the components under test import those files, and ambient declarations are reached by
 // being included, never by being imported.
 //
-// "exclude" is deliberately not set. The base config does not define one, so it inherits TypeScript's
-// default, which keeps node_modules out. Resetting it to [] here would pull node_modules in.
+// "exclude" is reset because it is inherited, and the base config excludes exactly the test files
+// this one exists to compile. Left inherited, exclude filters include and this config resolves to
+// nothing but global.d.ts. Resetting to [] rather than restoring TypeScript's default is safe only
+// because "include" below never reaches outside ./src.
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "types": ["jest"]
   },
-  "include": ["./src/**/*.test.ts", "./src/**/*.test.tsx", "./src/**/*.d.ts"]
+  "include": ["./src/**/*.test.ts", "./src/**/*.test.tsx", "./src/**/*.d.ts"],
+  "exclude": []
 }
