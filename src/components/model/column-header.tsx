@@ -27,6 +27,7 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
   const [columnName, setColumnName] = useState(column.name);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const cancelEditRef = useRef(false);
+  const committingRef = useRef(false);
   const [label, setLabel] = useState("");
   const [message, setMessage] = useState("");
   const [opacity, setOpacity] = useState(0);
@@ -76,6 +77,12 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
       return;
     }
 
+    // Leaving the field, returning to it and leaving again commits twice over. The second commit
+    // would ask CODAP for a name the first has already renamed away and read that as a refusal.
+    if (committingRef.current) {
+      return;
+    }
+
     const newName = getNewColumnName(columnName.trim(), model.columns, column.id);
 
     // do not allow the user to clear the input and leave it empty
@@ -89,6 +96,15 @@ export const ColumnHeader = ({column, columnIndex}: IProps) => {
       setMessage(`Could not rename ${column.name}.`);
     };
 
+    committingRef.current = true;
+    try {
+      await commitNameChange(newName, keepOldName);
+    } finally {
+      committingRef.current = false;
+    }
+  };
+
+  const commitNameChange = async (newName: string, keepOldName: () => void) => {
     // Renaming the column while CODAP still knows the attribute by its old name is what leaves the
     // stale attribute behind on the next run, so the column keeps its old name unless CODAP renamed
     // the attribute.

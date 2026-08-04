@@ -44,14 +44,14 @@ const dataContextName = "Sampler";
 const oldName = "output";
 const newName = "choice";
 
-const stateWithColumn = () => {
+const stateWithColumn = ({ withAttrMapEntry = true } = {}) => {
   const globalState: IGlobalState = getDefaultState();
   const column = globalState.model.columns[0];
   column.name = oldName;
   globalState.dataContextName = dataContextName;
   globalState.attrMap = {
     ...globalState.attrMap,
-    [column.id]: { codapID: "id-output", name: oldName }
+    ...(withAttrMapEntry ? { [column.id]: { codapID: "id-output", name: oldName } } : {})
   };
   return { globalState, column };
 };
@@ -75,6 +75,21 @@ const renderWithStore = () => {
   return { column };
 };
 
+// Answers the way CODAP does: an attribute is found under the name it currently holds, and renaming
+// one it no longer holds fails. Enough to tell a second commit from the first.
+const fakeCodap = (initialName: string) => {
+  let heldName = initialName;
+  mockGetAttribute.mockImplementation(async (_ctx: string, _coll: string, name: string) =>
+    name === heldName ? { success: true, values: { name } } : { success: false });
+  mockUpdateAttribute.mockImplementation(
+    async (_ctx: string, _coll: string, name: string, _attr: unknown, values: { name: string }) => {
+      if (name !== heldName) return { success: false };
+      heldName = values.name;
+      return { success: true };
+    });
+  return { heldName: () => heldName };
+};
+
 const typeNewName = () => {
   const textbox = screen.getByRole("textbox");
   textbox.focus();
@@ -82,8 +97,8 @@ const typeNewName = () => {
   return textbox;
 };
 
-const renderColumnHeader = () => {
-  const { globalState, column } = stateWithColumn();
+const renderColumnHeader = (options?: { withAttrMapEntry?: boolean }) => {
+  const { globalState, column } = stateWithColumn(options);
   render(
     <GlobalStateContext.Provider value={{ globalState, setGlobalState: jest.fn() }}>
       <ColumnHeader column={column} columnIndex={0} />
@@ -155,6 +170,18 @@ describe("ColumnHeader", () => {
     expect(mockUpdateAttribute).not.toHaveBeenCalled();
   });
 
+  // The entry naming the attribute goes with the column, so an edit committed after the column is
+  // gone has nothing to rename from and must not go looking.
+  it("does not ask CODAP anything when the column's attrMap entry is already gone", async () => {
+    renderColumnHeader({ withAttrMapEntry: false });
+
+    fireEvent.blur(typeNewName());
+
+    await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
+    expect(mockGetAttribute).not.toHaveBeenCalled();
+    expect(mockUpdateAttribute).not.toHaveBeenCalled();
+  });
+
   // Blurring is what commits, and Enter blurs, so committing on Enter as well would run the whole
   // exchange a second time -- against a name CODAP has already renamed, which reads as a refusal and
   // puts the old name back.
@@ -166,6 +193,23 @@ describe("ColumnHeader", () => {
 
     await waitFor(() => expect(mockUpdateAttribute).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(newName));
+  });
+
+  // Leaving the field, returning to it and leaving again commits twice over. The second commit asks
+  // for a name the first has already renamed away, which reads as a refusal and puts the old name
+  // back -- the same undoing as committing on Enter, by a route Enter is not involved in.
+  it("does not undo itself when the field is left, returned to and left again", async () => {
+    const codap = fakeCodap(oldName);
+    renderColumnHeader();
+
+    const textbox = typeNewName();
+    fireEvent.blur(textbox);
+    textbox.focus();
+    fireEvent.blur(textbox);
+
+    await waitFor(() => expect(codap.heldName()).toBe(newName));
+    await act(async () => undefined);
+    expect(screen.getByRole("textbox")).toHaveValue(newName);
   });
 
   // Escape abandons the edit, and since blurring commits, cancelling has to reach the commit too.

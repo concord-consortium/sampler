@@ -4,7 +4,7 @@ import { useImmer } from "use-immer";
 import { createNewAttribute } from "@concord-consortium/codap-plugin-api";
 import { DeviceFooter } from "./device-footer";
 import { GlobalStateContext, getDefaultState } from "../../hooks/useGlobalState";
-import { IGlobalState } from "../../types";
+import { IGlobalState, IGlobalStateContext } from "../../types";
 
 jest.mock("@concord-consortium/codap-plugin-api", () => ({
   codapInterface: {
@@ -49,10 +49,12 @@ const dataContextName = "Sampler";
 const newAttributeId = "id-output2";
 
 // The component drives real state, so the state updates its handlers make are actually applied.
+let store: IGlobalStateContext;
 const StateProvider = ({ initialState, children }: { initialState: IGlobalState, children: React.ReactNode }) => {
   const [globalState, setGlobalState] = useImmer<IGlobalState>(initialState);
+  store = { globalState, setGlobalState };
   return (
-    <GlobalStateContext.Provider value={{ globalState, setGlobalState }}>
+    <GlobalStateContext.Provider value={store}>
       {children}
     </GlobalStateContext.Provider>
   );
@@ -125,6 +127,24 @@ describe("DeviceFooter", () => {
 
     await waitFor(() => expect(warn).toHaveBeenCalled());
     warn.mockRestore();
+  });
+
+  // Deleting the column takes its attrMap entry with it, and the create outlives that, so recording
+  // the id it comes back with has to cope with the entry being gone. Writing through it would throw
+  // inside the recipe.
+  it("survives the new column being deleted before its attribute comes back", async () => {
+    let finishCreate = (result: unknown) => { /* replaced below */ };
+    mockCreateNewAttribute.mockImplementation(() => new Promise(resolve => { finishCreate = resolve; }));
+    renderDeviceFooter();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Device" }));
+    await waitFor(() => expect(mockCreateNewAttribute).toHaveBeenCalledTimes(1));
+    const newColumnId = store.globalState.model.columns[1].id;
+
+    act(() => { store.setGlobalState(draft => { delete draft.attrMap[newColumnId]; }); });
+    await act(async () => { finishCreate({ success: true, values: { attrs: [{ id: newAttributeId }] } }); });
+
+    expect(store.globalState.attrMap[newColumnId]).toBeUndefined();
   });
 
   // An attrMap entry already carrying the new column's name is re-keyed onto it, and the attribute
