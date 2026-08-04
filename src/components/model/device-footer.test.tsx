@@ -126,6 +126,10 @@ describe("DeviceFooter", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add Device" }));
 
     await waitFor(() => expect(warn).toHaveBeenCalled());
+    // the column is still there, with no attribute recorded behind it, and the model still renders
+    const newColumnId = store.globalState.model.columns[1].id;
+    expect(store.globalState.attrMap[newColumnId].codapID).toBeNull();
+    expect(screen.getByRole("button", { name: "DG.Plugin.Sampler.device-branch" })).toBeInTheDocument();
     warn.mockRestore();
   });
 

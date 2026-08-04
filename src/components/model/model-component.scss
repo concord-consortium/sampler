@@ -353,11 +353,13 @@ $pluginMinWidth: 304px;
         width: 100%;
       }
 
-      // positioned like the label so that saying why a rename did not take does not move the model
+      // out of flow so that saying why a rename did not take does not move the model, and below the
+      // label rather than on top of it, since a message can still be showing when a run starts
       .device-column-header-message {
         font-size: 11px;
         color: #b00020;
         position: absolute;
+        top: 20px;
         width: 100%;
       }
     }

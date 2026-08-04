@@ -117,8 +117,9 @@ export const DeviceFooter = ({device, columnIndex, handleUpdateVariables, handle
               }
             });
           } else if (result) {
-            // tryRequest reports a request that never answered; this is one that answered no
-            console.warn(`Sampler: could not create the attribute for column ${name}`);
+            // tryRequest reports a request that never answered. This is one that answered, but
+            // either refused or came back without the id the column needs to recognise it later.
+            console.warn(`Sampler: CODAP did not create an attribute for column ${name}`);
           }
         });
     }

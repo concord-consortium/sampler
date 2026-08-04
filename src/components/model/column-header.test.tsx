@@ -41,6 +41,7 @@ const mockGetAttributeList = getAttributeList as jest.Mock;
 const mockUpdateAttribute = updateAttribute as jest.Mock;
 
 const dataContextName = "Sampler";
+const attributeId = "id-output";
 const oldName = "output";
 const newName = "choice";
 
@@ -51,7 +52,7 @@ const stateWithColumn = ({ withAttrMapEntry = true } = {}) => {
   globalState.dataContextName = dataContextName;
   globalState.attrMap = {
     ...globalState.attrMap,
-    ...(withAttrMapEntry ? { [column.id]: { codapID: "id-output", name: oldName } } : {})
+    ...(withAttrMapEntry ? { [column.id]: { codapID: attributeId, name: oldName } } : {})
   };
   return { globalState, column };
 };
@@ -110,7 +111,7 @@ const renderColumnHeader = (options?: { withAttrMapEntry?: boolean }) => {
 describe("ColumnHeader", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetAttribute.mockResolvedValue({ success: true, values: { id: "id-output", name: oldName } });
+    mockGetAttribute.mockResolvedValue({ success: true, values: { id: attributeId, name: oldName } });
     mockUpdateAttribute.mockResolvedValue({ success: true });
   });
 
@@ -138,7 +139,8 @@ describe("ColumnHeader", () => {
     fireEvent.blur(screen.getByRole("textbox"));
 
     await waitFor(() => expect(mockUpdateAttribute).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Column name" })).toHaveValue(oldName));
+    expect(screen.getByRole("status")).toHaveTextContent(`Could not rename ${oldName}.`);
   });
 
   // A request that times out or meets a closed connection rejects rather than reporting failure, so
@@ -182,10 +184,10 @@ describe("ColumnHeader", () => {
     expect(mockUpdateAttribute).not.toHaveBeenCalled();
   });
 
-  // Blurring is what commits, and Enter blurs, so committing on Enter as well would run the whole
-  // exchange a second time -- against a name CODAP has already renamed, which reads as a refusal and
-  // puts the old name back.
-  it("commits once when the edit is finished with Enter", async () => {
+  // Finishing with Enter has to leave the name where the user put it. Enter blurs, and blurring is
+  // what commits, so the commit runs once from there. A second commit would be stood down by the
+  // same latch the leave-return-leave test pins, so this pins the outcome rather than that branch.
+  it("keeps the new name when the edit is finished with Enter", async () => {
     renderColumnHeader();
 
     const textbox = typeNewName();
@@ -212,6 +214,24 @@ describe("ColumnHeader", () => {
     expect(screen.getByRole("textbox")).toHaveValue(newName);
   });
 
+  // A commit stands down while one is under way. The edit typed in the meantime is not made, so the
+  // field goes back to the name that is actually being committed and says why.
+  it("says so rather than silently dropping an edit made while a commit is in flight", async () => {
+    const codap = fakeCodap(oldName);
+    renderWithStore();
+
+    const textbox = typeNewName();
+    fireEvent.blur(textbox);
+    textbox.focus();
+    fireEvent.change(textbox, { target: { value: "pick" } });
+    fireEvent.blur(textbox);
+
+    await waitFor(() => expect(codap.heldName()).toBe(newName));
+    await act(async () => undefined);
+    expect(screen.getByRole("status")).toHaveTextContent(`Still renaming to ${newName}.`);
+    expect(screen.getByRole("textbox")).toHaveValue(newName);
+  });
+
   // Escape abandons the edit, and since blurring commits, cancelling has to reach the commit too.
   it("does not rename anything when the edit is abandoned with Escape", async () => {
     renderColumnHeader();
@@ -223,30 +243,53 @@ describe("ColumnHeader", () => {
     expect(mockUpdateAttribute).not.toHaveBeenCalled();
   });
 
-  // A request that stops answering has not necessarily failed, so the name CODAP holds decides it.
-  it("takes the new name when CODAP turns out to hold it after all", async () => {
+  // A request that stops answering has not necessarily failed, so what became of the attribute
+  // decides it. The header already shows the typed name, so only the store settles whether the
+  // rename was adopted.
+  it("takes the new name when CODAP turns out to have renamed the attribute after all", async () => {
     mockUpdateAttribute.mockRejectedValue(new Error("connection closed"));
-    mockGetAttributeList.mockResolvedValue({ success: true, values: [{ name: newName }] });
+    mockGetAttributeList.mockResolvedValue({ success: true, values: [{ id: attributeId, name: newName }] });
     const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
-    renderColumnHeader();
+    const { column } = renderWithStore();
 
-    const textbox = typeNewName();
-    fireEvent.blur(textbox);
+    fireEvent.blur(typeNewName());
 
-    await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(newName));
+    await waitFor(() => expect(store.globalState.model.columns[0].name).toBe(newName));
+    expect(store.globalState.attrMap[column.id].name).toBe(newName);
+    expect(mockGetAttributeList).toHaveBeenCalled();
     warn.mockRestore();
   });
 
-  it("keeps the old name when CODAP turns out not to hold the new one", async () => {
+  it("keeps the old name when the attribute turns out still to carry it", async () => {
     mockUpdateAttribute.mockRejectedValue(new Error("connection closed"));
-    mockGetAttributeList.mockResolvedValue({ success: true, values: [{ name: oldName }] });
+    mockGetAttributeList.mockResolvedValue({ success: true, values: [{ id: attributeId, name: oldName }] });
     const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
-    renderColumnHeader();
+    const { column } = renderWithStore();
 
-    const textbox = typeNewName();
-    fireEvent.blur(textbox);
+    fireEvent.blur(typeNewName());
 
     await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
+    expect(store.globalState.model.columns[0].name).toBe(oldName);
+    expect(store.globalState.attrMap[column.id].name).toBe(oldName);
+    warn.mockRestore();
+  });
+
+  // Deleting a column leaves an attribute that holds data behind, so something else can already
+  // answer to the new name. Only this column's attribute having taken it counts as a rename.
+  it("keeps the old name when the new name belongs to some other attribute", async () => {
+    mockUpdateAttribute.mockRejectedValue(new Error("connection closed"));
+    mockGetAttributeList.mockResolvedValue({ success: true, values: [
+      { id: attributeId, name: oldName },
+      { id: "id-orphan", name: newName }
+    ] });
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { column } = renderWithStore();
+
+    fireEvent.blur(typeNewName());
+
+    await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(oldName));
+    expect(store.globalState.model.columns[0].name).toBe(oldName);
+    expect(store.globalState.attrMap[column.id].name).toBe(oldName);
     warn.mockRestore();
   });
 
