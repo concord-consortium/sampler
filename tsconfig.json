@@ -18,5 +18,18 @@
   },
   "include": [
     "./src/**/*"
+  ],
+  // The tests are compiled by ts-jest through tsconfig.test.json, which is where jest's globals are
+  // declared. Keeping them out of this program is what makes a jest global left behind in shipped
+  // source a compile error: src/test/setupTests.ts imports @testing-library/jest-dom, whose types
+  // reach @types/jest, and one such file anywhere in a program puts describe/it/expect in scope for
+  // all of it.
+  //
+  // Naming an exclude replaces TypeScript's default rather than adding to it. That costs nothing
+  // here because "include" is confined to ./src, so node_modules was never a candidate.
+  "exclude": [
+    "./src/**/*.test.ts",
+    "./src/**/*.test.tsx",
+    "./src/test/**/*"
   ]
 }

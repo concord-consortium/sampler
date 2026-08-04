@@ -1,0 +1,19 @@
+// Compiler options for the tests, used by ts-jest. Identical to the build's, except that the tests
+// get jest's globals.
+//
+// Keeping "types" out of tsconfig.json is what makes a test-only identifier left behind in shipped
+// source a compile error rather than something that builds cleanly.
+//
+// src/**/*.d.ts is load-bearing rather than tidiness: the ambient "*.scss" and "*.svg" declarations
+// live there, the components under test import those files, and ambient declarations are reached by
+// being included, never by being imported.
+//
+// "exclude" is deliberately not set. The base config does not define one, so it inherits TypeScript's
+// default, which keeps node_modules out. Resetting it to [] here would pull node_modules in.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest"]
+  },
+  "include": ["./src/**/*.test.ts", "./src/**/*.test.tsx", "./src/**/*.d.ts"]
+}
