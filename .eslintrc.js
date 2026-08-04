@@ -50,7 +50,6 @@ module.exports = {
     "@typescript-eslint/no-this-alias": "off",
     "@typescript-eslint/no-unused-vars": ["warn", { args: "none", ignoreRestSiblings: true }],
     "@typescript-eslint/prefer-optional-chain": "off",
-    "@typescript-eslint/semi": ["warn", "always"],
     "curly": ["error", "multi-line", "consistent"],
     "dot-notation": "error",
     "eol-last": "warn",
@@ -93,7 +92,8 @@ module.exports = {
     "react/no-unsafe": ["off", { checkAliases: true }],
     "react/no-unused-state": "error",
     "react/prop-types": "off",
-    "semi": "off" // superseded by @typescript-eslint/semi
+    // typescript-eslint v8 dropped its formatting rules, so this is the base rule again
+    "semi": ["warn", "always"]
   },
   overrides: [
     { // rules specific to Jest tests
