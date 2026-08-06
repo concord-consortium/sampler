@@ -92,7 +92,11 @@ module.exports = {
     "react/no-unsafe": ["off", { checkAliases: true }],
     "react/no-unused-state": "error",
     "react/prop-types": "off",
-    // typescript-eslint v8 dropped its formatting rules, so this is the base rule again
+    // typescript-eslint v8 dropped its formatting rules, so this is the base rule again. Note it is
+    // TypeScript-unaware and so covers less than @typescript-eslint/semi did: interface and type
+    // members, enum members, `declare` class fields and abstract signatures are no longer checked.
+    // @stylistic/ts/semi restores that, but only from a version requiring eslint 9, so it belongs
+    // with the flat-config migration rather than here.
     "semi": ["warn", "always"]
   },
   overrides: [
