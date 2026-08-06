@@ -1,22 +1,29 @@
-// Compiler options for the tests, used by ts-jest. Identical to the build's, except that the tests
-// get jest's globals.
+// Compiler options for the tests, used by ts-jest.
 //
-// Keeping "types" out of tsconfig.json is what makes a test-only identifier left behind in shipped
-// source a compile error rather than something that builds cleanly.
+// tsconfig.json sets "types": [] so that a jest global left behind in shipped source fails the
+// build. The tests need those globals, so they are declared here instead.
 //
-// src/**/*.d.ts is load-bearing rather than tidiness: the ambient "*.scss" and "*.svg" declarations
-// live there, the components under test import those files, and ambient declarations are reached by
-// being included, never by being imported.
+// "exclude" is reset because it is inherited, and the base config excludes exactly the files this
+// config exists to compile. Left inherited, it filters "include" down to nothing but global.d.ts.
+// Resetting to [] is safe only because "include" never reaches outside ./src.
 //
-// "exclude" is reset because it is inherited, and the base config excludes exactly the test files
-// this one exists to compile. Left inherited, exclude filters include and this config resolves to
-// nothing but global.d.ts. Resetting to [] rather than restoring TypeScript's default is safe only
-// because "include" below never reaches outside ./src.
+// src/**/*.d.ts carries the ambient "*.scss" and "*.svg" declarations that the components under test
+// import. Ambient declarations are reached by being included, never by being imported.
+//
+// skipLibCheck covers a clash between resize-observer-polyfill's global ResizeObserver declarations
+// and lib.dom's own (TS2717). It is set here rather than in tsconfig.json, so the shipped build goes
+// on checking its .d.ts files.
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["jest"]
+    "types": ["jest"],
+    "skipLibCheck": true
   },
-  "include": ["./src/**/*.test.ts", "./src/**/*.test.tsx", "./src/**/*.d.ts"],
+  "include": [
+    "./src/**/*.test.ts",
+    "./src/**/*.test.tsx",
+    "./src/test/**/*",
+    "./src/**/*.d.ts"
+  ],
   "exclude": []
 }
