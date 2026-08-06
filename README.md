@@ -35,9 +35,13 @@ load a plugin over `http`, so `npm start` is enough. Both CODAP and this dev ser
 ## Testing
 
 - `npm test` — the Jest unit suite
-- `npm run test:cypress` — the Cypress end-to-end suite. It does not start the dev server; run
-  `npm start` alongside it, or use `npm run test:full`.
+- `npm run test:cypress` — the Cypress end-to-end suite
+- `npm run test:full` — both suites in sequence
 - `npm run lint` — eslint
+
+Neither `test:cypress` nor `test:full` starts the dev server, and Cypress fails on `cy.visit("")`
+without one. Run `npm start` in another terminal first. CI does not hit this because the Cypress job
+lets `cypress-io/github-action` start the server through its own `start:` input.
 
 ## Updating translations
 
