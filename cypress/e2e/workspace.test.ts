@@ -10,6 +10,6 @@ context("Test the overall app", () => {
   });
 
   it("renders the navigation tabs", () => {
-    cy.get(".navigationTabs .tab").should("have.length", 3);
+    ae.getNavTabs().should("have.length", 3);
   });
 });
