@@ -3,17 +3,16 @@ import { GlobalStateContext, useGlobalStateContextValue } from "../hooks/useGlob
 import { AboutTab } from "./about/about";
 import { MeasuresTab } from "./measures/measures";
 import { ModelTab } from "./model/model-component";
+import { navTabs, type NavTab } from "../types";
 
 import "./App.scss";
 import { tr } from "../utils/localeManager";
 
-const navTabs = ["Model", "Measures", "About"] as const;
 const tabLabels = [
   tr("DG.Plugin.Sampler.tab.devices"),
   tr("DG.Plugin.Sampler.tab.measures"),
   tr("DG.Plugin.Sampler.tab.about")
 ] as const;
-type NavTab = typeof navTabs[number];
 
 export const App = () => {
   const globalStateContextValue = useGlobalStateContextValue();

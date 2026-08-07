@@ -5,9 +5,11 @@ context("Test the overall app", () => {
     cy.visit("");
   });
 
-  // describe("Desktop functionalities", () => {
-  //   it("renders with text", () => {
-  //     ae.getApp().should("have.text", "Hello World");
-  //   });
-  // });
+  it("renders the app", () => {
+    ae.getApp().should("exist");
+  });
+
+  it("renders the navigation tabs", () => {
+    ae.getNavTabs().should("have.length", 3);
+  });
 });

@@ -1,0 +1,29 @@
+// Compiler options for the tests, used by ts-jest.
+//
+// tsconfig.json sets "types": [] so that a jest global left behind in shipped source fails the
+// build. The tests need those globals, so they are declared here instead.
+//
+// "exclude" is reset because it is inherited, and the base config excludes exactly the files this
+// config exists to compile. Left inherited, it filters "include" down to nothing but global.d.ts.
+// Resetting to [] is safe only because "include" never reaches outside ./src.
+//
+// src/**/*.d.ts carries the ambient "*.scss" and "*.svg" declarations that the components under test
+// import. Ambient declarations are reached by being included, never by being imported.
+//
+// skipLibCheck covers a clash between resize-observer-polyfill's global ResizeObserver declarations
+// and lib.dom's own (TS2717). It is set here rather than in tsconfig.json, so the shipped build goes
+// on checking its .d.ts files.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest"],
+    "skipLibCheck": true
+  },
+  "include": [
+    "./src/**/*.test.ts",
+    "./src/**/*.test.tsx",
+    "./src/test/**/*",
+    "./src/**/*.d.ts"
+  ],
+  "exclude": []
+}

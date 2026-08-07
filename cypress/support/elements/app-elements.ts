@@ -1,5 +1,8 @@
 export const AppElements = {
   getApp() {
-    return cy.get(".app");
+    return cy.get(".App");
+  },
+  getNavTabs() {
+    return cy.get(".navigationTabs .tab");
   }
 };

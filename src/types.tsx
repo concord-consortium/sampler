@@ -3,8 +3,8 @@ import { tr } from "./utils/localeManager";
 
 export type Id = string;
 
-const navTabs = ["Model", "Measures", "About"] as const;
-type NavTab = typeof navTabs[number];
+export const navTabs = ["Model", "Measures", "About"] as const;
+export type NavTab = typeof navTabs[number];
 
 export interface IAttrForMap {
   codapID: string | null;

@@ -1,2 +1,7 @@
 node_modules
 dist
+cypress/screenshots
+cypress/videos
+.nyc_output
+coverage
+coverage-cypress

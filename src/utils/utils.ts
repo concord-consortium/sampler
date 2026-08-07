@@ -98,7 +98,7 @@ export const validateFormula = (expression: string): boolean => {
     // format will throw an exception if it can't be parsed
     formatFormula(expression, "_", []);
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 };
