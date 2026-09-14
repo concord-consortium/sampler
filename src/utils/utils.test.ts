@@ -1,4 +1,4 @@
-import { formatFormula } from "./utils";
+import { formatFormula, validateFormula } from "./utils";
 
 describe("formatFormula", () => {
   it("should wrap string values that are not in the replacements array with single quotes", () => {
@@ -96,6 +96,61 @@ describe("formatFormula", () => {
     const columnName = "output";
     const replacements = ["output"];
     const expected = "output = -1";
+    expect(formatFormula(expression, columnName, replacements)).toBe(expected);
+  });
+
+  it("should handle two-character comparison operators", () => {
+    const columnName = "output";
+    const replacements = ["output"];
+    expect(formatFormula("output <= 5", columnName, replacements)).toBe("output <= 5");
+    expect(formatFormula("output >= 5", columnName, replacements)).toBe("output >= 5");
+    expect(formatFormula("output != 5", columnName, replacements)).toBe("output != 5");
+  });
+
+  it("should supply the left-hand side of a two-character comparison operator", () => {
+    const columnName = "output";
+    const replacements = ["output"];
+    expect(formatFormula("<= 5", columnName, replacements)).toBe("output <= 5");
+    expect(formatFormula("!= 5", columnName, replacements)).toBe("output != 5");
+  });
+
+  it("should handle subtraction that is not surrounded by spaces", () => {
+    const expression = "output = 5-3";
+    const columnName = "output";
+    const replacements = ["output"];
+    const expected = "output = 5 - 3";
+    expect(formatFormula(expression, columnName, replacements)).toBe(expected);
+  });
+
+  it("should not split values that begin with a word operator", () => {
+    const columnName = "output";
+    const replacements = ["output"];
+    expect(formatFormula("orange", columnName, replacements)).toBe("output = 'orange'");
+    expect(formatFormula("output = android", columnName, replacements)).toBe("output = 'android'");
+  });
+
+  it("should reject an expression it cannot parse in full rather than ignoring the rest", () => {
+    expect(() => formatFormula("output = 5 6", "output", ["output"])).toThrow();
+  });
+
+  it("should reject an expression that ends where a value was expected", () => {
+    expect(() => formatFormula("output >=", "output", ["output"])).toThrow("Unexpected end of expression");
+    expect(() => formatFormula("output +", "output", ["output"])).toThrow("Unexpected end of expression");
+    expect(validateFormula("output >=")).toBe(false);
+  });
+
+  it("should see an attribute that is inside parentheses", () => {
+    const columnName = "output";
+    const replacements = ["output"];
+    expect(formatFormula("(output) = 5", columnName, replacements)).toBe("(output) = 5");
+    expect(formatFormula("(output + 1) > 5", columnName, replacements)).toBe("(output + 1) > 5");
+  });
+
+  it("should supply the left-hand side around a comparison that follows a word operator", () => {
+    const expression = "b and output = c";
+    const columnName = "output";
+    const replacements = ["output"];
+    const expected = "output = 'b' and output = 'c'";
     expect(formatFormula(expression, columnName, replacements)).toBe(expected);
   });
 
