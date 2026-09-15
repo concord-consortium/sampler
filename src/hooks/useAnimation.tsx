@@ -217,18 +217,21 @@ export const useAnimationContextValue = (): IAnimationContext => {
           break;
         }
 
-        const parsedFormula = parseFormula(formula, columnName);
-        const neededVariables = getVariables(parsedFormula);
-
-        const values = neededVariables.reduce((acc, variable) => {
-          if (variable in previousOutputs) {
-            acc[variable] = previousOutputs[variable];
-          }
-          return acc;
-        }, { [columnName]: selectedVariable });
-
-        const formattedFormula = formatFormula(formula, columnName, Object.keys(values));
+        // the editor saves a formula it cannot parse, so a parse failure reports by name here the
+        // same way one CODAP could not evaluate does
         try {
+          const parsedFormula = parseFormula(formula, columnName);
+          const neededVariables = getVariables(parsedFormula);
+
+          const values = neededVariables.reduce((acc, variable) => {
+            if (variable in previousOutputs) {
+              acc[variable] = previousOutputs[variable];
+            }
+            return acc;
+          }, { [columnName]: selectedVariable });
+
+          const formattedFormula = formatFormula(formula, columnName, Object.keys(values));
+
           const evaluationResult = await evaluateResult(formattedFormula, values);
           if (evaluationResult) {
             nextDeviceId = deviceId;

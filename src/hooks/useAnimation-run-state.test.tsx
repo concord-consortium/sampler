@@ -358,4 +358,27 @@ describe("handleStartRun run-state feedback", () => {
     expect(state.isRunning).toBe(false);
     expect(state.enableRunButton).toBe(true);
   });
+
+  // the editor saves a formula it cannot parse, so the run has to report it by name
+  it("names the transition formula that cannot be parsed", async () => {
+    const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => undefined);
+    mockFindOrCreateDataContext.mockResolvedValue("Sampler");
+    state.model = {
+      columns: [
+        { id: "c1", name: "Deck1",
+          devices: [{ id: "d1", viewType: "mixer", variables: ["a"], replacement: true,
+                      formulas: { d2: "Deck1 = red marble" } }] },
+        { id: "c2", name: "Deck2",
+          devices: [{ id: "d2", viewType: "mixer", variables: ["b"], replacement: true, formulas: {} }] }
+      ]
+    };
+
+    const { result } = renderHook(() => useAnimationContextValue());
+    await result.current.handleStartRun();
+    await flushRequests();
+
+    expect(alertSpy).toHaveBeenCalledWith("Error evaluating transition formula: Deck1 = red marble");
+    expect(state.isRunning).toBe(false);
+    expect(state.enableRunButton).toBe(true);
+  });
 });

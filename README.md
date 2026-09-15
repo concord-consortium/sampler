@@ -7,6 +7,64 @@ experiments against them, and sends the samples to CODAP as data to analyze.
 It is a React application written in TypeScript and bundled with webpack. It talks to CODAP through
 [@concord-consortium/codap-plugin-api](https://github.com/concord-consortium/codap-plugin-api).
 
+## The condition that ends a repetition
+
+In repeat mode the Sampler keeps drawing items into a single sample until a condition says to stop,
+rather than until a fixed sample size is reached. The **Condition to End Repetition** dialog
+(`src/components/model/repeat-until-modal.tsx`) offers two conditions: **Expression or Pattern**, and
+**Unique Values**. What the first accepts is not obvious from the dialog, so it is written out here.
+
+### Expression or pattern
+
+One text field takes either form, and a heuristic decides which one was typed
+(`isPattern` in `src/utils/pattern.ts`). It is read as a **pattern** if it is a single bare token of
+letters, digits, `_` and `.`, or if it contains a comma and no parentheses; otherwise it is read as
+an **expression**. So `a`, `a,b,a` and `cat, dog` are patterns, while `output = "a"` and
+`count(x) > 2` are expressions.
+
+A **pattern** is a comma-separated sequence of values, each trimmed. The repetition ends as soon as
+those values appear as a *consecutive run* among the items drawn so far, for any one of the output
+attributes — `a,b,a` means an `a`, then a `b`, then an `a`, back to back.
+
+An **expression** is passed verbatim to CODAP's formula engine (`evaluateResult` in
+`src/helpers/codap-helpers.tsx` sends an `evalExpression` request), so the syntax it accepts is
+CODAP's formula language, documented under
+[Enter a Formula for an Attribute](https://codap.concord.org/help/work-functions/enter-formula-attribute)
+and the [function list](https://codap.concord.org/help/functions): the comparisons `=`, `!=`, `<`,
+`<=`, `>`, `>=`, the boolean operators `&`, `|`, `and`, `or`, `AND`, `OR`, arithmetic, parentheses,
+and CODAP's functions. The dialog's own example, `sex = "male" AND height > 5`, is one of these.
+
+Two things follow from evaluating it in CODAP rather than here:
+
+- **Nothing quotes for you.** String values need their own quotes. `sex = "male"` compares against
+  the string; `sex = male` reaches CODAP as a reference to an attribute named `male`, which does not
+  exist in the record, so evaluation fails and the run stops with an error naming the formula. This
+  differs from the branching formulas on a device, which *are* parsed and quoted locally.
+- **Only the current item is in scope.** The expression is evaluated once per draw, against a single
+  record whose keys are the output attribute names and whose values are the item just drawn. Earlier
+  items in the sample cannot be referenced, so a condition that has to look across the accumulated
+  items — a count, a run, an average — belongs in a pattern or in the unique-values condition instead.
+
+The expression is not parsed or validated before it is sent, so a malformed one surfaces as an error
+when the experiment runs rather than when it is entered.
+
+`src/utils/formula-parser.ts` is a full expression grammar living in this repo and is easy to mistake
+for the above. It is not involved: it parses the **branching formulas** that route an item from one
+device to the next, which is where `parseFormula`, `formatFormula` and `validateFormula` are used.
+
+### Unique values
+
+The other condition (`src/utils/unique-values.ts`) ends the repetition once the items drawn contain
+exactly the requested number of distinct values for any one output attribute. The model header
+displays this as `uniqueValues() = 3`, which reads like a function call but is only a label — it
+cannot be typed into the expression field.
+
+### The ceiling
+
+Either way, a sample stops after 1000 items (`maxRepeatUntilItems` in `src/hooks/useAnimation.tsx`).
+A condition that never comes true therefore aborts the experiment with an error naming the condition,
+rather than running forever.
+
 ## Development
 
 1. Clone this repo and `cd` into it

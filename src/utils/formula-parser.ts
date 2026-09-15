@@ -46,9 +46,27 @@ interface ParseState {
   replacements: string[];
 }
 
+// A "-" directly after a value is subtraction, but the number rule has already taken it for a sign,
+// so "5-3" arrives as ["5", "-3"]. Hand the operator back to the parser.
+const splitSubtraction = (tokens: string[]): string[] => {
+  return tokens.reduce<string[]>((acc, token) => {
+    const previous = acc[acc.length - 1];
+    const followsValue = previous !== undefined && (previous === ")" || /^-?\w/.test(previous));
+    if (followsValue && /^-\d/.test(token)) {
+      acc.push("-", token.slice(1));
+    } else {
+      acc.push(token);
+    }
+    return acc;
+  }, []);
+};
+
 export const tokenize = (input: string): string[] => {
-  const regex = /(-?\d+(\.\d+)?|[()+\-*/%^<>=!&|,]|<=|>=|!=|≠|≤|≥|and|or|AND|OR|÷|\s+|[a-zA-Z_]\w*)/g;
-  return (input.match(regex) || []).filter(t => t.trim().length > 0);
+  // Order matters: the two-character comparisons must precede the single-character class, and the
+  // word operators come from the identifier rule so a name such as "orange" is not read as "or" + "ange".
+  const regex = /(-?\d+(\.\d+)?|<=|>=|!=|[()+\-*/%^<>=!&|,]|≠|≤|≥|÷|\s+|[a-zA-Z_]\w*)/g;
+  const tokens = (input.match(regex) || []).filter(t => t.trim().length > 0);
+  return splitSubtraction(tokens);
 };
 
 const peek = (tokens: string[], state: ParseState): string => {
@@ -73,6 +91,8 @@ const containsReplacements = (node: ExpressionNode, state: ParseState): boolean 
       return containsReplacements(node.argument, state);
     case "FunctionCall":
       return node.arguments.reduce((acc, cur) => acc || containsReplacements(cur, state), false);
+    case "GroupingExpression":
+      return containsReplacements(node.expression, state);
     case "Variable":
       return state.replacements.includes(node.name);
     default:
@@ -81,7 +101,8 @@ const containsReplacements = (node: ExpressionNode, state: ParseState): boolean 
 };
 
 export const parseExpression = (tokens: string[], state: ParseState): ExpressionNode => {
-  const operators = ["=", "+", "-", "*", "/", "%", "^", "&", "|", "<", ">", "!", "≠", "≤", "≥", "and", "or", "AND", "OR"];
+  const operators = ["=", "+", "-", "*", "/", "%", "^", "&", "|", "<", ">", "!", "<=", ">=", "!=",
+                     "≠", "≤", "≥", "and", "or", "AND", "OR"];
 
   let tree: ExpressionNode;
 
@@ -92,10 +113,15 @@ export const parseExpression = (tokens: string[], state: ParseState): Expression
       type: "BinaryExpression",
       operator,
       left: { type: "Variable", name: state.columnName },
-      right: parseComparison(tokens, state),
+      right: parseLogicalOr(tokens, state),
     };
   } else {
-    tree = parseComparison(tokens, state);
+    tree = parseLogicalOr(tokens, state);
+  }
+
+  // leftover tokens mean the input did not parse as written
+  if (state.value < tokens.length) {
+    throw new Error(`Unexpected token: ${peek(tokens, state)}`);
   }
 
   if ((tree.type !== "BinaryExpression") || !containsReplacements(tree.left, state)) {
@@ -110,23 +136,8 @@ export const parseExpression = (tokens: string[], state: ParseState): Expression
   return tree;
 };
 
-const parseComparison = (tokens: string[], state: ParseState): ExpressionNode => {
-  let node = parseLogicalOr(tokens, state);
-
-  while (["=", "!=", "≠", "<", ">", "<=", "≥", "≤", ">="].includes(peek(tokens, state))) {
-    const operator = consume(tokens, state);
-    const right = parseLogicalOr(tokens, state);
-    node = {
-      type: "BinaryExpression",
-      operator,
-      left: node,
-      right,
-    };
-  }
-
-  return node;
-};
-
+// Each of the functions below handles one level of precedence, loosest first: or, and, comparison,
+// addition, multiplication, exponentiation, unary, primary.
 const parseLogicalOr = (tokens: string[], state: ParseState): ExpressionNode => {
   let node = parseLogicalAnd(tokens, state);
 
@@ -145,9 +156,26 @@ const parseLogicalOr = (tokens: string[], state: ParseState): ExpressionNode => 
 };
 
 const parseLogicalAnd = (tokens: string[], state: ParseState): ExpressionNode => {
-  let node = parseAddition(tokens, state);
+  let node = parseComparison(tokens, state);
 
   while (["&", "and", "AND"].includes(peek(tokens, state))) {
+    const operator = consume(tokens, state);
+    const right = parseComparison(tokens, state);
+    node = {
+      type: "BinaryExpression",
+      operator,
+      left: node,
+      right,
+    };
+  }
+
+  return node;
+};
+
+const parseComparison = (tokens: string[], state: ParseState): ExpressionNode => {
+  let node = parseAddition(tokens, state);
+
+  while (["=", "!=", "≠", "<", ">", "<=", "≥", "≤", ">="].includes(peek(tokens, state))) {
     const operator = consume(tokens, state);
     const right = parseAddition(tokens, state);
     node = {
@@ -229,8 +257,12 @@ const parseUnary = (tokens: string[], state: ParseState): ExpressionNode => {
 const parsePrimary = (tokens: string[], state: ParseState): ExpressionNode => {
   const token = consume(tokens, state);
 
+  if (token === undefined) {
+    throw new Error("Unexpected end of expression");
+  }
+
   if (token === "(") {
-    const expr = parseComparison(tokens, state);
+    const expr = parseLogicalOr(tokens, state);
     expect(tokens, state, ")");
     return {
       type: "GroupingExpression",
@@ -257,7 +289,7 @@ const parseFunctionCall = (tokens: string[], state: ParseState, callee: string):
   const args: ExpressionNode[] = [];
   if (peek(tokens, state) !== ")") {
     do {
-      args.push(parseComparison(tokens, state));
+      args.push(parseLogicalOr(tokens, state));
     } while (peek(tokens, state) === "," && consume(tokens, state));
   }
   expect(tokens, state, ")");
