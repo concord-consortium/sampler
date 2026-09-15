@@ -51,7 +51,7 @@ interface ParseState {
 const splitSubtraction = (tokens: string[]): string[] => {
   return tokens.reduce<string[]>((acc, token) => {
     const previous = acc[acc.length - 1];
-    const followsValue = previous !== undefined && (previous === ")" || /^\w/.test(previous));
+    const followsValue = previous !== undefined && (previous === ")" || /^-?\w/.test(previous));
     if (followsValue && /^-\d/.test(token)) {
       acc.push("-", token.slice(1));
     } else {
@@ -62,10 +62,8 @@ const splitSubtraction = (tokens: string[]): string[] => {
 };
 
 export const tokenize = (input: string): string[] => {
-  // Alternation order matters twice over. The two-character comparisons have to precede the
-  // single-character class, or "<=" comes out as "<" followed by "=". The word operators need no
-  // alternative of their own — the identifier rule already yields them, and giving them one ahead of
-  // it would split "orange" into "or" and "ange".
+  // Order matters: the two-character comparisons must precede the single-character class, and the
+  // word operators come from the identifier rule so a name such as "orange" is not read as "or" + "ange".
   const regex = /(-?\d+(\.\d+)?|<=|>=|!=|[()+\-*/%^<>=!&|,]|≠|≤|≥|÷|\s+|[a-zA-Z_]\w*)/g;
   const tokens = (input.match(regex) || []).filter(t => t.trim().length > 0);
   return splitSubtraction(tokens);
@@ -121,8 +119,7 @@ export const parseExpression = (tokens: string[], state: ParseState): Expression
     tree = parseLogicalOr(tokens, state);
   }
 
-  // Anything left over means the expression did not parse as written. Ignoring it would quietly
-  // evaluate something other than what was typed, so treat it the way any other bad input is treated.
+  // leftover tokens mean the input did not parse as written
   if (state.value < tokens.length) {
     throw new Error(`Unexpected token: ${peek(tokens, state)}`);
   }
@@ -260,7 +257,6 @@ const parseUnary = (tokens: string[], state: ParseState): ExpressionNode => {
 const parsePrimary = (tokens: string[], state: ParseState): ExpressionNode => {
   const token = consume(tokens, state);
 
-  // an expression that ends where a value was expected, such as "output >="
   if (token === undefined) {
     throw new Error("Unexpected end of expression");
   }

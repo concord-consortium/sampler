@@ -217,27 +217,21 @@ export const useAnimationContextValue = (): IAnimationContext => {
           break;
         }
 
-        // a formula the editor let through without being able to parse it reports the same way as
-        // one CODAP could not evaluate, rather than surfacing the parser's own message
-        let values: Record<string, string>;
-        let formattedFormula: string;
+        // the editor saves a formula it cannot parse, so a parse failure reports by name here the
+        // same way one CODAP could not evaluate does
         try {
           const parsedFormula = parseFormula(formula, columnName);
           const neededVariables = getVariables(parsedFormula);
 
-          values = neededVariables.reduce((acc, variable) => {
+          const values = neededVariables.reduce((acc, variable) => {
             if (variable in previousOutputs) {
               acc[variable] = previousOutputs[variable];
             }
             return acc;
-          }, { [columnName]: selectedVariable } as Record<string, string>);
+          }, { [columnName]: selectedVariable });
 
-          formattedFormula = formatFormula(formula, columnName, Object.keys(values));
-        } catch {
-          throw new Error(`Error evaluating transition formula: ${formula}`);
-        }
+          const formattedFormula = formatFormula(formula, columnName, Object.keys(values));
 
-        try {
           const evaluationResult = await evaluateResult(formattedFormula, values);
           if (evaluationResult) {
             nextDeviceId = deviceId;

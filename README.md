@@ -37,8 +37,9 @@ and CODAP's functions. The dialog's own example, `sex = "male" AND height > 5`, 
 Two things follow from evaluating it in CODAP rather than here:
 
 - **Nothing quotes for you.** String values need their own quotes. `sex = "male"` compares against
-  the string; `sex = male` reaches CODAP as a reference to an attribute named `male` and will not
-  match. This differs from the branching formulas on a device, which *are* parsed and quoted locally.
+  the string; `sex = male` reaches CODAP as a reference to an attribute named `male`, which does not
+  exist in the record, so evaluation fails and the run stops with an error naming the formula. This
+  differs from the branching formulas on a device, which *are* parsed and quoted locally.
 - **Only the current item is in scope.** The expression is evaluated once per draw, against a single
   record whose keys are the output attribute names and whose values are the item just drawn. Earlier
   items in the sample cannot be referenced, so a condition that has to look across the accumulated
@@ -61,7 +62,7 @@ cannot be typed into the expression field.
 ### The ceiling
 
 Either way, a sample stops after 1000 items (`maxRepeatUntilItems` in `src/hooks/useAnimation.tsx`).
-A condition that never comes true therefore aborts the experiment with an error naming the formula,
+A condition that never comes true therefore aborts the experiment with an error naming the condition,
 rather than running forever.
 
 ## Development

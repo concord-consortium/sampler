@@ -359,9 +359,7 @@ describe("handleStartRun run-state feedback", () => {
     expect(state.enableRunButton).toBe(true);
   });
 
-  // The formula editor saves a transition formula it could not parse, so the run is where an
-  // unparseable one lands. What reaches the user has to name the formula rather than repeat the
-  // parser's own account of where it gave up.
+  // the editor saves a formula it cannot parse, so the run has to report it by name
   it("names the transition formula that cannot be parsed", async () => {
     const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => undefined);
     mockFindOrCreateDataContext.mockResolvedValue("Sampler");

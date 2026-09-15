@@ -130,13 +130,12 @@ describe("formatFormula", () => {
   });
 
   it("should reject an expression it cannot parse in full rather than ignoring the rest", () => {
-    expect(() => formatFormula("output = 5 6", "output", ["output"])).toThrow();
+    expect(() => formatFormula("output = 5 6", "output", ["output"])).toThrow("Unexpected token: 6");
   });
 
   it("should reject an expression that ends where a value was expected", () => {
     expect(() => formatFormula("output >=", "output", ["output"])).toThrow("Unexpected end of expression");
     expect(() => formatFormula("output +", "output", ["output"])).toThrow("Unexpected end of expression");
-    expect(validateFormula("output >=")).toBe(false);
   });
 
   it("should see an attribute that is inside parentheses", () => {
@@ -154,4 +153,16 @@ describe("formatFormula", () => {
     expect(formatFormula(expression, columnName, replacements)).toBe(expected);
   });
 
+});
+
+describe("validateFormula", () => {
+  it("should report an expression the parser cannot read as invalid", () => {
+    expect(validateFormula("output >=")).toBe(false);
+    expect(validateFormula("output = 5 6")).toBe(false);
+  });
+
+  it("should report a parsable expression as valid", () => {
+    expect(validateFormula("output >= 5")).toBe(true);
+    expect(validateFormula("*")).toBe(true);
+  });
 });

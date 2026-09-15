@@ -30,6 +30,7 @@ describe("tokenize", () => {
     expect(tokenize("5-3")).toEqual(["5", "-", "3"]);
     expect(tokenize("a-1")).toEqual(["a", "-", "1"]);
     expect(tokenize("(a)-1")).toEqual(["(", "a", ")", "-", "1"]);
+    expect(tokenize("-1-2")).toEqual(["-1", "-", "2"]);
   });
 
   it("still reads a minus that begins a value as a sign", () => {
