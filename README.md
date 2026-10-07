@@ -117,25 +117,65 @@ which point the project code and the prefix filter in that script both need revi
 
 ## Releasing
 
+There is no CHANGELOG in this repo; the GitHub releases serve that purpose.
+
 1. Raise the version in `package.json`, `package-lock.json`, and `kVersion` in `src/constants.ts`,
    and merge that to `main`. `npm version <version> --no-git-tag-version` does the first two;
    `kVersion` is by hand. A unit test fails if the two get out of step, so forgetting one of them
    fails CI rather than shipping a mismatch.
 
-2. Tag the merge commit and push the tag:
+2. Tag the merge commit and push the tag. The tags here are annotated rather than lightweight, and
+   the message is the version again:
 
    ```
-   git tag v1.2.3
+   git tag -a v1.2.3 -m "Version v1.2.3"
    git push origin v1.2.3
    ```
 
    Pushing a tag builds it and deploys it to `models-resources/sampler/version/v1.2.3/`, where it
    can be run on its own without being the released version.
 
-3. Run the **Release** workflow from the Actions tab, giving the tag as the `version` input. It
-   copies that version's `index-top.html` over the top-level `index.html`, which is what
-   https://sampler.concord.org serves. Until this step runs, the new version is deployed but not
-   released.
+3. Hand the tagged build to QA, pointed at the version rather than at `main`, and test it against
+   production CODAP — what users actually run:
+
+   ```
+   https://codap.concord.org/app?di=https://sampler.concord.org/version/v1.2.3/
+   ```
+
+   `di` on its own opens a blank document with a new Sampler in it. To test against an existing
+   document that already contains a Sampler, add `&di-override=sampler`, which substitutes the build
+   named by `di` for the one the document would otherwise load. Anything reproduced from a saved
+   document needs the override form.
+
+   A `branch/main` URL changes under the testers whenever anything merges, and a bug report against
+   it does not say which build it came from. While developing, `branch/main` in place of
+   `version/v1.2.3` exercises whatever is currently on `main`.
+
+   To test against an *unreleased* CODAP — a branch build, or a fix not yet in production — use the
+   `codap3.concord.org` host instead, e.g.
+   `https://codap3.concord.org/branch/main/?di=https://sampler.concord.org/version/v1.2.3/`.
+
+4. Once QA passes, run the **Release** workflow from the Actions tab, giving the tag as the
+   `version` input. It copies that version's `index-top.html` over the top-level `index.html`, which
+   is what https://sampler.concord.org serves. Until this step runs, the new version is deployed but
+   not released.
+
+5. Publish the GitHub release, after the production deploy has succeeded rather than before:
+
+   ```
+   gh release create v1.2.3 --title "Version 1.2.3 - Released January 2, 2026" --notes-file notes.md
+   ```
+
+   The notes group a bullet per ticket under a heading, each bullet a short restatement of what a
+   user would notice rather than the Jira summary:
+
+   ```
+   ### 🐞 Bug Fixes:
+   - **SAMPLER-123:** Renaming a column no longer leaves the old attribute behind
+   ```
+
+   `### ✨ Features & Improvements:` and `### 🛠️ Under the Hood:` are the other headings in use;
+   include only those with items.
 
 Deploys authenticate to AWS with OIDC, assuming the `sampler` IAM role; there are no AWS credentials
 stored in this repository. See
